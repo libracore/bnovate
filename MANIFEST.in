@@ -1,0 +1,18 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+include *.md
+include *.py
+include *.txt
+recursive-include bnovate *.css
+recursive-include bnovate *.csv
+recursive-include bnovate *.html
+recursive-include bnovate *.ico
+recursive-include bnovate *.js
+recursive-include bnovate *.json
+recursive-include bnovate *.md
+recursive-include bnovate *.png
+recursive-include bnovate *.py
+recursive-include bnovate *.svg
+recursive-include bnovate *.txt
+recursive-exclude bnovate *.pyc
