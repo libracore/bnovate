@@ -20,6 +20,7 @@ def get_columns():
         #{"label": _("Item Group"), "fieldname": "item_group", "fieldtype": "Link", "options": "Item Group",  "width": 120},
         {"label": _("SNR"), "fieldname": "snr", "fieldtype": "Data", "width": 100},
         {"label": _("Quantity"), "fieldname": "qty", "fieldtype": "Float", "width": 100},
+        {"label": _("Stock UOM"), "fieldname": "stock_uom", "fieldtype": "Link", "width": 100, "options": "UOM"},
         {"label": _("Value"), "fieldname": "value", "fieldtype": "Currency", "width": 100},
         {"label": _(""), "fieldname": "blank", "fieldtype": "Data", "width": 20}
     ]
@@ -68,6 +69,7 @@ def get_data_with_snr(filters):
           `tabStock Ledger Entry`.`item_code`, 
           `tabStock Ledger Entry`.`warehouse`,
           `tabItem`.`has_serial_no` AS `has_serial_no`,
+          `tabItem`.`stock_uom` AS `stock_uom`,
           `tabSerial No`.`name` AS `serial_no`
         FROM `tabStock Ledger Entry`
         LEFT JOIN `tabItem` ON `tabStock Ledger Entry`.`item_code` = `tabItem`.`name`
@@ -97,6 +99,7 @@ def get_data_with_snr(filters):
                 'item_code': item_warehouse['item_code'],
                 'warehouse': item_warehouse['warehouse'],
                 'qty': stock_level[0]['qty'],
+                'stock_uom': item_warehouse['stock_uom'],
                 'value': stock_level[0]['value']
             }
             if item_warehouse['has_serial_no']:
