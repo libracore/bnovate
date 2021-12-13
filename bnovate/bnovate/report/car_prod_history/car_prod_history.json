@@ -1,0 +1,38 @@
+{
+ "add_total_row": 0,
+ "creation": "2021-01-28 14:43:44.844450",
+ "disable_prepared_report": 0,
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "idx": 0,
+ "is_standard": "Yes",
+ "letter_head": "Standard",
+ "modified": "2021-12-13 20:29:10.923412",
+ "modified_by": "Administrator",
+ "module": "bNovate",
+ "name": "CAR prod history",
+ "owner": "vincent.shamaei@bnovate.com",
+ "prepared_report": 0,
+ "query": "SELECT \n\tsoi.parent as \"Parent:Link/Sales Order:100\",\n    so.per_delivered as \"Delivered:Percent:80\",\n    so.customer_name as \"Customer:Link/Customer:150\",\n    soi.qty as \"Qty:Int:50\", \n    soi.item_name as \"Item name:String:300\", \n    soi.delivery_date as \"Ship date:Date:80\",\n    soi.delivered_qty / soi.qty * 100 AS \"Delivered:Percent:50\",\n    soi.item_code as \"Item code:Link/Item:120\",\n    soi.item_group as \"Item group:String:300\",\n    so.status as \"Status:String:100\"\nFROM `tabSales Order Item` as soi\nJOIN `tabSales Order` as so ON soi.parent = so.name\nWHERE\n    soi.delivery_date BETWEEN '2021-01-01' AND '2021-12-31'\n    AND so.docstatus = 1\nORDER BY soi.delivery_date ASC",
+ "ref_doctype": "Sales Order",
+ "report_name": "CAR prod history",
+ "report_type": "Script Report",
+ "roles": [
+  {
+   "role": "Sales User"
+  },
+  {
+   "role": "Sales Manager"
+  },
+  {
+   "role": "Maintenance User"
+  },
+  {
+   "role": "Accounts User"
+  },
+  {
+   "role": "Stock User"
+  }
+ ]
+}

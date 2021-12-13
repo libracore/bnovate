@@ -13,6 +13,13 @@ def get_data():
                         "label": _("Enclosure History"),
                         "doctype": "Serial No",
                         "is_query_report": True               
+                   },
+                   {
+                        "type": "report",
+                        "name": "CAR prod history",
+                        "label": _("CAR prod history"),
+                        "doctype": "Sales Order",
+                        "is_query_report": True               
                    }              
             ]
         },
