@@ -74,12 +74,12 @@ ORDER BY soi.delivery_date ASC
         if row['weeknum'] != last_week_num:
             week_colour = next(week_colours)
             last_week_num = row['weeknum']
-        row['weeknum'] = f"<span style='color:{week_colour}!important;font-weight:bold;width:100%;height:100%'>{row['weeknum']}</span>"
+        row['weeknum'] = "<span style='color:{week_colour}!important;font-weight:bold;width:100%;height:100%'>{weeknum}</span>".format(week_colour=week_colour, weeknum=row['weeknum'])
         
         if row['delivery_date'] != last_day:
             day_colour = next(day_colours)
             last_day = row['delivery_date']
-        row['ship_date'] = f"<span style='color:{day_colour}!important;font-weight:bold;width:100%;height:100%'>{row['delivery_date'].strftime('%d-%m-%Y')}</span>"
+        row['ship_date'] = "<span style='color:{day_colour}!important;font-weight:bold;width:100%;height:100%'>{delivery_date}</span>".format(day_colour=day_colour, delivery_date=row['delivery_date'].strftime('%d-%m-%Y'))
     
     return data
 
