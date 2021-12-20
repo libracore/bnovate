@@ -11,4 +11,10 @@ frappe.query_reports["Orders to Fulfill"] = {
             "default" : 1
         },
 	]
+	/*,
+	"formatter": function (value, row, column, data, default_formatter) {
+		console.log(value, row, column, data, default_formatter);
+		return default_formatter(value, row, column, data);
+	}
+	*/
 };

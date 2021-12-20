@@ -4,6 +4,7 @@
 from __future__ import unicode_literals
 import frappe
 import textwrap
+import itertools
 from frappe import _
 
 def execute(filters=None):
@@ -16,16 +17,15 @@ def execute(filters=None):
 
 def get_columns():
     return [
-        {'fieldname': 'weeknum', 'fieldtype': 'Int', 'label': _('Week'), 'width': 80},
+        {'fieldname': 'weeknum', 'fieldtype': 'Data', 'label': _('Week'), 'width': 80},
         {'fieldname': 'parent', 'fieldtype': 'Link', 'label': _('Parent'), 'options': 'Sales Order', 'width': 100},
         {'fieldname': 'customer_name', 'fieldtype': 'Link', 'label': _('Customer'), 'options': 'Customer', 'width': 150},
-        {'fieldname': 'delivery_date', 'fieldtype': 'Date', 'label': _('Ship date'), 'width': 80},
+        {'fieldname': 'ship_date', 'fieldtype': 'Data', 'label': _('Ship date'), 'width': 80},
         # {'fieldname': 'qty', 'fieldtype': 'Int', 'label': _('Qty Ordered'), 'width': 100}, 
         {'fieldname': 'remaining_qty', 'fieldtype': 'Int', 'label': _('Qty to Deliver'), 'width': 100}, 
         {'fieldname': 'item_code', 'fieldtype': 'Link', 'label': _('Item code'), 'options': 'Item', 'width': 300},
         # {'fieldname': 'item_name', 'fieldtype': 'Data', 'label': _('Item name'), 'width': 300},
         {'fieldname': 'item_group', 'fieldtype': 'Link', 'label': _('Item group'), 'options': 'Item Group', 'width': 150},
-        # {'fieldname': 'item_group', 'fieldtype': 'Data', 'label': _('Item group'), 'width': 300},
         # {'fieldname': 'status', 'fieldtype': 'Data', 'label': _('Status'), 'width': 100}
     ]
     
@@ -37,7 +37,7 @@ def get_data(filters):
     
     sql_query = """
 SELECT 
-	WEEK(soi.delivery_date) as weeknum,
+    WEEK(soi.delivery_date) as weeknum,
     soi.parent as parent,
     so.customer_name as customer_name,
     soi.qty as qty,
@@ -50,7 +50,7 @@ FROM `tabSales Order Item` as soi
 JOIN `tabSales Order` as so ON soi.parent = so.name
 JOIN `tabItem` as it on soi.item_code = it.name
 WHERE
-	so.docstatus = 1 AND 
+    so.docstatus = 1 AND 
     so.per_delivered < 100 AND
     soi.qty > soi.delivered_qty AND
     so.status != 'Closed'
@@ -59,6 +59,27 @@ ORDER BY soi.delivery_date ASC
     """.format(extra_filters=extra_filters)
 
     data = frappe.db.sql(sql_query, as_dict=True)
+    
+    week_colours = itertools.cycle(['black', '#6660A9', '#297045', '#CC5A2B'])
+    day_colours = itertools.cycle(['black', '#6660A9', '#297045', '#CC5A2B'])
+
+    
+    last_week_num = ''
+    last_day = ''
+    week_colour = next(week_colours)
+    day_colour = next(day_colours)
+
+    for row in data:
+        
+        if row['weeknum'] != last_week_num:
+            week_colour = next(week_colours)
+            last_week_num = row['weeknum']
+        row['weeknum'] = f"<span style='color:{week_colour}!important;font-weight:bold;width:100%;height:100%'>{row['weeknum']}</span>"
+        
+        if row['delivery_date'] != last_day:
+            day_colour = next(day_colours)
+            last_day = row['delivery_date']
+        row['ship_date'] = f"<span style='color:{day_colour}!important;font-weight:bold;width:100%;height:100%'>{row['delivery_date'].strftime('%d-%m-%Y')}</span>"
     
     return data
 
@@ -73,13 +94,13 @@ def get_chart(filters):
 SELECT
     WEEK(soi.delivery_date) as weeknum,
     SUBDATE(soi.delivery_date, WEEKDAY(soi.delivery_date)) as week,
-    soi.qty - soi.delivered_qty AS remaining_qty,
+    SUM(soi.qty - soi.delivered_qty) AS remaining_qty,
     it.item_group as item_group
 FROM `tabSales Order Item` as soi
 JOIN `tabSales Order` as so ON soi.parent = so.name
 JOIN `tabItem` as it on soi.item_code = it.name
 WHERE
-	so.docstatus = 1 AND 
+    so.docstatus = 1 AND 
     so.status != 'Closed' AND
     soi.qty > soi.delivered_qty
     {extra_filters}
@@ -113,11 +134,14 @@ ORDER BY week ASC
     
     chart = {
         "data": {
-            "labels": [w.strftime("%Y-%m-%e (week %V)") for w in weeks],
+            "labels": [w.strftime("(W%V) %d-%m-%Y") for w in weeks],
             "datasets": datasets,
         },
         "type": 'bar',
-        "barOptions": {"stacked": True},
+        "barOptions": {
+            "stacked": True,
+            "spaceRatio": 0.1,
+        },
         "title": "Total items per week",
     }
     return chart
