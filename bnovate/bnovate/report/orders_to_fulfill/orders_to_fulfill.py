@@ -110,26 +110,24 @@ ORDER BY week ASC
     
     data = frappe.db.sql(sql_query, as_dict=True)
     
-    # Build dict of dict, that store the sum of items in each group, each week.
+    # Build dict of arrays, that store the sum of items in each group, each week.
     weeks = sorted(set([it['week'] for it in data]))
     groups = sorted(set([it['item_group'] for it in data]))
     plotdata = {}
 
     for g in groups:
-        plotdata[g] = {}
-        for w in weeks:
-            plotdata[g][w] = 0
+        plotdata[g] = [0] * len(weeks)
 
     for item in data:
         week, group, qty = item['week'], item['item_group'], item['remaining_qty']
-        plotdata[group][week] += qty
+        plotdata[group][weeks.index(week)] += qty
 
     # Convert to format expected by Frappe charts
     datasets = []
     for group in plotdata.keys():
         datasets.append({
             "name": ellipsis(group, 12),
-            "values": plotdata[group].values(),
+            "values": plotdata[group],
         })
     
     chart = {
