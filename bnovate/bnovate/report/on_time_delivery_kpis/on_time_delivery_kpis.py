@@ -8,9 +8,9 @@ from frappe import _
 
 def execute(filters=None):
     columns = get_columns()
-    data = get_data()
+    data = get_data(filters)
     message = "No message"
-    chart = get_chart()
+    chart = get_chart(filters)
     
     return columns, data, message, chart
 
@@ -31,7 +31,11 @@ def get_columns():
         {'fieldname': '>1w', 'fieldtype': 'Int', 'label': _('>7d'), 'width': 50},
     ]
     
-def get_data():
+def get_data(filters):
+    
+    extra_filters = ""
+    if filters.item_group:
+        extra_filters = """ AND i.item_group = "{}" """.format(filters.item_group)
     sql_query = """
 SELECT
 	dn.name as "DN",
@@ -56,17 +60,22 @@ JOIN `tabSales Order Item` AS soi ON dni.so_detail = soi.name
 WHERE dni.item_code NOT RLIKE '^Di-'
     AND dni.item_code NOT RLIKE '^ENC-'
     AND dn.docstatus = 1
-    AND soi.delivery_date >= DATE_SUB( NOW(), INTERVAL 25 MONTH )
+    AND soi.delivery_date BETWEEN "{from_date}" AND "{to_date}"
+    {extra_filters}
 
--- ORDER BY dt.delay DESC
 ORDER BY dn.posting_date DESC
-    """
+    """.format(from_date=filters.from_date, to_date=filters.to_date, extra_filters=extra_filters)
+
+    print(sql_query)
 
     data = frappe.db.sql(sql_query, as_dict=True)
     return data
 
-def get_chart():    
-
+def get_chart(filters):    
+   
+    extra_filters = ""
+    if filters.item_group:
+        extra_filters = """ AND i.item_group = "{}" """.format(filters.item_group)
         
     sql_query = """
 SELECT
@@ -100,13 +109,13 @@ FROM (
   WHERE dni.item_code NOT RLIKE '^Di-'
     AND dni.item_code NOT RLIKE '^ENC-'
     AND dn.docstatus = 1
+    AND soi.delivery_date BETWEEN "{from_date}" AND "{to_date}"
+    {extra_filters}
 ) as sd -- shipping delays
-
-WHERE month >= LEFT(CONVERT(DATE_SUB( NOW(), INTERVAL 24 MONTH ), CHAR), 7)
 
 GROUP BY `Month`
 ORDER BY `Month` ASC
-    """.format()
+    """.format(from_date=filters.from_date, to_date=filters.to_date, extra_filters=extra_filters)
     
     data = frappe.db.sql(sql_query, as_dict=True)
     
