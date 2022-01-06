@@ -27,7 +27,14 @@ def get_data():
                         "label": _("On Time Delivery KPIs"),
                         "doctype": "Sales Order",
                         "is_query_report": True    
-                   }
+                   },
+                   {
+                        "type": "report",
+                        "name": "Shipping And Billing History",
+                        "label": _("Shipping And Billing History"),
+                        "doctype": "Serial No",
+                        "is_query_report": True    
+                   },                   
             ]
         },
         {

@@ -66,8 +66,6 @@ WHERE dni.item_code NOT RLIKE '^Di-'
 ORDER BY dn.posting_date DESC
     """.format(from_date=filters.from_date, to_date=filters.to_date, extra_filters=extra_filters)
 
-    print(sql_query)
-
     data = frappe.db.sql(sql_query, as_dict=True)
     return data
 
