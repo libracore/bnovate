@@ -16,18 +16,25 @@ def get_data():
                    },
                    {
                         "type": "report",
-                        "name": "CAR prod history",
-                        "label": _("CAR prod history"),
-                        "doctype": "Sales Order",
-                        "is_query_report": True               
-                   },
-                   {
-                        "type": "report",
                         "name": "Orders to Fulfill",
                         "label": _("Orders to Fulfill"),
                         "doctype": "Sales Order",
                         "is_query_report": True               
                    },
+                   {
+                        "type": "report",
+                        "name": "On Time Delivery KPIs",
+                        "label": _("On Time Delivery KPIs"),
+                        "doctype": "Sales Order",
+                        "is_query_report": True    
+                   },
+                   {
+                        "type": "report",
+                        "name": "Shipping And Billing History",
+                        "label": _("Shipping And Billing History"),
+                        "doctype": "Serial No",
+                        "is_query_report": True    
+                   },                   
             ]
         },
         {
