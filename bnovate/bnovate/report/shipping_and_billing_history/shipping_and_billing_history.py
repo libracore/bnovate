@@ -32,7 +32,7 @@ def get_data(filters):
     
     sn_filter = ""
     if filters.serial_no:
-        sn_filter = """ WHERE di.serial_no LIKE "{}" """.format(filters.serial_no)
+        sn_filter = """ WHERE di.serial_no LIKE "%{}%" """.format(filters.serial_no)
     sql_query = """
     SELECT       
         /* For each serialized item we deliverd, associate customer name (from SO) and billing percentage (from SO item) */
@@ -77,7 +77,6 @@ def get_data(filters):
     {sn_filter}
     ;
     """.format(from_date=filters.from_date, to_date=filters.to_date, sn_filter=sn_filter)
-    print(sql_query)
 
     data = frappe.db.sql(sql_query, as_dict=True)
     return data
