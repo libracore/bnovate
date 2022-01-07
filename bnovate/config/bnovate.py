@@ -29,8 +29,8 @@ def get_data():
             "items": [
                    {
                         "type": "report",
-                        "name": "Enclosure History",
-                        "label": _("Enclosure History"),
+                        "name": "Enclosure Movement History",
+                        "label": _("Enclosure Movement History"),
                         "doctype": "Serial No",
                         "is_query_report": True               
                    }, 
