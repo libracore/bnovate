@@ -28,7 +28,7 @@ def get_data(filters):
     
     sn_filter = ""
     if filters.serial_no:
-        sn_filter = """AND (fa.enclosure_serial LIKE "%{serial_no}%" OR fa.fill_serial LIKE "%{serial_no}%""".format(filters.serial_no)
+        sn_filter = """AND (fa.enclosure_serial LIKE "%{serial_no}%" OR fa.fill_serial LIKE "%{serial_no}%""".format(serial_no=filters.serial_no)
     sql_query = """
     SELECT
         ste.name,
