@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2020, libracore and contributors
+# Copyright (c) 2013-2022, libracore and contributors
 # For license information, please see license.txt
 
 from __future__ import unicode_literals
@@ -25,7 +25,7 @@ def get_columns():
     ]
 
 def get_data(filters):
-    if not filters.snr:
+    if not filters.serial_no:
         return None
     # get all item/warehouse combinations
     sql_query = """SELECT 
@@ -67,7 +67,7 @@ def get_data(filters):
         WHERE `tabDelivery Note Item`.`serial_no` LIKE "%{snr}%"
           AND `tabDelivery Note`.`docstatus` = 1
         ) AS `raw`
-        ORDER BY `raw`.`date` DESC, `raw`.`time` DESC;""".format(snr=filters.snr)
+        ORDER BY `raw`.`date` DESC, `raw`.`time` DESC;""".format(snr=filters.serial_no)
     history = frappe.db.sql(sql_query, as_dict=True)
         
     return history

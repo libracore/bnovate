@@ -9,13 +9,6 @@ def get_data():
             "items": [
                    {
                         "type": "report",
-                        "name": "Enclosure History",
-                        "label": _("Enclosure History"),
-                        "doctype": "Serial No",
-                        "is_query_report": True               
-                   },
-                   {
-                        "type": "report",
                         "name": "Orders to Fulfill",
                         "label": _("Orders to Fulfill"),
                         "doctype": "Sales Order",
@@ -27,7 +20,27 @@ def get_data():
                         "label": _("On Time Delivery KPIs"),
                         "doctype": "Sales Order",
                         "is_query_report": True    
-                   },
+                   },                  
+            ]
+        },
+                {
+            "label": _("Cartridge Tracking"),
+            "icon": "octicon octicon-git-compare",
+            "items": [
+                   {
+                        "type": "report",
+                        "name": "Enclosure Movement History",
+                        "label": _("Enclosure Movement History"),
+                        "doctype": "Serial No",
+                        "is_query_report": True               
+                   }, 
+                   {
+                        "type": "report",
+                        "name": "Enclosure Filling History",
+                        "label": _("Enclosure Filling History"),
+                        "doctype": "Serial No",
+                        "is_query_report": True               
+                   }, 
                    {
                         "type": "report",
                         "name": "Shipping And Billing History",
