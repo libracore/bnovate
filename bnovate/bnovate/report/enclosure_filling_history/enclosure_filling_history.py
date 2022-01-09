@@ -28,20 +28,20 @@ def get_data(filters):
     
     sn_filter = ""
     if filters.serial_no:
-        sn_filter = """AND (fa.enclosure_serial LIKE "%{serial_no}%" OR fa.fill_serial LIKE "%{serial_no}%""".format(serial_no=filters.serial_no)
+        sn_filter = """ AND (`fa`.`enclosure_serial` LIKE "%{serial_no}%" OR `fa`.`fill_serial` LIKE "%{serial_no}%") """.format(serial_no=filters.serial_no)
     sql_query = """
     SELECT
-        ste.name,
-        ste.posting_date,
-        ste.expiry_date,
-        fa.fill_serial,
-        fa.enclosure_serial,
-        fa.fill_type
-    FROM `tabStock Entry` as ste
-    JOIN `tabFill Association Item` as fa ON fa.parent = ste.name
-    WHERE ste.purpose = "Manufacture"
+        `ste`.`name`,
+        `ste`.`posting_date`,
+        `ste`.`expiry_date`,
+        `fa`.`fill_serial`,
+        `fa`.`enclosure_serial`,
+        `fa`.`fill_type`
+    FROM `tabStock Entry` AS `ste`
+    JOIN `tabFill Association Item` AS `fa` ON `fa`.`parent` = `ste`.`name`
+    WHERE `ste`.`purpose` = "Manufacture"
         {sn_filter}
-    ORDER BY ste.posting_date DESC
+    ORDER BY `ste`.`posting_date` DESC
     """.format(sn_filter=sn_filter)
 
     data = frappe.db.sql(sql_query, as_dict=True)
