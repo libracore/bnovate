@@ -4,13 +4,20 @@ from frappe import _
 def get_data():
     return[
         {
-            "label": _("bNovate"),
+            "label": _("Order Tracking"),
             "icon": "octicon octicon-git-compare",
             "items": [
                    {
                         "type": "report",
                         "name": "Orders to Fulfill",
                         "label": _("Orders to Fulfill"),
+                        "doctype": "Sales Order",
+                        "is_query_report": True               
+                   },
+                   {
+                        "type": "report",
+                        "name": "Order Book",
+                        "label": _("Order Book"),
                         "doctype": "Sales Order",
                         "is_query_report": True               
                    },
