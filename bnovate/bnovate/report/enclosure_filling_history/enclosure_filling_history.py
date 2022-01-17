@@ -41,7 +41,7 @@ def get_data(filters):
     JOIN `tabFill Association Item` AS `fa` ON `fa`.`parent` = `ste`.`name`
     WHERE `ste`.`purpose` = "Manufacture"
         {sn_filter}
-        AND ste.docstatus = 1
+        AND `ste`.`docstatus` = 1
     ORDER BY `ste`.`posting_date` DESC
     """.format(sn_filter=sn_filter)
 
