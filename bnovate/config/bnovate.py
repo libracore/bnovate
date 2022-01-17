@@ -29,8 +29,8 @@ def get_data():
                         "is_query_report": True    
                    },                  
             ]
-        },
-                {
+        }, 
+        {
             "label": _("Cartridge Tracking"),
             "icon": "octicon octicon-git-compare",
             "items": [
@@ -55,6 +55,19 @@ def get_data():
                         "doctype": "Serial No",
                         "is_query_report": True    
                    },                   
+            ]
+        },
+        {
+            "label": _("Production Tracking"),
+            "icon": "octicon octicon-git-compare",
+            "items": [
+                   {
+                        "type": "report",
+                        "name": "Projected Stock",
+                        "label": _("Projected Stock"),
+                        "doctype": "Item",
+                        "is_query_report": True               
+                   },                 
             ]
         },
         {
