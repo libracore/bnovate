@@ -59,10 +59,12 @@ FROM (
     soi.parent as `docname`,
     soi.item_code,
     soi.warehouse,
-    -(soi.qty - soi.delivered_qty) as qty
+    -(soi.qty - soi.delivered_qty) * soi.conversion_factor as qty
   FROM `tabSales Order Item` as soi
+  JOIN `tabSales Order` as so ON so.name = soi.parent
   WHERE soi.delivered_qty < soi.qty
     AND soi.docstatus = 1
+    AND so.status != 'Closed'
 ) UNION ALL (
 -- Purchase Order: items to receive
   SELECT    
@@ -72,10 +74,12 @@ FROM (
     poi.parent as `docname`,
     poi.item_code,
     poi.warehouse,
-    (poi.qty - poi.received_qty) as qty
+    (poi.qty - poi.received_qty) * poi.conversion_factor as qty
   FROM `tabPurchase Order Item` as poi
+  JOIN `tabPurchase Order` as po ON po.name = poi.parent
   WHERE poi.received_qty < poi.qty
     AND poi.docstatus = 1
+    AND po.status != 'Closed'
 ) UNION ALL (
 -- Work Orders: produced items
 SELECT
@@ -98,7 +102,7 @@ SELECT
     "Work Order" as `doctype`,
     wo.name as `docname`,
     woi.item_code as `item_code`,
-    wo.fg_warehouse,
+    woi.source_warehouse as `warehouse`,
     -(woi.required_qty - woi.consumed_qty) as `qty`
 FROM `tabWork Order Item` as woi
 JOIN `tabWork Order` as wo ON woi.parent = wo.name
