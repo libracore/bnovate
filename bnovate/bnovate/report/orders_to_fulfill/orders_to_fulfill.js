@@ -3,18 +3,19 @@
 /* eslint-disable */
 
 frappe.query_reports["Orders to Fulfill"] = {
-	"filters": [
+	filters: [
 		{
-            "fieldname": "only_manufacturing",
-            "label": __("Only manufactured items"),
-            "fieldtype": "Check",
-            "default" : 1
-        },
-	]
+			"fieldname": "only_manufacturing",
+			"label": __("Only manufactured items"),
+			"fieldtype": "Check",
+			"default": 1
+		},
+	],
+	initial_depth: 0,
 	/*,
 	"formatter": function (value, row, column, data, default_formatter) {
 		console.log(value, row, column, data, default_formatter);
 		return default_formatter(value, row, column, data);
-	}
+	
 	*/
 };
