@@ -71,6 +71,19 @@ def get_data():
             ]
         },
         {
+            "label": _("KPIs"),
+            "icon": "octicon octicon-git-compare",
+            "items": [
+                   {
+                        "type": "report",
+                        "name": "Weekly KPI",
+                        "label": _("Weekly KPI"),
+                        "doctype": "Sales Order",
+                        "is_query_report": True               
+                   },                 
+            ]
+        },
+        {
             "label": _("Switzerland"),
             "icon": "fa fa-money",
             "items": [
