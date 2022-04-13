@@ -18,7 +18,8 @@ def get_columns():
     return [
         # {'fieldname': 'weeknum', 'fieldtype': 'Data', 'label': _('Week'), 'width': 80},
         {'fieldname': 'name', 'fieldtype': 'Link', 'label': _('Sales Order'), 'options': 'Sales Order', 'width': 100},
-        {'fieldname': 'customer', 'fieldtype': 'Link', 'label': _('Customer'), 'options': 'Customer', 'width': 150},
+        {'fieldname': 'customer', 'fieldtype': 'Link', 'label': _('Customer'), 'options': 'Customer', 'width': 80},
+        {'fieldname': 'customer_name', 'fieldtype': 'Data', 'label': _('Customer Name'), 'width': 150},
         {'fieldname': 'currency', 'fieldtype': 'Data', 'label': _('Currency'), 'width': 70},
         {'fieldname': 'so_date', 'fieldtype': 'Date', 'label': _('SO date'), 'width': 80},
         {'fieldname': 'ship_date', 'fieldtype': 'Date', 'label': _('Ship date'), 'width': 80},
@@ -48,6 +49,7 @@ def get_data(filters):
 SELECT
     so.name,
     so.customer,
+    so.customer_name,
     so.currency,
     so.transaction_date as so_date,
     soi.delivery_date as ship_date,
