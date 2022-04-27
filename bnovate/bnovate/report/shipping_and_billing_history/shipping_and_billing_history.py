@@ -15,7 +15,8 @@ def execute(filters=None):
 def get_columns():
     return [
         {'fieldname': 'sales_order', 'fieldtype': 'Link', 'label': _('SO'), 'options': 'Sales Order', 'width': 80},
-        {'fieldname': 'customer', 'fieldtype': 'Link', 'label': _('Customer'), 'options': 'Customer', 'width': 150},
+        {'fieldname': 'customer', 'fieldtype': 'Link', 'label': _('Customer'), 'options': 'Customer', 'width': 80},
+        {'fieldname': 'customer_name', 'fieldtype': 'Data', 'label': _('Customer Name'), 'width': 150},
         {'fieldname': 'item_code', 'fieldtype': 'Link', 'label': _('Sold item'), 'options': 'Item', 'width': 200},
         {'fieldname': 'sold_rate', 'fieldtype': 'Int', 'label': _('Sold rate'), 'width': 80},
         {'fieldname': 'billed', 'fieldtype': 'Percent', 'label': _('Billed'), 'width': 80},
@@ -37,7 +38,8 @@ def get_data(filters):
     SELECT       
         /* For each serialized item we deliverd, associate customer name (from SO) and billing percentage (from SO item) */
         so.name as "sales_order",
-        so.customer as "customer", 
+        so.customer as "customer",
+        c.customer_name as "customer_name",
         soi.item_code as "item_code",
         soi.item_name as "item_name",
         soi.rate as sold_rate, /* TODO: figure out currency */
@@ -74,6 +76,7 @@ def get_data(filters):
     JOIN `tabSales Order Item` as soi ON soi.name = di.so_detail
     JOIN `tabSales Order` as so ON so.name = soi.parent
     JOIN `tabDelivery Note` as dn on di.delivery_note = dn.name
+    JOIN `tabCustomer` as c on so.customer = c.name
     {sn_filter}
     ;
     """.format(from_date=filters.from_date, to_date=filters.to_date, sn_filter=sn_filter)
