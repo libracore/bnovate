@@ -31,7 +31,7 @@ def get_data():
             ]
         }, 
         {
-            "label": _("Cartridge Tracking"),
+            "label": _("Cartridge Tools"),
             "icon": "octicon octicon-git-compare",
             "items": [
                    {
@@ -54,7 +54,13 @@ def get_data():
                         "label": _("Shipping And Billing History"),
                         "doctype": "Serial No",
                         "is_query_report": True    
-                   },                   
+                   },    
+                    {
+                        "type": "page",
+                        "name": "cartridge-return",
+                        "label": _("Cartridge Return"),
+                        "description": _("Confirm return of cartridges")           
+                   },                 
             ]
         },
         {
