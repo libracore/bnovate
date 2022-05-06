@@ -176,7 +176,7 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 				}],
 				primary_action_label: 'Scan next',
 				primary_action: function (values) {
-					resolve(values.serial_no);
+					resolve(values.serial_no.trim());
 					this.hide();
 				},
 				secondary_action_label: 'Cancel',
