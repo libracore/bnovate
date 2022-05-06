@@ -20,7 +20,7 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 			label: 'Instructions',
 			fieldname: 'instructions',
 			fieldtype: 'HTML',
-			options: '<p><b>Scan</b> cartridge enclosure barcodes.</p><p><b>Confirm return</b> will create a "Repack" entry only for cartridges currently located at customer sites.</p>',
+			options: '<p><b>Scan</b> cartridge enclosure barcodes.</p><p><b>Confirm return</b> will create a stock entry only for cartridges, and only if they are not in "To Refill".`</p>',
 		}, {
 			label: '',
 			fieldtype: 'Column Break',
