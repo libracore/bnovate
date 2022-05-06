@@ -11,7 +11,7 @@ frappe.pages['file_uploader'].on_page_load = function (wrapper) {
 
 	let state = {
 		files: [], // will contain a list of objects with attributes: name, fileObj, uploaded, error, message
-	}
+	};
 
 	page.set_primary_action('Upload', upload, 'octicon octicon-plus');
 
