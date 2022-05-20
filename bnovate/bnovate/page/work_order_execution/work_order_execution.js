@@ -1,3 +1,31 @@
+/*
+Work Order Execution Page
+-------------------------
+
+* D. Watson, 2022
+
+This page provides tools for operators to validate execution of work orders.
+
+The workflow goes:
+
+- Load this page, either from a button on WO or by scanning a QR code
+- View key information (required items, links to work instructions, comments)
+- When work is done, a couple steps:
+	- Click "finish", indicate number of finished parts.
+	- Adjust quantities of consumed items, add new ones if needed.
+	- Submit -> Creates stock entry, redirects to "view" state
+
+
+The main view switches between two tables: read -> write (to adjust quantities, enter S/N....)
+*/
+
+// TODO: what if same info is submitted / sent twice? <-- disable submit button. Can still have another tab open.
+// More visual feedback when STE is submitted.
+// Avoid double clicks on Finish?
+// Handle batches
+// Handle SNs.
+
+
 frappe.provide("frappe.bnovate.work_order_execution")
 
 frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
@@ -8,12 +36,18 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 	});
 	frappe.bnovate.work_order_execution.page = page; // for easier debugging
 
+	const read = Symbol("read");
+	const write = Symbol("write");
+
 	const state = {
-		work_order_id: undefined,
-		work_order_doc: undefined,
-		docinfo: undefined, // docinfo[doctype][docname] -> {attachments: []}
+		work_order_id: undefined, 	// docname of the current workorder
+		work_order_doc: undefined,  // contents of the current workorder
+		docinfo: undefined, 		// docinfo[doctype][docname] -> {attachments: []}
+		view: read,					// state of the items display: read or write
+		ste_doc: undefined, 		// will contain content of stock entry before submitting.
 	}
 	frappe.bnovate.work_order_execution.state = state;
+	window.state = state;
 
 	let form = new frappe.ui.FieldGroup({
 		fields: [{
@@ -35,6 +69,11 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			fieldname: 'main',
 			fieldtype: 'HTML',
 			options: '<div id="main"></div>',
+		}, {
+			label: 'Items',
+			fieldname: 'items',
+			fieldtype: 'HTML',
+			options: '<div id="items"></div>',
 		}],
 		body: page.body
 	});
@@ -42,21 +81,39 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 
 	const work_order = form.fields_dict.work_order.wrapper;
 	const main_content = document.getElementById('main');
+	const item_content = document.getElementById('items');
 
 	function draw() {
-		frappe.bnovate.work_order_execution.attachments = state.docinfo["Work Order"][state.work_order_id];
-
 		main_content.innerHTML = frappe.render_template('work_order_execution', {
 			doc: state.work_order_doc,
 			docinfo: state.docinfo,
-			attachments: state.docinfo["Work Order"][state.work_order_id].attachments,
+			attachments: state.attachments,
 		});
-
-		if (state.remaining_qty) {
-			page.set_primary_action('Finish', finish);
+		if (state.view == read) {
+			item_content.innerHTML = frappe.render_template('items_read', {
+				doc: state.work_order_doc,
+			})
+		} else {
+			item_content.innerHTML = frappe.render_template('items_write', {
+				doc: state.ste_doc,
+			})
+		}
+		let item_template = 'items_read';
+		if (state.view == write) {
+			item_template = 'items_write';
 		}
 
-		page.set_title(`Work Order Execution: ${state.work_order_doc.item_name}`);
+		page.clear_primary_action();
+		if (state.remaining_qty > 0) {
+			if (state.view == read) {
+				page.set_primary_action('Finish', finish);
+			} else {
+				page.set_primary_action('Submit', submit);
+			}
+		}
+
+		let doc = state.work_order_doc;
+		page.set_title(`Work Order Execution: ${doc.item_name}`);
 		page.set_indicator(
 			state.work_order_doc.status,
 			// use frappe's built-in indicator colour logic.
@@ -80,12 +137,24 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		state.work_order_doc = await frappe.model.with_doc('Work Order', wo_id);
 		state.docinfo = frappe.model.docinfo;
 		state.remaining_qty = state.work_order_doc.qty - state.work_order_doc.produced_qty;
+
+		// BOMs can't change after submit, no need to clear cache
+		state.bom_doc = await frappe.model.with_doc('BOM', state.work_order_doc.bom_no);
+
+		state.attachments = [];
+		state.attachments.push(
+			...state.docinfo['Work Order'][wo_id].attachments || [],
+			...state.docinfo['BOM'][state.work_order_doc.bom_no].attachments || []
+		);
 		draw();
 	}
 
 	// LOGIC
 	////////////////////////////
 	async function finish() {
+		// Prompts user for finished qty. Generates stock entry content without submitting to DB,
+		// switched view from 'read' to 'write', to allow adjusting qties.
+		page.clear_primary_action();
 		let qty = await prompt_qty(state.remaining_qty);
 		frappe.xcall('erpnext.manufacturing.doctype.work_order.work_order.make_stock_entry', {
 			'work_order_id': state.work_order_id,
@@ -94,9 +163,30 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		}).then(ste => {
 			ste.title = `Manufacture for ${ste.work_order}`;
 			ste.docstatus = 1;
-			console.log(ste)
-			return frappe.db.insert(ste)
-		}).finally(() => { state.load_work_order(state.work_order_id) });
+			ste.required_items = ste.items.filter(i => i.s_warehouse);
+			state.ste_doc = ste;
+			state.view = write;
+			draw();
+		});
+	}
+
+	async function submit() {
+		// Submits STE with adjusted qties to db.
+		page.clear_primary_action();
+
+		// Get adjusted quantities, apply to STE items
+		[...document.querySelectorAll("input.qty-delta")]
+			.map(el => [el.dataset.idx, parseFloat(el.value) || 0])
+			.map(([idx, delta]) => {
+				state.ste_doc.items.find(i => i.idx == idx).qty += delta;
+			});
+
+		// Submit and refresh
+		return frappe.db.insert(state.ste_doc)
+			.then(() => {
+				state.view = read;
+				state.load_work_order(state.work_order_id)
+			}); // Reload
 	}
 
 	async function prompt_qty(default_qty) {

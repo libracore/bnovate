@@ -1,0 +1,73 @@
+<style>
+    .bn_row {
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    .medaillon {
+        flex: 0 0 200px;
+    }
+
+    .bn_col {
+        flex: 0 1 400px;
+        padding: 0 20px;
+    }
+
+    .details {
+        margin: 0;
+    }
+
+    .comment {
+        background-color: #f7cd72; 
+        padding: 10px; 
+        border-radius: 10px;
+    }
+</style>
+
+<div>
+    <div class="bn_row">
+        <h2>Required Items</h2>
+        <table class="table table-condensed" style="border-bottom: 1px solid #d1d8dd">
+            <thead>
+                <tr>
+                    <th style="width: 5%" class="table-sr">Sr</th>
+
+                    <th style="width: 20%;" class="" data-fieldname="items" data-fieldtype="Table">
+                        Item Code
+                    </th>
+                    <th style="width: 35%;" class="" data-fieldname="items" data-fieldtype="Table">
+                        Item Name
+                    </th>
+                    <th style="width: 20%;" class="text-right" data-fieldname="items" data-fieldtype="Table">
+                        Required Qty
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+
+                {% for item in doc.required_items %}
+                <tr>
+                    <td class="table-sr">{{ item.idx }}</td>
+                    <td class="" data-fieldname="items" data-fieldtype="Table">
+                        <div class="value">
+                            {{ item.item_code }}
+                        </div>
+                    </td>
+                    <td class="" data-fieldname="items" data-fieldtype="Table">
+                        <div class="value">
+                            <strong>{{ item.item_name }}</strong>
+                        </div>
+                    </td>
+                    <td class="text-right" data-fieldname="items" data-fieldtype="Table">
+                        <div class="value">
+                            {{ item.required_qty }}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+
+            </tbody>
+        </table>
+    </div>
+    
+</div>
