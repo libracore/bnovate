@@ -1,49 +1,13 @@
-<style>
-    .bn_row {
-        display: flex;
-        flex-wrap: wrap;
-    }
-
-    .medaillon {
-        flex: 0 0 200px;
-    }
-
-    .bn_col {
-        flex: 0 1 400px;
-        padding: 0 20px;
-    }
-
-    .details {
-        margin: 0;
-    }
-
-    .bigger {
-        font-size: 200%;
-    }
-
-    .comment {
-        background-color: #f7cd72; 
-        padding: 10px; 
-        border-radius: 10px;
-    }
-
-    .info {
-        background-color: #aecdfc; 
-        padding: 10px; 
-        border-radius: 10px;
-    }
-</style>
-
 <div>
-    <div class="bn_row info">
+    <!-- <div class="bn_row info">
         <p>
         Confirming production of <b class="bigger">{{ doc.fg_completed_qty }} </b> items. <br />
         Adjust consumed quantities below and confirm with Submit.
-    </p>
+    </p> -->
 
     </div>
-    <div class="bn_row">
-        <h2>Consumed Items</h2>
+    <div class="bn_row fade-in">
+        <h2>Components consumed to produce </b>{{ doc.fg_completed_qty }} items</h2>
         <table class="table table-condensed" style="border-bottom: 1px solid #d1d8dd">
             <thead>
                 <tr>

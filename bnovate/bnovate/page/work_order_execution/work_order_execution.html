@@ -17,10 +17,45 @@
         margin: 0;
     }
 
+    .bigger {
+        font-size: 200%;
+    }
+
     .comment {
         background-color: #f7cd72; 
         padding: 10px; 
         border-radius: 10px;
+    }
+
+    .info {
+        background-color: #aecdfc; 
+        padding: 10px; 
+        border-radius: 10px;
+    }
+
+    .pulse-info {
+        animation: pulseInfo 2s;
+    }
+
+    .fade-in {
+        animation: fadeIn 3s;
+    }
+
+    @keyframes fadeIn {
+        from {opacity: 0}
+        to {opacity: 1}
+    }
+
+    @keyframes pulseInfo {
+        from {
+            background-color: #aecdfc00; 
+        }
+        50% {
+            background-color: #aecdfcff; 
+        }
+        to {
+            background-color: #aecdfc00; 
+        }
     }
 </style>
 
@@ -41,7 +76,7 @@
                     </tr>
                     <tr>
                         <th>Quantity Produced</th>
-                        <td>{{ doc.produced_qty}} / {{ doc.qty }}</td>
+                        <td id="produced-qty">{{ doc.produced_qty}} / {{ doc.qty }}</td>
                     </tr>
                     <tr>
                         <th>BOM no</th>

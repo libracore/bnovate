@@ -24,6 +24,7 @@ The main view switches between two tables: read -> write (to adjust quantities, 
 // Avoid double clicks on Finish?
 // Handle batches
 // Handle SNs.
+// Add field for operator to add comments.
 
 
 frappe.provide("frappe.bnovate.work_order_execution")
@@ -93,14 +94,10 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			item_content.innerHTML = frappe.render_template('items_read', {
 				doc: state.work_order_doc,
 			})
-		} else {
+		} else if (state.view == write) {
 			item_content.innerHTML = frappe.render_template('items_write', {
 				doc: state.ste_doc,
 			})
-		}
-		let item_template = 'items_read';
-		if (state.view == write) {
-			item_template = 'items_write';
 		}
 
 		page.clear_primary_action();
@@ -156,18 +153,17 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		// switched view from 'read' to 'write', to allow adjusting qties.
 		page.clear_primary_action();
 		let qty = await prompt_qty(state.remaining_qty);
-		frappe.xcall('erpnext.manufacturing.doctype.work_order.work_order.make_stock_entry', {
+		let ste = await frappe.xcall('erpnext.manufacturing.doctype.work_order.work_order.make_stock_entry', {
 			'work_order_id': state.work_order_id,
 			'purpose': 'Manufacture',
 			'qty': qty,
-		}).then(ste => {
-			ste.title = `Manufacture for ${ste.work_order}`;
-			ste.docstatus = 1;
-			ste.required_items = ste.items.filter(i => i.s_warehouse);
-			state.ste_doc = ste;
-			state.view = write;
-			draw();
-		});
+		})
+		ste.title = `Manufacture for ${ste.work_order}`;
+		ste.docstatus = 1;
+		ste.required_items = ste.items.filter(i => i.s_warehouse);
+		state.ste_doc = ste;
+		state.view = write;
+		draw();
 	}
 
 	async function submit() {
@@ -182,11 +178,12 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			});
 
 		// Submit and refresh
-		return frappe.db.insert(state.ste_doc)
-			.then(() => {
-				state.view = read;
-				state.load_work_order(state.work_order_id)
-			}); // Reload
+		await frappe.db.insert(state.ste_doc);
+		state.view = read;
+
+		// Reload, flash new produced qty
+		await state.load_work_order(state.work_order_id)
+		document.getElementById("produced-qty").classList.add("pulse-info");
 	}
 
 	async function prompt_qty(default_qty) {
@@ -214,6 +211,20 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			d.show();
 		})
 	}
+
+	async function post_comment(doctype, docname, comment) {
+		await frappe.call({
+			"method": "frappe.desk.form.utils.add_comment",
+			"args": {
+				reference_doctype: doctype,
+				reference_name: docname,
+				content: comment,
+				comment_email: frappe.session.user,
+				comment_by: frappe.session.user_fullname,
+			}
+		});
+	}
+	frappe.bnovate.work_order_execution.post_comment = post_comment;
 
 	// LISTENERS
 	////////////////////////////
