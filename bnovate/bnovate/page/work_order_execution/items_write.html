@@ -39,7 +39,7 @@
                             Additional Consumed Qty
                         </th>
 
-                        <th style="width: 20%;" class="text-right" data-fieldname="items" data-fieldtype="Table">
+                        <th style="width: 20%;" class="text-left" data-fieldname="items" data-fieldtype="Table">
                             Batch Name
                         </th>
                     </tr>
@@ -76,7 +76,7 @@
                             {% if item.has_batch_no %}
                             <div class="value">
                                 <input class="batch form-control required" id="batch-{{ item.idx }}"
-                                    name="batch-{{ item.idx }}" data-idx="{{ item.idx }} data-required">
+                                    name="batch-{{ item.idx }}" data-idx="{{ item.idx }}" data-required>
                             </div>
                             {% endif %}
                         </td>

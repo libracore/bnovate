@@ -24,6 +24,7 @@ The main view switches between two tables: read -> write (to adjust quantities, 
 // Avoid double clicks on Finish?
 // Handle batches
 // Handle SNs.
+// TODO: auto-populate expiry date based on shelf-life when creating batch.
 
 
 frappe.provide("frappe.bnovate.work_order_execution")
@@ -96,7 +97,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			item_content.innerHTML = frappe.render_template('items_read', {
 				doc: state.work_order_doc,
 			});
-			if (state.remaining_qty > 0 && state.work_order_doc.docstatus == 1) {
+			if (state.remaining_qty > 0 && state.work_order_doc.docstatus == 1 && state.work_order_doc.status != "Stopped") {
 				page.set_primary_action('Finish', finish);
 			}
 		} else if (state.view == write) {
