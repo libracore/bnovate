@@ -35,16 +35,17 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		single_column: true,
 	});
 	frappe.bnovate.work_order_execution.page = page; // for easier debugging
+	window.page = page;
 
 	const read = Symbol("read");
 	const write = Symbol("write");
 
 	const state = {
 		work_order_id: null, 	// docname of the current workorder
-		work_order_doc: null,  // contents of the current workorder
-		docinfo: null, 		// docinfo[doctype][docname] -> {attachments: []}
-		view: read,					// state of the items display: read or write
-		ste_doc: null, 		// will contain content of stock entry before submitting.
+		work_order_doc: null,  	// contents of the current workorder
+		docinfo: null, 			// docinfo[doctype][docname] -> {attachments: []}
+		view: read,				// state of the items display: read or write
+		ste_doc: null, 			// will contain content of stock entry before submitting.
 	}
 	frappe.bnovate.work_order_execution.state = state;
 	window.state = state;
@@ -90,23 +91,20 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			attachments: state.attachments,
 		});
 
+		page.clear_primary_action();
 		if (state.view == read) {
 			item_content.innerHTML = frappe.render_template('items_read', {
 				doc: state.work_order_doc,
 			});
+			if (state.remaining_qty > 0 && state.work_order_doc.docstatus == 1) {
+				page.set_primary_action('Finish', finish);
+			}
 		} else if (state.view == write) {
 			item_content.innerHTML = frappe.render_template('items_write', {
 				doc: state.ste_doc,
 			});
-		}
-
-		page.clear_primary_action();
-		if (state.remaining_qty > 0 && state.work_order_doc.docstatus == 1) {
-			if (state.view == read) {
-				page.set_primary_action('Finish', finish);
-			} else {
-				page.set_primary_action('Submit', submit);
-			}
+			page.set_primary_action('Submit', validate);
+			attach_validator();
 		}
 
 		let doc = state.work_order_doc;
@@ -161,12 +159,54 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			'qty': qty,
 		})
 		ste.title = `Manufacture for ${ste.work_order}`;
+
+		// Attach batch and sn requirements.
+		await fetch_item_details(ste.items.map(sti => sti.item_code));
+		for (let item of ste.items) {
+			item.has_batch_no = locals["Item"][item.item_code].has_batch_no;
+			item.has_serial_no = locals["Item"][item.item_code].has_serial_no;
+		}
+		ste.production_item_entry = ste.items.find(it => it.item_code == state.work_order_doc.production_item);
+
+		// Prepare doc for final editing in "write" view
 		ste.docstatus = 1;
 		ste.required_items = ste.items.filter(i => i.s_warehouse);
 		state.ste_doc = ste;
 		state.view = write;
 		draw();
 	}
+
+	function validate_inputs() {
+		// Enable Submit button only if all required fields have values.
+		const required_inputs = [...document.querySelectorAll("[data-required]")];
+		for (let input of required_inputs) {
+			if (!input.value) {
+				input.classList.add('required')
+				return false;
+			} else {
+				input.classList.remove('required')
+			}
+		}
+		return true;
+	}
+
+	function validate() {
+		// Calls submit() if form is valid. Else shows alert.
+		page.btn_primary.prop("disabled", true);
+
+		if (!validate_inputs()) {
+			page.btn_primary.prop("disabled", false);
+			frappe.msgprint({
+				title: 'Missing Fields',
+				indicator: 'red',
+				message: 'Please complete required fields',
+			});
+			return;
+		}
+
+		submit();
+	}
+	window.validate = validate;
 
 	async function submit() {
 		// Submits STE with adjusted qties to db.
@@ -178,6 +218,16 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			.map(([idx, delta]) => {
 				state.ste_doc.items.find(i => i.idx == idx).qty += delta;
 			});
+		// Same for batches, only on select items.
+		[...document.querySelectorAll("input.batch")]
+			.map(el => [el.dataset.idx, el.value || 0])
+			.map(([idx, batch_no]) => {
+				state.ste_doc.items.find(i => i.idx == idx).batch_no = batch_no;
+			}); // BTW, this also modifies the same object pointed to from production_item_entry.
+
+		// Create target batch if it doesn't exist
+		await create_batch_if_undefined(state.work_order_doc.production_item,
+			state.ste_doc.production_item_entry.batch_no);
 
 		// Submit, post comment. Submitted doc now has a docname.
 		let submitted_doc = await frappe.db.insert(state.ste_doc);
@@ -231,12 +281,38 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			}
 		});
 	}
-	frappe.bnovate.work_order_execution.post_comment = post_comment;
 
-	// TODO: fetch items using with_doc, so that their info is stored in localstorage.
+	async function fetch_item_details(item_codes) {
+		// Fetch item detail docs, store in locals["Items"].
+		let promises = [];
+		for (let item_code of item_codes) {
+			promises.push(frappe.model.with_doc("Item", item_code));
+		}
+
+		return Promise.all(promises);
+	}
+
+	async function create_batch_if_undefined(item_code, batch_no) {
+		// Creates batch if it doesn't exist yet
+		let batch_doc = await frappe.model.with_doc("Batch", batch_no);
+		if (batch_doc) {
+			return batch_doc
+		}
+		return await frappe.db.insert({
+			doctype: "Batch",
+			title: `${batch_no} for item ${item_code}`,
+			batch_id: batch_no,
+			item: item_code,
+		})
+	}
 
 	// LISTENERS
 	////////////////////////////
+
+	function attach_validator() {
+		[...document.querySelectorAll("[data-required")]
+			.map(el => el.addEventListener("change", validate_inputs))
+	}
 
 	work_order.addEventListener("change", (e) => {
 		state.load_work_order(e.target.value);

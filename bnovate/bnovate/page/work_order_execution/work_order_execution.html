@@ -1,9 +1,10 @@
 <style>
-
-    .comment-input input, label, textarea {
+    .comment-input input,
+    label,
+    textarea {
         display: block;
     }
-    
+
     .bn-row {
         display: flex;
         flex-wrap: wrap;
@@ -18,7 +19,12 @@
         padding: 0 20px;
     }
 
-    .details {
+    .bn-col-full {
+        flex: 0 1 100%;
+        padding: 0 20px;
+    }
+
+    .no-margin {
         margin: 0;
     }
 
@@ -26,15 +32,22 @@
         font-size: 200%;
     }
 
+    .required {
+        border-color: #ff5858;
+        box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
+        color: #000;
+        background-color: #fffdf4;
+    }
+
     .comment {
-        background-color: #f7cd72; 
-        padding: 10px; 
+        background-color: #f7cd72;
+        padding: 10px;
         border-radius: 10px;
     }
 
     .info {
-        background-color: #aecdfc; 
-        padding: 10px; 
+        background-color: #aecdfc;
+        padding: 10px;
         border-radius: 10px;
     }
 
@@ -47,19 +60,26 @@
     }
 
     @keyframes fadeIn {
-        from {opacity: 0}
-        to {opacity: 1}
+        from {
+            opacity: 0
+        }
+
+        to {
+            opacity: 1
+        }
     }
 
     @keyframes pulseInfo {
         from {
-            background-color: #aecdfc00; 
+            background-color: #aecdfc00;
         }
+
         50% {
-            background-color: #aecdfcff; 
+            background-color: #aecdfcff;
         }
+
         to {
-            background-color: #aecdfc00; 
+            background-color: #aecdfc00;
         }
     }
 </style>
@@ -69,7 +89,7 @@
         <img class="medaillon" src="{{ doc.image }}" />
         <div class="bn-col">
 
-            <table class="table details">
+            <table class="table no-margin">
                 <tbody>
                     <tr>
                         <th>Item to Manufacture</th>
@@ -115,5 +135,5 @@
         </div>
 
     </div>
-    
+
 </div>
