@@ -1,12 +1,12 @@
-<div>
+<div class="fade-in">
     <!-- <div class="bn_row info">
         <p>
         Confirming production of <b class="bigger">{{ doc.fg_completed_qty }} </b> items. <br />
         Adjust consumed quantities below and confirm with Submit.
-    </p> -->
+    </p>
 
-    </div>
-    <div class="bn_row fade-in">
+    </div> -->
+    <div class="bn_row">
         <h2>Components consumed to produce </b>{{ doc.fg_completed_qty }} items</h2>
         <table class="table table-condensed" style="border-bottom: 1px solid #d1d8dd">
             <thead>
@@ -51,7 +51,8 @@
 
                     <td class="text-right" data-fieldname="items" data-fieldtype="Table">
                         <div class="value">
-                            <input class="qty-delta" id="delta-{{ item.idx }}" name="delta-{{ item.idx }}" data-idx="{{ item.idx }}">
+                            <input class="qty-delta" id="delta-{{ item.idx }}" name="delta-{{ item.idx }}"
+                                data-idx="{{ item.idx }}">
                         </div>
                     </td>
                 </tr>
@@ -60,5 +61,12 @@
             </tbody>
         </table>
     </div>
-    
+
+    <div class="bn_row">
+        <div class="bn_col">
+            <label for="comment">Comment</label>
+            <textarea id="comment" name="comment" rows="5" cols="80"></textarea>
+        </div>
+    </div>
+
 </div>

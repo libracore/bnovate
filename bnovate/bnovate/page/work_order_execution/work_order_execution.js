@@ -24,7 +24,6 @@ The main view switches between two tables: read -> write (to adjust quantities, 
 // Avoid double clicks on Finish?
 // Handle batches
 // Handle SNs.
-// Add field for operator to add comments.
 
 
 frappe.provide("frappe.bnovate.work_order_execution")
@@ -41,11 +40,11 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 	const write = Symbol("write");
 
 	const state = {
-		work_order_id: undefined, 	// docname of the current workorder
-		work_order_doc: undefined,  // contents of the current workorder
-		docinfo: undefined, 		// docinfo[doctype][docname] -> {attachments: []}
+		work_order_id: null, 	// docname of the current workorder
+		work_order_doc: null,  // contents of the current workorder
+		docinfo: null, 		// docinfo[doctype][docname] -> {attachments: []}
 		view: read,					// state of the items display: read or write
-		ste_doc: undefined, 		// will contain content of stock entry before submitting.
+		ste_doc: null, 		// will contain content of stock entry before submitting.
 	}
 	frappe.bnovate.work_order_execution.state = state;
 	window.state = state;
@@ -90,18 +89,19 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			docinfo: state.docinfo,
 			attachments: state.attachments,
 		});
+
 		if (state.view == read) {
 			item_content.innerHTML = frappe.render_template('items_read', {
 				doc: state.work_order_doc,
-			})
+			});
 		} else if (state.view == write) {
 			item_content.innerHTML = frappe.render_template('items_write', {
 				doc: state.ste_doc,
-			})
+			});
 		}
 
 		page.clear_primary_action();
-		if (state.remaining_qty > 0) {
+		if (state.remaining_qty > 0 && state.work_order_doc.docstatus == 1) {
 			if (state.view == read) {
 				page.set_primary_action('Finish', finish);
 			} else {
@@ -123,7 +123,9 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 
 	// TODO: Refactor to load_work_order: downloads the docs, sets the ID in the state etc.
 	state.load_work_order = async (wo_id) => {
+		state.view = read; 				// reset view
 		state.work_order_id = wo_id;
+		state.ste_doc = null;
 
 		// with_doctype loads default for the doctype, populates listview_settings,
 		// giving us status indicators
@@ -177,9 +179,14 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 				state.ste_doc.items.find(i => i.idx == idx).qty += delta;
 			});
 
-		// Submit and refresh
-		await frappe.db.insert(state.ste_doc);
-		state.view = read;
+		// Submit, post comment. Submitted doc now has a docname.
+		let submitted_doc = await frappe.db.insert(state.ste_doc);
+		let comment = document.getElementById("comment").value;
+		if (comment) {
+			post_comment(submitted_doc.doctype, submitted_doc.name, comment);
+			post_comment(state.work_order_doc.doctype, state.work_order_doc.name, comment);
+		}
+		frappe.show_alert(`<a href="#Form/Stock Entry/${submitted_doc.name}">${submitted_doc.name} created</a>`)
 
 		// Reload, flash new produced qty
 		await state.load_work_order(state.work_order_id)
@@ -225,6 +232,8 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		});
 	}
 	frappe.bnovate.work_order_execution.post_comment = post_comment;
+
+	// TODO: fetch items using with_doc, so that their info is stored in localstorage.
 
 	// LISTENERS
 	////////////////////////////
