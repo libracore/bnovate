@@ -6,13 +6,13 @@
                 <tr>
                     <th style="width: 5%" class="table-sr">Sr</th>
 
-                    <th style="width: 20%;" class="" data-fieldname="items" data-fieldtype="Table">
+                    <th style="width: 20%;" class="" >
                         Item Code
                     </th>
-                    <th style="width: 35%;" class="" data-fieldname="items" data-fieldtype="Table">
+                    <th style="width: 35%;" class="" >
                         Item Name
                     </th>
-                    <th style="width: 20%;" class="text-right" data-fieldname="items" data-fieldtype="Table">
+                    <th style="width: 20%;" class="text-right" >
                         Required Qty
                     </th>
                 </tr>
@@ -22,17 +22,17 @@
                 {% for item in doc.required_items %}
                 <tr>
                     <td class="table-sr">{{ item.idx }}</td>
-                    <td class="" data-fieldname="items" data-fieldtype="Table">
+                    <td class="" >
                         <div class="value">
                             {{ item.item_code }}
                         </div>
                     </td>
-                    <td class="" data-fieldname="items" data-fieldtype="Table">
+                    <td class="" >
                         <div class="value">
                             <strong>{{ item.item_name }}</strong>
                         </div>
                     </td>
-                    <td class="text-right" data-fieldname="items" data-fieldtype="Table">
+                    <td class="text-right" >
                         <div class="value">
                             {{ item.required_qty }}
                         </div>

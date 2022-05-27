@@ -5,6 +5,10 @@
         display: block;
     }
 
+    .table tbody tr td {
+        vertical-align: middle;
+    }
+
     .bn-row {
         display: flex;
         flex-wrap: wrap;
@@ -92,7 +96,7 @@
             <table class="table no-margin">
                 <tbody>
                     <tr>
-                        <th>Item to Manufacture</th>
+                        <th style="width: 180px;">Item to Manufacture</th>
                         <td>{{ doc.production_item }}</td>
                     </tr>
                     <tr>

@@ -12,7 +12,18 @@
             <h3>Batch produced</h3>
             <input class="batch form-control" id="batch-{{ doc.production_item_entry.idx }}"
                 name="batch-{{ doc.production_item_entry.idx }}" data-idx="{{ doc.production_item_entry.idx }}"
-                data-required value="{{ doc.work_order }}"">
+                data-required value="{{ doc.work_order }}" tabindex="1">
+        </div>
+    </div>
+    {% endif %}
+
+    {% if doc.production_item_entry.has_serial_no %}
+    <div class="bn-row">
+        <div class="bn-col">
+            <h3>Serial No produced</h3>
+            <input class="serial form-control required" id="serial-{{ doc.production_item_entry.idx }}"
+                name="serial-{{ doc.production_item_entry.idx }}" data-idx="{{ doc.production_item_entry.idx }}"
+                data-required tabindex="1">
         </div>
     </div>
     {% endif %}
@@ -25,22 +36,26 @@
                     <tr>
                         <th style="width: 5%" class="table-sr">Sr</th>
 
-                        <th style="width: 20%;" class="" data-fieldname="items" data-fieldtype="Table">
+                        <th style="width: 20%;" class="">
                             Item Code
                         </th>
-                        <th style="width: 35%;" class="" data-fieldname="items" data-fieldtype="Table">
+                        <th style="width: 25%;" class="">
                             Item Name
                         </th>
-                        <th style="width: 10%;" class="text-right" data-fieldname="items" data-fieldtype="Table">
+                        <th style="width: 10%;" class="text-right">
                             Required Qty
                         </th>
 
-                        <th style="width: 10%;" class="text-left" data-fieldname="items" data-fieldtype="Table">
+                        <th style="width: 10%;" class="text-left">
                             Additional Consumed Qty
                         </th>
 
-                        <th style="width: 20%;" class="text-left" data-fieldname="items" data-fieldtype="Table">
-                            Batch Name
+                        <th style="width: 15%;" class="text-left">
+                            Batch
+                        </th>
+
+                        <th style="width: 15%;" class="text-left">
+                            Serial No
                         </th>
                     </tr>
                 </thead>
@@ -49,34 +64,44 @@
                     {% for item in doc.required_items %}
                     <tr>
                         <td class="table-sr">{{ item.idx }}</td>
-                        <td class="" data-fieldname="items" data-fieldtype="Table">
+                        <td class="" >
                             <div class="value">
                                 {{ item.item_code }}
                             </div>
                         </td>
-                        <td class="" data-fieldname="items" data-fieldtype="Table">
+                        <td class="" >
                             <div class="value">
                                 <strong>{{ item.item_name }}</strong>
                             </div>
                         </td>
-                        <td class="text-right" data-fieldname="items" data-fieldtype="Table">
+                        <td class="text-right">
                             <div class="value">
                                 {{ item.qty }}
                             </div>
                         </td>
 
-                        <td class="text-left" data-fieldname="items" data-fieldtype="Table">
+                        <td class="text-left">
                             <div class="value">
                                 <input class="qty-delta form-control" id="delta-{{ item.idx }}"
-                                    name="delta-{{ item.idx }}" data-idx="{{ item.idx }}">
+                                    name="delta-{{ item.idx }}" data-idx="{{ item.idx }}" tabindex="{{ item.idx + doc.items.length }}">
                             </div>
                         </td>
 
-                        <td class="text-right" data-fieldname="items" data-fieldtype="Table">
+                        <td class="text-right">
                             {% if item.has_batch_no %}
                             <div class="value">
                                 <input class="batch form-control required" id="batch-{{ item.idx }}"
-                                    name="batch-{{ item.idx }}" data-idx="{{ item.idx }}" data-required>
+                                    name="batch-{{ item.idx }}" data-idx="{{ item.idx }}" data-required tabindex="{{ item.idx + 1 }}">
+                            </div>
+                            {% endif %}
+                        </td>
+
+
+                        <td class="text-right">
+                            {% if item.has_serial_no %}
+                            <div class="value">
+                                <input class="serial form-control required" id="serial-{{ item.idx }}"
+                                    name="serial-{{ item.idx }}" data-idx="{{ item.idx }}" data-required tabindex="{{ item.idx + 1 }}">
                             </div>
                             {% endif %}
                         </td>
