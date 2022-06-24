@@ -23,7 +23,6 @@ For serialized items, we force entry of components for one item at a time, so th
 
 // TODO: what if same info is submitted / sent twice? <-- From another tab open for example.
 // Handle SNs.
-// Handle expiry dates for fills and refills.
 // Fix valuation - client side scripts are no longer called. Maybe fetch my own custom script?
 //  Or move my script to a JS library function.
 // Consider removing "view" mode for serialized items.
@@ -113,6 +112,9 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			} else {
 				page.set_primary_action('Submit', validate);
 			}
+			let expiry_input = draw_expiry_input("#expiry-div");
+			window.expiry_input = expiry_input;
+
 			attach_validator();
 		}
 
@@ -123,6 +125,23 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			// use frappe's built-in indicator colour logic.
 			frappe.listview_settings['Work Order'].get_indicator(state.work_order_doc)?.[1]
 		);
+	}
+
+	function draw_expiry_input(parent_id) {
+		// Use frappe API to draw their own date selection box.
+		let form_control = frappe.ui.form.make_control({
+			parent: page.wrapper.find(parent_id),
+			df: { label: 'Expiry date', fieldname: 'expiry_date', fieldtype: 'Date' },
+			render_input: true
+		})
+
+		// form_control is a div with many elements.
+		// Find the input element
+		let input = document.querySelectorAll('input[data-fieldname="expiry_date"]')?.[0];
+		input.classList.add('required');
+		input.dataset.required = true;
+
+		return input;
 	}
 
 	// DATA STRUCTURE
@@ -267,6 +286,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 
 		handle_scrap(state.ste_doc, state.work_order_doc.production_item);
 		handle_fills(state.ste_doc, state.work_order_doc.production_item);
+		// calculate_product_valuation(state.ste_doc, state.work_order_doc.production_item);
 
 		// Submit, post comment. Submitted doc now has a docname.
 		let submitted_doc = await frappe.db.insert(state.ste_doc);
@@ -306,7 +326,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		// - builds "fill associations" table.
 		// Assumes all serial numbers are filled in ste_doc.items.
 
-		if (!bom_item.startsWith("FIL")) {
+		if (!is_fill(bom_item)) {
 			return;
 		}
 
@@ -347,6 +367,48 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			d.show();
 		})
 	}
+
+	function calculate_product_valuation(doc, bom_item) {
+		// WARNING: this code is duplicated in custom script on Stock Entry! Manually make changes in both places.
+		// Assumes a custom field 'bom_item' exists, that points to the item the BOM manufactures.
+
+		// Set scrap enclosures to 1 cent, this will send all product value to the fill item, which then goes to COGS.
+		let scrap_items = doc.items.filter((it) => !it.s_warehouse && it.item_code !== bom_item);
+		for (let it of scrap_items) {
+			if (is_enclosure(it.item_code)) {
+				it.basic_rate = 0.01;
+			}
+		}
+		let target_items = doc.items.filter((it) => it.item_code === bom_item);
+		let input_items = doc.items.filter((it) => !!it.s_warehouse);
+
+		// amount is total CHF value of all items in the filtered list
+		let input_amount = input_items.reduce((c, n) => c + n.amount, 0);
+		let scrap_amount = scrap_items.reduce((c, n) => c + n.amount, 0);
+		let product_qty = target_items.reduce((c, n) => c + n.qty, 0); // should be safer than taking 'For quantity'
+		let product_rate = (input_amount - scrap_amount) / product_qty;
+
+		if (product_rate <= 0) {
+			console.log("Scrap items are worth more than total input items, aborting valuation calculation.");
+			return; // and hope ERPNext will raise an error!
+		}
+
+		console.log(`Setting product rate to ${product_rate}. Input amount: ${input_amount}, scrap amount: ${scrap_amount}, qty: ${product_qty}`)
+		for (let it of target_items) {
+			it.basic_rate = product_rate;
+		}
+	};
+
+	// HELPERS
+	////////////////////////////
+	function is_fill(item_code) {
+		return item_code !== undefined && item_code.startsWith("FIL");
+	}
+
+	function is_enclosure(item_code) {
+		return item_code !== undefined && (item_code.startsWith("ENC") || item_code === '100146');
+	}
+
 
 	// SERVER CALLS
 	////////////////////////////

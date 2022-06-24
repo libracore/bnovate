@@ -19,7 +19,7 @@
 
     {% if doc.production_item_entry.has_serial_no %}
     <div class="bn-row">
-        <div class="bn-col">
+        <div class="bn-col" id="expiry-div">
             <h3>Serial No produced</h3>
             <input class="serial form-control required" id="serial-{{ doc.production_item_entry.idx }}"
                 name="serial-{{ doc.production_item_entry.idx }}" data-idx="{{ doc.production_item_entry.idx }}"
