@@ -1,0 +1,143 @@
+<style>
+    .comment-input input,
+    label,
+    textarea {
+        display: block;
+    }
+
+    .table tbody tr td {
+        vertical-align: middle;
+    }
+
+    .bn-row {
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    .medaillon {
+        flex: 0 0 200px;
+    }
+
+    .bn-col {
+        flex: 0 1 400px;
+        padding: 0 20px;
+    }
+
+    .bn-col-full {
+        flex: 0 1 100%;
+        padding: 0 20px;
+    }
+
+    .no-margin {
+        margin: 0;
+    }
+
+    .bigger {
+        font-size: 200%;
+    }
+
+    .required {
+        border-color: #ff5858;
+        box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
+        color: #000;
+        background-color: #fffdf4;
+    }
+
+    .comment {
+        background-color: #f7cd72;
+        padding: 10px;
+        border-radius: 10px;
+    }
+
+    .info {
+        background-color: #aecdfc;
+        padding: 10px;
+        border-radius: 10px;
+    }
+
+    .pulse-info {
+        animation: pulseInfo 2s;
+    }
+
+    .fade-in {
+        animation: fadeIn 3s;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0
+        }
+
+        to {
+            opacity: 1
+        }
+    }
+
+    @keyframes pulseInfo {
+        from {
+            background-color: #aecdfc00;
+        }
+
+        50% {
+            background-color: #aecdfcff;
+        }
+
+        to {
+            background-color: #aecdfc00;
+        }
+    }
+</style>
+
+<div>
+    <div class="bn-row">
+        <img class="medaillon" src="{{ doc.image }}" />
+        <div class="bn-col">
+
+            <table class="table no-margin">
+                <tbody>
+                    <tr>
+                        <th style="width: 180px;">Item to Manufacture</th>
+                        <td>{{ doc.production_item }}</td>
+                    </tr>
+                    <tr>
+                        <th>Item Name</th>
+                        <td>{{ doc.item_name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Quantity Produced</th>
+                        <td id="produced-qty">{{ doc.produced_qty}} / {{ doc.qty }}</td>
+                    </tr>
+                    <tr>
+                        <th>BOM no</th>
+                        <td>{{ doc.bom_no }}</td>
+                    </tr>
+                    <!-- <tr>
+                        <th>Planned start date</th>
+                        <td>{{ doc.planned_start_date }}</td>
+                    </tr> -->
+                    <tr>
+                        <th>Expected delivery date</th>
+                        <td>{{ doc.expected_delivery_date }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        {% if doc.comment %}
+        <div class="bn-col comment">
+            {{ doc.comment }}
+        </div>
+        {% endif %}
+
+
+        <div class="bn-col">
+            <ul>
+                {% for attachment in attachments %}
+                <li><a href="{{ attachment.file_url }}" target="_blank">{{ attachment.file_name }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+
+    </div>
+
+</div>

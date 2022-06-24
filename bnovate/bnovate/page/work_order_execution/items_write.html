@@ -1,0 +1,123 @@
+<div class="fade-in">
+    <!-- <div class="bn-row info">
+        <p>
+        Confirming production of <b class="bigger">{{ doc.fg_completed_qty }} </b> items. <br />
+        Adjust consumed quantities below and confirm with Submit.
+    </p>
+
+    </div> -->
+    {% if doc.production_item_entry.has_batch_no %}
+    <div class="bn-row">
+        <div class="bn-col">
+            <h3>Batch produced</h3>
+            <input class="batch form-control" id="batch-{{ doc.production_item_entry.idx }}"
+                name="batch-{{ doc.production_item_entry.idx }}" data-idx="{{ doc.production_item_entry.idx }}"
+                data-required value="{{ doc.work_order }}" tabindex="1">
+        </div>
+    </div>
+    {% endif %}
+
+    {% if doc.production_item_entry.has_serial_no %}
+    <div class="bn-row">
+        <div class="bn-col" id="expiry-div">
+            <h3>Serial No produced</h3>
+            <input class="serial form-control required" id="serial-{{ doc.production_item_entry.idx }}"
+                name="serial-{{ doc.production_item_entry.idx }}" data-idx="{{ doc.production_item_entry.idx }}"
+                data-required tabindex="1">
+        </div>
+    </div>
+    {% endif %}
+
+    <div class=" bn-row">
+        <div class="bn-col-full">
+            <h3>Components consumed to produce </b>{{ doc.fg_completed_qty }} items</h3>
+            <table class="table table-condensed no-margin" style="border-bottom: 1px solid #d1d8dd">
+                <thead>
+                    <tr>
+                        <th style="width: 5%" class="table-sr">Sr</th>
+
+                        <th style="width: 20%;" class="">
+                            Item Code
+                        </th>
+                        <th style="width: 25%;" class="">
+                            Item Name
+                        </th>
+                        <th style="width: 10%;" class="text-right">
+                            Required Qty
+                        </th>
+
+                        <th style="width: 10%;" class="text-left">
+                            Additional Consumed Qty
+                        </th>
+
+                        <th style="width: 15%;" class="text-left">
+                            Batch
+                        </th>
+
+                        <th style="width: 15%;" class="text-left">
+                            Serial No
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    {% for item in doc.required_items %}
+                    <tr>
+                        <td class="table-sr">{{ item.idx }}</td>
+                        <td class="" >
+                            <div class="value">
+                                {{ item.item_code }}
+                            </div>
+                        </td>
+                        <td class="" >
+                            <div class="value">
+                                <strong>{{ item.item_name }}</strong>
+                            </div>
+                        </td>
+                        <td class="text-right">
+                            <div class="value">
+                                {{ item.qty }}
+                            </div>
+                        </td>
+
+                        <td class="text-left">
+                            <div class="value">
+                                <input class="qty-delta form-control" id="delta-{{ item.idx }}"
+                                    name="delta-{{ item.idx }}" data-idx="{{ item.idx }}" tabindex="{{ item.idx + doc.items.length }}">
+                            </div>
+                        </td>
+
+                        <td class="text-right">
+                            {% if item.has_batch_no %}
+                            <div class="value">
+                                <input class="batch form-control required" id="batch-{{ item.idx }}"
+                                    name="batch-{{ item.idx }}" data-idx="{{ item.idx }}" data-required tabindex="{{ item.idx + 1 }}">
+                            </div>
+                            {% endif %}
+                        </td>
+
+
+                        <td class="text-right">
+                            {% if item.has_serial_no %}
+                            <div class="value">
+                                <input class="serial form-control required" id="serial-{{ item.idx }}"
+                                    name="serial-{{ item.idx }}" data-idx="{{ item.idx }}" data-required tabindex="{{ item.idx + 1 }}">
+                            </div>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="bn-row">
+        <div class="bn-col comment-input">
+            <h3>Comment</h3>
+            <textarea class="form-control" id="comment" name="comment" rows="5" cols="80"></textarea>
+        </div>
+    </div>
+
+</div>

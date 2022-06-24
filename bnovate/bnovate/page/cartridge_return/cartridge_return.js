@@ -39,13 +39,15 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 
 	const table_template = `
 	<table class="table">
-	<tbody>
+		<thead>
 		<tr>
 			<th>Serial No</th>
 			<th>Warehouse</th>
 			<th>Customer</th>
 			<th></th>
 		</tr>
+		</thead>
+		<tbody>
 		{% for enc in encs %}
 		<tr>
 			<td><a href="/desk#Form/Serial No/{{ enc.serial_no }}" target="_blank">{{ enc.serial_no }}</a></td>
