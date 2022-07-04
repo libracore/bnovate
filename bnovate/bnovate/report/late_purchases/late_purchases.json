@@ -8,7 +8,7 @@
  "idx": 0,
  "is_standard": "Yes",
  "letter_head": "Small logo",
- "modified": "2022-07-04 15:42:09.248817",
+ "modified": "2022-07-04 21:22:09.248817",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Late Purchases",
@@ -17,5 +17,54 @@
  "ref_doctype": "Purchase Order",
  "report_name": "Late Purchases",
  "report_type": "Script Report",
- "roles": []
+ "roles": [
+  {
+   "role": "Manufacturing User"
+  },
+  {
+   "role": "Accounts User"
+  },
+  {
+   "role": "Sales User"
+  },
+  {
+   "role": "Stock Manager"
+  },
+  {
+   "role": "Maintenance User"
+  },
+  {
+   "role": "Item Manager"
+  },
+  {
+   "role": "Purchase User"
+  },
+  {
+   "role": "Stock User"
+  },
+  {
+   "role": "Manufacturing User"
+  },
+  {
+   "role": "Accounts User"
+  },
+  {
+   "role": "Sales User"
+  },
+  {
+   "role": "Stock Manager"
+  },
+  {
+   "role": "Maintenance User"
+  },
+  {
+   "role": "Item Manager"
+  },
+  {
+   "role": "Stock User"
+  },
+  {
+   "role": "Manufacturing Manager"
+  }
+ ]
 }
