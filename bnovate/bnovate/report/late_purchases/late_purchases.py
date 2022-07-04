@@ -46,7 +46,7 @@ FROM `tabPurchase Order` as po
     JOIN `tabPurchase Order Item` as poi ON po.name = poi.parent
     JOIN `tabItem` as it ON poi.item_code = it.name
 WHERE poi.received_qty < poi.qty
-    AND poi.schedule_date <= CURRENT_DATE()
+    AND IFNULL(poi.expected_delivery_date, poi.schedule_date) <= CURRENT_DATE()
     AND po.docstatus = 1
     AND po.status != 'Closed'
     {extra_filters}
