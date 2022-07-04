@@ -73,7 +73,14 @@ def get_data():
                         "label": _("Projected Stock"),
                         "doctype": "Item",
                         "is_query_report": True               
-                   },                 
+                   },        
+                   {
+                        "type": "report",
+                        "name": "Late Purchases",
+                        "label": _("Late Purchases"),
+                        "doctype": "Purchase Order",
+                        "is_query_report": True               
+                   },           
             ]
         },
         {
