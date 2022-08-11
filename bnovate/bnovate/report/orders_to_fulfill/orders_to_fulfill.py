@@ -90,7 +90,7 @@ SELECT * FROM ((
 )) as united
 ORDER BY 
 	delivery_date ASC,
-    name,
+    parent,
     is_packed_item,
     idx;
     """.format(extra_filters=extra_filters)
