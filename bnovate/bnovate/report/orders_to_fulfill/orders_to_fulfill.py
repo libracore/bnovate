@@ -19,7 +19,8 @@ def get_columns():
     return [
         {'fieldtype': 'Data', 'label': '', 'width': 20},
         {'fieldname': 'weeknum', 'fieldtype': 'Data', 'label': _('Week'), 'width': 80},
-        {'fieldname': 'parent', 'fieldtype': 'Link', 'label': _('Parent'), 'options': 'Sales Order', 'width': 90},
+        {'fieldname': 'parent', 'fieldtype': 'Link', 'label': _('Sales Order'), 'options': 'Sales Order', 'width': 90},
+        {'fieldname': 'indicator', 'fieldtype': 'Data', 'label': _('Status'), 'width': 90},
         {'fieldname': 'customer', 'fieldtype': 'Link', 'label': _('Customer'), 'options': 'Customer', 'width': 80},
         {'fieldname': 'customer_name', 'fieldtype': 'Data', 'label': _('Customer Name'), 'width': 150},
         {'fieldname': 'ship_date', 'fieldtype': 'Data', 'label': _('Ship date'), 'width': 80},
@@ -33,6 +34,10 @@ def get_columns():
     
 def get_data(filters):
     
+    status_filter = "so.docstatus = 1 AND"
+    if filters.include_drafts:
+        status_filter = "so.docstatus <= 1 AND" # include drafts and submitted.
+
     extra_filters = ""
     if filters.only_manufacturing:
         extra_filters += "AND it.include_item_in_manufacturing = 1"
@@ -52,12 +57,13 @@ SELECT * FROM ((
         it.item_name as item_name,
         it.item_group as item_group,
         FALSE as is_packed_item,
-        soi.idx as idx
+        soi.idx as idx,
+        so.docstatus as docstatus
     FROM `tabSales Order Item` as soi
     JOIN `tabSales Order` as so ON soi.parent = so.name
     JOIN `tabItem` as it on soi.item_code = it.name
     WHERE
-        so.docstatus = 1 AND 
+        {status_filter}
         so.per_delivered < 100 AND
         soi.qty > soi.delivered_qty AND
         so.status != 'Closed'
@@ -76,13 +82,14 @@ SELECT * FROM ((
         pi.item_name as item_name,
         NULL as item_group,
         TRUE as is_packed_item,
-        pi.idx as idx
+        pi.idx as idx,
+        so.docstatus as docstatus
     FROM `tabSales Order Item` as soi
     JOIN `tabSales Order` as so ON soi.parent = so.name
     JOIN `tabItem` as it on soi.item_code = it.name
     JOIN `tabPacked Item` as pi ON soi.name = pi.parent_detail_docname
     WHERE
-        so.docstatus = 1 AND 
+        {status_filter}
         so.per_delivered < 100 AND
         soi.qty > soi.delivered_qty AND
         so.status != 'Closed'
@@ -90,11 +97,12 @@ SELECT * FROM ((
 )) as united
 ORDER BY 
 	delivery_date ASC,
-    name,
+    parent,
     is_packed_item,
     idx;
-    """.format(extra_filters=extra_filters)
+    """.format(status_filter=status_filter, extra_filters=extra_filters)
 
+    print(sql_query)
     data = frappe.db.sql(sql_query, as_dict=True)
     
     week_colours = itertools.cycle(['black', '#6660A9', '#297045', '#CC5A2B'])
@@ -124,12 +132,22 @@ ORDER BY
         else:
             row['indent'] = 0
             row['item_name'] = "<b>{name}</b>".format(name=row['item_name'])
+
+        if row['docstatus'] == 0:
+            row['indicator'] = '<span class="indicator whitespace-nowrap red"><span>Draft</span></span>'
+        else:
+            row['indicator'] = '<span class="indicator whitespace-nowrap orange"><span>To Deliver</span></span>'
     
+    print(data)
     return data
 
 
 def get_chart(filters):
-    
+
+    status_filter = "so.docstatus = 1 AND"
+    if filters.include_drafts:
+        status_filter = "so.docstatus <= 1 AND" # include drafts and submitted.
+
     extra_filters = ""
     if filters.only_manufacturing:
         extra_filters += "AND it.include_item_in_manufacturing = TRUE"
@@ -144,13 +162,13 @@ FROM `tabSales Order Item` as soi
 JOIN `tabSales Order` as so ON soi.parent = so.name
 JOIN `tabItem` as it on soi.item_code = it.name
 WHERE
-    so.docstatus = 1 AND 
+    {status_filter} 
     so.status != 'Closed' AND
     soi.qty > soi.delivered_qty
     {extra_filters}
 GROUP BY week, item_group
 ORDER BY week ASC
-    """.format(extra_filters=extra_filters)
+    """.format(status_filter=status_filter, extra_filters=extra_filters)
     
     data = frappe.db.sql(sql_query, as_dict=True)
     
