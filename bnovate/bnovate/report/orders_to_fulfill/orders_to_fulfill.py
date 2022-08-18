@@ -61,12 +61,13 @@ SELECT * FROM ((
         so.docstatus as docstatus
     FROM `tabSales Order Item` as soi
     JOIN `tabSales Order` as so ON soi.parent = so.name
-    JOIN `tabItem` as it on soi.item_code = it.name
+    JOIN `tabItem` as it ON soi.item_code = it.name
     WHERE
         {status_filter}
         so.per_delivered < 100 AND
         soi.qty > soi.delivered_qty AND
-        so.status != 'Closed'
+        so.status != 'Closed' AND
+        (so._user_tags NOT LIKE "%template%" OR so._user_tags IS NULL)
         {extra_filters}
 ) UNION (
     SELECT
@@ -92,7 +93,8 @@ SELECT * FROM ((
         {status_filter}
         so.per_delivered < 100 AND
         soi.qty > soi.delivered_qty AND
-        so.status != 'Closed'
+        so.status != 'Closed' AND
+        (so._user_tags NOT LIKE "%template%" OR so._user_tags IS NULL)
         {extra_filters}
 )) as united
 ORDER BY 
@@ -138,7 +140,6 @@ ORDER BY
         else:
             row['indicator'] = '<span class="indicator whitespace-nowrap orange"><span>To Deliver</span></span>'
     
-    print(data)
     return data
 
 
@@ -164,7 +165,8 @@ JOIN `tabItem` as it on soi.item_code = it.name
 WHERE
     {status_filter} 
     so.status != 'Closed' AND
-    soi.qty > soi.delivered_qty
+    soi.qty > soi.delivered_qty AND
+    (so._user_tags NOT LIKE "%template%" OR so._user_tags IS NULL)
     {extra_filters}
 GROUP BY week, item_group
 ORDER BY week ASC
