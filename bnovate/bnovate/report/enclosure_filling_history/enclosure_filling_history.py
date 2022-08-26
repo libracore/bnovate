@@ -1,5 +1,6 @@
 # Copyright (c) 2022, libracore and contributors
 # For license information, please see license.txt
+# Assumes existance of a custom doctype "Fill Association Item"
 
 from __future__ import unicode_literals
 import frappe
@@ -28,15 +29,20 @@ def get_data(filters):
     
     sn_filter = ""
     if filters.serial_no:
-        sn_filter = """ AND (`fa`.`enclosure_serial` LIKE "%{serial_no}%" OR `fa`.`fill_serial` LIKE "%{serial_no}%") """.format(serial_no=filters.serial_no)
+        sn_filter = """ AND (
+            `fa`.`enclosure_serial` LIKE "%{serial_no}%" OR 
+            `fa`.`fill_serial` LIKE "%{serial_no}%" OR
+            `fa`.`enclosure_serial_data` LIKE "%{serial_no}%" OR
+            `fa`.`fill_serial_data` LIKE "%{serial_no}%"
+        ) """.format(serial_no=filters.serial_no)
     sql_query = """
     SELECT
         `ste`.`name`,
         `ste`.`posting_date`,
         `ste`.`expiry_date`,
-        `fa`.`fill_serial`,
-        `fa`.`enclosure_serial`,
-        `fa`.`fill_type`
+        IFNULL(`fa`.`fill_serial_data`, `fa`.`fill_serial`) AS `fill_serial`,
+        IFNULL(`fa`.`enclosure_serial_data`, `fa`.`enclosure_serial`) AS `enclosure_serial`,
+        IFNULL(`ste`.`bom_item`, `fa`.`fill_type`) AS `fill_type`
     FROM `tabStock Entry` AS `ste`
     JOIN `tabFill Association Item` AS `fa` ON `fa`.`parent` = `ste`.`name`
     WHERE `ste`.`purpose` = "Manufacture"
