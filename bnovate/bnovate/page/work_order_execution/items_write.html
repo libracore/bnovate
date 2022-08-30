@@ -6,13 +6,14 @@
     </p>
 
     </div> -->
-    {% if doc.production_item_entry.has_batch_no %}
+    {% if doc.production_item_entry.needs_batch_input  %}
     <div class="bn-row">
         <div class="bn-col">
             <h3>Batch produced</h3>
             <input class="batch form-control" id="batch-{{ doc.production_item_entry.idx }}"
                 name="batch-{{ doc.production_item_entry.idx }}" data-idx="{{ doc.production_item_entry.idx }}"
-                data-required value="{{ doc.work_order }}" tabindex="1">
+                data-required 
+                value="{{ doc.work_order }}" tabindex="1">
         </div>
     </div>
     {% endif %}

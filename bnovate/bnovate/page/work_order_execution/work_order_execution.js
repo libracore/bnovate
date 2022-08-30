@@ -27,6 +27,8 @@ For serialized items, we force entry of components for one item at a time, so th
 //  Or move my script to a JS library function.
 // Consider removing "view" mode for serialized items.
 // Consider switching to serialized view if any serialized items are present. It shouldn't happen, but why not.
+// Handle enter in an input as if it were a tab
+// Make batches optional if auto-numbering of batch is enabled for that item.
 
 frappe.provide("frappe.bnovate.work_order_execution")
 
@@ -211,6 +213,8 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		await fetch_item_details(ste.items.map(sti => sti.item_code));
 		for (let item of ste.items) {
 			item.has_batch_no = locals["Item"][item.item_code].has_batch_no;
+			item.has_auto_batch_number = !!locals["Item"][item.item_code].batch_number_series;
+			item.needs_batch_input = item.has_batch_no && !item.has_auto_batch_number;
 			item.has_serial_no = locals["Item"][item.item_code].has_serial_no;
 		}
 		ste.production_item_entry = ste.items.find(it => it.item_code == state.work_order_doc.production_item);
@@ -280,16 +284,22 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 
 		if (state.ste_doc.production_item_entry.has_batch_no) {
 			// Create target batch if it doesn't exist
-			await create_batch_if_undefined(state.work_order_doc.production_item,
+			let batch_doc = await get_or_create_batch(state.work_order_doc.production_item,
 				state.ste_doc.production_item_entry.batch_no);
+
+			// Actually fill the field in the case of auto-numbered batches
+			if (state.ste_doc.production_item_entry.has_auto_batch_number) {
+				state.ste_doc.production_item_entry.batch_no = batch_doc.batch_id;
+			}
 		}
 
 		handle_scrap(state.ste_doc, state.work_order_doc.production_item);
 		handle_fills(state.ste_doc, state.work_order_doc.production_item);
-		// calculate_product_valuation(state.ste_doc, state.work_order_doc.production_item);
+		calculate_product_valuation(state.ste_doc, state.work_order_doc.production_item);
 
 		// Submit, post comment. Submitted doc now has a docname.
 		let submitted_doc = await frappe.db.insert(state.ste_doc);
+		// let submitted_doc = await submit_doc(draft_doc.doctype, draft_doc.docname);
 		let comment = document.getElementById("comment").value;
 		if (comment) {
 			post_comment(submitted_doc.doctype, submitted_doc.name, comment);
@@ -335,8 +345,8 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 
 		if (enc_sn && fill_sn) {
 			ste_doc.fill_associations = [{
-				enclosure_serial: enc_sn,
-				fill_serial: fill_sn,
+				enclosure_serial_data: enc_sn,
+				fill_serial_data: fill_sn,
 			}];
 		}
 
@@ -426,6 +436,18 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		});
 	}
 
+	async function submit_doc(doctype, docname) {
+		return await frappe.call({
+			method: "frappe.client.submit",
+			args: {
+				doc: {
+					doctype: doctype,
+					name: docname,
+				}
+			}
+		});
+	}
+
 	async function fetch_item_details(item_codes) {
 		// Fetch item detail docs, store in locals["Items"].
 		let promises = [];
@@ -436,12 +458,30 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		return Promise.all(promises);
 	}
 
-	async function create_batch_if_undefined(item_code, batch_no) {
-		// Creates batch if it doesn't exist yet
+	async function create_batch_with_autonaming(item_code) {
+		return await frappe.db.insert({
+			doctype: "Batch",
+			title: `Item ${item_code}`,
+			item: item_code,
+		})
+	}
+
+	async function get_or_create_batch(item_code, batch_no) {
+		// Creates batch if it doesn't exist yet.
+		// If no batch name is specified, let ERPNext decide it 
+		// (only works for items where that option is set)
+		if (!batch_no) {
+			return await frappe.db.insert({
+				doctype: "Batch",
+				item: item_code,
+			});
+		}
+
 		let batch_doc = await frappe.model.with_doc("Batch", batch_no);
 		if (batch_doc) {
 			return batch_doc
 		}
+
 		return await frappe.db.insert({
 			doctype: "Batch",
 			title: `${batch_no} for item ${item_code}`,
