@@ -66,6 +66,22 @@ FROM (
     AND soi.docstatus = 1
     AND so.status != 'Closed'
 ) UNION ALL (
+-- Packed items: items to sell inside bundles
+  SELECT
+    1 as order_prio,
+    soi.delivery_date as `date`,
+    'Sales Order' as `doctype`,
+    soi.parent as `docname`,
+    pi.item_code,
+    pi.warehouse,
+  	ROUND(-(soi.qty - soi.delivered_qty) / soi.qty * pi.qty, 3) as qty -- soi conversion factor already calculated in packed item qty!
+  FROM `tabPacked Item` as pi
+  JOIN `tabSales Order` as so ON so.name = pi.parent
+  JOIN `tabSales Order Item` as soi on soi.name = pi.parent_detail_docname
+  WHERE soi.delivered_qty < soi.qty
+    AND soi.docstatus = 1
+    AND so.status != 'Closed'
+) UNION ALL (
 -- Purchase Order: items to receive
   SELECT    
     1 as order_prio,
