@@ -118,6 +118,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			window.expiry_input = expiry_input;
 
 			attach_validator();
+			attach_enterToTab();
 		}
 
 		let doc = state.work_order_doc;
@@ -495,7 +496,21 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 
 	function attach_validator() {
 		[...document.querySelectorAll("[data-required]")]
-			.map(el => el.addEventListener("change", validate_inputs))
+			.map(el => el.addEventListener("change", validate_inputs));
+	}
+
+	function attach_enterToTab() {
+		[...document.querySelectorAll("input")]
+			.map(el => el.addEventListener("keydown", (event) => {
+				if (event.key === "Enter") {
+					// Find input with next highest tabIndex.
+					let nextInput = [...document.querySelectorAll("input")]
+						.filter(el => el.tabIndex > event.target.tabIndex)
+						.sort((el1, el2) => el1.tabIndex - el2.tabIndex)[0];
+					nextInput?.focus();
+					event.preventDefault();
+				}
+			}));
 	}
 
 	work_order.addEventListener("change", (e) => {
