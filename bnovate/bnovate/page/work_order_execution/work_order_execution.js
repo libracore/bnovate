@@ -141,8 +141,8 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		// form_control is a div with many elements.
 		// Find the input element
 		let input = document.querySelectorAll('input[data-fieldname="expiry_date"]')?.[0];
-		input.classList.add('required');
-		input.dataset.required = true;
+		input?.classList.add('required');
+		input?.dataset.required = true;
 
 		return input;
 	}
@@ -150,7 +150,6 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 	// DATA STRUCTURE
 	////////////////////////////
 
-	// TODO: Refactor to load_work_order: downloads the docs, sets the ID in the state etc.
 	state.load_work_order = async (wo_id) => {
 		state.view = read; 				// reset view
 		state.work_order_id = wo_id;
@@ -168,7 +167,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		state.docinfo = frappe.model.docinfo;
 		state.remaining_qty = state.work_order_doc.qty - state.work_order_doc.produced_qty;
 
-		// should we switch to serialized behaviour?
+		// should we switch to serialized behaviour? (produce one item at a time)
 		await fetch_item_details([state.work_order_doc.production_item]);
 		state.produce_serial_no = locals["Item"][state.work_order_doc.production_item].has_serial_no;
 
@@ -437,6 +436,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		});
 	}
 
+	// TODO: delete?
 	async function submit_doc(doctype, docname) {
 		return await frappe.call({
 			method: "frappe.client.submit",
@@ -459,6 +459,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		return Promise.all(promises);
 	}
 
+	// TODO: delete?
 	async function create_batch_with_autonaming(item_code) {
 		return await frappe.db.insert({
 			doctype: "Batch",
