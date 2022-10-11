@@ -29,6 +29,7 @@ For serialized items, we force entry of components for one item at a time, so th
 // Consider switching to serialized view if any serialized items are present. It shouldn't happen, but why not.
 // Handle enter in an input as if it were a tab
 // Make batches optional if auto-numbering of batch is enabled for that item.
+// Batch input: change to multiselectlist, with get_data fetch possible batches?
 
 frappe.provide("frappe.bnovate.work_order_execution")
 
@@ -51,7 +52,8 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		view: read,					// state of the items display: read or write
 		ste_doc: null, 				// will contain content of stock entry before submitting.
 		produce_serial_no: false,	// true if produced item needs a serial number.
-		serial_no_remaining: 0  	// when producing with S/N, loop this many more times
+		serial_no_remaining: 0,  	// when producing with S/N, loop this many more times
+		needs_expiry_date: false,	// when produced item needs an expiry date.
 	}
 	frappe.bnovate.work_order_execution.state = state;
 	window.state = state;
@@ -114,8 +116,12 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			} else {
 				page.set_primary_action('Submit', validate);
 			}
-			let expiry_input = draw_expiry_input("#expiry-div");
-			window.expiry_input = expiry_input;
+
+			if (state.needs_expiry_date) {
+				let expiry_input = draw_expiry_input("#expiry-div");
+				document.getElementById("expiry-div").hidden = false;
+				window.expiry_input = expiry_input;
+			}
 
 			attach_validator();
 			attach_enterToTab();
@@ -134,7 +140,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		// Use frappe API to draw their own date selection box.
 		let form_control = frappe.ui.form.make_control({
 			parent: page.wrapper.find(parent_id),
-			df: { label: 'Expiry date', fieldname: 'expiry_date', fieldtype: 'Date' },
+			df: { fieldname: 'expiry_date', fieldtype: 'Date' },
 			render_input: true
 		})
 
@@ -170,6 +176,9 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		// should we switch to serialized behaviour? (produce one item at a time)
 		await fetch_item_details([state.work_order_doc.production_item]);
 		state.produce_serial_no = locals["Item"][state.work_order_doc.production_item].has_serial_no;
+
+		// do we need an expiry date? For now only FILs need them.
+		state.needs_expiry_date = state.work_order_doc.production_item.startsWith("FIL")
 
 		// BOMs can't change after submit, no need to clear cache
 		state.bom_doc = await frappe.model.with_doc('BOM', state.work_order_doc.bom_no);
@@ -218,11 +227,13 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			item.has_serial_no = locals["Item"][item.item_code].has_serial_no;
 		}
 		ste.production_item_entry = ste.items.find(it => it.item_code == state.work_order_doc.production_item);
-		// ste.scrap_items = ste.items.filter(it => !it.s_warehouse && it.item_code !== state.work_order_doc.production_item);
+		ste.required_items = ste.items.filter(i => i.s_warehouse);
+		ste.scrap_items = ste.items.filter(it => !it.s_warehouse && it.item_code !== state.work_order_doc.production_item);
+		// These items exist only as scrap, for example the enclosure of a new cartridge.
+		ste.exclusively_scrap_items = ste.scrap_items.filter(s_it => ste.required_items.findIndex(r_it => r_it.item_code == s_it.item_code) < 0);
 
 		// Prepare doc for final editing in "write" view
 		ste.docstatus = 1;
-		ste.required_items = ste.items.filter(i => i.s_warehouse);
 		state.ste_doc = ste;
 		state.view = write;
 		draw();
@@ -278,9 +289,9 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			}); // BTW, this also modifies the same object pointed to from production_item_entry.
 		// And for serial no
 		[...document.querySelectorAll("input.serial")]
-			.map(el => [el.dataset.idx, el.value || 0])
-			.map(([idx, serial_no]) => {
-				state.ste_doc.items.find(i => i.idx == idx).serial_no = serial_no;
+			.map(el => [el.dataset.idx, el.dataset.item, el.value || 0])
+			.map(([idx, item, serial_no]) => {
+				state.ste_doc.items.find(i => i.idx == idx && i.item_code == item).serial_no = serial_no; // scrap items can have same index as input items, need to double-check item_code.
 			});
 
 		if (state.ste_doc.production_item_entry.has_batch_no) {
@@ -325,10 +336,13 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		let input_items = ste_doc.items.filter(it => !!it.s_warehouse);
 
 		for (let scrap_item of scrap_items) {
-			scrap_item.serial_no = input_items
+			let input_SNs = input_items
 				.filter(it => it.item_code == scrap_item.item_code)
 				.map(it => it.serial_no)
 				.join("\n");
+			if (input_SNs) {
+				scrap_item.serial_no = input_SNs
+			}
 		}
 	}
 
