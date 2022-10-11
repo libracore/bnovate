@@ -141,8 +141,8 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		// form_control is a div with many elements.
 		// Find the input element
 		let input = document.querySelectorAll('input[data-fieldname="expiry_date"]')?.[0];
-		input?.classList.add('required');
-		input?.dataset.required = true;
+		input.classList.add('required');
+		input.dataset.required = true;
 
 		return input;
 	}
