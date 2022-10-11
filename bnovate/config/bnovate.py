@@ -27,7 +27,7 @@ def get_data():
                         "label": _("On Time Delivery KPIs"),
                         "doctype": "Sales Order",
                         "is_query_report": True    
-                   },                  
+                   }            
             ]
         }, 
         {
@@ -60,7 +60,19 @@ def get_data():
                         "name": "cartridge-return",
                         "label": _("Cartridge Return"),
                         "description": _("Confirm return of cartridges")           
-                   },                 
+                   }             
+            ]
+        },
+        {
+            "label": _("Production"),
+            "icon": "octicon octicon-git-compare",
+            "items": [
+                   {
+                        "type": "page",
+                        "name": "work-order-execution",
+                        "label": _("Work Order Execution"),
+                        "description": _("Execution page for work orders")            
+                   }         
             ]
         },
         {
@@ -80,7 +92,7 @@ def get_data():
                         "label": _("Late Purchases"),
                         "doctype": "Purchase Order",
                         "is_query_report": True               
-                   },           
+                   }         
             ]
         },
         {
@@ -93,7 +105,7 @@ def get_data():
                         "label": _("Weekly KPI"),
                         "doctype": "Sales Order",
                         "is_query_report": True               
-                   },                 
+                   }                
             ]
         },
         {
@@ -105,7 +117,7 @@ def get_data():
                         "name": "file_uploader",
                         "label": _("PINV uploader"),
                         "description": _("Bulk upload scanned purchase invoices")           
-                   },                 
+                   }
             ]
         },
         {
