@@ -6,6 +6,7 @@
     </p>
 
     </div> -->
+
     {% if doc.production_item_entry.needs_batch_input  %}
     <div class="bn-row">
         <div class="bn-col">
@@ -25,6 +26,15 @@
             <input class="serial form-control required" id="serial-{{ doc.production_item_entry.idx }}"
                 name="serial-{{ doc.production_item_entry.idx }}" data-idx="{{ doc.production_item_entry.idx }}"
                 data-required tabindex="1">
+
+        {% for scrap_item in doc.scrap_items %} 
+            <p>TODO: Only ask for enclosure (scrap item) SN if it is not already in items.</p>
+            {% if scrap_item.has_serial_no %}
+                <input class="serial form-control required" id="serial-{{ scrap_item.idx }}"
+                name="serial-{{ scrap_item.idx }}" data-idx="{{ scrap_item.idx }}"
+                data-required tabindex="1">
+            {% endif %}
+        {% endfor %}
         </div>
     </div>
     {% endif %}

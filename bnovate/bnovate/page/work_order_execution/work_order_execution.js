@@ -218,6 +218,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			item.has_serial_no = locals["Item"][item.item_code].has_serial_no;
 		}
 		ste.production_item_entry = ste.items.find(it => it.item_code == state.work_order_doc.production_item);
+		// ste.scrap_items = ste.items.filter(it => !it.s_warehouse && it.item_code !== state.work_order_doc.production_item);
 
 		// Prepare doc for final editing in "write" view
 		ste.docstatus = 1;
