@@ -31,6 +31,8 @@ def get_data(filters):
     if filters.only_stock_items:
         extra_filters += "AND it.is_stock_item = {}\n".format(filters.only_stock_items)
 
+    days_from_now = filters.days_from_now or 0
+
     sql_query = """
 SELECT 
     po.name as purchase_order,
@@ -46,13 +48,13 @@ FROM `tabPurchase Order` as po
     JOIN `tabPurchase Order Item` as poi ON po.name = poi.parent
     JOIN `tabItem` as it ON poi.item_code = it.name
 WHERE poi.received_qty < poi.qty
-    AND IFNULL(poi.expected_delivery_date, poi.schedule_date) <= CURRENT_DATE()
+    AND IFNULL(poi.expected_delivery_date, poi.schedule_date) <= DATE_ADD(CURRENT_DATE(), INTERVAL {days_from_now} DAY)
     AND po.docstatus = 1
     AND po.status != 'Closed'
     {extra_filters}
 ORDER BY IFNULL(poi.expected_delivery_date, poi.schedule_date) DESC
     ;
-    """.format(extra_filters=extra_filters)
+    """.format(extra_filters=extra_filters, days_from_now=days_from_now)
 
     data = frappe.db.sql(sql_query, as_dict=True)
     return data
