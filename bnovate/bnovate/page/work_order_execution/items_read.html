@@ -1,4 +1,57 @@
 <div>
+
+    {% if ste_docs.length %}
+    <div class="bn-row">
+        <h3>Existing Stock Entries</h3>
+        <table class="table table-condensed no-margin" style="border-bottom: 1px solid #d1d8dd">
+            <thead>
+                <tr>
+                    <th style="width: 20%;" class="" >
+                        Status
+                    </th>
+                    <th style="width: 30%;" class="" >
+                        Stock Entry
+                    </th>
+                    <th style="width: 10%;" class="text-right" >
+                        Qty
+                    </th>
+                    {% if produce_serial_no %}
+                    <th style="width: 35%;" class="" >
+                        Serial No
+                    </th>
+                    {% endif %}
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ste in ste_docs %}
+                <tr>
+                    <td>
+                        <span class="indicator whitespace-nowrap {{ ste.indicator_color }}"><span>{{ ste.indicator_label }}</span></span>
+                    </td>
+                    <td>
+                        <a href="{{ ste.link }}">{{ ste.name }}</a>
+                    </td>
+                    <td class="text-right">
+                        {{ ste.fg_completed_qty }}
+                    </td>
+                    {% if produce_serial_no %}
+                    <td>
+                        {{ ste.produced_serial_nos }}
+                    </td>
+                    {% endif %}
+                    <td>
+                        {% if ste.docstatus == 0 %}
+                        <button class="btn btn-xs btn-danger submit-ste" data-docname="{{ ste.name }}">Submit</button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
     <div class="bn-row">
         <h3>Required Items</h3>
         <table class="table table-condensed no-margin" style="border-bottom: 1px solid #d1d8dd">

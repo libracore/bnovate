@@ -27,7 +27,6 @@ For serialized items, we force entry of components for one item at a time, so th
 //  Or move my script to a JS library function.
 // Consider removing "view" mode for serialized items.
 // Consider switching to serialized view if any serialized items are present. It shouldn't happen, but why not.
-// Handle enter in an input as if it were a tab
 // Make batches optional if auto-numbering of batch is enabled for that item.
 // Batch input: change to multiselectlist, with get_data fetch possible batches?
 
@@ -51,6 +50,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		docinfo: null, 				// docinfo[doctype][docname] -> {attachments: []}
 		view: read,					// state of the items display: read or write
 		ste_doc: null, 				// will contain content of stock entry before submitting.
+		ste_docs: [],				// existing stock entries related to the work order
 		produce_serial_no: false,	// true if produced item needs a serial number.
 		serial_no_remaining: 0,  	// when producing with S/N, loop this many more times
 		needs_expiry_date: false,	// when produced item needs an expiry date.
@@ -103,10 +103,13 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		if (state.view == read) {
 			item_content.innerHTML = frappe.render_template('items_read', {
 				doc: state.work_order_doc,
+				ste_docs: state.ste_docs,
+				produce_serial_no: state.produce_serial_no,
 			});
 			if (state.remaining_qty > 0 && state.work_order_doc.docstatus == 1 && state.work_order_doc.status != "Stopped") {
 				page.set_primary_action('Finish', finish);
 			}
+			attach_ste_submits();
 		} else if (state.view == write) {
 			item_content.innerHTML = frappe.render_template('items_write', {
 				doc: state.ste_doc,
@@ -153,6 +156,11 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		return input;
 	}
 
+	async function refresh() {
+		await state.load_work_order(state.work_order_id);
+		document.getElementById("produced-qty").classList.add("pulse-info");
+	}
+
 	// DATA STRUCTURE
 	////////////////////////////
 
@@ -166,6 +174,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		// with_doctype loads default for the doctype, populates listview_settings,
 		// giving us status indicators
 		await frappe.model.with_doctype('Work Order');
+		await frappe.model.with_doctype('Stock Entry');
 
 		// with_doc returns the doc and populates docinfo, giving us attachments. Force refresh
 		frappe.model.clear_doc('Work Order', wo_id);
@@ -178,10 +187,28 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		state.produce_serial_no = locals["Item"][state.work_order_doc.production_item].has_serial_no;
 
 		// do we need an expiry date? For now only FILs need them.
-		state.needs_expiry_date = state.work_order_doc.production_item.startsWith("FIL")
+		state.needs_expiry_date = is_fill(state.work_order_doc.production_item);
 
 		// BOMs can't change after submit, no need to clear cache
 		state.bom_doc = await frappe.model.with_doc('BOM', state.work_order_doc.bom_no);
+
+		// (re-)load associated stock entries
+		state.ste_docs.map(doc => frappe.model.clear_doc('Stock Entry', doc.name));
+		let ste_docnames = (await frappe.db.get_list('Stock Entry', {
+			fields: ['name'],
+			filters: { work_order: wo_id }
+		}))
+			.map(doc => doc.name)
+			.sort();
+		state.ste_docs = await Promise.all(ste_docnames.map(name =>
+			frappe.model.with_doc('Stock Entry', name)
+		))
+		for (let doc of state.ste_docs) {
+			[doc.indicator_label, doc.indicator_color, ...rest] = frappe.listview_settings['Stock Entry'].get_indicator(doc); // safe, get_indicator always returns a value.
+			doc.link = frappe.utils.get_form_link('Stock Entry', doc.name);
+			doc.produced_serial_nos = doc.items.find(it => it.item_code == state.work_order_doc.production_item)?.serial_no?.replaceAll("\n", ", ");
+
+		}
 
 		state.attachments = [];
 		state.attachments.push(
@@ -324,8 +351,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			return await build_ste(state.serial_no_remaining);
 		}
 		// Reload, flash new produced qty
-		await state.load_work_order(state.work_order_id)
-		document.getElementById("produced-qty").classList.add("pulse-info");
+		refresh();
 	}
 
 	function handle_scrap(ste_doc, bom_item) {
@@ -451,15 +477,11 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		});
 	}
 
-	// TODO: delete?
-	async function submit_doc(doctype, docname) {
+	async function submit_doc(doc) {
 		return await frappe.call({
 			method: "frappe.client.submit",
 			args: {
-				doc: {
-					doctype: doctype,
-					name: docname,
-				}
+				doc,
 			}
 		});
 	}
@@ -517,7 +539,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 
 	function attach_enterToTab() {
 		[...document.querySelectorAll("input")]
-			.map(el => el.addEventListener("keydown", (event) => {
+			.map(el => el.addEventListener("keydown", event => {
 				if (event.key === "Enter") {
 					// Find input with next highest tabIndex.
 					let nextInput = [...document.querySelectorAll("input")]
@@ -526,6 +548,17 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 					nextInput?.focus();
 					event.preventDefault();
 				}
+			}));
+	}
+
+	function attach_ste_submits() {
+		[...document.querySelectorAll('.submit-ste')]
+			.map(el => el.addEventListener('click', async event => {
+				let doc = state.ste_docs.find(doc => doc.name == el.dataset.docname);
+				if (doc) {
+					await submit_doc(doc);
+				}
+				refresh();
 			}));
 	}
 
