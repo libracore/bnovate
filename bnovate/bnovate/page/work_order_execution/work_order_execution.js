@@ -51,6 +51,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		view: read,					// state of the items display: read or write
 		ste_doc: null, 				// will contain content of stock entry before submitting.
 		ste_docs: [],				// existing stock entries related to the work order
+		draft_mode: false,			// if true, create draft STE's instead of submitted docs.
 		produce_serial_no: false,	// true if produced item needs a serial number.
 		serial_no_remaining: 0,  	// when producing with S/N, loop this many more times
 		needs_expiry_date: false,	// when produced item needs an expiry date.
@@ -107,7 +108,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 				produce_serial_no: state.produce_serial_no,
 			});
 			if (state.remaining_qty > 0 && state.work_order_doc.docstatus == 1 && state.work_order_doc.status != "Stopped") {
-				page.set_primary_action('Finish', finish);
+				page.set_primary_action(state.draft_mode ? 'Start' : 'Finish', finish);
 			}
 			attach_ste_submits();
 		} else if (state.view == write) {
@@ -115,9 +116,9 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 				doc: state.ste_doc,
 			});
 			if (state.serial_no_remaining > 0) {
-				page.set_primary_action('Next', validate);
+				page.set_primary_action(`Next (${state.serial_no_remaining})`, validate);
 			} else {
-				page.set_primary_action('Submit', validate);
+				page.set_primary_action(state.draft_mode ? 'Done' : 'Submit', validate);
 			}
 
 			if (state.needs_expiry_date) {
@@ -185,6 +186,9 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		// should we switch to serialized behaviour? (produce one item at a time)
 		await fetch_item_details([state.work_order_doc.production_item]);
 		state.produce_serial_no = locals["Item"][state.work_order_doc.production_item].has_serial_no;
+		if (state.produce_serial_no) {
+			state.draft_mode = true;
+		}
 
 		// do we need an expiry date? For now only FILs need them.
 		state.needs_expiry_date = is_fill(state.work_order_doc.production_item);
@@ -260,7 +264,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		ste.exclusively_scrap_items = ste.scrap_items.filter(s_it => ste.required_items.findIndex(r_it => r_it.item_code == s_it.item_code) < 0);
 
 		// Prepare doc for final editing in "write" view
-		ste.docstatus = 1;
+		ste.docstatus = state.draft_mode ? 0 : 1;
 		state.ste_doc = ste;
 		state.view = write;
 		draw();
@@ -338,7 +342,6 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 
 		// Submit, post comment. Submitted doc now has a docname.
 		let submitted_doc = await frappe.db.insert(state.ste_doc);
-		// let submitted_doc = await submit_doc(draft_doc.doctype, draft_doc.docname);
 		let comment = document.getElementById("comment").value;
 		if (comment) {
 			post_comment(submitted_doc.doctype, submitted_doc.name, comment);
@@ -348,7 +351,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 
 		if (state.serial_no_remaining > 0) {
 			state.serial_no_remaining -= 1;
-			return await build_ste(state.serial_no_remaining);
+			return await build_ste(1);
 		}
 		// Reload, flash new produced qty
 		refresh();
@@ -552,13 +555,19 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 	}
 
 	function attach_ste_submits() {
-		[...document.querySelectorAll('.submit-ste')]
+		let submit_buttons = [...document.querySelectorAll('.submit-ste')];
+
+		submit_buttons
 			.map(el => el.addEventListener('click', async event => {
+				submit_buttons.map(el => el.disabled = true); // forbid concurrent submission.
 				let doc = state.ste_docs.find(doc => doc.name == el.dataset.docname);
-				if (doc) {
-					await submit_doc(doc);
+				try {
+					if (doc) {
+						await submit_doc(doc);
+					}
+				} finally {
+					refresh();
 				}
-				refresh();
 			}));
 	}
 
