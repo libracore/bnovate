@@ -6,28 +6,64 @@
     </p>
 
     </div> -->
-    {% if doc.production_item_entry.needs_batch_input  %}
+
     <div class="bn-row">
+        {% if doc.production_item_entry.needs_batch_input  %}
         <div class="bn-col">
             <h3>Batch produced</h3>
             <input class="batch form-control" id="batch-{{ doc.production_item_entry.idx }}"
                 name="batch-{{ doc.production_item_entry.idx }}" data-idx="{{ doc.production_item_entry.idx }}"
                 data-required 
-                value="{{ doc.work_order }}" tabindex="1">
+                value="{{ doc.work_order }}" tabindex="1" autofocus>
         </div>
-    </div>
-    {% endif %}
+        {% endif %}
 
-    {% if doc.production_item_entry.has_serial_no %}
-    <div class="bn-row">
-        <div class="bn-col" id="expiry-div">
+        {% if doc.production_item_entry.has_serial_no %}
+        <div class="bn-col">
             <h3>Serial No produced</h3>
-            <input class="serial form-control required" id="serial-{{ doc.production_item_entry.idx }}"
-                name="serial-{{ doc.production_item_entry.idx }}" data-idx="{{ doc.production_item_entry.idx }}"
-                data-required tabindex="1">
+            <table class="table table-condensed no-margin" style="border-bottom: 1px solid #d1d8dd">
+                <tbody>
+
+                    <tr>
+                        <td>
+                            {{ doc.production_item_entry.item_code }}
+                        </td>
+                        <td>
+                            <input class="serial form-control required" id="serial-{{ doc.production_item_entry.idx }}"
+                            name="serial-{{ doc.production_item_entry.idx }}" data-idx="{{ doc.production_item_entry.idx }}"
+                            data-item="{{ doc.production_item_entry.item_code }}" data-required tabindex="1" autofocus>
+                        </td>
+                    </tr>
+
+
+                    {% for scrap_item in doc.exclusively_scrap_items %} 
+                    {% if scrap_item.has_serial_no %}
+                    <tr>
+                        <td>
+                            {{ scrap_item.item_code }}
+                        </td>
+                        <td>
+                            <input class="serial form-control required" id="serial-scrap-{{ scrap_item.idx }}"
+                            name="serial-scrap-{{ scrap_item.idx }}" data-idx="{{ scrap_item.idx }}"
+                            data-item="{{ scrap_item.item_code }}" data-required tabindex="1">
+                        </td>  
+                    </tr>
+                    {% endif %} 
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
+        {% endif %}
+
+        <div class="bn-row">
+            <div class="bn-col" id="expiry-div" hidden>
+                <h3>Expiry Date</h3>
+            <!-- This is filled in from JS, a date input is added -->
+            </div>
+        </div>
+
     </div>
-    {% endif %}
+
 
     <div class=" bn-row">
         <div class="bn-col-full">
@@ -102,7 +138,7 @@
                             {% if item.has_serial_no %}
                             <div class="value">
                                 <input class="serial form-control required" id="serial-{{ item.idx }}"
-                                    name="serial-{{ item.idx }}" data-idx="{{ item.idx }}" data-required tabindex="{{ item.idx + 1 }}">
+                                    name="serial-{{ item.idx }}" data-idx="{{ item.idx }}" data-item="{{ item.item_code }}" data-required tabindex="{{ item.idx + 1 }}">
                             </div>
                             {% endif %}
                         </td>

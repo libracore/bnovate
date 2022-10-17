@@ -15,6 +15,11 @@ frappe.query_reports["Late Purchases"] = {
 			"label": __("bNovate Contact"),
 			"fieldtype": "Link",
 			"options": "User",
-		}
+		},
+		{
+			"fieldname": "days_from_now",
+			"label": __("Expected in ... days"),
+			"fieldtype": "Int",
+		},
 	]
 };

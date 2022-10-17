@@ -20,14 +20,7 @@ def get_data():
                         "label": _("Order Book"),
                         "doctype": "Sales Order",
                         "is_query_report": True               
-                   },
-                   {
-                        "type": "report",
-                        "name": "On Time Delivery KPIs",
-                        "label": _("On Time Delivery KPIs"),
-                        "doctype": "Sales Order",
-                        "is_query_report": True    
-                   }            
+                   }         
             ]
         }, 
         {
@@ -68,6 +61,13 @@ def get_data():
             "icon": "octicon octicon-git-compare",
             "items": [
                    {
+                        "type": "report",
+                        "name": "Open Work Orders for Lab",
+                        "label": _("Open Work Orders for Lab"),
+                        "doctype": "Work Order",
+                        "is_query_report": True,            
+                   },
+                   {
                         "type": "page",
                         "name": "work-order-execution",
                         "label": _("Work Order Execution"),
@@ -105,7 +105,14 @@ def get_data():
                         "label": _("Weekly KPI"),
                         "doctype": "Sales Order",
                         "is_query_report": True               
-                   }                
+                   },
+                   {
+                        "type": "report",
+                        "name": "On Time Delivery KPIs",
+                        "label": _("On Time Delivery KPIs"),
+                        "doctype": "Sales Order",
+                        "is_query_report": True    
+                   }                   
             ]
         },
         {
