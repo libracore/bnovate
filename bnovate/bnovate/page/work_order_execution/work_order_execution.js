@@ -111,6 +111,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 				page.set_primary_action(state.draft_mode ? 'Start' : 'Finish', finish);
 			}
 			attach_ste_submits();
+			attach_print_labels();
 		} else if (state.view == write) {
 			item_content.innerHTML = frappe.render_template('items_write', {
 				doc: state.ste_doc,
@@ -569,6 +570,30 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 					refresh();
 				}
 			}));
+	}
+
+	function attach_print_labels() {
+		[...document.querySelectorAll('.print-wo-label')]
+			.map(el => el.addEventListener('click', event => {
+				window.open(
+					frappe.urllib.get_full_url(
+						"/api/method/bnovate.bnovate.utils.labels.download_wo_label"
+						+ "?ste_name=" + encodeURIComponent(el.dataset.docname)
+					),
+					"_blank"
+				); // _blank opens in new tab.
+			}));
+
+		[...document.querySelectorAll('.print-pouch-label')]
+			.map(el => el.addEventListener('click', event => {
+				window.open(
+					frappe.urllib.get_full_url(
+						"/api/method/bnovate.bnovate.utils.labels.download_pouch_label"
+						+ "?ste_name=" + encodeURIComponent(el.dataset.docname)
+					),
+					"_blank"
+				); // _blank opens in new tab.
+			}))
 	}
 
 	work_order.addEventListener("change", (e) => {
