@@ -55,6 +55,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		produce_serial_no: false,	// true if produced item needs a serial number.
 		serial_no_remaining: 0,  	// when producing with S/N, loop this many more times
 		needs_expiry_date: false,	// when produced item needs an expiry date.
+		default_shelf_life: 0,		// used to calculate expiry date.
 	}
 	frappe.bnovate.work_order_execution.state = state;
 	window.state = state;
@@ -154,6 +155,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		let input = document.querySelectorAll('input[data-fieldname="expiry_date"]')?.[0];
 		input.classList.add('required');
 		input.dataset.required = true;
+		input.value = frappe.datetime.add_days(state.work_order_doc.expected_delivery_date, state.default_shelf_life);
 
 		return input;
 	}
@@ -193,6 +195,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 
 		// do we need an expiry date? For now only FILs need them.
 		state.needs_expiry_date = is_fill(state.work_order_doc.production_item);
+		state.default_shelf_life = locals["Item"][state.work_order_doc.production_item].shelf_life_in_days
 
 		// BOMs can't change after submit, no need to clear cache
 		state.bom_doc = await frappe.model.with_doc('BOM', state.work_order_doc.bom_no);
@@ -259,7 +262,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			item.has_serial_no = locals["Item"][item.item_code].has_serial_no;
 		}
 		ste.production_item_entry = ste.items.find(it => it.item_code == state.work_order_doc.production_item);
-		ste.required_items = ste.items.filter(i => i.s_warehouse);
+		ste.required_items = ste.items.filter(i => i.s_warehouse).sort((i_a, i_b) => i_a.idx - i_b.idx);
 		ste.scrap_items = ste.items.filter(it => !it.s_warehouse && it.item_code !== state.work_order_doc.production_item);
 		// These items exist only as scrap, for example the enclosure of a new cartridge.
 		ste.exclusively_scrap_items = ste.scrap_items.filter(s_it => ste.required_items.findIndex(r_it => r_it.item_code == s_it.item_code) < 0);
@@ -325,6 +328,11 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			.map(([idx, item, serial_no]) => {
 				state.ste_doc.items.find(i => i.idx == idx && i.item_code == item).serial_no = serial_no; // scrap items can have same index as input items, need to double-check item_code.
 			});
+		// Handle expiry date if relevant
+		let expiry_input = document.querySelectorAll('input[data-fieldname="expiry_date"]')?.[0]
+		if (expiry_input) {
+			state.ste_doc.expiry_date = expiry_input.value;
+		}
 
 		if (state.ste_doc.production_item_entry.has_batch_no) {
 			// Create target batch if it doesn't exist
@@ -338,6 +346,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		}
 
 		handle_scrap(state.ste_doc, state.work_order_doc.production_item);
+		handle_warehouses(state.ste_doc, state.work_order_doc);
 		handle_fills(state.ste_doc, state.work_order_doc.production_item);
 		calculate_product_valuation(state.ste_doc, state.work_order_doc.production_item);
 
@@ -373,6 +382,16 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			if (input_SNs) {
 				scrap_item.serial_no = input_SNs
 			}
+		}
+	}
+
+	function handle_warehouses(ste_doc, wo_doc) {
+		// make sure warehouses in STE match those of WO
+		for (let ste_it of ste_doc.items) {
+			if (!ste_it.s_warehouse) {
+				continue;
+			}
+			ste_it.s_warehouse = wo_doc.required_items.find(wo_it => wo_it.item_code == ste_it.item_code)?.source_warehouse || ste_it.s_warehouse;
 		}
 	}
 
@@ -422,6 +441,26 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			d.show();
 		})
 	}
+
+	// async function prompt_additional_item() {
+	// 	return new Promise((resolve, reject) => {
+	// 		let new_item = {
+	// 			item_code: null,
+	// 			qty: null,
+	// 		}
+	// 		let d = new frappe.ui.Dialog({
+	// 			title: "Enter additional item",
+	// 			fields: [{
+	// 				fieldname: 'item_code',
+	// 				fieldtype: 'link',
+	// 				label: 'Item code',
+	// 				options: 'Item',
+	// 				reqd: 1,
+	// 			}]
+	// 		})
+	// 		d.show();
+	// 	});
+	// }
 
 	function calculate_product_valuation(doc, bom_item) {
 		// WARNING: this code is duplicated in custom script on Stock Entry! Manually make changes in both places.
