@@ -54,6 +54,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		draft_mode: false,			// if true, create draft STE's instead of submitted docs.
 		produce_serial_no: false,	// true if produced item needs a serial number.
 		serial_no_remaining: 0,  	// when producing with S/N, loop this many more times
+		produce_batch: false,		// true if produced item needs a batch number.
 		needs_expiry_date: false,	// when produced item needs an expiry date.
 		default_shelf_life: 0,		// used to calculate expiry date.
 	}
@@ -107,6 +108,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 				doc: state.work_order_doc,
 				ste_docs: state.ste_docs,
 				produce_serial_no: state.produce_serial_no,
+				produce_batch: state.produce_batch
 			});
 			if (state.remaining_qty > 0 && state.work_order_doc.docstatus == 1 && state.work_order_doc.status != "Stopped") {
 				page.set_primary_action(state.draft_mode ? 'Start' : 'Finish', finish);
@@ -173,6 +175,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		state.work_order_id = wo_id;
 		state.ste_doc = null;
 		state.produce_serial_no = false;
+		state.produce_batch = false;
 		state.serial_no_remaining = 0;
 
 		// with_doctype loads default for the doctype, populates listview_settings,
@@ -192,6 +195,8 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		if (state.produce_serial_no) {
 			state.draft_mode = true;
 		}
+
+		state.produce_batch = locals["Item"][state.work_order_doc.production_item].has_batch_no;
 
 		// do we need an expiry date? For now only FILs need them.
 		state.needs_expiry_date = is_fill(state.work_order_doc.production_item);
@@ -215,7 +220,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			[doc.indicator_label, doc.indicator_color, ...rest] = frappe.listview_settings['Stock Entry'].get_indicator(doc); // safe, get_indicator always returns a value.
 			doc.link = frappe.utils.get_form_link('Stock Entry', doc.name);
 			doc.produced_serial_nos = doc.items.find(it => it.item_code == state.work_order_doc.production_item)?.serial_no?.replaceAll("\n", ", ");
-
+			doc.produced_batch = doc.items.find(it => it.item_code == state.work_order_doc.production_item)?.batch_no?.replaceAll("\n", ", ");
 		}
 
 		state.attachments = [];

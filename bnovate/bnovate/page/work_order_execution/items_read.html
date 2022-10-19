@@ -20,6 +20,11 @@
                         Serial No
                     </th>
                     {% endif %}
+                    {% if produce_batch %}
+                    <th style="width: 35%;" class="" >
+                        Batch
+                    </th>
+                    {% endif %}
                     <th>
                         <!-- Buttons go in this col... -->
                     </th>
@@ -40,6 +45,11 @@
                     {% if produce_serial_no %}
                     <td>
                         {{ ste.produced_serial_nos }}
+                    </td>
+                    {% endif %}
+                    {% if produce_batch %}
+                    <td>
+                        {{ ste.produced_batch }}
                     </td>
                     {% endif %}
                     <td>
