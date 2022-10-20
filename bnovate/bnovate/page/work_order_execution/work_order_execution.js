@@ -133,6 +133,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 
 			attach_validator();
 			attach_enterToTab();
+			attach_additional_item_buttons();
 		}
 
 		let doc = state.work_order_doc;
@@ -231,6 +232,36 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		draw();
 	}
 
+	state.add_additional_item = async function (item_code, qty) {
+		// Add items during refurbishing (broken handle...)
+		// WARNING: these are not 'threadsafe', _row could have duplicates. Not critical considering the application. 
+		if (!state.ste_doc) {
+			return;
+		}
+		if (!state.ste_doc.additional_items) {
+			state.ste_doc.additional_items = [];
+		}
+
+		let item = await frappe.model.with_doc("Item", item_code);
+		let item_defaults = item.item_defaults.find(d => d.company == state.ste_doc.company);
+		state.ste_doc.additional_items.push({
+			_row: state.ste_doc.additional_items.length,
+			item_code: item_code,
+			item_name: item.item_name,
+			qty: qty,
+			s_warehouse: item_defaults.default_warehouse,
+		});
+	}
+
+	state.remove_additional_item = function (_row) {
+		if (!state.ste_doc || !state.ste_doc.additional_items) {
+			return;
+		}
+
+		const index = state.ste_doc.additional_items.findIndex(it => it._row == _row);
+		state.ste_doc.additional_items.splice(index, 1);
+	}
+
 	// LOGIC
 	////////////////////////////
 	async function finish() {
@@ -271,6 +302,9 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		ste.scrap_items = ste.items.filter(it => !it.s_warehouse && it.item_code !== state.work_order_doc.production_item);
 		// These items exist only as scrap, for example the enclosure of a new cartridge.
 		ste.exclusively_scrap_items = ste.scrap_items.filter(s_it => ste.required_items.findIndex(r_it => r_it.item_code == s_it.item_code) < 0);
+
+
+		ste.additional_items = []; // populated by user, when replacing broken parts on refills for example.
 
 		// Prepare doc for final editing in "write" view
 		ste.docstatus = state.draft_mode ? 0 : 1;
@@ -348,6 +382,16 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			if (state.ste_doc.production_item_entry.has_auto_batch_number) {
 				state.ste_doc.production_item_entry.batch_no = batch_doc.batch_id;
 			}
+		}
+
+		// Copy over additional items:
+		while (state.ste_doc.additional_items.length) {
+			let item = state.ste_doc.additional_items.pop();
+			state.ste_doc.items.push({
+				item_code: item.item_code,
+				qty: item.qty,
+				s_warehouse: item.s_warehouse,
+			});
 		}
 
 		handle_scrap(state.ste_doc, state.work_order_doc.production_item);
@@ -447,25 +491,36 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		})
 	}
 
-	// async function prompt_additional_item() {
-	// 	return new Promise((resolve, reject) => {
-	// 		let new_item = {
-	// 			item_code: null,
-	// 			qty: null,
-	// 		}
-	// 		let d = new frappe.ui.Dialog({
-	// 			title: "Enter additional item",
-	// 			fields: [{
-	// 				fieldname: 'item_code',
-	// 				fieldtype: 'link',
-	// 				label: 'Item code',
-	// 				options: 'Item',
-	// 				reqd: 1,
-	// 			}]
-	// 		})
-	// 		d.show();
-	// 	});
-	// }
+	async function prompt_additional_item() {
+		return new Promise((resolve, reject) => {
+			let d = new frappe.ui.Dialog({
+				title: "Enter additional item",
+				fields: [{
+					fieldname: 'item_code',
+					fieldtype: 'Link',
+					label: 'Item code',
+					options: 'Item',
+					reqd: 1,
+				}, {
+					fieldname: 'qty',
+					fieldtype: 'Float',
+					label: 'Quantity',
+					reqd: 1,
+				}],
+				primary_action_label: 'Add',
+				primary_action: async function (values) {
+					await state.add_additional_item(values.item_code, values.qty);
+					resolve(values);
+					this.hide();
+				},
+				secondary_action_label: 'Cancel',
+				secondary_action: function () {
+					reject();
+				}
+			})
+			d.show();
+		});
+	}
 
 	function calculate_product_valuation(doc, bom_item) {
 		// WARNING: this code is duplicated in custom script on Stock Entry! Manually make changes in both places.
@@ -513,7 +568,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 	////////////////////////////
 
 	async function post_comment(doctype, docname, comment) {
-		await frappe.call({
+		await frappe.xcall({
 			"method": "frappe.desk.form.utils.add_comment",
 			"args": {
 				reference_doctype: doctype,
@@ -526,7 +581,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 	}
 
 	async function submit_doc(doc) {
-		return await frappe.call({
+		return await frappe.xcall({
 			method: "frappe.client.submit",
 			args: {
 				doc,
@@ -638,6 +693,22 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 					"_blank"
 				); // _blank opens in new tab.
 			}))
+	}
+
+	function attach_additional_item_buttons() {
+		const add_button = document.querySelectorAll('.add-items')[0];
+		if (add_button) {
+			add_button.addEventListener('click', async event => {
+				await prompt_additional_item();
+				draw();
+			});
+		}
+		[...document.querySelectorAll('.remove-additional-item')]
+			.map(el => el.addEventListener('click', async event => {
+				await state.remove_additional_item(el.dataset.row);
+				draw();
+			}));
+
 	}
 
 	work_order.addEventListener("change", (e) => {
