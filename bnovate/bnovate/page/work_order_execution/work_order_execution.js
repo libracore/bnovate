@@ -369,13 +369,13 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		[...document.querySelectorAll("input.batch")]
 			.map(el => [el.dataset.idx, el.value || 0])
 			.map(([idx, batch_no]) => {
-				state.ste_doc.items.find(i => i.idx == idx).batch_no = batch_no;
+				state.ste_doc.items.find(i => i.idx == idx).batch_no = batch_no.trim();
 			}); // BTW, this also modifies the same object pointed to from production_item_entry.
 		// And for serial no
 		[...document.querySelectorAll("input.serial")]
 			.map(el => [el.dataset.idx, el.dataset.item, el.value || 0])
 			.map(([idx, item, serial_no]) => {
-				state.ste_doc.items.find(i => i.idx == idx && i.item_code == item).serial_no = serial_no; // scrap items can have same index as input items, need to double-check item_code.
+				state.ste_doc.items.find(i => i.idx == idx && i.item_code == item).serial_no = serial_no.trim(); // scrap items can have same index as input items, need to double-check item_code.
 			});
 		// Handle expiry date if relevant
 		let expiry_input = document.querySelectorAll('input[data-fieldname="expiry_date"]')?.[0]
@@ -404,9 +404,10 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			});
 		}
 
-		let new_doc = await save_doc(state.ste_doc); // update costs of additional items, set docname...
-		await state.load_ste(new_doc);
-		console.log(new_doc)
+
+		set_scrap_item_value(state.ste_doc, state.work_order_doc.production_item);
+		// Save to update costs of additional items, set docname...
+		await state.load_ste(await save_doc(state.ste_doc));
 
 		handle_scrap(state.ste_doc, state.work_order_doc.production_item);
 		handle_warehouses(state.ste_doc, state.work_order_doc);
@@ -541,11 +542,8 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		});
 	}
 
-	function calculate_product_valuation(doc, bom_item) {
-		// WARNING: this code is duplicated in custom script on Stock Entry! Manually make changes in both places.
-		// Assumes a custom field 'bom_item' exists, that points to the item the BOM manufactures.
-
-		// Set scrap enclosures to 1 cent, this will send all product value to the fill item, which then goes to COGS.
+	function set_scrap_item_value(doc, bom_item) {
+		// Sets scrap items rate to 0.01 CHF. Need to save after this to recalculate amount / basic amount
 		let scrap_items = doc.items.filter((it) => !it.s_warehouse && it.item_code !== bom_item);
 		for (let it of scrap_items) {
 			if (is_enclosure(it.item_code)) {
@@ -553,6 +551,18 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 				it.basic_amount = flt(flt(it.transfer_qty) * flt(it.basic_rate), precision("basic_amount", it))
 			}
 		}
+	}
+	frappe.bnovate.work_order_execution.set_scrap_item_value = set_scrap_item_value;
+
+
+	function calculate_product_valuation(doc, bom_item) {
+		// WARNING: this code is duplicated in custom script on Stock Entry! Manually make changes in both places.
+		// Assumes a custom field 'bom_item' exists, that points to the item the BOM manufactures.
+
+		// Before calling this, call set_scrap_item_value, then save the doc to recalculate fields on server-side!
+
+		// Set scrap enclosures to 1 cent, this will send all product value to the fill item, which then goes to COGS.
+		let scrap_items = doc.items.filter((it) => !it.s_warehouse && it.item_code !== bom_item);
 		let target_items = doc.items.filter((it) => it.item_code === bom_item);
 		let input_items = doc.items.filter((it) => !!it.s_warehouse);
 
@@ -573,6 +583,9 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			it.basic_amount = flt(flt(it.transfer_qty) * flt(it.basic_rate), precision("basic_amount", it))
 		}
 	};
+	frappe.bnovate.work_order_execution.calculate_product_valuation = calculate_product_valuation;
+
+
 
 	// HELPERS
 	////////////////////////////
@@ -611,6 +624,8 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		});
 		return resp.docs[0];
 	}
+	frappe.bnovate.work_order_execution.save_doc = save_doc;
+
 
 	async function submit_doc(doc) {
 		let resp = await frappe.call({
@@ -621,6 +636,8 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		});
 		return resp.message;
 	}
+	frappe.bnovate.work_order_execution.submit_doc = submit_doc;
+
 
 	async function fetch_item_details(item_codes) {
 		// Fetch item detail docs, store in locals["Items"].
