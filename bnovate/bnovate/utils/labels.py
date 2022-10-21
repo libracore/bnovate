@@ -16,6 +16,15 @@ def download_label(label_reference, content):
     frappe.local.response.type = "download"
     frappe.local.response.display_content_as = "inline" # Doesn't have any effect on our frappe version.
 
+@frappe.whitelist()
+def download_label_for_doc(doctype, docname, print_format, label_reference):
+    """ Return PDF label based on an existing print format and label_printer size """
+    doc = frappe.get_doc(doctype, docname)
+    pf = frappe.get_doc("Print Format", print_format)
+
+    template = """<style>{css}</style>{html}""".format(css=pf.css, html=pf.html)
+    content = frappe.render_template(template, {"doc": doc})
+    return download_label(label_reference, content)
 
 @frappe.whitelist()
 def download_wo_label(ste_name):

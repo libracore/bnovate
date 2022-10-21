@@ -54,7 +54,9 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		draft_mode: false,			// if true, create draft STE's instead of submitted docs.
 		produce_serial_no: false,	// true if produced item needs a serial number.
 		serial_no_remaining: 0,  	// when producing with S/N, loop this many more times
+		produce_batch: false,		// true if produced item needs a batch number.
 		needs_expiry_date: false,	// when produced item needs an expiry date.
+		default_shelf_life: 0,		// used to calculate expiry date.
 	}
 	frappe.bnovate.work_order_execution.state = state;
 	window.state = state;
@@ -106,6 +108,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 				doc: state.work_order_doc,
 				ste_docs: state.ste_docs,
 				produce_serial_no: state.produce_serial_no,
+				produce_batch: state.produce_batch
 			});
 			if (state.remaining_qty > 0 && state.work_order_doc.docstatus == 1 && state.work_order_doc.status != "Stopped") {
 				page.set_primary_action(state.draft_mode ? 'Start' : 'Finish', finish);
@@ -130,6 +133,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 
 			attach_validator();
 			attach_enterToTab();
+			attach_additional_item_buttons();
 		}
 
 		let doc = state.work_order_doc;
@@ -154,6 +158,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		let input = document.querySelectorAll('input[data-fieldname="expiry_date"]')?.[0];
 		input.classList.add('required');
 		input.dataset.required = true;
+		input.value = frappe.datetime.add_days(state.work_order_doc.expected_delivery_date, state.default_shelf_life);
 
 		return input;
 	}
@@ -171,6 +176,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		state.work_order_id = wo_id;
 		state.ste_doc = null;
 		state.produce_serial_no = false;
+		state.produce_batch = false;
 		state.serial_no_remaining = 0;
 
 		// with_doctype loads default for the doctype, populates listview_settings,
@@ -189,10 +195,15 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		state.produce_serial_no = locals["Item"][state.work_order_doc.production_item].has_serial_no;
 		if (state.produce_serial_no) {
 			state.draft_mode = true;
+		} else {
+			state.draft_mode = false;
 		}
+
+		state.produce_batch = locals["Item"][state.work_order_doc.production_item].has_batch_no;
 
 		// do we need an expiry date? For now only FILs need them.
 		state.needs_expiry_date = is_fill(state.work_order_doc.production_item);
+		state.default_shelf_life = locals["Item"][state.work_order_doc.production_item].shelf_life_in_days
 
 		// BOMs can't change after submit, no need to clear cache
 		state.bom_doc = await frappe.model.with_doc('BOM', state.work_order_doc.bom_no);
@@ -212,7 +223,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			[doc.indicator_label, doc.indicator_color, ...rest] = frappe.listview_settings['Stock Entry'].get_indicator(doc); // safe, get_indicator always returns a value.
 			doc.link = frappe.utils.get_form_link('Stock Entry', doc.name);
 			doc.produced_serial_nos = doc.items.find(it => it.item_code == state.work_order_doc.production_item)?.serial_no?.replaceAll("\n", ", ");
-
+			doc.produced_batch = doc.items.find(it => it.item_code == state.work_order_doc.production_item)?.batch_no?.replaceAll("\n", ", ");
 		}
 
 		state.attachments = [];
@@ -221,6 +232,63 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			...state.docinfo['BOM'][state.work_order_doc.bom_no].attachments || []
 		);
 		draw();
+	}
+
+	state.load_ste = async function (ste) {
+		// Add useful properties and load as state.ste_doc
+
+		ste.title = `Manufacture for ${ste.work_order}`;
+
+		// Attach batch and sn requirements.
+		await fetch_item_details(ste.items.map(sti => sti.item_code));
+		for (let item of ste.items) {
+			item.has_batch_no = locals["Item"][item.item_code].has_batch_no;
+			item.has_auto_batch_number = !!locals["Item"][item.item_code].batch_number_series;
+			item.needs_batch_input = item.has_batch_no && !item.has_auto_batch_number;
+			item.has_serial_no = locals["Item"][item.item_code].has_serial_no;
+		}
+		ste.production_item_entry = ste.items.find(it => it.item_code == state.work_order_doc.production_item);
+		ste.required_items = ste.items.filter(i => i.s_warehouse).sort((i_a, i_b) => i_a.idx - i_b.idx);
+		ste.scrap_items = ste.items.filter(it => !it.s_warehouse && it.item_code !== state.work_order_doc.production_item);
+		// These items exist only as scrap, for example the enclosure of a new cartridge.
+		ste.exclusively_scrap_items = ste.scrap_items.filter(s_it => ste.required_items.findIndex(r_it => r_it.item_code == s_it.item_code) < 0);
+
+
+		ste.additional_items = []; // populated by user, when replacing broken parts on refills for example.
+
+		// Prepare doc for final editing in "write" view
+		ste.docstatus = state.draft_mode ? 0 : 1;
+		state.ste_doc = ste;
+	}
+
+	state.add_additional_item = async function (item_code, qty) {
+		// Add items during refurbishing (broken handle...)
+		// WARNING: these are not 'threadsafe', _row could have duplicates. Not critical considering the application. 
+		if (!state.ste_doc) {
+			return;
+		}
+		if (!state.ste_doc.additional_items) {
+			state.ste_doc.additional_items = [];
+		}
+
+		let item = await frappe.model.with_doc("Item", item_code);
+		let item_defaults = item.item_defaults.find(d => d.company == state.ste_doc.company);
+		state.ste_doc.additional_items.push({
+			_row: state.ste_doc.additional_items.length,
+			item_code: item_code,
+			item_name: item.item_name,
+			qty: qty,
+			s_warehouse: item_defaults.default_warehouse,
+		});
+	}
+
+	state.remove_additional_item = function (_row) {
+		if (!state.ste_doc || !state.ste_doc.additional_items) {
+			return;
+		}
+
+		const index = state.ste_doc.additional_items.findIndex(it => it._row == _row);
+		state.ste_doc.additional_items.splice(index, 1);
 	}
 
 	// LOGIC
@@ -248,25 +316,9 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			'purpose': 'Manufacture',
 			'qty': qty,
 		})
-		ste.title = `Manufacture for ${ste.work_order}`;
 
-		// Attach batch and sn requirements.
-		await fetch_item_details(ste.items.map(sti => sti.item_code));
-		for (let item of ste.items) {
-			item.has_batch_no = locals["Item"][item.item_code].has_batch_no;
-			item.has_auto_batch_number = !!locals["Item"][item.item_code].batch_number_series;
-			item.needs_batch_input = item.has_batch_no && !item.has_auto_batch_number;
-			item.has_serial_no = locals["Item"][item.item_code].has_serial_no;
-		}
-		ste.production_item_entry = ste.items.find(it => it.item_code == state.work_order_doc.production_item);
-		ste.required_items = ste.items.filter(i => i.s_warehouse);
-		ste.scrap_items = ste.items.filter(it => !it.s_warehouse && it.item_code !== state.work_order_doc.production_item);
-		// These items exist only as scrap, for example the enclosure of a new cartridge.
-		ste.exclusively_scrap_items = ste.scrap_items.filter(s_it => ste.required_items.findIndex(r_it => r_it.item_code == s_it.item_code) < 0);
+		await state.load_ste(ste);
 
-		// Prepare doc for final editing in "write" view
-		ste.docstatus = state.draft_mode ? 0 : 1;
-		state.ste_doc = ste;
 		state.view = write;
 		draw();
 	}
@@ -317,14 +369,19 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		[...document.querySelectorAll("input.batch")]
 			.map(el => [el.dataset.idx, el.value || 0])
 			.map(([idx, batch_no]) => {
-				state.ste_doc.items.find(i => i.idx == idx).batch_no = batch_no;
+				state.ste_doc.items.find(i => i.idx == idx).batch_no = batch_no.trim();
 			}); // BTW, this also modifies the same object pointed to from production_item_entry.
 		// And for serial no
 		[...document.querySelectorAll("input.serial")]
 			.map(el => [el.dataset.idx, el.dataset.item, el.value || 0])
 			.map(([idx, item, serial_no]) => {
-				state.ste_doc.items.find(i => i.idx == idx && i.item_code == item).serial_no = serial_no; // scrap items can have same index as input items, need to double-check item_code.
+				state.ste_doc.items.find(i => i.idx == idx && i.item_code == item).serial_no = serial_no.trim(); // scrap items can have same index as input items, need to double-check item_code.
 			});
+		// Handle expiry date if relevant
+		let expiry_input = document.querySelectorAll('input[data-fieldname="expiry_date"]')?.[0]
+		if (expiry_input) {
+			state.ste_doc.expiry_date = expiry_input.value;
+		}
 
 		if (state.ste_doc.production_item_entry.has_batch_no) {
 			// Create target batch if it doesn't exist
@@ -337,18 +394,39 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			}
 		}
 
+		// Copy over additional items:
+		while (state.ste_doc.additional_items.length) {
+			let item = state.ste_doc.additional_items.pop();
+			state.ste_doc.items.push({
+				item_code: item.item_code,
+				qty: item.qty,
+				s_warehouse: item.s_warehouse,
+			});
+		}
+
+
+		set_scrap_item_value(state.ste_doc, state.work_order_doc.production_item);
+		// Save to update costs of additional items, set docname...
+		await state.load_ste(await save_doc(state.ste_doc));
+
 		handle_scrap(state.ste_doc, state.work_order_doc.production_item);
+		handle_warehouses(state.ste_doc, state.work_order_doc);
 		handle_fills(state.ste_doc, state.work_order_doc.production_item);
 		calculate_product_valuation(state.ste_doc, state.work_order_doc.production_item);
 
-		// Submit, post comment. Submitted doc now has a docname.
-		let submitted_doc = await frappe.db.insert(state.ste_doc);
+		// Post comment (saved doc has a docname)
 		let comment = document.getElementById("comment").value;
 		if (comment) {
-			post_comment(submitted_doc.doctype, submitted_doc.name, comment);
+			post_comment(state.ste_doc.doctype, state.ste_doc.name, comment);
 			post_comment(state.work_order_doc.doctype, state.work_order_doc.name, comment);
 		}
-		frappe.show_alert(`<a href="#Form/Stock Entry/${submitted_doc.name}">${submitted_doc.name} created</a>`)
+
+		if (state.draft_mode) {
+			save_doc(state.ste_doc);
+		} else {
+			submit_doc(state.ste_doc);
+		}
+		frappe.show_alert(`<a href="#Form/Stock Entry/${state.ste_doc.name}">${state.ste_doc.name} created</a>`)
 
 		if (state.serial_no_remaining > 0) {
 			state.serial_no_remaining -= 1;
@@ -373,6 +451,16 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			if (input_SNs) {
 				scrap_item.serial_no = input_SNs
 			}
+		}
+	}
+
+	function handle_warehouses(ste_doc, wo_doc) {
+		// make sure warehouses in STE match those of WO
+		for (let ste_it of ste_doc.items) {
+			if (!ste_it.s_warehouse) {
+				continue;
+			}
+			ste_it.s_warehouse = wo_doc.required_items.find(wo_it => wo_it.item_code == ste_it.item_code)?.source_warehouse || ste_it.s_warehouse;
 		}
 	}
 
@@ -423,17 +511,58 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		})
 	}
 
-	function calculate_product_valuation(doc, bom_item) {
-		// WARNING: this code is duplicated in custom script on Stock Entry! Manually make changes in both places.
-		// Assumes a custom field 'bom_item' exists, that points to the item the BOM manufactures.
+	async function prompt_additional_item() {
+		return new Promise((resolve, reject) => {
+			let d = new frappe.ui.Dialog({
+				title: "Enter additional item",
+				fields: [{
+					fieldname: 'item_code',
+					fieldtype: 'Link',
+					label: 'Item code',
+					options: 'Item',
+					reqd: 1,
+				}, {
+					fieldname: 'qty',
+					fieldtype: 'Float',
+					label: 'Quantity',
+					reqd: 1,
+				}],
+				primary_action_label: 'Add',
+				primary_action: async function (values) {
+					await state.add_additional_item(values.item_code, values.qty);
+					resolve(values);
+					this.hide();
+				},
+				secondary_action_label: 'Cancel',
+				secondary_action: function () {
+					reject();
+				}
+			})
+			d.show();
+		});
+	}
 
-		// Set scrap enclosures to 1 cent, this will send all product value to the fill item, which then goes to COGS.
+	function set_scrap_item_value(doc, bom_item) {
+		// Sets scrap items rate to 0.01 CHF. Need to save after this to recalculate amount / basic amount
 		let scrap_items = doc.items.filter((it) => !it.s_warehouse && it.item_code !== bom_item);
 		for (let it of scrap_items) {
 			if (is_enclosure(it.item_code)) {
 				it.basic_rate = 0.01;
+				it.basic_amount = flt(flt(it.transfer_qty) * flt(it.basic_rate), precision("basic_amount", it))
 			}
 		}
+	}
+	frappe.bnovate.work_order_execution.set_scrap_item_value = set_scrap_item_value;
+
+
+	function calculate_product_valuation(doc, bom_item) {
+		// WARNING: this code is duplicated in custom script on Stock Entry! Manually make changes in both places.
+		// Assumes a custom field 'bom_item' exists, that points to the item the BOM manufactures.
+
+		// Before calling this, call set_scrap_item_value, then save the doc to recalculate fields on server-side!
+
+		// Set scrap enclosures to 1 cent, this will send all product value to the fill item, which then goes to COGS.
+		let scrap_items = doc.items.filter((it) => !it.s_warehouse && it.item_code !== bom_item);
 		let target_items = doc.items.filter((it) => it.item_code === bom_item);
 		let input_items = doc.items.filter((it) => !!it.s_warehouse);
 
@@ -451,8 +580,12 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		console.log(`Setting product rate to ${product_rate}. Input amount: ${input_amount}, scrap amount: ${scrap_amount}, qty: ${product_qty}`)
 		for (let it of target_items) {
 			it.basic_rate = product_rate;
+			it.basic_amount = flt(flt(it.transfer_qty) * flt(it.basic_rate), precision("basic_amount", it))
 		}
 	};
+	frappe.bnovate.work_order_execution.calculate_product_valuation = calculate_product_valuation;
+
+
 
 	// HELPERS
 	////////////////////////////
@@ -470,8 +603,8 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 
 	async function post_comment(doctype, docname, comment) {
 		await frappe.call({
-			"method": "frappe.desk.form.utils.add_comment",
-			"args": {
+			method: "frappe.desk.form.utils.add_comment",
+			args: {
 				reference_doctype: doctype,
 				reference_name: docname,
 				content: comment,
@@ -481,14 +614,30 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		});
 	}
 
+	async function save_doc(doc) {
+		let resp = await frappe.call({
+			method: "frappe.desk.form.save.savedocs",
+			args: {
+				doc,
+				action: 'Save',
+			}
+		});
+		return resp.docs[0];
+	}
+	frappe.bnovate.work_order_execution.save_doc = save_doc;
+
+
 	async function submit_doc(doc) {
-		return await frappe.call({
+		let resp = await frappe.call({
 			method: "frappe.client.submit",
 			args: {
 				doc,
 			}
 		});
+		return resp.message;
 	}
+	frappe.bnovate.work_order_execution.submit_doc = submit_doc;
+
 
 	async function fetch_item_details(item_codes) {
 		// Fetch item detail docs, store in locals["Items"].
@@ -594,6 +743,22 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 					"_blank"
 				); // _blank opens in new tab.
 			}))
+	}
+
+	function attach_additional_item_buttons() {
+		const add_button = document.querySelectorAll('.add-items')[0];
+		if (add_button) {
+			add_button.addEventListener('click', async event => {
+				await prompt_additional_item();
+				draw();
+			});
+		}
+		[...document.querySelectorAll('.remove-additional-item')]
+			.map(el => el.addEventListener('click', async event => {
+				await state.remove_additional_item(el.dataset.row);
+				draw();
+			}));
+
 	}
 
 	work_order.addEventListener("change", (e) => {
