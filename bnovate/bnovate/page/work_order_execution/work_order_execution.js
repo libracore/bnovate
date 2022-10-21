@@ -195,6 +195,8 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		state.produce_serial_no = locals["Item"][state.work_order_doc.production_item].has_serial_no;
 		if (state.produce_serial_no) {
 			state.draft_mode = true;
+		} else {
+			state.draft_mode = false;
 		}
 
 		state.produce_batch = locals["Item"][state.work_order_doc.production_item].has_batch_no;
@@ -230,6 +232,33 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			...state.docinfo['BOM'][state.work_order_doc.bom_no].attachments || []
 		);
 		draw();
+	}
+
+	state.load_ste = async function (ste) {
+		// Add useful properties and load as state.ste_doc
+
+		ste.title = `Manufacture for ${ste.work_order}`;
+
+		// Attach batch and sn requirements.
+		await fetch_item_details(ste.items.map(sti => sti.item_code));
+		for (let item of ste.items) {
+			item.has_batch_no = locals["Item"][item.item_code].has_batch_no;
+			item.has_auto_batch_number = !!locals["Item"][item.item_code].batch_number_series;
+			item.needs_batch_input = item.has_batch_no && !item.has_auto_batch_number;
+			item.has_serial_no = locals["Item"][item.item_code].has_serial_no;
+		}
+		ste.production_item_entry = ste.items.find(it => it.item_code == state.work_order_doc.production_item);
+		ste.required_items = ste.items.filter(i => i.s_warehouse).sort((i_a, i_b) => i_a.idx - i_b.idx);
+		ste.scrap_items = ste.items.filter(it => !it.s_warehouse && it.item_code !== state.work_order_doc.production_item);
+		// These items exist only as scrap, for example the enclosure of a new cartridge.
+		ste.exclusively_scrap_items = ste.scrap_items.filter(s_it => ste.required_items.findIndex(r_it => r_it.item_code == s_it.item_code) < 0);
+
+
+		ste.additional_items = []; // populated by user, when replacing broken parts on refills for example.
+
+		// Prepare doc for final editing in "write" view
+		ste.docstatus = state.draft_mode ? 0 : 1;
+		state.ste_doc = ste;
 	}
 
 	state.add_additional_item = async function (item_code, qty) {
@@ -287,28 +316,9 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			'purpose': 'Manufacture',
 			'qty': qty,
 		})
-		ste.title = `Manufacture for ${ste.work_order}`;
 
-		// Attach batch and sn requirements.
-		await fetch_item_details(ste.items.map(sti => sti.item_code));
-		for (let item of ste.items) {
-			item.has_batch_no = locals["Item"][item.item_code].has_batch_no;
-			item.has_auto_batch_number = !!locals["Item"][item.item_code].batch_number_series;
-			item.needs_batch_input = item.has_batch_no && !item.has_auto_batch_number;
-			item.has_serial_no = locals["Item"][item.item_code].has_serial_no;
-		}
-		ste.production_item_entry = ste.items.find(it => it.item_code == state.work_order_doc.production_item);
-		ste.required_items = ste.items.filter(i => i.s_warehouse).sort((i_a, i_b) => i_a.idx - i_b.idx);
-		ste.scrap_items = ste.items.filter(it => !it.s_warehouse && it.item_code !== state.work_order_doc.production_item);
-		// These items exist only as scrap, for example the enclosure of a new cartridge.
-		ste.exclusively_scrap_items = ste.scrap_items.filter(s_it => ste.required_items.findIndex(r_it => r_it.item_code == s_it.item_code) < 0);
+		await state.load_ste(ste);
 
-
-		ste.additional_items = []; // populated by user, when replacing broken parts on refills for example.
-
-		// Prepare doc for final editing in "write" view
-		ste.docstatus = state.draft_mode ? 0 : 1;
-		state.ste_doc = ste;
 		state.view = write;
 		draw();
 	}
@@ -394,19 +404,28 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			});
 		}
 
+		let new_doc = await save_doc(state.ste_doc); // update costs of additional items, set docname...
+		await state.load_ste(new_doc);
+		console.log(new_doc)
+
 		handle_scrap(state.ste_doc, state.work_order_doc.production_item);
 		handle_warehouses(state.ste_doc, state.work_order_doc);
 		handle_fills(state.ste_doc, state.work_order_doc.production_item);
 		calculate_product_valuation(state.ste_doc, state.work_order_doc.production_item);
 
-		// Submit, post comment. Submitted doc now has a docname.
-		let submitted_doc = await frappe.db.insert(state.ste_doc);
+		// Post comment (saved doc has a docname)
 		let comment = document.getElementById("comment").value;
 		if (comment) {
-			post_comment(submitted_doc.doctype, submitted_doc.name, comment);
+			post_comment(state.ste_doc.doctype, state.ste_doc.name, comment);
 			post_comment(state.work_order_doc.doctype, state.work_order_doc.name, comment);
 		}
-		frappe.show_alert(`<a href="#Form/Stock Entry/${submitted_doc.name}">${submitted_doc.name} created</a>`)
+
+		if (state.draft_mode) {
+			save_doc(state.ste_doc);
+		} else {
+			submit_doc(state.ste_doc);
+		}
+		frappe.show_alert(`<a href="#Form/Stock Entry/${state.ste_doc.name}">${state.ste_doc.name} created</a>`)
 
 		if (state.serial_no_remaining > 0) {
 			state.serial_no_remaining -= 1;
@@ -531,6 +550,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		for (let it of scrap_items) {
 			if (is_enclosure(it.item_code)) {
 				it.basic_rate = 0.01;
+				it.basic_amount = flt(flt(it.transfer_qty) * flt(it.basic_rate), precision("basic_amount", it))
 			}
 		}
 		let target_items = doc.items.filter((it) => it.item_code === bom_item);
@@ -550,6 +570,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		console.log(`Setting product rate to ${product_rate}. Input amount: ${input_amount}, scrap amount: ${scrap_amount}, qty: ${product_qty}`)
 		for (let it of target_items) {
 			it.basic_rate = product_rate;
+			it.basic_amount = flt(flt(it.transfer_qty) * flt(it.basic_rate), precision("basic_amount", it))
 		}
 	};
 
@@ -568,9 +589,9 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 	////////////////////////////
 
 	async function post_comment(doctype, docname, comment) {
-		await frappe.xcall({
-			"method": "frappe.desk.form.utils.add_comment",
-			"args": {
+		await frappe.call({
+			method: "frappe.desk.form.utils.add_comment",
+			args: {
 				reference_doctype: doctype,
 				reference_name: docname,
 				content: comment,
@@ -580,13 +601,25 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		});
 	}
 
+	async function save_doc(doc) {
+		let resp = await frappe.call({
+			method: "frappe.desk.form.save.savedocs",
+			args: {
+				doc,
+				action: 'Save',
+			}
+		});
+		return resp.docs[0];
+	}
+
 	async function submit_doc(doc) {
-		return await frappe.xcall({
+		let resp = await frappe.call({
 			method: "frappe.client.submit",
 			args: {
 				doc,
 			}
 		});
+		return resp.message;
 	}
 
 	async function fetch_item_details(item_codes) {
