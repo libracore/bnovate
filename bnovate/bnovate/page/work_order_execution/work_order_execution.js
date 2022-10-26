@@ -13,22 +13,23 @@ The workflow goes:
 - When work is done, a couple steps:
 	- Click "finish", indicate number of finished parts.
 	- Adjust quantities of consumed items, add new ones if needed.
+	- Scan batch numbers or serial numbers of components
 	- Submit -> Creates stock entry, redirects to "view" state
 
 
 The main view switches between two tables: read and write (to adjust quantities, enter S/N....)
 
 For serialized items, we force entry of components for one item at a time, so the "Submit" button becomes a "Next" button.
+Also, STEs are saved in draft state, to allow scanning serial numbers before closing an enclosure, then submitting after QC.
+
 */
 
 // TODO: what if same info is submitted / sent twice? <-- From another tab open for example.
-// Handle SNs.
-// Fix valuation - client side scripts are no longer called. Maybe fetch my own custom script?
-//  Or move my script to a JS library function.
-// Consider removing "view" mode for serialized items.
 // Consider switching to serialized view if any serialized items are present. It shouldn't happen, but why not.
-// Make batches optional if auto-numbering of batch is enabled for that item.
 // Batch input: change to multiselectlist, with get_data fetch possible batches?
+// Consider: allow re-working a stock entry. Instead of always building STE from scratch, load existing
+// 		one with existing SNs & Batches. Would allow scanning components in several stages, and
+// 		SNs wouldn't be lost when redrawing the table after adding additional items.
 
 frappe.provide("frappe.bnovate.work_order_execution")
 
@@ -103,7 +104,9 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		});
 
 		page.clear_primary_action();
+		page.clear_secondary_action();
 		if (state.view == read) {
+			page.set_secondary_action('Reload', () => state.load_work_order(state.work_order_id));
 			item_content.innerHTML = frappe.render_template('items_read', {
 				doc: state.work_order_doc,
 				ste_docs: state.ste_docs,
@@ -417,14 +420,16 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		// Post comment (saved doc has a docname)
 		let comment = document.getElementById("comment").value;
 		if (comment) {
-			post_comment(state.ste_doc.doctype, state.ste_doc.name, comment);
-			post_comment(state.work_order_doc.doctype, state.work_order_doc.name, comment);
+			await Promise.all([
+				post_comment(state.ste_doc.doctype, state.ste_doc.name, comment),
+				post_comment(state.work_order_doc.doctype, state.work_order_doc.name, comment),
+			]);
 		}
 
 		if (state.draft_mode) {
-			save_doc(state.ste_doc);
+			await save_doc(state.ste_doc);
 		} else {
-			submit_doc(state.ste_doc);
+			await submit_doc(state.ste_doc);
 		}
 		frappe.show_alert(`<a href="#Form/Stock Entry/${state.ste_doc.name}">${state.ste_doc.name} created</a>`)
 
