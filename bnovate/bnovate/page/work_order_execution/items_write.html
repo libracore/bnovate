@@ -73,14 +73,20 @@
                     <tr>
                         <th style="width: 5%" class="table-sr">Sr</th>
 
-                        <th style="width: 20%;" class="">
+                        <th style="width: 15%;" class="">
                             Item Code
                         </th>
+
                         <th style="width: 25%;" class="">
                             Item Name
                         </th>
+
                         <th style="width: 10%;" class="text-right">
                             Required Qty
+                        </th>
+
+                        <th style="width: 5%;" class="text-left">
+                            Unit
                         </th>
 
                         <th style="width: 10%;" class="text-left">
@@ -115,6 +121,11 @@
                             <div class="value">
                                 {{ item.qty }}
                             </div>
+                        </td>
+                        <td class="text-left">
+                            <div class="value">
+                                {{ item.uom }}
+                            </div> 
                         </td>
 
                         <td class="text-left">
