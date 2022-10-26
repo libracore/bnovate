@@ -34,7 +34,7 @@ def download_wo_label(ste_name):
 
     template = """<style>{css}</style>{html}""".format(css=pf.css, html=pf.html)
     content = frappe.render_template(template, {"doc": ste})
-    return download_label("Labels 100x25mm", content)
+    return download_label("Labels 100x30mm", content)
 
 @frappe.whitelist()
 def download_pouch_label(ste_name):
