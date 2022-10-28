@@ -53,7 +53,8 @@ ORDER BY expected_delivery_date
 
 	for row in data:
 		row['comment'] = """<p title="{value}">{value}</p>""".format(value=row['comment'])
-		row['item'] = """<a href="/desk#Form/Work%20Order/{wo}">{item_code}: {item_name}</a>""".format(wo=row['work_order'], item_code=row['item'], item_name=row['item_name'])
+		row['item'] = """<a href="/desk#work-order-execution?work_order={wo}">{item_code}: {item_name}</a>""".format(wo=row['work_order'], item_code=row['item'], item_name=row['item_name'])
+		row['work_order'] = """<a href="/desk#work-order-execution?work_order={wo}">{wo}</a>""".format(wo=row['work_order'])
 		# wo_url = quote("/desk#Form/Work%20Order/{wo}".format(wo=row['work_order']))
 		# row['work_order'] = """<a href="/desk#Form/Work%20Order/{wo}">{wo}</a> <img src="https://data.libracore.ch/phpqrcode/api/qrcode.php?content={url}&ecc=L&size=2&frame=0">""".format(wo=row['work_order'], url=wo_url)
 
