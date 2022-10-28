@@ -510,6 +510,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 				secondary_action_label: 'Cancel',
 				secondary_action: function () {
 					reject();
+					draw();
 				}
 			});
 			d.show();
