@@ -122,7 +122,7 @@
                     </tr> -->
                     <tr>
                         <th>Expected delivery date</th>
-                        <td>{{ doc.expected_delivery_date }}</td>
+                        <td>{{ frappe.format(doc.expected_delivery_date, {fieldtype: "Date"}) }}</td>
                     </tr>
                 </tbody>
             </table>

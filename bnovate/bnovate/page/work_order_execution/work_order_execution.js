@@ -57,7 +57,8 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		serial_no_remaining: 0,  	// when producing with S/N, loop this many more times
 		produce_batch: false,		// true if produced item needs a batch number.
 		needs_expiry_date: false,	// when produced item needs an expiry date.
-		default_shelf_life: 0,		// used to calculate expiry date.
+		expiry_date_control: null,	// contains expiry date control if it exists...
+		default_shelf_life: 9,		// [months] used to calculate expiry date
 	}
 	frappe.bnovate.work_order_execution.state = state;
 	window.state = state;
@@ -129,9 +130,10 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			}
 
 			if (state.needs_expiry_date) {
-				let expiry_input = draw_expiry_input("#expiry-div");
+				state.expiry_date_control = draw_expiry_input("#expiry-div");
 				document.getElementById("expiry-div").hidden = false;
-				window.expiry_input = expiry_input;
+			} else {
+				state.expiry_date_control = null;
 			}
 
 			attach_validator();
@@ -150,7 +152,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 
 	function draw_expiry_input(parent_id) {
 		// Use frappe API to draw their own date selection box.
-		let form_control = frappe.ui.form.make_control({
+		expiry_date_control = frappe.ui.form.make_control({
 			parent: page.wrapper.find(parent_id),
 			df: { fieldname: 'expiry_date', fieldtype: 'Date' },
 			render_input: true
@@ -158,12 +160,12 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 
 		// form_control is a div with many elements.
 		// Find the input element
-		let input = document.querySelectorAll('input[data-fieldname="expiry_date"]')?.[0];
+		let input = expiry_date_control.input
 		input.classList.add('required');
 		input.dataset.required = true;
-		input.value = frappe.datetime.add_days(state.work_order_doc.expected_delivery_date, state.default_shelf_life);
+		expiry_date_control.set_value(frappe.datetime.add_months(state.work_order_doc.expected_delivery_date, state.default_shelf_life));
 
-		return input;
+		return expiry_date_control;
 	}
 
 	async function refresh() {
@@ -206,7 +208,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 
 		// do we need an expiry date? For now only FILs need them.
 		state.needs_expiry_date = is_fill(state.work_order_doc.production_item);
-		state.default_shelf_life = locals["Item"][state.work_order_doc.production_item].shelf_life_in_days
+		// state.default_shelf_life = locals["Item"][state.work_order_doc.production_item].shelf_life_in_days <-- days vs months...
 
 		// BOMs can't change after submit, no need to clear cache
 		state.bom_doc = await frappe.model.with_doc('BOM', state.work_order_doc.bom_no);
@@ -381,9 +383,8 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 				state.ste_doc.items.find(i => i.idx == idx && i.item_code == item).serial_no = serial_no.trim(); // scrap items can have same index as input items, need to double-check item_code.
 			});
 		// Handle expiry date if relevant
-		let expiry_input = document.querySelectorAll('input[data-fieldname="expiry_date"]')?.[0]
-		if (expiry_input) {
-			state.ste_doc.expiry_date = expiry_input.value;
+		if (state.needs_expiry_date && state.expiry_input) {
+			state.ste_doc.expiry_date = state.expiry_input.get_value();
 		}
 
 		if (state.ste_doc.production_item_entry.has_batch_no) {
