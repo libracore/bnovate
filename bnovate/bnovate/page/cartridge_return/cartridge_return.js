@@ -14,6 +14,7 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 		encs: [
 		], // will contain list of objects with attributes: serial_no [str], warehouse [str], transferred [bool]
 	};
+	window.state = state;
 
 	let form = new frappe.ui.FieldGroup({
 		fields: [{
@@ -52,7 +53,7 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 		<tr>
 			<td><a href="/desk#Form/Serial No/{{ enc.serial_no }}" target="_blank">{{ enc.serial_no }}</a></td>
 			<td>{{ enc.warehouse }}</td>
-			<td>{{ enc.customer }}</td>
+			<td>{{ enc.customer_name }}</td>
 			<td>
 				{% if enc.transferred %}
 					<i class="octicon octicon-check" style="color: #4bc240"></i>
@@ -101,6 +102,7 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 				serial_no,
 				warehouse: location.warehouse,
 				customer: location.customer,
+				customer_name: location.customer_name,
 				error: location.error
 			})
 		}
@@ -137,7 +139,8 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 	async function lookup_location(serial_no) {
 		try {
 			let sn_doc = await frappe.db.get_doc('Serial No', serial_no);
-			let customer = sn_doc.customer_name; // This never happens with cartridges
+			let customer = sn_doc.customer; // This never happens with cartridges
+			let customer_name = sn_doc.customer_name;
 			let item_code = sn_doc.item_code;
 			let error = '';
 
@@ -149,11 +152,13 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 				// Typical configuration of Serial No doc for cartridges after delivery.
 				let dn_doc = await frappe.db.get_doc('Delivery Note', sn_doc.purchase_document_no);
 				console.log(dn_doc)
-				customer = dn_doc.customer_name;
+				customer = dn_doc.customer;
+				customer_name = dn_doc.customer_name;
 			}
 			return {
 				warehouse: sn_doc.warehouse,
 				customer: customer,
+				customer_name: customer_name,
 				error: error,
 			}
 		} catch (err) {
@@ -196,6 +201,7 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 			title: `Cartridge Return for ${enc.serial_no}`,
 			stock_entry_type: "Repack",
 			docstatus: 1,
+			from_customer: enc.customer,
 			items: [{
 				item_code: 100146,
 				qty: 1,
