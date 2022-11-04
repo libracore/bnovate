@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 from __future__ import unicode_literals
+from contextlib import nullcontext
 import frappe
 from frappe import _
 
@@ -32,17 +33,17 @@ def get_name(item_code):
 	name_memo[item_code] = item.item_name
 	return item.item_name
 
-def build_tree(data, indent=0, batch_no=None, serial_no=None):
+def build_tree(data, indent=0, batch_no=None, serial_no=None, visited_nodes={}):
 
 	print("looking for batch no or serial no", batch_no, serial_no)
 
-	if batch_no is None and serial_no is None:
+	if not batch_no and not serial_no:
 		# Ignore items with no serial or batch no.
 		return
 
 	filters={
 		'actual_qty': ['>', '0'],
-		'posting_date': ['<=', ]
+		'voucher_type': ['in', ['Stock Entry', 'Purchase Receipt']],
 	}
 	if batch_no:
 		filters['batch_no'] = batch_no
@@ -57,6 +58,12 @@ def build_tree(data, indent=0, batch_no=None, serial_no=None):
 	)
 
 	for le in ledger_entries:
+
+		# Avoid infinite recursion.
+		# if le.voucher_no in visited_nodes:
+		#	continue
+		visited_nodes[le.voucher_no] = True
+
 		data.append({
 			'indent': indent,
 			'item_code': le.item_code,
@@ -67,15 +74,17 @@ def build_tree(data, indent=0, batch_no=None, serial_no=None):
 			'serial_no': le.serial_no,
 			'production_date': le.posting_date,
 		})
+
 		doc = frappe.get_doc(le.voucher_type, le.voucher_no)
-		
+		print("Found doc", doc.name)
+
 		# this is either an STE or a PREC.
-		if le.voucher_type == 'Stock Entry':
+		if doc.doctype == 'Stock Entry' and doc.stock_entry_type in ['Manufacture', 'Repack']:
 			# Find all batched items and start over.
 			for item in doc.items:
 				#TODO: handle case where same serial no comes in and out - avoid infinite recursion.
-				if item.s_warehouse:
-					build_tree(data, indent+1, item.batch_no, item.serial_no)
+				if item.s_warehouse and item.item_code != le.item_code:
+					build_tree(data, indent+1, item.batch_no, item.serial_no, visited_nodes)
 
 def get_data(filters):
 	# filters.batch_no = '220906_Rinse'
