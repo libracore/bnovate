@@ -383,8 +383,8 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 				state.ste_doc.items.find(i => i.idx == idx && i.item_code == item).serial_no = serial_no.trim(); // scrap items can have same index as input items, need to double-check item_code.
 			});
 		// Handle expiry date if relevant
-		if (state.needs_expiry_date && state.expiry_input) {
-			state.ste_doc.expiry_date = state.expiry_input.get_value();
+		if (state.needs_expiry_date && state.expiry_date_control) {
+			state.ste_doc.expiry_date = state.expiry_date_control.get_value();
 		}
 
 		if (state.ste_doc.production_item_entry.has_batch_no) {
