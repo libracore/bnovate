@@ -45,7 +45,7 @@
                         <td>
                             <input class="serial form-control required" id="serial-scrap-{{ scrap_item.idx }}"
                             name="serial-scrap-{{ scrap_item.idx }}" data-idx="{{ scrap_item.idx }}"
-                            data-item="{{ scrap_item.item_code }}" data-required tabindex="1">
+                            data-item="{{ scrap_item.item_code }}" data-required tabindex="2">
                         </td>  
                     </tr>
                     {% endif %} 
@@ -131,7 +131,7 @@
                         <td class="text-left">
                             <div class="value">
                                 <input class="qty-delta form-control" id="delta-{{ item.idx }}"
-                                    name="delta-{{ item.idx }}" data-idx="{{ item.idx }}" tabindex="{{ item.idx + doc.items.length }}">
+                                    name="delta-{{ item.idx }}" data-idx="{{ item.idx }}" tabindex="{{ item.idx + doc.items.length + 2}}">
                             </div>
                         </td>
 
@@ -139,7 +139,7 @@
                             {% if item.has_batch_no %}
                             <div class="value">
                                 <input class="batch form-control required" id="batch-{{ item.idx }}"
-                                    name="batch-{{ item.idx }}" data-idx="{{ item.idx }}" data-required tabindex="{{ item.idx + 1 }}">
+                                    name="batch-{{ item.idx }}" data-idx="{{ item.idx }}" data-required tabindex="{{ item.idx + 2 }}">
                             </div>
                             {% endif %}
                         </td>
@@ -149,7 +149,7 @@
                             {% if item.has_serial_no %}
                             <div class="value">
                                 <input class="serial form-control required" id="serial-{{ item.idx }}"
-                                    name="serial-{{ item.idx }}" data-idx="{{ item.idx }}" data-item="{{ item.item_code }}" data-required tabindex="{{ item.idx + 1 }}">
+                                    name="serial-{{ item.idx }}" data-idx="{{ item.idx }}" data-item="{{ item.item_code }}" data-required tabindex="{{ item.idx + 2 }}">
                             </div>
                             {% endif %}
                         </td>
