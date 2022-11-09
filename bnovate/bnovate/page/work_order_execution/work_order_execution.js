@@ -139,6 +139,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			attach_validator();
 			attach_enterToTab();
 			attach_additional_item_buttons();
+			focus_next_input(0);
 		}
 
 		let doc = state.work_order_doc;
@@ -702,13 +703,18 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			.map(el => el.addEventListener("keydown", event => {
 				if (event.key === "Enter") {
 					// Find input with next highest tabIndex.
-					let nextInput = [...document.querySelectorAll("input")]
-						.filter(el => el.tabIndex > event.target.tabIndex)
-						.sort((el1, el2) => el1.tabIndex - el2.tabIndex)[0];
-					nextInput?.focus();
+					focus_next_input(event.target.tabIndex);
 					event.preventDefault();
 				}
 			}));
+	}
+
+	// Focus input with next highest tabIndex (set tabIndex=0 to focus first input)
+	function focus_next_input(tabIndex) {
+		let nextInput = [...document.querySelectorAll("input")]
+			.filter(el => el.tabIndex > tabIndex)
+			.sort((el1, el2) => el1.tabIndex - el2.tabIndex)[0];
+		nextInput?.focus();
 	}
 
 	function attach_ste_submits() {
