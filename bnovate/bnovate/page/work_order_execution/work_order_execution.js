@@ -232,10 +232,13 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			doc.produced_batch = doc.items.find(it => it.item_code == state.work_order_doc.production_item)?.batch_no?.replaceAll("\n", ", ");
 		}
 
+		let item_links = locals["Item"][state.work_order_doc.production_item].links; // Assumes we have this custom table on Item doctype
+
 		state.attachments = [];
 		state.attachments.push(
 			...state.docinfo['Work Order'][wo_id].attachments || [],
-			...state.docinfo['BOM'][state.work_order_doc.bom_no].attachments || []
+			...state.docinfo['BOM'][state.work_order_doc.bom_no].attachments || [],
+			...item_links?.map(link => ({ file_url: link.url, file_name: link.title })) || [],
 		);
 		draw();
 	}
