@@ -79,13 +79,16 @@ app_include_js = "/assets/bnovate/js/bnovate_common.js"
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
+doc_events = {
 # 	"*": {
 # 		"on_update": "method",
 # 		"on_cancel": "method",
 # 		"on_trash": "method"
 #	}
-# }
+    "Work Order": {
+        "on_update": "bnovate.bnovate.page.work_order_execution.work_order_execution.calculate_total_time",
+    }
+}
 
 # Scheduled Tasks
 # ---------------

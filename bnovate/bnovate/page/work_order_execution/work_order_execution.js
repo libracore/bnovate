@@ -650,6 +650,30 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 	frappe.bnovate.work_order_execution.submit_doc = submit_doc;
 
 
+	async function start_time_log(work_order_id) {
+		let resp = await frappe.call({
+			method: "bnovate.bnovate.page.work_order_execution.work_order_execution.start_log",
+			args: {
+				work_order_id,
+			}
+		});
+		return resp.message;
+	}
+	frappe.bnovate.work_order_execution.start_time_log = start_time_log;
+
+
+	async function stop_time_log(work_order_id) {
+		let resp = await frappe.call({
+			method: "bnovate.bnovate.page.work_order_execution.work_order_execution.stop_log",
+			args: {
+				work_order_id,
+			}
+		});
+		return resp.message;
+	}
+	frappe.bnovate.work_order_execution.stop_time_log = stop_time_log;
+
+
 	async function fetch_item_details(item_codes) {
 		// Fetch item detail docs, store in locals["Items"].
 		let promises = [];
