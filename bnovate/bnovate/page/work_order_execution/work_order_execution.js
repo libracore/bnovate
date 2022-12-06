@@ -25,6 +25,7 @@ Also, STEs are saved in draft state, to allow scanning serial numbers before clo
 */
 
 // TODO: what if same info is submitted / sent twice? <-- From another tab open for example.
+// Time tracking: stop tracking on submit? Fail safe, don't stop progress if timer had already finished.
 // Consider switching to serialized view if any serialized items are present. It shouldn't happen, but why not.
 // Batch input: change to multiselectlist, with get_data fetch possible batches?
 // Consider: allow re-working a stock entry. Instead of always building STE from scratch, load existing
@@ -73,6 +74,11 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			label: '',
 			fieldtype: 'Column Break',
 		}, {
+			label: 'Time tracking',
+			fieldname: 'time_tracking',
+			fieldtype: 'HTML',
+			options: '<div id="time_tracking"></div>',
+		}, {
 			label: '',
 			fieldtype: 'Column Break',
 		}, {
@@ -94,6 +100,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 	form.make();
 
 	const work_order = form.fields_dict.work_order.wrapper;
+	const time_content = document.getElementById('time_tracking');
 	const main_content = document.getElementById('main');
 	const item_content = document.getElementById('items');
 
@@ -103,6 +110,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			docinfo: state.docinfo,
 			attachments: state.attachments,
 		});
+		time_tracking.innerHTML = "";
 
 		page.clear_primary_action();
 		page.clear_secondary_action();
@@ -116,9 +124,14 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			});
 			if (state.remaining_qty > 0 && state.work_order_doc.docstatus == 1 && state.work_order_doc.status != "Stopped") {
 				page.set_primary_action(state.draft_mode ? 'Start' : 'Finish', finish);
+				time_tracking.innerHTML = frappe.render_template('time_tracking', {
+					doc: state.work_order_doc,
+					timing_started: state.timing_started,
+				})
 			}
 			attach_ste_submits();
 			attach_print_labels();
+			attach_timer_buttons();
 		} else if (state.view == write) {
 			item_content.innerHTML = frappe.render_template('items_write', {
 				doc: state.ste_doc,
@@ -169,9 +182,13 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		return expiry_date_control;
 	}
 
-	async function refresh() {
+	async function refresh(pulse_elements = []) {
 		await state.load_work_order(state.work_order_id);
-		document.getElementById("produced-qty").classList.add("pulse-info");
+
+
+		for (let element of pulse_elements) {
+			document.getElementById(element).classList.add("pulse-info");
+		}
 	}
 
 	// DATA STRUCTURE
@@ -232,14 +249,18 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			doc.produced_batch = doc.items.find(it => it.item_code == state.work_order_doc.production_item)?.batch_no?.replaceAll("\n", ", ");
 		}
 
+		// Load attachments / linked docs
 		let item_links = locals["Item"][state.work_order_doc.production_item].links; // Assumes we have this custom table on Item doctype
-
 		state.attachments = [];
 		state.attachments.push(
 			...state.docinfo['Work Order'][wo_id].attachments || [],
 			...state.docinfo['BOM'][state.work_order_doc.bom_no].attachments || [],
 			...item_links?.map(link => ({ file_url: link.url, file_name: link.title })) || [],
 		);
+
+		// Check time tracking status. If a row with no end_time exists, then timing has started.
+		state.timing_started = state.work_order_doc.time_log.map(row => row.end_time).indexOf(undefined) > 0;
+
 		draw();
 	}
 
@@ -311,6 +332,11 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		if (qty == 0) {
 			return;
 		}
+
+		if (state.timing_started) {
+			stop_time_log(state.work_order_id);
+		}
+
 		if (state.produce_serial_no) {
 			state.serial_no_remaining = qty - 1;
 			return await build_ste(1)
@@ -443,7 +469,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			return await build_ste(1);
 		}
 		// Reload, flash new produced qty
-		refresh();
+		refresh(["produced-qty"]);
 	}
 
 	function handle_scrap(ste_doc, bom_item) {
@@ -799,6 +825,24 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 				draw();
 			}));
 
+	}
+
+	function attach_timer_buttons() {
+		const start_button = document.querySelectorAll('.start-timer')[0];
+		if (start_button) {
+			start_button.addEventListener('click', async event => {
+				await start_time_log(state.work_order_id);
+				refresh();
+			});
+		}
+
+		const stop_button = document.querySelectorAll('.stop-timer')[0];
+		if (stop_button) {
+			stop_button.addEventListener('click', async event => {
+				await stop_time_log(state.work_order_id);
+				refresh();
+			});
+		}
 	}
 
 	work_order.addEventListener("change", (e) => {
