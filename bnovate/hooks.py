@@ -86,7 +86,12 @@ doc_events = {
 # 		"on_trash": "method"
 #	}
     "Work Order": {
-        "on_update": "bnovate.bnovate.page.work_order_execution.work_order_execution.calculate_total_time",
+        "before_save": "bnovate.bnovate.page.work_order_execution.work_order_execution.calculate_total_time",
+        "on_update_after_submit": "bnovate.bnovate.page.work_order_execution.work_order_execution.calculate_total_time",
+    },
+    "Stock Entry": {
+        "on_submit": "bnovate.bnovate.page.work_order_execution.work_order_execution.update_work_order_unit_time",
+        "on_cancel": "bnovate.bnovate.page.work_order_execution.work_order_execution.update_work_order_unit_time",
     }
 }
 
