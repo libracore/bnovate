@@ -7,6 +7,7 @@
 # - time_log: table of "Work Order Time Log" child items. These have a datetime start_time and end_time field, and a float duration field.
 #           start_time is mandatory, duration is read-only. All can be changed after submit.
 # - total_time: float, total duration in minutes. Read only, allowed on submit.
+# - time_per_unit
 #
 
 from __future__ import unicode_literals

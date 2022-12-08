@@ -259,7 +259,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		);
 
 		// Check time tracking status. If a row with no end_time exists, then timing has started.
-		state.timing_started = state.work_order_doc.time_log.map(row => row.end_time).indexOf(undefined) > 0;
+		state.timing_started = state.work_order_doc.time_log.map(row => row.end_time).indexOf(undefined) >= 0;
 
 		draw();
 	}
