@@ -276,6 +276,8 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			item.has_auto_batch_number = !!locals["Item"][item.item_code].batch_number_series;
 			item.needs_batch_input = item.has_batch_no && !item.has_auto_batch_number;
 			item.has_serial_no = locals["Item"][item.item_code].has_serial_no;
+			item.has_auto_serial_no = locals["Item"][item.item_code].serial_no_series;
+			item.needs_serial_input = item.has_serial_no && !item.has_auto_serial_no;
 		}
 		ste.production_item_entry = ste.items.find(it => it.item_code == state.work_order_doc.production_item);
 		ste.required_items = ste.items.filter(i => i.s_warehouse).sort((i_a, i_b) => i_a.idx - i_b.idx);

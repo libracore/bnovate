@@ -18,7 +18,23 @@
         </div>
         {% endif %}
 
+        {% if doc.production_item_entry.has_batch_no %}
+            {% if not doc.production_item_entry.needs_batch_input %}
+                <div class="bn-col info">
+                    <i class="fa fa-info-circle"></i> Batch no is automatically generated.
+                </div>
+            {% endif %}
+        {% endif %}
+
         {% if doc.production_item_entry.has_serial_no %}
+            {% if not doc.production_item_entry.needs_serial_input %}
+                <div class="bn-col info">
+                    <i class="fa fa-info-circle"></i> Serial no is automatically generated.
+                </div>
+            {% endif %}
+        {% endif %}
+
+        {% if doc.production_item_entry.needs_serial_input %}
         <div class="bn-col">
             <h3>Serial No produced</h3>
             <table class="table table-condensed no-margin" style="border-bottom: 1px solid #d1d8dd">
