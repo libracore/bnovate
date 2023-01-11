@@ -261,7 +261,7 @@ def simbase_get_cards():
 @frappe.whitelist()
 def rms_get_devices():
     settings = frappe.get_single("bNovate Settings")
-    return mock
+    # return mock
     return requests.request(
         "GET", 
         "https://rms.teltonika-networks.com/api/devices", 

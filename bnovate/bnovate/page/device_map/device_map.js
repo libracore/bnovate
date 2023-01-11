@@ -13,6 +13,7 @@ frappe.pages['device-map'].on_page_load = function (wrapper) {
 
 	const state = {
 		devices: [], // List of connected devices
+		map: null,   // will contain leaflet map
 	}
 	frappe.bnovate.device_map.state = state;
 	window.state = state;
@@ -30,27 +31,39 @@ frappe.pages['device-map'].on_page_load = function (wrapper) {
 	page.form = form;
 
 	function draw() {
-		let map = L.map('map').setView([46.35357481001013, 6.7310494232727764], 10);
-		page.map = map;
-		// force re-draw
-		setTimeout(() => map.invalidateSize(), 100);
+		page.set_secondary_action('Reload', () => load_devices());
+		draw_map();
+	}
+
+	function draw_map() {
+		state.map?.off();
+		state.map?.remove();
+
+		let map = L.map('map').setView([46.35357481001013, 6.7310494232727764], 5);
+		state.map = map;
 
 		L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 			attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 		}).addTo(map);
+		let markers = L.markerClusterGroup();
+		map.addLayer(markers);
 
 		for (let device of state.devices) {
-			L.marker([device.latitude, device.longitude]).addTo(map)
-				.bindPopup(device.name)
-				.openPopup();
-
+			markers.addLayer(
+				L.marker([device.latitude || device.user_set_latitude, device.longitude || device.user_set_longitude])
+					.bindPopup(device.name)
+					.openPopup()
+			);
 		}
-
+		map.fitBounds(markers.getBounds().pad(0.5));
 	}
+
+	/********************************
+	 * DATA MODEL
+	 ********************************/
 
 	async function load_devices() {
 		state.devices = await get_devices();
-
 		draw();
 	}
 	load_devices();
