@@ -1,4 +1,9 @@
-frappe.provide("frappe.bnovate.device_map")
+frappe.require(["/assets/frappe/css/frappe-datatable.css",
+	"/assets/frappe/js/lib/clusterize.min.js",
+	"/assets/frappe/js/lib/Sortable.min.js",
+	"/assets/frappe/js/lib/frappe-datatable.js"])
+
+frappe.provide("frappe.bnovate.device_map");
 
 frappe.pages['device-map'].on_page_load = function (wrapper) {
 	var page = frappe.ui.make_app_page({
@@ -12,8 +17,9 @@ frappe.pages['device-map'].on_page_load = function (wrapper) {
 	window.page = page;
 
 	const state = {
-		devices: [], // List of connected devices
-		map: null,   // will contain leaflet map
+		devices: [], 	// List of connected devices
+		map: null,   	// will contain leaflet map
+		report_data: {} // will contain columns and result for DataTable as provided by a report.
 	}
 	frappe.bnovate.device_map.state = state;
 	window.state = state;
@@ -24,6 +30,12 @@ frappe.pages['device-map'].on_page_load = function (wrapper) {
 			fieldname: 'map',
 			fieldtype: 'HTML',
 			options: '<div id="map" style="height: 800px; width: 100%"></div>',
+		}, {
+			label: 'Table',
+			fieldname: 'table',
+			fieldtype: 'HTML',
+			options: '<div id="table"></div>',
+
 		}],
 		body: page.body
 	});
@@ -31,7 +43,7 @@ frappe.pages['device-map'].on_page_load = function (wrapper) {
 	page.form = form;
 
 	function draw() {
-		page.set_secondary_action('Reload', () => load_devices());
+		page.set_secondary_action('Reload', () => load());
 		draw_map();
 	}
 
@@ -58,16 +70,55 @@ frappe.pages['device-map'].on_page_load = function (wrapper) {
 		map.fitBounds(markers.getBounds().pad(0.5));
 	}
 
+	async function draw_table() {
+		// Use Frappe's QueryReport class to transform data for DataTable:
+		let report = new frappe.views.QueryReport({ parent: page.form.fields_dict.table.wrapper });
+		report.report_settings = {}
+		window.report = report;
+		// report.report_name = 'Late Purchases';  // TODO: cleanup
+		// await report.get_report_doc();
+		// await report.get_report_settings();
+		// report.prepare_report_data(state.report_data);
+		report.columns = report.prepare_columns(state.report_data.columns);
+		report.data = report.prepare_data(state.report_data.result);
+		console.log(report.columns);
+		console.log(report.data);
+		// // report.prepare_columns(state.report_data.columns):
+
+		// let table_element = document.getElementById('table');
+		let dt = new DataTable(form.fields_dict.table.wrapper, {
+			columns: report.columns,
+			data: report.data,
+			inlineFilters: true,
+			treeView: false,
+			layout: 'fixed',
+			cellHeight: 33,
+			showTotalRow: false,
+		})
+	}
+	window.draw_table = draw_table
+
 	/********************************
 	 * DATA MODEL
 	 ********************************/
 
-	async function load_devices() {
-		state.devices = await get_devices();
+	async function load() {
+		await load_devices();
+		await load_report();
+
 		draw();
 	}
-	load_devices();
 
+	async function load_devices() {
+		state.devices = await get_devices();
+	}
+
+	async function load_report() {
+		state.report_data = await get_report();
+	}
+
+
+	load();
 
 	/*******************************
 	 * SERVER CALLS
@@ -81,5 +132,22 @@ frappe.pages['device-map'].on_page_load = function (wrapper) {
 		console.log(resp);
 
 		return resp.message.data;
+	}
+
+	// Example of how we could get report data.
+	async function get_report() {
+		let resp = await frappe.call({
+			method: "frappe.desk.query_report.run",
+			args: {
+				report_name: "Late Purchases",
+				filters: {
+					only_stock_items: 1,
+				}
+			}
+		})
+
+		console.log(resp);
+
+		return resp.message;
 	}
 }

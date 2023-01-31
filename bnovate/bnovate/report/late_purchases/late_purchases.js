@@ -21,5 +21,5 @@ frappe.query_reports["Late Purchases"] = {
 			"label": __("Expected in ... days"),
 			"fieldtype": "Int",
 		},
-	]
+	],
 };
