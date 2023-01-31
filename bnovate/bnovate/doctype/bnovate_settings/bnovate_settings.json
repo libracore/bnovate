@@ -1,0 +1,44 @@
+{
+ "creation": "2023-01-10 09:52:41.823666",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "simbase_api_key",
+  "rms_api_token"
+ ],
+ "fields": [
+  {
+   "fieldname": "simbase_api_key",
+   "fieldtype": "Data",
+   "label": "Simbase API key"
+  },
+  {
+   "fieldname": "rms_api_token",
+   "fieldtype": "Long Text",
+   "label": "RMS API token"
+  }
+ ],
+ "issingle": 1,
+ "modified": "2023-01-10 10:48:05.140400",
+ "modified_by": "douglas.watson@bnovate.com",
+ "module": "bNovate",
+ "name": "bNovate Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

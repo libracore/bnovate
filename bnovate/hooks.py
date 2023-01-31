@@ -15,8 +15,13 @@ app_license = "AGPL"
 # ------------------
 
 # include js, css files in header of desk.html
-# app_include_css = "/assets/bnovate/css/bnovate.css"
-app_include_js = "/assets/bnovate/js/bnovate_common.js"
+app_include_css = [
+    "/assets/css/bnovate.min.css",
+]
+app_include_js = [ # Note to self: in case of changes, may need to run bench build --app bnovate
+    "/assets/bnovate/js/bnovate_common.js",
+    "/assets/js/bnovate_libs.min.js",
+]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/bnovate/css/bnovate.css"

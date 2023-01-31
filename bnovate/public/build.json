@@ -1,5 +1,14 @@
 {
     "js/bnovate.js": [
         "public/js/bnovate_common.js"
+    ],
+
+    "js/bnovate_libs.min.js": [
+        "public/js/lib/leaflet/leaflet.markercluster.js"
+    ],
+
+    "css/bnovate.min.css": [
+        "public/js/lib/leaflet/MarkerCluster.css",
+        "public/js/lib/leaflet/MarkerCluster.Default.css"
     ]
 }
