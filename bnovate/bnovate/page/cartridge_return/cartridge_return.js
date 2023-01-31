@@ -45,6 +45,7 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 			<th>Serial No</th>
 			<th>Warehouse</th>
 			<th>Customer</th>
+			<th>Repair?</th>
 			<th></th>
 		</tr>
 		</thead>
@@ -54,6 +55,11 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 			<td><a href="/desk#Form/Serial No/{{ enc.serial_no }}" target="_blank">{{ enc.serial_no }}</a></td>
 			<td>{{ enc.warehouse }}</td>
 			<td>{{ enc.customer_name }}</td>
+			<td>
+				{% if not enc.transferred %}
+					<input type="checkbox" class="repair-needed" id="repair-{{ enc.serial_no }}">
+				{% endif %}
+			</td>
 			<td>
 				{% if enc.transferred %}
 					<i class="octicon octicon-check" style="color: #4bc240"></i>
@@ -196,6 +202,8 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 	}
 
 	async function create_repack_entry(enc) {
+		const needs_repair = document.getElementById(`repair-${enc.serial_no}`).checked;
+		const warehouse = needs_repair ? "Repairs - bN" : "To Refill - bN";
 		doc = await frappe.db.insert({
 			doctype: "Stock Entry",
 			title: `Cartridge Return for ${enc.serial_no}`,
@@ -206,7 +214,7 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 				item_code: 100146,
 				qty: 1,
 				s_warehouse: enc.warehouse,
-				t_warehouse: "To Refill - bN",
+				t_warehouse: warehouse,
 				serial_no: enc.serial_no,
 			}, {
 				item_code: 100016, // Tubing pouch 200 mm
@@ -223,7 +231,7 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 
 	async function create_all_entries() {
 		for (enc of Object.values(state.encs)) {
-			if (enc.warehouse !== "To Refill - bN" && !enc.error) {
+			if (enc.warehouse !== "To Refill - bN" && enc.warehouse !== "Repairs - bN" && !enc.error) {
 				let doc = await create_repack_entry(enc);
 				console.log(doc);
 				if (doc) {
