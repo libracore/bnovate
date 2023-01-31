@@ -127,18 +127,18 @@ def get_data():
                    }
             ]
         },
-         {
-            "label": _("IoT"),
-            "icon": "octicon octicon-git-compare",
-            "items": [
-                   {
-                        "type": "page",
-                        "name": "device-map",
-                        "label": _("Connected Device Map"),
-                        "description": _("Information about connected devices")           
-                   }
-            ]
-        },
+        #  {
+        #     "label": _("IoT"),
+        #     "icon": "octicon octicon-git-compare",
+        #     "items": [
+        #            {
+        #                 "type": "page",
+        #                 "name": "device-map",
+        #                 "label": _("Connected Device Map"),
+        #                 "description": _("Information about connected devices")           
+        #            }
+        #     ]
+        # },
         {
             "label": _("Switzerland"),
             "icon": "fa fa-money",
