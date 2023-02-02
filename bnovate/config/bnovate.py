@@ -48,6 +48,13 @@ def get_data():
                         "doctype": "Serial No",
                         "is_query_report": True    
                    },    
+                   {
+                        "type": "report",
+                        "name": "Stored Cartridges",
+                        "label": _("Stored Cartridges"),
+                        "doctype": "Serial No",
+                        "is_query_report": True    
+                   },    
                     {
                         "type": "page",
                         "name": "cartridge-return",
