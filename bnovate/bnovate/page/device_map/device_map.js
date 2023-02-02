@@ -45,6 +45,7 @@ frappe.pages['device-map'].on_page_load = function (wrapper) {
 	function draw() {
 		page.set_secondary_action('Reload', () => load());
 		draw_map();
+		draw_table();
 	}
 
 	function draw_map() {
@@ -78,23 +79,9 @@ frappe.pages['device-map'].on_page_load = function (wrapper) {
 		// report.report_name = 'Late Purchases';  // TODO: cleanup
 		// await report.get_report_doc();
 		// await report.get_report_settings();
-		// report.prepare_report_data(state.report_data);
-		report.columns = report.prepare_columns(state.report_data.columns);
-		report.data = report.prepare_data(state.report_data.result);
-		console.log(report.columns);
-		console.log(report.data);
-		// // report.prepare_columns(state.report_data.columns):
-
-		// let table_element = document.getElementById('table');
-		let dt = new DataTable(form.fields_dict.table.wrapper, {
-			columns: report.columns,
-			data: report.data,
-			inlineFilters: true,
-			treeView: false,
-			layout: 'fixed',
-			cellHeight: 33,
-			showTotalRow: false,
-		})
+		report.$report = [form.fields_dict.table.wrapper];
+		report.prepare_report_data(state.report_data);
+		report.render_datatable()
 	}
 	window.draw_table = draw_table
 
