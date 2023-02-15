@@ -49,10 +49,11 @@ frappe.pages['device-map'].on_page_load = function (wrapper) {
 	}
 
 	function draw_map() {
+		let [bn_lat, bn_long] = [46.35357481001013, 6.7310494232727764]
 		state.map?.off();
 		state.map?.remove();
 
-		let map = L.map('map').setView([46.35357481001013, 6.7310494232727764], 5);
+		let map = L.map('map').setView([bn_lat, bn_long], 5);
 		state.map = map;
 
 		L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -63,7 +64,7 @@ frappe.pages['device-map'].on_page_load = function (wrapper) {
 
 		for (let device of state.devices) {
 			markers.addLayer(
-				L.marker([device.latitude || device.user_set_latitude, device.longitude || device.user_set_longitude])
+				L.marker([device.latitude || device.user_set_latitude || bn_lat, device.longitude || device.user_set_longitude || bn_long])
 					.bindPopup(device.name)
 					.openPopup()
 			);
@@ -97,7 +98,7 @@ frappe.pages['device-map'].on_page_load = function (wrapper) {
 	}
 
 	async function load_devices() {
-		state.devices = await get_devices();
+		state.devices = await get_devices_and_data();
 	}
 
 	async function load_report() {
@@ -111,15 +112,14 @@ frappe.pages['device-map'].on_page_load = function (wrapper) {
 	 * SERVER CALLS
 	 *******************************/
 
-	async function get_devices() {
+	async function get_devices_and_data() {
 		let resp = await frappe.call({
-			method: "bnovate.bnovate.utils.iot_apis.rms_get_devices",
+			method: "bnovate.bnovate.utils.iot_apis.get_devices_and_data",
 			args: {}
 		});
-		console.log(resp);
-
-		return resp.message.data;
+		return resp.message;
 	}
+	window.get_devices_and_data = get_devices_and_data;
 
 	// Example of how we could get report data.
 	async function get_report() {
@@ -132,9 +132,6 @@ frappe.pages['device-map'].on_page_load = function (wrapper) {
 				}
 			}
 		})
-
-		console.log(resp);
-
 		return resp.message;
 	}
 }

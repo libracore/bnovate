@@ -4,24 +4,30 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "simbase_api_key",
+  "combase_api_username",
+  "combase_api_key",
   "rms_api_token"
  ],
  "fields": [
   {
-   "fieldname": "simbase_api_key",
-   "fieldtype": "Data",
-   "label": "Simbase API key"
-  },
-  {
    "fieldname": "rms_api_token",
    "fieldtype": "Long Text",
    "label": "RMS API token"
+  },
+  {
+   "fieldname": "combase_api_key",
+   "fieldtype": "Data",
+   "label": "Combase API key"
+  },
+  {
+   "fieldname": "combase_api_username",
+   "fieldtype": "Data",
+   "label": "Combase API Username"
   }
  ],
  "issingle": 1,
- "modified": "2023-01-10 10:48:05.140400",
- "modified_by": "douglas.watson@bnovate.com",
+ "modified": "2023-02-15 11:35:26.524757",
+ "modified_by": "Administrator",
  "module": "bNovate",
  "name": "bNovate Settings",
  "owner": "Administrator",
