@@ -64,8 +64,15 @@ frappe.pages['device-map'].on_page_load = function (wrapper) {
 
 		for (let device of state.devices) {
 			markers.addLayer(
-				L.marker([device.latitude || device.user_set_latitude || bn_lat, device.longitude || device.user_set_longitude || bn_long])
-					.bindPopup(device.name)
+				L.marker([
+					device.latitude || device.cell_tower_latitude || device.user_set_latitude || bn_lat,
+					device.longitude || device.cell_tower_longitude || device.user_set_longitude || bn_long
+				])
+					.bindPopup(`
+					<span class="indicator whitespace-nowrap ${device.status ? 'green' : 'red'}"></span><b>${device.name}</b><br />
+					${device.operator}, ${device.connection_type} [${device.signal} dBm] <br />
+					<a href="https://rms.teltonika-networks.com/devices/${device.id}" target="_blank">Manage <i class="fa fa-external-link"></i></a>
+					`)
 					.openPopup()
 			);
 		}
@@ -126,9 +133,9 @@ frappe.pages['device-map'].on_page_load = function (wrapper) {
 		let resp = await frappe.call({
 			method: "frappe.desk.query_report.run",
 			args: {
-				report_name: "Late Purchases",
+				report_name: "Connected Devices",
 				filters: {
-					only_stock_items: 1,
+					// only_stock_items: 1,
 				}
 			}
 		})
