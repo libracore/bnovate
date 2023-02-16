@@ -15,10 +15,13 @@ def execute(filters=None):
 def get_columns():
 	return [
 		{'fieldname': 'customer', 'fieldtype': 'Link', 'label': _('Customer'), 'options': 'Customer', 'width': 120},
-		{'fieldname': 'customer_name', 'fieldtype': 'Data', 'label': _('Customer Name'), 'width': 300}, 
+		{'fieldname': 'customer_name', 'fieldtype': 'Data', 'label': _('Customer Name'), 'width': 200}, 
 		{'fieldname': 'docname', 'fieldtype': 'Link', 'label': _('Package Name'), 'options': 'Connectivity Package', 'width': 150}, 
-		{'fieldname': 'status_indicator', 'fieldtype': 'Data', 'label': _('Status'), 'width': 80}, 
 		{'fieldname': 'name', 'fieldtype': 'Data', 'label': _('Device Name'), 'width': 150}, 
+		{'fieldname': 'status_indicator', 'fieldtype': 'Data', 'label': _('Status'), 'width': 80}, 
+		# {'fieldname': 'operator', 'fieldtype': 'Data', 'label': _('Operator'), 'width': 150}, 
+		# {'fieldname': 'connection_type', 'fieldtype': 'Data', 'label': _('Type'), 'width': 60}, 
+		# {'fieldname': 'signal', 'fieldtype': 'Int', 'label': _('Signal [dBm]'), 'width': 60}, 
 		{'fieldname': 'sim_data_usage_mb', 'fieldtype': 'Float', 'label': _('Data Usage [MB]'), 'width': 150}, 
 		# {'fieldname': 'item_code', 'fieldtype': 'Link', 'label': _('Item'), 'options': 'Item', 'width': 100},
 		# {'fieldname': 'warehouse', 'fieldtype': 'Link', 'label': _('Warehouse'), 'options': 'Warehouse', 'width': 100},

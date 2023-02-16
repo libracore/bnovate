@@ -26,7 +26,7 @@ async function get_device_info(frm, device_id) {
 	$(frm.fields_dict.info.wrapper).html(`
 		<span class="indicator whitespace-nowrap ${device.status ? 'green' : 'red'}"></span><b>${device.name}</b><br />
 		${device.operator}, ${device.connection_type} [${device.signal} dBm] <br />
-		<a href="https://rms.teltonika-networks.com/devices/${device.id}" target="_blank">Manage <i class="fa fa-external-link"></i></a>
+		<a href="https://rms.teltonika-networks.com/devices/${device.id}" target="_blank">Manage on RMS<i class="fa fa-external-link"></i></a>
 	`)
 }
 
@@ -50,7 +50,10 @@ async function get_connections(frm) {
 }
 
 async function start_session(frm, config_id, device_id) {
-	await rms_start_session(config_id, device_id);
+	const link = await rms_start_session(config_id, device_id);
+	if (link) {
+		window.open("https://" + link, "_blank");
+	}
 	get_connections(frm);
 }
 

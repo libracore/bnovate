@@ -82,7 +82,8 @@ async function rms_start_session(config_id, device_id) {
           indicator: 'red',
         })
       }
-      break;
+
+      return last_update.link
     }
 
     // Sleep 1 sec and loop again
