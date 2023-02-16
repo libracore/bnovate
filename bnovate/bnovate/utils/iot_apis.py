@@ -18,22 +18,49 @@ def _get_settings():
     return frappe.get_single("bNovate Settings")
 
 @frappe.whitelist()
-def rms_request(path, method='GET', params=None, settings=None):
+def rms_get_status(channel):
+    """ Return status updates on given channel."""
+    # Response and error handling are slightly different from regular API
+    settings = _get_settings()
+
+    resp = request(
+        "GET", 
+        "https://rms.teltonika-networks.com/status/channel/" + channel,
+        headers={"Authorization": "Bearer {}".format(settings.rms_api_token)}
+    )
+
+    if resp.status_code != 200:
+        raise ApiException("Error fetching RMS Status: " + str(resp.json()))
+    return resp.json()['data']
+
+
+def rms_request(path, method='GET', params=None, body=None, settings=None):
+    print(path)
     if settings is None:
-        settings = _get_settings();
+        settings = _get_settings()
     resp = request(
         method, 
-        "https://rms.teltonika-networks.com/api" + path,
+        "https://rms.teltonika-networks.com" + path,
         params=params,
+        json=body,
         headers={"Authorization": "Bearer {}".format(settings.rms_api_token)}
     ).json()
     if not resp['success']:
-        raise ApiException("Error fetching from RMS API:" + str(resp['errors']))
+        raise ApiException("Error fetching from RMS API: " + str(resp['errors']))
+    if 'data' not in resp:
+        return resp['meta']
     return resp['data']
+
+
+@frappe.whitelist()
+def rms_get_device(device_id):
+    """ Return info from single device """
+    return rms_request("/api/devices/{id}".format(id=device_id))
 
 def rms_get_devices(settings=None):
     """ Return list of all devices connected to RMS """
-    return rms_request("/devices", settings=settings)
+    return rms_request("/api/devices", settings=settings)
+
 
 @frappe.whitelist()
 def rms_get_id(serial):
@@ -48,7 +75,7 @@ def rms_get_access_configs(device_id=None, settings=None):
     if device_id:
         params = {'device_id': device_id}
     configs = rms_request(
-        "/devices/remote-access", 
+        "/api/devices/remote-access", 
         params=params,
         settings=settings,
     )
@@ -57,12 +84,12 @@ def rms_get_access_configs(device_id=None, settings=None):
 def rms_get_access_sessions_for_config(config, settings=None):
     """ Return active access session urls for a given access config """
     sessions = rms_request(
-        "/devices/connect/{config_id}/sessions".format(config_id=config['id']),
+        "/api/devices/connect/{config_id}/sessions".format(config_id=config['id']),
         settings=settings
     )
 
     active = [s for s in sessions if s['end_time'] > time.time()]
-    active.sort(key=lambda el: el['end_time'])
+    active.sort(key=lambda el: el['end_time'], reverse=True)
     return dict(sessions=active, **config)
 
 @frappe.whitelist()
@@ -77,6 +104,16 @@ def rms_get_access_sessions(device_id=None):
     # Alphabetical sort by protocol, so that they always appear in the same order.
     responses.sort(key=lambda el: el['protocol'])
     return responses
+
+@frappe.whitelist()
+def rms_start_session(config_id, duration=30*60):
+    """ Opens a new sessions for an existing remote configuration """
+    resp = rms_request(
+        "/api/devices/connect/{config_id}".format(config_id=config_id),
+        "POST",
+        body={"duration": duration},
+    )
+    return resp['channel']
 
 
 def combase_get_usage(iccid, settings=None):

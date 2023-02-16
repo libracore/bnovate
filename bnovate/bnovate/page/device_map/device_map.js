@@ -109,20 +109,15 @@ frappe.pages['device-map'].on_page_load = function (wrapper) {
 	 ********************************/
 
 	async function load() {
-		await load_devices();
 		await load_report();
 
 		draw();
 	}
 
-	async function load_devices() {
-		state.devices = await get_devices_and_data();
-	}
-
 	async function load_report() {
 		state.report_data = await get_report();
+		state.devices = state.report_data.result.filter(row => row.indent == 1) // Devices are indented 1, customers 0.
 	}
-
 
 	load();
 

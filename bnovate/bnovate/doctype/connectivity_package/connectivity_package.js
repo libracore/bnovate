@@ -4,7 +4,8 @@
 frappe.ui.form.on('Connectivity Package', {
 	refresh(frm) {
 		frm.rms_modal = rms_modal;
-		draw_rms_link(frm, undefined)
+		frm.start_session = (config_id, device_id) => start_session(frm, config_id, device_id);
+		get_device_info(frm, undefined)
 		get_connections(frm);
 	},
 
@@ -13,10 +14,28 @@ frappe.ui.form.on('Connectivity Package', {
 	},
 });
 
+// General info
+async function get_device_info(frm, device_id) {
+	// if device_id is undefined, erase all content.
+	if (!device_id) {
+		$(frm.fields_dict.info.wrapper).html(``);
+		return;
+	}
+
+	const device = await rms_get_device(device_id);
+	$(frm.fields_dict.info.wrapper).html(`
+		<span class="indicator whitespace-nowrap ${device.status ? 'green' : 'red'}"></span><b>${device.name}</b><br />
+		${device.operator}, ${device.connection_type} [${device.signal} dBm] <br />
+		<a href="https://rms.teltonika-networks.com/devices/${device.id}" target="_blank">Manage <i class="fa fa-external-link"></i></a>
+	`)
+}
+
+// Remote connections
+
 async function get_connections(frm) {
 	set_message(frm, "Loading...");
 	const device_id = await rms_get_id(frm.doc.teltonika_serial);
-	draw_rms_link(frm, device_id)
+	get_device_info(frm, device_id); // don't await, run in background.
 	if (device_id) {
 		const access_configs = await rms_get_sessions(device_id);
 		console.log(access_configs)
@@ -30,16 +49,13 @@ async function get_connections(frm) {
 	}
 }
 
-function set_message(frm, message = "Loading...") {
-	$(frm.fields_dict.connection_table.wrapper).html(message)
+async function start_session(frm, config_id, device_id) {
+	await rms_start_session(config_id, device_id);
+	get_connections(frm);
 }
 
-function draw_rms_link(frm, device_id) {
-	if (device_id) {
-		$(frm.fields_dict.info.wrapper).html(`<a href="https://rms.teltonika-networks.com/devices/${device_id}" target="_blank">Manage in RMS <i class="fa fa-external-link"></i></a>`)
-	} else {
-		$(frm.fields_dict.info.wrapper).html(``)
-	}
+function set_message(frm, message = "Loading...") {
+	$(frm.fields_dict.connection_table.wrapper).html(message)
 }
 
 function draw_table(frm, access_configs) {
@@ -57,7 +73,7 @@ function draw_table(frm, access_configs) {
 				<tr>
 					<td><b>{{ access.name }}</b></td>
 					<td>{{ access.protocol.toUpperCase() }}</td>
-					<td></td>
+					<td><button class="btn btn-xs btn-primary" onclick="cur_frm.start_session({{ access.id }}, {{ access.device_id }})">New</button></td>
 					<td></td>
 				</tr>
 					{% for session in access.sessions %}
