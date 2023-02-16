@@ -63,6 +63,17 @@ frappe.pages['device-map'].on_page_load = function (wrapper) {
 		map.addLayer(markers);
 
 		for (let device of state.devices) {
+			// if (device.accuracy || device.cell_tower_accuracy) {
+			// 	markers.addLayer(
+			// 		L.circle([
+			// 			device.latitude || device.cell_tower_latitude,
+			// 			device.longitude || device.cell_tower_longitude,
+
+			// 		], device.accuracy || device.cell_tower_accuracy, {
+
+			// 		})
+			// 	)
+			// }
 			markers.addLayer(
 				L.marker([
 					device.latitude || device.cell_tower_latitude || device.user_set_latitude || bn_lat,
@@ -119,6 +130,7 @@ frappe.pages['device-map'].on_page_load = function (wrapper) {
 	 * SERVER CALLS
 	 *******************************/
 
+	// Return array of all connected devices with current cycle data usage.
 	async function get_devices_and_data() {
 		let resp = await frappe.call({
 			method: "bnovate.bnovate.utils.iot_apis.get_devices_and_data",
@@ -128,7 +140,7 @@ frappe.pages['device-map'].on_page_load = function (wrapper) {
 	}
 	window.get_devices_and_data = get_devices_and_data;
 
-	// Example of how we could get report data.
+	// Fetch report data
 	async function get_report() {
 		let resp = await frappe.call({
 			method: "frappe.desk.query_report.run",

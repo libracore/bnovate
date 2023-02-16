@@ -8,7 +8,10 @@
  "field_order": [
   "customer",
   "customer_name",
-  "teltonika_serial"
+  "teltonika_serial",
+  "remote_connections_section",
+  "refresh_connections",
+  "connection_table"
  ],
  "fields": [
   {
@@ -32,9 +35,24 @@
    "fieldtype": "Read Only",
    "in_list_view": 1,
    "label": "Customer Name"
+  },
+  {
+   "fieldname": "remote_connections_section",
+   "fieldtype": "Section Break",
+   "label": "Remote Connections"
+  },
+  {
+   "fieldname": "connection_table",
+   "fieldtype": "HTML",
+   "label": "Connections"
+  },
+  {
+   "fieldname": "refresh_connections",
+   "fieldtype": "Button",
+   "label": "Refresh"
   }
  ],
- "modified": "2023-02-15 14:09:09.553544",
+ "modified": "2023-02-16 13:07:15.344783",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Connectivity Package",
