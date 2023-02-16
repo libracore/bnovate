@@ -4,6 +4,7 @@
 frappe.ui.form.on('Connectivity Package', {
 	refresh(frm) {
 		frm.rms_modal = rms_modal;
+		draw_rms_link(frm, undefined)
 		get_connections(frm);
 	},
 
@@ -13,14 +14,32 @@ frappe.ui.form.on('Connectivity Package', {
 });
 
 async function get_connections(frm) {
-	set_loading(frm);
+	set_message(frm, "Loading...");
 	const device_id = await rms_get_id(frm.doc.teltonika_serial);
-	const access_configs = await rms_get_sessions(device_id);
-	draw_table(frm, access_configs);
+	draw_rms_link(frm, device_id)
+	if (device_id) {
+		const access_configs = await rms_get_sessions(device_id);
+		console.log(access_configs)
+		if (access_configs.length) {
+			draw_table(frm, access_configs);
+		} else {
+			set_message(frm, "No remote access configurations for this device.")
+		}
+	} else {
+		set_message(frm, "Device not found on RMS.")
+	}
 }
 
-function set_loading(frm) {
-	$(frm.fields_dict.connection_table.wrapper).html(`Loading...`)
+function set_message(frm, message = "Loading...") {
+	$(frm.fields_dict.connection_table.wrapper).html(message)
+}
+
+function draw_rms_link(frm, device_id) {
+	if (device_id) {
+		$(frm.fields_dict.info.wrapper).html(`<a href="https://rms.teltonika-networks.com/devices/${device_id}" target="_blank">Manage in RMS <i class="fa fa-external-link"></i></a>`)
+	} else {
+		$(frm.fields_dict.info.wrapper).html(``)
+	}
 }
 
 function draw_table(frm, access_configs) {

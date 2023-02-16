@@ -4,7 +4,6 @@
 
 from distutils.command.config import config
 from http.client import responses
-import json
 import time
 import frappe
 import concurrent.futures

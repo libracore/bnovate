@@ -9,6 +9,7 @@
   "customer",
   "customer_name",
   "teltonika_serial",
+  "info",
   "remote_connections_section",
   "refresh_connections",
   "connection_table"
@@ -50,9 +51,14 @@
    "fieldname": "refresh_connections",
    "fieldtype": "Button",
    "label": "Refresh"
+  },
+  {
+   "fieldname": "info",
+   "fieldtype": "HTML",
+   "label": "Info"
   }
  ],
- "modified": "2023-02-16 13:07:15.344783",
+ "modified": "2023-02-16 14:22:13.035458",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Connectivity Package",
