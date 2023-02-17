@@ -8,6 +8,11 @@ frappe.ui.form.on('Connectivity Package', {
 
 		clear_info(frm);
 
+		// Wait for first Save before fetching any data from API...
+		if (!frm.doc.creation) {
+			return;
+		}
+
 		let device_id = await get_device_id(frm, true);
 		if (!device_id) {
 			return;

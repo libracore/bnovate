@@ -39,6 +39,7 @@
    "label": "Customer Name"
   },
   {
+   "depends_on": "eval:doc.creation",
    "fieldname": "remote_connections_section",
    "fieldtype": "Section Break",
    "label": "Remote Connections",
@@ -64,7 +65,7 @@
    "fieldtype": "Column Break"
   }
  ],
- "modified": "2023-02-17 15:42:48.850208",
+ "modified": "2023-02-17 15:52:07.348850",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Connectivity Package",
