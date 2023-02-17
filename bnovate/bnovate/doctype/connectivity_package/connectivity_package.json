@@ -39,10 +39,10 @@
    "label": "Customer Name"
   },
   {
-   "depends_on": "eval:console.log(window)",
    "fieldname": "remote_connections_section",
    "fieldtype": "Section Break",
-   "label": "Remote Connections"
+   "label": "Remote Connections",
+   "permlevel": 1
   },
   {
    "fieldname": "connection_table",
@@ -64,7 +64,7 @@
    "fieldtype": "Column Break"
   }
  ],
- "modified": "2023-02-17 15:16:16.331355",
+ "modified": "2023-02-17 15:42:48.850208",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Connectivity Package",
