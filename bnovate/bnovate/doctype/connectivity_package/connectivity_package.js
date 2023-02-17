@@ -2,27 +2,50 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Connectivity Package', {
-	refresh(frm) {
+	async refresh(frm) {
 		frm.rms_modal = rms_modal;
 		frm.start_session = (config_id, device_id) => start_session(frm, config_id, device_id);
-		get_device_info(frm, undefined)
+
+		clear_info(frm);
+
+		let device_id = await get_device_id(frm, true);
+		if (!device_id) {
+			return;
+		}
+		get_device_info(frm)
 		get_connections(frm);
 	},
 
 	async refresh_connections(frm) {
+		get_device_info(frm);
 		get_connections(frm);
 	},
 });
 
 // General info
-async function get_device_info(frm, device_id) {
-	// if device_id is undefined, erase all content.
-	if (!device_id) {
-		$(frm.fields_dict.info.wrapper).html(``);
-		return;
+///////////////
+
+// Cache device ID
+async function get_device_id(frm, refresh = false) {
+	if (!locals.rms_device_id) {
+		locals.rms_device_id = {};
 	}
 
-	const device = await rms_get_device(device_id);
+	if (!refresh && locals.rms_device_id[frm.doc.teltonika_serial]) {
+		return locals.rms_device_id[frm.doc.teltonika_serial];
+	}
+
+	locals.rms_device_id[frm.doc.teltonika_serial] = await rms_get_id(frm.doc.teltonika_serial);
+	return locals.rms_device_id[frm.doc.teltonika_serial];
+}
+
+function clear_info(frm) {
+	$(frm.fields_dict.info.wrapper).html(``);
+	set_message(frm)
+}
+
+async function get_device_info(frm) {
+	const device = await rms_get_device(await get_device_id(frm));
 	$(frm.fields_dict.info.wrapper).html(`
 		<span class="indicator whitespace-nowrap ${device.status ? 'green' : 'red'}"></span><b>${device.name}</b><br />
 		${device.operator}, ${device.connection_type} [${device.signal} dBm] <br />
@@ -31,14 +54,21 @@ async function get_device_info(frm, device_id) {
 }
 
 // Remote connections
+///////////////////
+
+function set_message(frm, message = "Loading...") {
+	$(frm.fields_dict.connection_table.wrapper).html(message)
+}
+
 
 async function get_connections(frm) {
+	if (!frm.has_perm(WRITE)) {
+		return
+	}
 	set_message(frm, "Loading...");
-	const device_id = await rms_get_id(frm.doc.teltonika_serial);
-	get_device_info(frm, device_id); // don't await, run in background.
+	const device_id = await get_device_id(frm)
 	if (device_id) {
 		const access_configs = await rms_get_sessions(device_id);
-		console.log(access_configs)
 		if (access_configs.length) {
 			draw_table(frm, access_configs);
 		} else {
@@ -55,10 +85,6 @@ async function start_session(frm, config_id, device_id) {
 		window.open("https://" + link, "_blank");
 	}
 	get_connections(frm);
-}
-
-function set_message(frm, message = "Loading...") {
-	$(frm.fields_dict.connection_table.wrapper).html(message)
 }
 
 function draw_table(frm, access_configs) {

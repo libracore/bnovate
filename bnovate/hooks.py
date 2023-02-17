@@ -11,6 +11,21 @@ app_color = "#3b6e8f"
 app_email = "info@libracore.com"
 app_license = "AGPL"
 
+# Fixtures
+# -----------------
+# (add docs created for this app): custom roles, permissions...
+# Need to run `bench export-fixtures` and add fixutres/ folder to git.
+fixtures = [
+    {
+        "dt": "Role",
+        "filters": [["role_name", "like", "IoT%"]],
+    },
+    {
+        "dt": "Custom DocPerm",
+        "filters": [["role", "like", "IoT%"]],
+    }
+]
+
 # Includes in <head>
 # ------------------
 

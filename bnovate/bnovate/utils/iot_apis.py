@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) bNovate (Douglas Watson)
 # For license information, please see license.txt
+#
+# Wrappers for various APIs.
+# -------------------------
+#
+#######################################################################
 
 from distutils.command.config import config
 from http.client import responses
@@ -11,8 +16,13 @@ import concurrent.futures
 from requests import request
 from requests.auth import HTTPBasicAuth
 
+READ, WRITE = "read", "write"
+
 class ApiException(Exception):
     pass
+
+def _auth(ptype=READ):
+    return frappe.has_permission("Connectivity Package", ptype, throw=True)
 
 def _get_settings():
     return frappe.get_single("bNovate Settings")
@@ -21,6 +31,7 @@ def _get_settings():
 def rms_get_status(channel):
     """ Return status updates on given channel."""
     # Response and error handling are slightly different from regular API
+    _auth(WRITE)
     settings = _get_settings()
 
     resp = request(
@@ -34,8 +45,10 @@ def rms_get_status(channel):
     return resp.json()['data']
 
 
-def rms_request(path, method='GET', params=None, body=None, settings=None):
-    print(path)
+def rms_request(path, method='GET', params=None, body=None, settings=None, auth=True):
+    """ Skip auth when running parallel requests, just make sure to check at least once! """
+    if auth:
+        _auth(READ if method == 'GET' else WRITE)
     if settings is None:
         settings = _get_settings()
     resp = request(
@@ -81,11 +94,12 @@ def rms_get_access_configs(device_id=None, settings=None):
     )
     return [c for c in configs if c['protocol']]
 
-def rms_get_access_sessions_for_config(config, settings=None):
+def rms_get_access_sessions_for_config(config, settings=None, auth=True):
     """ Return active access session urls for a given access config """
     sessions = rms_request(
         "/api/devices/connect/{config_id}/sessions".format(config_id=config['id']),
-        settings=settings
+        settings=settings,
+        auth=auth,
     )
 
     active = [s for s in sessions if s['end_time'] > time.time()]
@@ -95,10 +109,11 @@ def rms_get_access_sessions_for_config(config, settings=None):
 @frappe.whitelist()
 def rms_get_access_sessions(device_id=None):
     """ Return list of access config dicts, each with its list of active sessions """
+    _auth(WRITE)  # require write permissions since this returns active session links
     settings = _get_settings()
     configs = rms_get_access_configs(device_id, settings=settings)
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        futures = [ executor.submit(rms_get_access_sessions_for_config, c, settings=settings) for c in configs ]
+        futures = [ executor.submit(rms_get_access_sessions_for_config, c, settings=settings, auth=False) for c in configs ]
         responses = [ future.result() for future in concurrent.futures.as_completed(futures) ]
 
     # Alphabetical sort by protocol, so that they always appear in the same order.
@@ -116,8 +131,16 @@ def rms_start_session(config_id, duration=30*60):
     return resp['channel']
 
 
-def combase_get_usage(iccid, settings=None):
-    """ Return data usage of SIM card in MB, or None """
+def combase_get_usage(iccid, settings=None, auth=True):
+    """ Return data usage of SIM card in MB, or None.
+
+
+    Skip permission check if these are called concurrently. Just make sure to 
+    check at least once calling _auth()!
+    
+    """
+    if auth:
+        _auth()
     if settings is None:
         settings = _get_settings()
 
@@ -145,7 +168,7 @@ def get_devices_and_data():
 
     # Get data usage for each SIM iccid:
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        futures = [ executor.submit(combase_get_usage, iccid, settings) for iccid in iccids ]
+        futures = [ executor.submit(combase_get_usage, iccid, settings, auth=False) for iccid in iccids ]
         responses = [ future.result() for future in concurrent.futures.as_completed(futures) ]
         lookup = { k: v for k, v in responses }
 
