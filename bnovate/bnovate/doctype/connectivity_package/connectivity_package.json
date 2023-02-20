@@ -1,6 +1,5 @@
 {
- "allow_rename": 1,
- "autoname": "field:teltonika_serial",
+ "autoname": "CP-.#####",
  "creation": "2023-02-15 13:57:23.655766",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -24,11 +23,12 @@
    "options": "Customer"
   },
   {
-   "description": "May be changed to lookup a SN in ERPNext directly.",
    "fieldname": "teltonika_serial",
-   "fieldtype": "Data",
+   "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Teltonika Serial",
+   "options": "Serial No",
+   "reqd": 1,
    "unique": 1
   },
   {
@@ -65,7 +65,7 @@
    "fieldtype": "Column Break"
   }
  ],
- "modified": "2023-02-17 15:52:07.348850",
+ "modified": "2023-02-20 18:42:25.544240",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Connectivity Package",
@@ -87,5 +87,6 @@
  "quick_entry": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
+ "title_field": "teltonika_serial",
  "track_changes": 1
 }

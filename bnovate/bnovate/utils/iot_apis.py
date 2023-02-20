@@ -77,7 +77,7 @@ def rms_get_devices(settings=None):
 
 @frappe.whitelist()
 def rms_get_id(serial):
-    matches = [ d for d in rms_get_devices() if d['serial'] == serial]
+    matches = [d for d in rms_get_devices() if d['serial'] == serial]
     if matches:
         return matches[0]['id']
     return None

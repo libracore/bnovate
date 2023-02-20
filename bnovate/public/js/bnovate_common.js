@@ -91,7 +91,7 @@ async function rms_start_session(config_id, device_id) {
   }
 }
 
-// Get RMS device id based on device serial number
+// Get status updates on notification channel
 async function rms_get_status(channel) {
   let resp = await frappe.call({
     method: "bnovate.bnovate.utils.iot_apis.rms_get_status",
@@ -100,4 +100,34 @@ async function rms_get_status(channel) {
     }
   });
   return resp.message;
+}
+
+
+// For fun
+async function get_status(device_id, password, attempt = 1) {
+  if (attempt >= 3) {
+    return;
+  }
+
+  const connections = await rms_get_sessions(device_id);
+  const https = connections.find(s => s.protocol == "https");
+
+  if (!https) {
+    console.log("fail");
+    return;
+  }
+
+  if (!https.sessions.length) {
+    await rms_start_session(https.id, device_id);
+    return get_status(device_id, password, attempt + 1)
+  }
+
+  // console.log(https)
+  const url = 'https://' + https.sessions[0].url + '/api/status';
+  const headers = { 'Authorization': 'Basic ' + btoa('user:' + password) };
+  // console.log(url, headers);
+  let resp = await fetch(url, { headers });
+  let status = await resp.json();
+  console.log(status);
+  return status;
 }

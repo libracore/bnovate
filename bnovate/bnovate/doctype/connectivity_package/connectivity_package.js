@@ -25,6 +25,26 @@ frappe.ui.form.on('Connectivity Package', {
 		get_device_info(frm);
 		get_connections(frm);
 	},
+
+	async validate(frm) {
+		// Ensure uniqueness of Serial No. Redundant with "Unique" param of the field, but this message is more helpful.
+		const results = await frappe.db.get_list("Connectivity Package", {
+			filters: { teltonika_serial: frm.doc.teltonika_serial }
+		});
+		console.log(results)
+
+		const duplicates = results.filter(doc => doc.name != frm.doc.name);
+		console.log(duplicates)
+		if (duplicates.length) {
+			frappe.validated = false;
+			const link = frappe.utils.get_form_link("Connectivity Package", results[0].name, true, results[0].name)
+			frappe.msgprint({
+				indicator: 'red',
+				message: __(`Another package already exists with this serial number: ${link}`)
+			});
+		}
+	}
+
 });
 
 // General info

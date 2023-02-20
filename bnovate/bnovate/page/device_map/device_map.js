@@ -82,7 +82,7 @@ frappe.pages['device-map'].on_page_load = function (wrapper) {
 					.bindPopup(`
 					<span class="indicator whitespace-nowrap ${device.status ? 'green' : 'red'}"></span><b>${device.name}</b><br />
 					${device.operator}, ${device.connection_type} [${device.signal} dBm] <br />
-					<a href="/desk#Form/Connectivity Package/${device.docname}">Manage</i></a>
+					${frappe.utils.get_form_link("Connectivity Package", device.docname, true, "Manage")}
 					`)
 					.openPopup()
 			);
