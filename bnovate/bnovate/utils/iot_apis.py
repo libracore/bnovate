@@ -21,11 +21,22 @@ READ, WRITE = "read", "write"
 class ApiException(Exception):
     pass
 
+class ChannelNotFound(ApiException):
+    """ Raised when a status channel isn't found - may be too early, try again """
+
+#######################
+# HELPERS
+#######################
+
 def _auth(ptype=READ):
     return frappe.has_permission("Connectivity Package", ptype, throw=True)
 
 def _get_settings():
     return frappe.get_single("bNovate Settings")
+
+#######################
+# BASE API CONNECTIONS
+#######################
 
 @frappe.whitelist()
 def rms_get_status(channel):
@@ -33,6 +44,7 @@ def rms_get_status(channel):
     # Response and error handling are slightly different from regular API
     _auth(WRITE)
     settings = _get_settings()
+    print("GETTING CHANNEL", channel)
 
     resp = request(
         "GET", 
@@ -41,8 +53,35 @@ def rms_get_status(channel):
     )
 
     if resp.status_code != 200:
-        raise ApiException("Error fetching RMS Status: " + str(resp.json()))
+        detail = resp.json()
+        if detail['code'] == 'CHANNEL_NOT_FOUND':
+            raise ChannelNotFound("Channel doesn't exist or expired:", channel)
+        raise ApiException("Error fetching RMS Status: " + str(detail))
     return resp.json()['data']
+
+
+def rms_monitor_status(channel, device_id, attempt=0):
+    """ Monitor status channel until completion or error """
+    if attempt >= 20:
+        raise ApiException("Timeout requesting status update from channel{}".format(channel))
+    try:
+        resp = rms_get_status(channel)
+    except ChannelNotFound:
+        time.sleep(1)
+        return rms_monitor_status(channel, device_id, attempt + 1)
+
+    if device_id not in resp:
+        raise ApiException("No status update for device {} in channel {}".format(device_id, channel))
+
+    updates = resp[device_id]
+
+    if updates and updates[-1]['status'] in ("error", "completed"):
+        if updates[-1]['status'] == "error":
+            raise ApiException(updates[-1]['value'])
+        return updates[-1]
+
+    time.sleep(0.5)
+    return rms_monitor_status(channel, device_id, attempt + 1)
 
 
 def rms_request(path, method='GET', params=None, body=None, settings=None, auth=True):
@@ -65,6 +104,10 @@ def rms_request(path, method='GET', params=None, body=None, settings=None, auth=
     return resp['data']
 
 
+##################################
+# WRAPPERS
+##################################
+
 @frappe.whitelist()
 def rms_get_device(device_id):
     """ Return info from single device """
@@ -81,6 +124,80 @@ def rms_get_id(serial):
     if matches:
         return matches[0]['id']
     return None
+
+def rms_port_scan(device_id):
+    """ Return available IPs and ports, i.e. instruments connected to device 
+
+    Example return value:
+
+    [{
+            "ip": "192.168.2.148",
+            "mac": "...",
+            "port": [ 22, 80, 443, 5900 ],
+            "vendor": "..."
+    }],
+
+    """
+    meta = rms_request(
+        "/api/devices/{}/port-scan".format(device_id),
+        params={"type": "ethernet"}
+    )
+    ports_info = rms_monitor_status(meta['channel'], device_id)
+    if not 'ports' in ports_info \
+            or not ports_info['ports'] \
+            or not 'devices' in ports_info['ports'][0] \
+            or not ports_info['ports'][0]['devices']:
+        raise ApiException("No end devices found")
+    
+    return ports_info['ports'][0]['devices'][0]
+
+
+def rms_create_access(device_id, payload):
+    """ Create remote access configurations. See API reference for payload format. """
+    meta = rms_request(
+        "/api/devices/remote-access",
+        "POST",
+        body=payload,
+    )
+    return rms_monitor_status(meta['channel'], device_id)
+
+
+@frappe.whitelist()
+def rms_initialize_device(device_id, device_name):
+    """ Create remote configurations for a device. """
+
+    # 1) Port scan
+    # 2) Create HTTPS and VNC remotes for first available end-device
+    # 3) Rename teltonika device
+    end_devices = rms_port_scan(device_id)
+
+    ip, ports = end_devices['ip'], end_devices['port']
+
+    data = []
+    if 443 in ports:
+        data.append({
+            "device_id": device_id,
+            "name": "{} HTTPS".format(device_name),
+            "destination_ip": ip,
+            "destination_port": 443,
+            "protocol": "https",
+            "credentials_required": False,
+        })
+
+    if 5900 in ports:
+        data.append({
+            "device_id": device_id,
+            "name": "{} VNC".format(device_name),
+            "destination_ip": ip,
+            "destination_port": 5900,
+            "protocol": "vnc",
+            "credentials_required": False,
+        })
+    
+    if not data:
+        raise ApiException("Neither HTTPS or VNC available on this device")
+
+    return rms_create_access(device_id, {"data": data})
 
 def rms_get_access_configs(device_id=None, settings=None):
     """ Return list of access configs based on RMS ID (not SN). """

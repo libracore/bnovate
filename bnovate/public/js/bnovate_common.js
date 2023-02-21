@@ -102,6 +102,18 @@ async function rms_get_status(channel) {
   return resp.message;
 }
 
+// TMP
+async function rms_initialize_device(device_id, device_name) {
+  let resp = await frappe.call({
+    method: "bnovate.bnovate.utils.iot_apis.rms_initialize_device",
+    args: {
+      device_id,
+      device_name
+    }
+  });
+  return resp.message;
+}
+
 
 // For fun
 async function get_status(device_id, password, attempt = 1) {
