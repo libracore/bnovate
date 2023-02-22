@@ -1,0 +1,147 @@
+{
+  "autoname": "SS-.#####",
+  "creation": "2023-02-22 15:50:34.906998",
+  "doctype": "DocType",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "customer",
+    "customer_name",
+    "interval",
+    "column_main",
+    "enabled",
+    "start_date",
+    "end_date",
+    "section_items",
+    "items",
+    "section_invoices",
+    "invoices",
+    "section_remarks",
+    "remarks"
+  ],
+  "fields": [
+    {
+      "fieldname": "customer",
+      "fieldtype": "Link",
+      "in_list_view": 1,
+      "label": "Customer",
+      "options": "Customer",
+      "reqd": 1
+    },
+    {
+      "fetch_from": "customer.customer_name",
+      "fieldname": "customer_name",
+      "fieldtype": "Data",
+      "label": "Customer name",
+      "read_only": 1
+    },
+    {
+      "fieldname": "column_main",
+      "fieldtype": "Column Break"
+    },
+    {
+      "default": "1",
+      "fieldname": "enabled",
+      "fieldtype": "Check",
+      "label": "Enabled"
+    },
+    {
+      "fieldname": "start_date",
+      "fieldtype": "Date",
+      "label": "Start Date"
+    },
+    {
+      "fieldname": "end_date",
+      "fieldtype": "Date",
+      "label": "End Date"
+    },
+    {
+      "fieldname": "section_items",
+      "fieldtype": "Section Break",
+      "label": "Items"
+    },
+    {
+      "fieldname": "items",
+      "fieldtype": "Table",
+      "label": "Items",
+      "options": "Subscription Service Item",
+      "reqd": 1
+    },
+    {
+      "fieldname": "section_invoices",
+      "fieldtype": "Section Break",
+      "label": "Sales Invoices"
+    },
+    {
+      "fieldname": "invoices",
+      "fieldtype": "Table",
+      "label": "Sales Invoices",
+      "no_copy": 1,
+      "options": "Subscription Service Invoice"
+    },
+    {
+      "fieldname": "section_remarks",
+      "fieldtype": "Section Break",
+      "label": "Remarks"
+    },
+    {
+      "fieldname": "remarks",
+      "fieldtype": "Text Editor",
+      "label": "Remarks"
+    },
+    {
+      "default": "Yearly",
+      "fieldname": "interval",
+      "fieldtype": "Select",
+      "label": "Interval",
+      "options": "Yearly\nMonthly"
+    }
+  ],
+  "modified": "2023-02-22 15:56:00.340439",
+  "modified_by": "Administrator",
+  "module": "bNovate",
+  "name": "Subscription Service",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "System Manager",
+      "share": 1,
+      "write": 1
+    },
+    {
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Sales Manager",
+      "share": 1,
+      "write": 1
+    },
+    {
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Sales User",
+      "share": 1,
+      "write": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "track_changes": 1,
+  "title_field": "customer_name"
+}
