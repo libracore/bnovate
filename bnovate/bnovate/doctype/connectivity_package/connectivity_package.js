@@ -17,8 +17,12 @@ frappe.ui.form.on('Connectivity Package', {
 		if (!device_id) {
 			return;
 		}
+
+		frm.add_custom_button(__("Auto-configure"), () => configure_device(frm))
+
 		get_device_info(frm)
 		get_connections(frm);
+
 	},
 
 	async refresh_connections(frm) {
@@ -161,4 +165,52 @@ function rms_modal(url) {
 		}]
 	})
 	d.show();
+}
+
+
+///////////////////////////////////////
+// Device Info
+//////////////////////////////////////
+
+// Rename device and add HTTP and VNC remotes for first available ports.
+async function configure_device(frm) {
+	const device_id = await get_device_id(frm)
+	let values = await prompt(
+		"Enter device details",
+		[{
+			label: "Device Name",
+			fieldname: "device_name",
+			fieldtype: "Data",
+			reqd: 1,
+		}],
+		"Configure",
+		"Cancel"
+	);
+
+	if (!values) {
+		return;
+	}
+
+	set_message(frm, "Loading...");
+	await rms_initialize_device(device_id, values.device_name);
+	await get_device_info(frm);
+	return get_connections(frm);
+}
+
+// Promise-ified frappe prompt:
+function prompt(title, fields, primary_action_label, secondary_action_label) {
+	return new Promise((resolve, reject) => {
+		const d = new frappe.ui.Dialog({
+			title,
+			fields,
+			primary_action_label,
+			secondary_action_label,
+			primary_action(values) {
+				resolve(values);
+				this.hide();
+			},
+			secondary_action() { resolve(null); },
+		})
+		d.show();
+	})
 }

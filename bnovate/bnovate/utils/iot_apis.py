@@ -44,7 +44,6 @@ def rms_get_status(channel):
     # Response and error handling are slightly different from regular API
     _auth(WRITE)
     settings = _get_settings()
-    print("GETTING CHANNEL", channel)
 
     resp = request(
         "GET", 
@@ -99,9 +98,10 @@ def rms_request(path, method='GET', params=None, body=None, settings=None, auth=
     ).json()
     if not resp['success']:
         raise ApiException("Error fetching from RMS API: " + str(resp['errors']))
-    if 'data' not in resp:
+    if 'data' not in resp and 'meta' in resp:
         return resp['meta']
-    return resp['data']
+    elif 'data' in resp:
+        return resp['data']
 
 
 ##################################
@@ -112,6 +112,14 @@ def rms_request(path, method='GET', params=None, body=None, settings=None, auth=
 def rms_get_device(device_id):
     """ Return info from single device """
     return rms_request("/api/devices/{id}".format(id=device_id))
+
+
+def rms_set_device(device_id, payload):
+    """ Set device data """
+    return rms_request("/api/devices/{}".format(device_id),
+    "PUT",
+    body=payload)
+
 
 def rms_get_devices(settings=None):
     """ Return list of all devices connected to RMS """
@@ -162,6 +170,21 @@ def rms_create_access(device_id, payload):
     return rms_monitor_status(meta['channel'], device_id)
 
 
+def rms_delete_access(device_id, config_ids):
+    """ Delete access configurations based on IDs.
+
+    config_ids: array of int
+    """
+    # Mistake in RMS API: it doesn't loop IDs. Need to do it ourselves:
+    for id in config_ids:
+        meta = rms_request(
+            "/api/devices/remote-access",
+            "DELETE",
+            body={'id': [id]},
+        )
+        rms_monitor_status(meta['channel'], device_id)
+
+
 @frappe.whitelist()
 def rms_initialize_device(device_id, device_name):
     """ Create remote configurations for a device. """
@@ -170,9 +193,7 @@ def rms_initialize_device(device_id, device_name):
     # 2) Create HTTPS and VNC remotes for first available end-device
     # 3) Rename teltonika device
     end_devices = rms_port_scan(device_id)
-
     ip, ports = end_devices['ip'], end_devices['port']
-
     data = []
     if 443 in ports:
         data.append({
@@ -193,9 +214,19 @@ def rms_initialize_device(device_id, device_name):
             "protocol": "vnc",
             "credentials_required": False,
         })
-    
+
+    rms_set_device(device_id, {
+        "name": device_name,
+    })
+
     if not data:
         raise ApiException("Neither HTTPS or VNC available on this device")
+
+    # Delete existing remotes, only if we can create new ones
+    configs = rms_get_access_configs(device_id)
+    if configs:
+        rms_delete_access(device_id, 
+            [c['id'] for c in configs if c['protocol'] in ("https", "vnc")])
 
     return rms_create_access(device_id, {"data": data})
 
