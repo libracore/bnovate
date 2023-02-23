@@ -4,9 +4,13 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "invoicing_section",
+  "api_credentials_section",
   "combase_api_username",
   "combase_api_key",
-  "rms_api_token"
+  "rms_api_token",
+  "shipping_income_account",
+  "shipping_income_item"
  ],
  "fields": [
   {
@@ -23,10 +27,34 @@
    "fieldname": "combase_api_username",
    "fieldtype": "Data",
    "label": "Combase API Username"
+  },
+  {
+   "fieldname": "invoicing_section",
+   "fieldtype": "Section Break",
+   "label": "Invoicing"
+  },
+  {
+   "fieldname": "api_credentials_section",
+   "fieldtype": "Section Break",
+   "label": "API Credentials"
+  },
+  {
+   "description": "What account is income from shipping written to in Taxes and Charges Templates?",
+   "fieldname": "shipping_income_account",
+   "fieldtype": "Link",
+   "label": "Shipping Income Account",
+   "options": "Account"
+  },
+  {
+   "description": "Used to invoice aggregated shipping cost to customers",
+   "fieldname": "shipping_income_item",
+   "fieldtype": "Link",
+   "label": "Shipping Invoice Item",
+   "options": "Item"
   }
  ],
  "issingle": 1,
- "modified": "2023-02-15 11:35:26.524757",
+ "modified": "2023-02-23 13:19:11.912631",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "bNovate Settings",

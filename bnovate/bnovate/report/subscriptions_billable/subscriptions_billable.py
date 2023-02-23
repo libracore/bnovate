@@ -22,9 +22,11 @@ def get_columns():
         {'fieldname': 'date', 'label': _('Date'), 'fieldtype': 'Date', 'width': 80},
         {'fieldname': 'item', 'label': _('Item'), 'fieldtype': 'Link', 'options': 'Item', 'width': 200},
         {'fieldname': 'qty', 'label': _('Qty'), 'fieldtype': 'Float', 'width': 50},
-        {'fieldname': 'rate', 'label': _('Rate'), 'fieldtype': 'Currency', 'width': 100},
+        {'fieldname': 'rate', 'label': _('Item Rate'), 'fieldtype': 'Currency', 'options': 'currency', 'width': 100},
+        {'fieldname': 'amount', 'label': _('Total'), 'fieldtype': 'Currency', 'options': 'currency', 'width': 100},
+        {'fieldname': 'shipping', 'label': _('Shipping'), 'fieldtype': 'Currency', 'options': 'currency', 'width': 100},
         {'fieldname': 'reference', 'label': _('Reference'), 'fieldtype': 'Dynamic Link', 'options': 'dt', 'width': 120},
-        {'fieldname': 'action', 'label': _('Action'), 'fieldtype': 'Data', 'width': 100}
+        {'fieldname': 'action', 'label': _('Action'), 'fieldtype': 'Data', 'width': 200}
     ]
 
 def get_data(filters):
@@ -36,6 +38,7 @@ def get_data(filters):
     for e in entries:
         if e.customer not in customers:
             customers.append(e.customer)
+    customers.sort()
     
     # create grouped entries
     output = []
@@ -43,22 +46,38 @@ def get_data(filters):
         details = []
         total_h = 0
         total_amount = 0
+        total_shipping = 0
         customer_name = None
+        last_dn = None
+        currencies = set()
         for e in entries:
             if e.customer == c:
                 total_h += e.hours or 0
                 total_amount += ((e.qty or 1) * (e.rate or 0))
+                if e.reference != last_dn:  # works if data is sorted by reference
+                    total_shipping += e.shipping if e.shipping else 0
                 customer_name = e.customer_name
+                last_dn = e.reference
+                currencies.add(e.currency)
+                e.customer = None  # Lighten output
+                e.customer_name = None
                 details.append(e)
+                if e.additional_discount:
+                    e.action = """<span class="text-warning"><i class="fa fa-warning"></i></span> Additional Discount""" 
                 
         # insert customer row
+        button = """<button class="btn btn-xs btn-primary" onclick="create_invoice('{customer}')">Create Invoice</button>"""
+        warning = """<span class="text-warning"><i class="fa fa-warning"></i></span> Multiple currencies"""
         output.append({
+            'dt': 'Customer',
             'customer': c,
             'customer_name': customer_name,
             'hours': total_h,
-            'rate': total_amount,
-            'action': '''<button class="btn btn-xs btn-primary" onclick="create_invoice('{customer}')">Create Invoice</button>'''.format(customer=c),
-            'indent': 0
+            'amount': total_amount if len(currencies) == 1 else None,
+            'shipping': total_shipping if len(currencies) == 1 else None,
+            'action': button.format(customer=c) if len(currencies) == 1 else warning,
+            'currency': currencies.pop() if len(currencies) == 1 else None,
+            'indent': 0,
         })
         for d in details:
             output.append(d)
@@ -81,15 +100,22 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None):
             dn.posting_date AS date,
             "Delivery Note" AS dt,
             dn.name AS reference,
-            NULL AS employee_name,
+            dni.against_sales_order AS sales_order,
+            dni.so_detail AS so_detail,
             dni.name AS detail,
             dni.item_code AS item,
             dni.item_name AS item_name,
             NULL AS hours,
             dni.qty AS qty,
             dni.net_rate AS rate,
-            dn.name AS remarks,
+            dni.price_list_rate AS price_list_rate,
+            dni.amount AS amount,
+            dn.discount_amount AS additional_discount,
+            dn.currency AS currency,
+            dni.description AS remarks,
             "" AS additional_remarks,
+            dni.blanket_order_customer_reference,
+            IFNULL(dns.shipping, 0) AS shipping,
             1 AS indent
         FROM `tabDelivery Note Item` dni
         LEFT JOIN `tabDelivery Note` dn ON dn.name = dni.parent
@@ -97,6 +123,13 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None):
             dni.name = sii.dn_detail
             AND sii.docstatus < 2
         )
+        LEFT JOIN (
+          SELECT
+          	stc.parent,
+          	stc.tax_amount as shipping
+          FROM `tabSales Taxes and Charges` stc
+          WHERE stc.account_head = "3410 - Freight Out Sales - bN"
+        ) as dns ON dns.parent = dn.name # DNS = Delivery Note Shipping
         WHERE 
             dn.docstatus = 1
             AND dn.status != "Closed"
@@ -113,15 +146,22 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None):
             ss.start_date AS date,
             "Subscription Service" AS dt,
             ss.name AS reference,
-            NULL AS employee_name,
             ssi.name AS detail,
+            NULL AS sales_order,
+            NULL AS so_detail,
             ssi.item AS item,
             ssi.item_name AS item_name,
             NULL AS hours,
             ssi.qty AS qty,
             ssi.rate AS rate,
+            NULL AS price_list_rate,
+            (IFNULL(ssi.qty, 1) * IFNULL(ssi.rate, 0)) AS amount,
+            0 as additional_discount,
+            "CHF" AS currency,
             ss.name AS remarks,
+            NULL as blanket_order_customer_reference,
             IFNULL(ss.remarks, "") AS additional_remarks,
+            NULL AS shipping,
             1 AS indent
         FROM `tabSubscription Service Item` ssi
         LEFT JOIN `tabSubscription Service` ss ON ss.name = ssi.parent
@@ -138,7 +178,7 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None):
                                                       WHERE tAI2.parent = ss.name) <= DATE_FORMAT(DATE_SUB(NOW(), INTERVAL 12 MONTH) ,'%Y-%m-01'))
                 )
         
-        ORDER BY date ASC;
+        ORDER BY date ASC, reference;
     """.format(from_date=from_date, to_date=to_date, customer=customer)
     entries = frappe.db.sql(sql_query, as_dict=True)
     return entries
@@ -148,12 +188,24 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None):
 def create_invoice(from_date, to_date, customer):
     # fetch entries
     entries = get_invoiceable_entries(from_date=from_date, to_date=to_date, customer=customer)
+
+    # Refuse to create invoice for mixed currency:
+    currencies = set(e.currency for e in entries)
+    if len(currencies) > 1:
+        raise Exception("Can't generate invoice for different currencies. Create create them by hand.")
+    currency = currencies.pop()
+    discounts = sum(e.additional_discount for e in entries)
+    if discounts:
+        raise Exception("A DN contains an additional discount. I can't handle this. Please create invoice by hand.")
     
     # determine tax template
     default_taxes = frappe.get_all("Sales Taxes and Charges Template", filters={'is_default': 1}, fields=['name'])
     if len(default_taxes) == 0:
         frappe.throw( _("Please define a default sales taxes and charges template."), _("Configuration missing"))
     taxes_and_charges_template = frappe.get_doc("Sales Taxes and Charges Template", default_taxes[0]['name'])
+
+    # Determine shipping item
+    shipping_item_code = frappe.get_single("bNovate Settings").shipping_income_item
     
     # create sales invoice
     sinv = frappe.get_doc({
@@ -164,34 +216,43 @@ def create_invoice(from_date, to_date, customer):
         'taxes': taxes_and_charges_template.taxes,
     })
     
+    shipping_total = 0
+    shipping_remarks = []
+    last_dn = None
     for e in entries:
         #Format Remarks 
-        if e.remarks:
-            remarkstring = "{0} : {1} <br>{2}<br>{3}".format(e.date.strftime("%d.%m.%Y"), 
-                e.employee_name or e.item_name, 
-                e.remarks.replace("\n", "<br>"),
-                e.additional_remarks.replace("\n", "<br>")
-                )
-        else:
-            remarkstring = "{0} : {1}".format(e.date.strftime("%d.%m.%Y"), e.employee_name)
+        remarkstring = e.remarks.replace("\n", "<br>")
+        remarkstring += ("<br>" + e.additional_remarks.replace("\n", "<br>")) if e.additional_remarks else ""
 
         item = {
             'item_code': e.item,
             'qty': e.qty,
             'rate': e.rate,
             'description': remarkstring,
-            'remarks': remarkstring
-
         }
         if e.dt == "Delivery Note":
             item['delivery_note'] = e.reference
             item['dn_detail'] = e.detail
-        elif e.dt == "Timesheet":
-            item['timesheet'] = e.reference
-            item['ts_detail'] = e.detail
-            item['qty'] = e.hours
-     
+            item['price_list_rate'] = e.price_list_rate
+            if e.so_detail:
+                item['sales_order'] = e.sales_order
+                item['so_detail'] = e.so_detail
+            if e.blanket_order_customer_reference:
+                item['blanket_order_customer_reference'] = e.blanket_order_customer_reference
+            if e.reference != last_dn:
+                shipping_total += e.shipping
+                shipping_remarks.append("{}: {} {}".format(e.reference, currency, e.shipping))
+            last_dn = e.reference
+
         sinv.append('items', item)
+
+    if shipping_total > 0:
+        sinv.append('items', {
+            'item_code': shipping_item_code,
+            'qty': 1,
+            'rate': shipping_total,
+            'description': "Aggregated shipping cost<br>" + "<br>".join(shipping_remarks),
+        })
     
     sinv.insert()
     

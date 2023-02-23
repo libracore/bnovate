@@ -3,7 +3,7 @@
 /* eslint-disable */
 
 frappe.query_reports["Subscriptions Billable"] = {
-	"filters": [
+	filters: [
 		{
 			"fieldname": "from_date",
 			"label": __("From Date"),
@@ -21,8 +21,15 @@ frappe.query_reports["Subscriptions Billable"] = {
 			"options": "Customer"
 		},
 	],
-	"onload": function (report) {
-		console.log("Report:", report);
+	initial_depth: 1,
+	onload(report) {
+		// console.log("Report:", report);
+	},
+	formatter(value, row, col, data, default_formatter) {
+		if (row[0].indent == 0) {
+			return '<b>' + default_formatter(value, row, col, data) + "</b>";
+		}
+		return default_formatter(value, row, col, data);
 	}
 };
 

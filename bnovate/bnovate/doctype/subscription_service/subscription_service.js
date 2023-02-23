@@ -34,3 +34,14 @@ frappe.ui.form.on('Subscription Service Item', {
 		}
 	}
 });
+
+// Code to add to custom scripts on Sales Invoice for example, to show links on dashboard:
+//
+// frappe.ui.form.on("Sales Invoice", {
+// 	before_load: function (frm) {
+// 		frm.dashboard.add_transactions({
+// 			'items': ['Subscription Service'],
+// 			'label': 'Subscription',
+// 		})
+// 	},
+// })
