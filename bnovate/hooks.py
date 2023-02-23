@@ -23,6 +23,12 @@ fixtures = [
     {
         "dt": "Custom DocPerm",
         "filters": [["role", "like", "IoT%"]],
+    },
+    {
+        "dt": "Custom Field",
+        "filters": [["name", "in", [
+            "Customer Group-taxes_and_charges_template", # Used to invoice subscriptions
+        ]]]
     }
 ]
 
