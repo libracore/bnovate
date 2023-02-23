@@ -14,7 +14,7 @@ app_license = "AGPL"
 # Fixtures
 # -----------------
 # (add docs created for this app): custom roles, permissions...
-# Need to run `bench export-fixtures` and add fixutres/ folder to git.
+# Need to run `bench export-fixtures` and add fixtures/ folder to git.
 fixtures = [
     {
         "dt": "Role",

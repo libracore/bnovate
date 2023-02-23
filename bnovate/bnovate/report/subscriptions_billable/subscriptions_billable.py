@@ -1,5 +1,12 @@
 # Copyright (c) 2023, bNovate, libracore and contributors
 # For license information, please see license.txt
+#
+#
+# Create a list of subscriptions and DN items ready to be billed
+# - Create a single invoice per customer for all open positions
+# - Aggregates shipping cost of all DNs under an item
+# - Elementary handling of different currencies and taxes and charges
+#
 
 from __future__ import unicode_literals
 from email.policy import default
@@ -192,17 +199,23 @@ def create_invoice(from_date, to_date, customer):
     # Refuse to create invoice for mixed currency:
     currencies = set(e.currency for e in entries)
     if len(currencies) > 1:
-        raise Exception("Can't generate invoice for different currencies. Create create them by hand.")
+        frappe.throw("Can't generate invoice for different currencies. Create create them by hand.")
     currency = currencies.pop()
     discounts = sum(e.additional_discount for e in entries)
     if discounts:
-        raise Exception("A DN contains an additional discount. I can't handle this. Please create invoice by hand.")
+        frappe.throw("A DN contains an additional discount. I can't handle this. Please create invoice by hand.")
     
     # determine tax template
-    default_taxes = frappe.get_all("Sales Taxes and Charges Template", filters={'is_default': 1}, fields=['name'])
-    if len(default_taxes) == 0:
-        frappe.throw( _("Please define a default sales taxes and charges template."), _("Configuration missing"))
-    taxes_and_charges_template = frappe.get_doc("Sales Taxes and Charges Template", default_taxes[0]['name'])
+    customer_group_name = frappe.get_value("Customer", customer, "customer_group")
+    customer_group = frappe.get_doc("Customer Group", customer_group_name)
+    default_taxes = customer_group.taxes_and_charges_template
+    # default_taxes = frappe.get_all("Sales Taxes and Charges Template", filters={'is_default': 1}, fields=['name'])
+    if not default_taxes:
+        frappe.throw(
+             _("Please define a default sales taxes and charges template for customer group {}.".format(customer_group_name)), 
+             _("Configuration missing")
+        )
+    taxes_and_charges_template = frappe.get_doc("Sales Taxes and Charges Template", default_taxes)
 
     # Determine shipping item
     shipping_item_code = frappe.get_single("bNovate Settings").shipping_income_item
@@ -212,7 +225,8 @@ def create_invoice(from_date, to_date, customer):
         'doctype': "Sales Invoice",
         'customer': customer,
         'customer_group': frappe.get_value("Customer", customer, "customer_group"),
-        'taxes_and_charges': default_taxes[0]['name'],
+        'currency': currency,
+        'taxes_and_charges': default_taxes,
         'taxes': taxes_and_charges_template.taxes,
     })
     
