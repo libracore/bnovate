@@ -33,6 +33,7 @@ def get_columns():
         {'fieldname': 'amount', 'label': _('Total'), 'fieldtype': 'Currency', 'options': 'currency', 'width': 100},
         {'fieldname': 'shipping', 'label': _('Shipping'), 'fieldtype': 'Currency', 'options': 'currency', 'width': 100},
         {'fieldname': 'reference', 'label': _('Reference'), 'fieldtype': 'Dynamic Link', 'options': 'dt', 'width': 120},
+        {'fieldname': 'payment_terms_template', 'label': _('Payment Terms'), 'fieldtype': 'link', 'options': 'Payment Terms Template', 'width': 120},
         {'fieldname': 'action', 'label': _('Action'), 'fieldtype': 'Data', 'width': 200}
     ]
 
@@ -57,6 +58,7 @@ def get_data(filters):
         customer_name = None
         last_dn = None
         currencies = set()
+        payment_terms = set()
         for e in entries:
             if e.customer == c:
                 total_h += e.hours or 0
@@ -66,6 +68,7 @@ def get_data(filters):
                 customer_name = e.customer_name
                 last_dn = e.reference
                 currencies.add(e.currency)
+                if e.payment_terms: payment_terms.add(e.payment_terms_template)
                 e.customer = None  # Lighten output
                 e.customer_name = None
                 details.append(e)
@@ -74,7 +77,11 @@ def get_data(filters):
                 
         # insert customer row
         button = """<button class="btn btn-xs btn-primary" onclick="create_invoice('{customer}')">Create Invoice</button>"""
-        warning = """<span class="text-warning"><i class="fa fa-warning"></i></span> Multiple currencies"""
+        warning = ""
+        if len(currencies) > 1:
+            warning = """<span class="text-warning"><i class="fa fa-warning"></i></span> Multiple currencies"""
+        elif len(payment_terms) > 1:
+            warning = """<span class="text-warning"><i class="fa fa-warning"></i></span> Multiple payment terms"""
         output.append({
             'dt': 'Customer',
             'customer': c,
@@ -82,7 +89,7 @@ def get_data(filters):
             'hours': total_h,
             'amount': total_amount if len(currencies) == 1 else None,
             'shipping': total_shipping if len(currencies) == 1 else None,
-            'action': button.format(customer=c) if len(currencies) == 1 else warning,
+            'action': warning if warning else button.format(customer=c),
             'currency': currencies.pop() if len(currencies) == 1 else None,
             'indent': 0,
         })
@@ -123,6 +130,7 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None):
             "" AS additional_remarks,
             dni.blanket_order_customer_reference,
             IFNULL(dns.shipping, 0) AS shipping,
+            dn.payment_terms_template,
             1 AS indent
         FROM `tabDelivery Note Item` dni
         LEFT JOIN `tabDelivery Note` dn ON dn.name = dni.parent
@@ -169,6 +177,7 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None):
             NULL as blanket_order_customer_reference,
             IFNULL(ss.remarks, "") AS additional_remarks,
             NULL AS shipping,
+            ss.payment_terms_template,
             1 AS indent
         FROM `tabSubscription Service Item` ssi
         LEFT JOIN `tabSubscription Service` ss ON ss.name = ssi.parent
@@ -199,8 +208,15 @@ def create_invoice(from_date, to_date, customer):
     # Refuse to create invoice for mixed currency:
     currencies = set(e.currency for e in entries)
     if len(currencies) > 1:
-        frappe.throw("Can't generate invoice for different currencies. Create create them by hand.")
+        frappe.throw("Can't generate invoice for different currencies. Please create them by hand.")
     currency = currencies.pop()
+
+    # Refuse to create invoices for mixed payment terms (ignore empty ones) 
+    payment_terms_templates = set(e.payment_terms_template for e in entries if e.payment_terms_template)
+    if len(payment_terms_templates) > 1:
+        frappe.throw("Can't generate invoice for different payment terms. Please create them by hand.")
+    payment_terms = payment_terms_templates.pop() if payment_terms_templates else None
+
     discounts = sum(e.additional_discount for e in entries)
     if discounts:
         frappe.throw("A DN contains an additional discount. I can't handle this. Please create invoice by hand.")
@@ -228,6 +244,7 @@ def create_invoice(from_date, to_date, customer):
         'currency': currency,
         'taxes_and_charges': default_taxes,
         'taxes': taxes_and_charges_template.taxes,
+        'payment_terms_template': payment_terms,
     })
     
     shipping_total = 0
