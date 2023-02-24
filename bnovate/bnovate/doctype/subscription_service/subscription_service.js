@@ -5,10 +5,9 @@ frappe.ui.form.on('Subscription Service', {
 	refresh(frm) {
 		frm.add_custom_button(__("Create Invoice"), async function () {
 			frappe.route_options = {};
-			await frappe.set_route("query-report", "Subscriptions Billable");
+			await frappe.set_route("query-report", "Aggregate Invoicing");
 			frappe.query_report.refresh();
 		});
-
 	}
 });
 
