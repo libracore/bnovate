@@ -44,6 +44,7 @@ app_include_css = [
 app_include_js = [ # Note to self: in case of changes, may need to run bench build --app bnovate
     "/assets/bnovate/js/bnovate_common.js",
     "/assets/js/bnovate_libs.min.js",
+    # "/assets/js/bnovate.js",   # Empty probably because it wasn't coded as a module.
 ]
 
 # include js, css files in header of web template

@@ -1,3 +1,13 @@
+// Set navbar to an obvious colour if running on dev machine:
+window.addEventListener("load", () => {
+  if (window.location.host.indexOf("localhost") >= 0) {
+    const navbar = document.getElementsByClassName("navbar")[0]
+    navbar.style.backgroundColor = "#e98332";
+    navbar.style.borderColor = "#e98332";
+  }
+})
+
+
 /*  ***********************
  * This file contains common global functions 
  * 
@@ -69,7 +79,7 @@ async function rms_start_session(config_id, device_id) {
     const status = await rms_get_status(channel);
     let [last_update] = status[device_id].slice(-1);
 
-    frappe.show_progress("Starting session....", status[device_id].length, 8, last_update?.value);
+    frappe.show_progress("Starting session....", status[device_id].length, 8, last_update ? last_update.value : null);
 
     if (last_update.status === "error" || last_update.status === "completed") {
       frappe.hide_progress();
