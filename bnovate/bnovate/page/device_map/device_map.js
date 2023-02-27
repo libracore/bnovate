@@ -92,15 +92,15 @@ frappe.pages['device-map'].on_page_load = function (wrapper) {
 
 	async function draw_table() {
 		// Use Frappe's QueryReport class to transform data for DataTable:
-		let report = new frappe.views.QueryReport({ parent: page.form.fields_dict.table.wrapper });
-		report.report_settings = {}
-		window.report = report;
-		// report.report_name = 'Late Purchases';  // TODO: cleanup
-		// await report.get_report_doc();
-		// await report.get_report_settings();
+		let report = new frappe.views.QueryReport({
+			report_name: "Connected Devices",
+			parent: page.form.fields_dict.table.wrapper,
+		});
+		await report.get_report_doc();
+		await report.get_report_settings();
 		report.$report = [form.fields_dict.table.wrapper];
 		report.prepare_report_data(state.report_data);
-		report.render_datatable()
+		report.render_datatable();
 	}
 	window.draw_table = draw_table
 

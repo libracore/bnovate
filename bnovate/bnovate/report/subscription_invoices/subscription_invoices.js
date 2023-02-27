@@ -16,5 +16,25 @@ frappe.query_reports["Subscription Invoices"] = {
             "fieldtype": "Link",
             "options": "Subscription Service"
         },
-    ]
+    ],
+    formatter(value, row, col, data, default_formatter) {
+        // Copied from SINV's lisview get_indicator
+        var status_color = {
+            "Draft": "grey",
+            "Unpaid": "orange",
+            "Paid": "green",
+            "Return": "darkgrey",
+            "Credit Note Issued": "darkgrey",
+            "Unpaid and Discounted": "orange",
+            "Overdue and Discounted": "red",
+            "Overdue": "red",
+            "Cancelled": "red"
+        };
+        if (col.fieldname === "status") {
+            let color = status_color[value] ? status_color[value] : "grey";
+            return `<span class="indicator ${color}">${value}</span>`
+        }
+        return default_formatter(value, row, col, data);
+    }
+
 };

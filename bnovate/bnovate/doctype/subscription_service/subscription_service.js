@@ -2,6 +2,14 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Subscription Service', {
+	before_load(frm) {
+		frm.dashboard.show();
+		frm.dashboard.add_transactions({
+			'items': ['Sales Invoice'],
+			'label': 'Invoicing',
+		});
+	},
+
 	refresh(frm) {
 		frm.add_custom_button(__("Create Invoice"), async function () {
 			frappe.route_options = {};
@@ -50,10 +58,12 @@ async function draw_report(frm) {
 		}
 	})
 	const report_data = resp.message;
-	console.log(report_data);
-
-	let report = new frappe.views.QueryReport({ parent: frm.fields_dict.report.wrapper });
-	report.report_settings = {}
+	let report = new frappe.views.QueryReport({
+		parent: frm.fields_dict.report.wrapper,
+		report_name: "Subscription Invoices"
+	});
+	await report.get_report_doc();
+	await report.get_report_settings();
 	report.$report = [frm.fields_dict.report.wrapper];
 	report.prepare_report_data(report_data);
 	report.render_datatable()
@@ -61,11 +71,11 @@ async function draw_report(frm) {
 
 // Code to add to custom scripts on Sales Invoice for example, to show links on dashboard:
 //
-// frappe.ui.form.on("Sales Invoice", {
-// 	before_load: function (frm) {
-// 		frm.dashboard.add_transactions({
-// 			'items': ['Subscription Service'],
-// 			'label': 'Subscription',
-// 		})
-// 	},
-// })
+frappe.ui.form.on("Sales Invoice", {
+	before_load(frm) {
+		frm.dashboard.add_transactions({
+			'items': ['Subscription Service'],
+			'label': 'Subscription',
+		})
+	},
+})

@@ -14,6 +14,8 @@ def get_columns():
         {'fieldname': 'customer_name', 'label': _('Customer name'), 'fieldtype': 'Data', 'width': 150},
         {'fieldname': 'subscription', 'label': _('Subscription'), 'fieldtype': 'Link', 'options': 'Subscription Service', 'width': 100},
         {'fieldname': 'sales_invoice', 'label': _('Invoice'), 'fieldtype': 'Link', 'options': 'Sales Invoice', 'width': 100},
+        {'fieldname': 'docstatus', 'label': _('Status'), 'fieldtype': 'Data', 'width': 100},
+        {'fieldname': 'status', 'label': _('Status'), 'fieldtype': 'Data', 'width': 100},
     ]
 
 
@@ -25,7 +27,9 @@ def get_data(filters):
         ss.name AS subscription,
         ss.customer,
         c.customer_name AS customer_name,
-        si.name AS sales_invoice
+        si.name AS sales_invoice,
+        si.docstatus AS docstatus,
+        si.status AS status
     FROM `tabSales Invoice Item` sii
         JOIN `tabSales Invoice` si ON sii.parent = si.name
         JOIN `tabSubscription Service` ss ON ss.name = sii.subscription

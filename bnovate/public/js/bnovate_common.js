@@ -1,11 +1,13 @@
 // Set navbar to an obvious colour if running on dev machine:
-window.addEventListener("load", () => {
-  if (window.location.host.indexOf("localhost") >= 0) {
-    const navbar = document.getElementsByClassName("navbar")[0]
-    navbar.style.backgroundColor = "#e98332";
-    navbar.style.borderColor = "#e98332";
-  }
-})
+// window.addEventListener("load", () => {
+if (window.location.host.indexOf("localhost") >= 0) {
+  let link = document.createElement('link');
+  link.type = 'text/css';
+  link.rel = 'stylesheet';
+  link.href = '/assets/bnovate/bnovate-dev.css';
+  document.getElementsByTagName('head')[0].appendChild(link);
+}
+// })
 
 
 /*  ***********************

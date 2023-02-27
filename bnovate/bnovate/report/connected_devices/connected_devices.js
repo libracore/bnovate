@@ -5,5 +5,5 @@
 frappe.query_reports["Connected Devices"] = {
 	"filters": [
 
-	]
+	],
 };

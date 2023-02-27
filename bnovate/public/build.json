@@ -8,6 +8,7 @@
     ],
 
     "css/bnovate.min.css": [
+        "public/bnovate.css",
         "public/js/lib/leaflet/MarkerCluster.css",
         "public/js/lib/leaflet/MarkerCluster.Default.css"
     ]
