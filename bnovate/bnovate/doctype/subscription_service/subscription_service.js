@@ -8,6 +8,8 @@ frappe.ui.form.on('Subscription Service', {
 			await frappe.set_route("query-report", "Aggregate Invoicing");
 			frappe.query_report.refresh();
 		});
+
+		draw_report(frm);
 	}
 });
 
@@ -34,6 +36,28 @@ frappe.ui.form.on('Subscription Service Item', {
 		}
 	}
 });
+
+
+// Example of how to draw a report inside a form.
+async function draw_report(frm) {
+	const resp = await frappe.call({
+		method: "frappe.desk.query_report.run",
+		args: {
+			report_name: "Subscription Invoices",
+			filters: {
+				subscription: frm.doc.name,
+			}
+		}
+	})
+	const report_data = resp.message;
+	console.log(report_data);
+
+	let report = new frappe.views.QueryReport({ parent: frm.fields_dict.report.wrapper });
+	report.report_settings = {}
+	report.$report = [frm.fields_dict.report.wrapper];
+	report.prepare_report_data(report_data);
+	report.render_datatable()
+}
 
 // Code to add to custom scripts on Sales Invoice for example, to show links on dashboard:
 //

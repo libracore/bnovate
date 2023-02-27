@@ -29,6 +29,7 @@ fixtures = [
         "filters": [["name", "in", [
             "Customer Group-taxes_and_charges_template", # Used to invoice subscriptions
             "Delivery Note-payment_terms_template", # Used to match invoice to SO payment terms through DN
+            "Sales Invoice Item-subscription", # Used to match SINV to subscriptions
         ]]]
     }
 ]

@@ -274,6 +274,8 @@ def create_invoice(from_date, to_date, customer):
                 shipping_total += e.shipping
                 shipping_remarks.append("{}: {} {}".format(e.reference, currency, e.shipping))
             last_dn = e.reference
+        elif e.dt == "Subscription Service":
+            item['subscription'] = e.reference
 
         sinv.append('items', item)
 

@@ -18,6 +18,7 @@
   "payment_terms_template",
   "section_invoices",
   "invoices",
+  "report",
   "section_remarks",
   "remarks"
  ],
@@ -109,9 +110,14 @@
    "fieldtype": "Link",
    "label": "Payment Terms Template",
    "options": "Payment Terms Template"
+  },
+  {
+   "fieldname": "report",
+   "fieldtype": "HTML",
+   "label": "Report"
   }
  ],
- "modified": "2023-02-24 14:55:11.621565",
+ "modified": "2023-02-24 17:48:10.275211",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Subscription Service",
