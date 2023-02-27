@@ -1,3 +1,13 @@
+// Set navbar to an obvious colour if running on dev machine:
+window.addEventListener("load", () => {
+  if (window.location.host.indexOf("localhost") >= 0) {
+    const navbar = document.getElementsByClassName("navbar")[0]
+    navbar.style.backgroundColor = "#e98332";
+    navbar.style.borderColor = "#e98332";
+  }
+})
+
+
 /*  ***********************
  * This file contains common global functions 
  * 
