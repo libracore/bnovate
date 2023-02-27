@@ -290,17 +290,17 @@ def create_invoice(from_date, to_date, customer):
     sinv.insert()
     
     # insert abo references (*renamed Abo to Subscription Service)
-    abos = []
-    for e in entries:
-        if e.dt == "Subscription Service" and e.reference not in abos:
-            abos.append(e.reference)
-    for a in abos:
-        abo = frappe.get_doc("Subscription Service", a)
-        abo.append("invoices", {
-            'date': datetime.datetime.now(),
-            'sales_invoice': sinv.name
-        })
-        abo.save()
+    # abos = []
+    # for e in entries:
+    #     if e.dt == "Subscription Service" and e.reference not in abos:
+    #         abos.append(e.reference)
+    # for a in abos:
+    #     abo = frappe.get_doc("Subscription Service", a)
+    #     abo.append("invoices", {
+    #         'date': datetime.datetime.now(),
+    #         'sales_invoice': sinv.name
+    #     })
+    #     abo.save()
     
     frappe.db.commit()
     

@@ -18,7 +18,7 @@ frappe.query_reports["Subscription Invoices"] = {
         },
     ],
     formatter(value, row, col, data, default_formatter) {
-        // Copied from SINV's lisview get_indicator
+        // Copied from SINV's listview get_indicator
         var status_color = {
             "Draft": "grey",
             "Unpaid": "orange",
