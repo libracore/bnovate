@@ -1,0 +1,47 @@
+{
+ "creation": "2022-12-06 16:31:09.756078",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "start_time",
+  "end_time",
+  "duration"
+ ],
+ "fields": [
+  {
+   "allow_on_submit": 1,
+   "fieldname": "start_time",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Start Time",
+   "reqd": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "end_time",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "End Time"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "duration",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Duration",
+   "read_only": 1
+  }
+ ],
+ "istable": 1,
+ "modified": "2023-02-28 13:11:39.335408",
+ "modified_by": "Administrator",
+ "module": "bNovate",
+ "name": "Work Order Time Log",
+ "owner": "douglas.watson@bnovate.com",
+ "permissions": [],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
