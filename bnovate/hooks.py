@@ -59,8 +59,8 @@ app_include_js = [ # Note to self: in case of changes, may need to run bench bui
 
 # include js in doctype views
 doctype_js = {
-    "Sales Invoice" : ["bnovate/doctype/subscription_service/subscription_service.js"],
-    "Customer" : ["bnovate/doctype/subscription_service/subscription_service.js"],
+    "Sales Invoice" : ["public/js/sales_invoice.js"],
+    "Customer" : ["public/js/customer.js"],
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
