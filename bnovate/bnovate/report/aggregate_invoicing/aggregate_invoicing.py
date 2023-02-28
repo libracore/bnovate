@@ -33,6 +33,7 @@ def get_columns():
         {'fieldname': 'amount', 'label': _('Total'), 'fieldtype': 'Currency', 'options': 'currency', 'width': 100},
         {'fieldname': 'shipping', 'label': _('Shipping'), 'fieldtype': 'Currency', 'options': 'currency', 'width': 100},
         {'fieldname': 'reference', 'label': _('Reference'), 'fieldtype': 'Dynamic Link', 'options': 'dt', 'width': 120},
+        {'fieldname': 'last_invoice_date', 'label': _('Last Invoiced'), 'fieldtype': 'Date', 'width': 120},
         {'fieldname': 'payment_terms_template', 'label': _('Payment Terms'), 'fieldtype': 'link', 'options': 'Payment Terms Template', 'width': 120},
         {'fieldname': 'action', 'label': _('Action'), 'fieldtype': 'Data', 'width': 200}
     ]
@@ -109,6 +110,7 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None):
         
     sql_query = """
         SELECT
+            1 AS indent,
             dn.customer AS customer,
             dn.customer_name AS customer_name,
             dn.posting_date AS date,
@@ -131,7 +133,8 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None):
             dni.blanket_order_customer_reference,
             IFNULL(dns.shipping, 0) AS shipping,
             dn.payment_terms_template,
-            1 AS indent
+            NULL AS sub_interval,
+            NULL AS last_invoice_date
         FROM `tabDelivery Note Item` dni
         LEFT JOIN `tabDelivery Note` dn ON dn.name = dni.parent
         LEFT JOIN `tabSales Invoice Item` sii ON (
@@ -155,45 +158,46 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None):
             AND (dn.posting_date >= "{from_date}" AND dn.posting_date <= "{to_date}")
             AND sii.name IS NULL
             
-        UNION SELECT
-            ss.customer AS customer,
-            ss.customer_name AS customer_name,
-            ss.start_date AS date,
-            "Subscription Service" AS dt,
-            ss.name AS reference,
-            ssi.name AS detail,
-            NULL AS sales_order,
-            NULL AS so_detail,
-            ssi.item AS item,
-            ssi.item_name AS item_name,
-            NULL AS hours,
-            ssi.qty AS qty,
-            ssi.rate AS rate,
-            NULL AS price_list_rate,
-            (IFNULL(ssi.qty, 1) * IFNULL(ssi.rate, 0)) AS amount,
-            0 as additional_discount,
-            "CHF" AS currency,
-            ss.name AS remarks,
-            NULL as blanket_order_customer_reference,
-            IFNULL(ss.remarks, "") AS additional_remarks,
-            NULL AS shipping,
-            ss.payment_terms_template,
-            1 AS indent
-        FROM `tabSubscription Service Item` ssi
-        LEFT JOIN `tabSubscription Service` ss ON ss.name = ssi.parent
-        WHERE
-            ss.enabled = 1
-            AND ss.customer LIKE "{customer}"
-            AND ss.start_date <= "{to_date}" 
-            AND (ss.end_date IS NULL OR ss.end_date >= "{to_date}")
-            AND ((ss.interval = "Monthly" AND (SELECT IFNULL(MAX(tAI1.date), "2000-01-01") 
-                                                      FROM `tabSubscription Service Invoice` AS tAI1
-                                                      WHERE tAI1.parent = ss.name) <= DATE_FORMAT(NOW() ,'%Y-%m-01'))
-                 OR (ss.interval = "Yearly" AND (SELECT IFNULL(MAX(tAI2.date), "2000-01-01")
-                                                      FROM `tabSubscription Service Invoice` AS tAI2
-                                                      WHERE tAI2.parent = ss.name) <= DATE_FORMAT(DATE_SUB(NOW(), INTERVAL 12 MONTH) ,'%Y-%m-01'))
-                )
-        
+        UNION SELECT * FROM ( SELECT
+                1 AS indent,
+                ss.customer AS customer,
+                ss.customer_name AS customer_name,
+                ss.start_date AS date,
+                "Subscription Service" AS dt,
+                ss.name AS reference,
+                ssi.name AS detail,
+                NULL AS sales_order,
+                NULL AS so_detail,
+                ssi.item AS item,
+                ssi.item_name AS item_name,
+                NULL AS hours,
+                ssi.qty AS qty,
+                ssi.rate AS rate,
+                NULL AS price_list_rate,
+                (IFNULL(ssi.qty, 1) * IFNULL(ssi.rate, 0)) AS amount,
+                0 as additional_discount,
+                "CHF" AS currency,
+                ss.name AS remarks,
+                NULL as blanket_order_customer_reference,
+                IFNULL(ss.remarks, "") AS additional_remarks,
+                NULL AS shipping,
+                ss.payment_terms_template,
+                ss.interval AS sub_interval,
+                (SELECT MAX(_si.posting_date)
+                    FROM `tabSales Invoice Item` _sii
+                    JOIN `tabSales Invoice` _si ON _si.name = _sii.parent
+                    WHERE _sii.subscription = ss.name AND _si.docstatus < 2
+                ) AS last_invoice_date
+            FROM `tabSubscription Service Item` ssi
+            LEFT JOIN `tabSubscription Service` ss ON ss.name = ssi.parent
+            WHERE
+                ss.enabled = 1
+                AND ss.customer LIKE "{customer}"
+                AND ss.start_date <= "{to_date}" 
+                AND (ss.end_date IS NULL OR ss.end_date >= "{to_date}")
+        ) as sub WHERE
+            (sub_interval = "Monthly" AND IFNULL(last_invoice_date, '2001-01-01') <= DATE_FORMAT(NOW() ,'%Y-%m-01'))  -- Latest invoice is earlier than the first day of current month.
+            OR (sub_interval = "Yearly" AND IFNULL(last_invoice_date, '2001-01-01') <= DATE_FORMAT(DATE_SUB(NOW(), INTERVAL 12 MONTH) ,'%Y-%m-01'))  -- Latest invoice is earlier than one year before first day of current month.
         ORDER BY date ASC, reference;
     """.format(from_date=from_date, to_date=to_date, customer=customer)
     entries = frappe.db.sql(sql_query, as_dict=True)

@@ -13,6 +13,7 @@ def get_columns():
         {'fieldname': 'customer', 'label': _('Customer'), 'fieldtype': 'Link', 'options': 'Customer', 'width': 100},
         {'fieldname': 'customer_name', 'label': _('Customer name'), 'fieldtype': 'Data', 'width': 150},
         {'fieldname': 'subscription', 'label': _('Subscription'), 'fieldtype': 'Link', 'options': 'Subscription Service', 'width': 100},
+        {'fieldname': 'posting_date', 'label': _('Posting Date'), 'fieldtype': 'Date', 'width': 100},
         {'fieldname': 'sales_invoice', 'label': _('Invoice'), 'fieldtype': 'Link', 'options': 'Sales Invoice', 'width': 100},
         # {'fieldname': 'docstatus', 'label': _('Status'), 'fieldtype': 'Data', 'width': 100},
         {'fieldname': 'status', 'label': _('Status'), 'fieldtype': 'Data', 'width': 100},
@@ -27,6 +28,7 @@ def get_data(filters):
         ss.name AS subscription,
         ss.customer,
         c.customer_name AS customer_name,
+        si.posting_date AS posting_date,
         si.name AS sales_invoice,
         si.docstatus AS docstatus,
         si.status AS status
@@ -36,6 +38,7 @@ def get_data(filters):
         JOIN `tabCustomer` c on ss.customer = c.name
     WHERE ss.name LIKE "{subscription}"
         AND ss.customer LIKE "{customer}"
+    ORDER BY ss.customer, ss.name, si.posting_date
     """.format(subscription = subscription, customer=customer)
 
     entries = frappe.db.sql(sql_query, as_dict=True)

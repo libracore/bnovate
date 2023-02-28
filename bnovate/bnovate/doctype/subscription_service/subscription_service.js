@@ -58,6 +58,9 @@ async function draw_report(frm) {
 		}
 	})
 	const report_data = resp.message;
+	// if (!report_data.result.length) {
+	// 	return;
+	// }
 	let report = new frappe.views.QueryReport({
 		parent: frm.fields_dict.report.wrapper,
 		report_name: "Subscription Invoices"
