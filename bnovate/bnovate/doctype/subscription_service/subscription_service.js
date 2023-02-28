@@ -70,23 +70,13 @@ async function draw_report(frm) {
 }
 
 // Add to custom scripts on Sales Invoice for example, to show links on dashboard:
-// Needs to included in hooks.py (doctype_js)
-frappe.ui.form.on("Sales Invoice", {
-	before_load(frm) {
-		frm.dashboard.add_transactions({
-			'items': ['Subscription Service'],
-			'label': 'Subscription',
-		})
-		frm.dashboard.data.internal_links['Subscription Service'] = ['items', 'subscription'];
-	},
-})
-
-frappe.ui.form.on("Customer", {
-	before_load(frm) {
-		frm.dashboard.add_transactions({
-			'items': ['Subscription Service'],
-			'label': 'Subscription',
-		})
-		frm.dashboard.data.internal_links['Subscription Service'] = ['items', 'subscription'];
-	},
-})
+// Needs to be included in hooks.py (doctype_js)
+// frappe.ui.form.on("Sales Invoice", {
+// 	before_load(frm) {
+// 		frm.dashboard.add_transactions({
+// 			'items': ['Subscription Service'],
+// 			'label': 'Subscription',
+// 		})
+// 		frm.dashboard.data.internal_links['Subscription Service'] = ['items', 'subscription'];
+// 	},
+// })
