@@ -26,25 +26,28 @@ def get_columns(filters):
     cols = [
         {'fieldname': 'customer', 'label': _('Customer'), 'fieldtype': 'Link', 'options': 'Customer', 'width': 100},
         {'fieldname': 'customer_name', 'label': _('Customer name'), 'fieldtype': 'Data', 'width': 150},
-        {'fieldname': 'date', 'label': _('Date'), 'fieldtype': 'Date', 'width': 80},
+        {'fieldname': 'reference', 'label': _('Reference'), 'fieldtype': 'Dynamic Link', 'options': 'dt', 'width': 120},
+        {'fieldname': 'date', 'label': _('Billing Start / Ship Date'), 'fieldtype': 'Date', 'width': 80},
+        {'fieldname': 'period_end', 'label': _('Billing Period End'), 'fieldtype': 'Date', 'width': 80},
         {'fieldname': 'item', 'label': _('Item'), 'fieldtype': 'Link', 'options': 'Item', 'width': 200},
         {'fieldname': 'qty', 'label': _('Qty'), 'fieldtype': 'Float', 'width': 50},
         {'fieldname': 'rate', 'label': _('Item Rate'), 'fieldtype': 'Currency', 'options': 'currency', 'width': 100},
         {'fieldname': 'amount', 'label': _('Total'), 'fieldtype': 'Currency', 'options': 'currency', 'width': 100},
         {'fieldname': 'shipping', 'label': _('Shipping'), 'fieldtype': 'Currency', 'options': 'currency', 'width': 100},
-        {'fieldname': 'reference', 'label': _('Reference'), 'fieldtype': 'Dynamic Link', 'options': 'dt', 'width': 120},
-        {'fieldname': 'last_invoice_date', 'label': _('Last Invoiced'), 'fieldtype': 'Date', 'width': 120},
         {'fieldname': 'payment_terms_template', 'label': _('Payment Terms'), 'fieldtype': 'link', 'options': 'Payment Terms Template', 'width': 120},
         {'fieldname': 'action', 'label': _('Action'), 'fieldtype': 'Data', 'width': 200},
         {'fieldname': 'start_date', 'label': _('Subscription Start'), 'fieldtype': 'Date', 'width': 80},
         {'fieldname': 'end_date', 'label': _('Subscription End'), 'fieldtype': 'Date', 'width': 80},
-        {'fieldname': 'period_start', 'label': _('Billing Period Start'), 'fieldtype': 'Date', 'width': 80},
-        {'fieldname': 'period_end', 'label': _('Billing Period End'), 'fieldtype': 'Date', 'width': 80},
-        {'fieldname': 'sinv_name', 'label': _('Invoice'), 'fieldtype': 'Link', 'options': 'Sales Invoice', 'width': 200},
-        {'fieldname': 'posting_date', 'label': _('Posting Date'), 'fieldtype': 'Date', 'width': 80},
-        {'fieldname': 'sii_start_date', 'label': _('SINV detail Period Start'), 'fieldtype': 'Date', 'width': 80},
-        {'fieldname': 'sii_end_date', 'label': _('SINV detail Period End'), 'fieldtype': 'Date', 'width': 80},
-        ]
+    ]
+
+    if filters.show_invoiced:
+        cols.extend([
+            {'fieldname': 'sinv_name', 'label': _('Invoice'), 'fieldtype': 'Link', 'options': 'Sales Invoice', 'width': 200},
+            {'fieldname': 'posting_date', 'label': _('Posting Date'), 'fieldtype': 'Date', 'width': 80},
+            {'fieldname': 'sii_start_date', 'label': _('SINV detail Period Start'), 'fieldtype': 'Date', 'width': 80},
+            {'fieldname': 'sii_end_date', 'label': _('SINV detail Period End'), 'fieldtype': 'Date', 'width': 80},
+        ])
+
     return cols
 
 def get_data(filters):
@@ -79,7 +82,7 @@ def get_data(filters):
                 customer_name = e.customer_name
                 last_dn = e.reference
                 currencies.add(e.currency)
-                if e.payment_terms: payment_terms.add(e.payment_terms_template)
+                if e.payment_terms_template: payment_terms.add(e.payment_terms_template)
                 e.customer = None  # Lighten output
                 e.customer_name = None
                 details.append(e)
@@ -211,7 +214,7 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, show_in
             1 AS indent,
             ss.customer AS customer,
             ss.customer_name AS customer_name,
-            ss.start_date AS date,
+            bp.period_start AS date,
             "Subscription Service" AS dt,
             ss.name AS reference,
             ssi.name AS detail,
@@ -248,10 +251,11 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, show_in
         LEFT JOIN `tabSales Invoice` si on sii.parent = si.name
         WHERE si.name IS NULL 
             {invoiced_filter}
+            AND ss.customer LIKE "{customer}"
         ORDER BY ss.name, period_start, ssi_index
         ) AS subs
         
-        -- ORDER BY date ASC, reference;
+        ORDER BY reference, date;
     """.format(from_date=from_date, to_date=to_date, customer=customer, shipping_account=shipping_account,
         invoiced_filter=invoiced_filter)
     entries = frappe.db.sql(sql_query, as_dict=True)
@@ -334,6 +338,8 @@ def create_invoice(from_date, to_date, customer):
             last_dn = e.reference
         elif e.dt == "Subscription Service":
             item['subscription'] = e.reference
+            item['start_date'] = e.period_start
+            item['end_date'] = e.period_end
 
         sinv.append('items', item)
 
@@ -342,6 +348,7 @@ def create_invoice(from_date, to_date, customer):
             'item_code': shipping_item_code,
             'qty': 1,
             'rate': shipping_total,
+            'price_list_rate': shipping_total,
             'description': "Aggregated shipping cost<br>" + "<br>".join(shipping_remarks),
         })
     

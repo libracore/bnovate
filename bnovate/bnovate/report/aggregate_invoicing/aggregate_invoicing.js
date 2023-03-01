@@ -29,11 +29,27 @@ frappe.query_reports["Aggregate Invoicing"] = {
     ],
     initial_depth: 1,
     onload(report) {
-        // console.log("Report:", report);
+        console.log("Report:", report);
+        this.report = report;
+        this.ref_index = 1;
+        this.colours = ["#e9a3c9", "#f7f7f7", "#a1d76a"];
     },
     formatter(value, row, col, data, default_formatter) {
-        if (row[0].indent == 0) {
+        if (row[0].rowIndex == 1) {
+            // console.log(value, row, col, data)
+        }
+        if (data.indent == 0) {
             return '<b>' + default_formatter(value, row, col, data) + "</b>";
+        }
+
+        // If we've reached this point, row is > 0
+        if (col.fieldname == "reference") {
+            console.log("reference", row, col, this.colours[this.ref_index % this.colours.length])
+            // Cycle colours if previous row has difference reference
+            if (this.report.data[row[0].rowIndex - 1].reference != data.reference) {
+                this.ref_index += 1
+            }
+            return `<span style="background-color: ${this.colours[this.ref_index % this.colours.length]}">${default_formatter(value, row, col, data)}</span>`
         }
         return default_formatter(value, row, col, data);
     }
