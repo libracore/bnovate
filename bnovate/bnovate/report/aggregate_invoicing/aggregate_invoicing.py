@@ -107,6 +107,8 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None):
         to_date = "2099-12-31"
     if not customer:
         customer = "%"
+
+    shipping_account = frappe.get_single("bNovate Settings").shipping_income_account
         
     sql_query = """
         SELECT
@@ -146,7 +148,7 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None):
           	stc.parent,
           	stc.tax_amount as shipping
           FROM `tabSales Taxes and Charges` stc
-          WHERE stc.account_head = "3410 - Freight Out Sales - bN"
+          WHERE stc.account_head = "{shipping_account}"
         ) as dns ON dns.parent = dn.name # DNS = Delivery Note Shipping
         WHERE 
             dn.docstatus = 1
@@ -199,7 +201,7 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None):
             (sub_interval = "Monthly" AND IFNULL(last_invoice_date, '2001-01-01') <= DATE_FORMAT(NOW() ,'%Y-%m-01'))  -- Latest invoice is earlier than the first day of current month.
             OR (sub_interval = "Yearly" AND IFNULL(last_invoice_date, '2001-01-01') <= DATE_FORMAT(DATE_SUB(NOW(), INTERVAL 12 MONTH) ,'%Y-%m-01'))  -- Latest invoice is earlier than one year before first day of current month.
         ORDER BY date ASC, reference;
-    """.format(from_date=from_date, to_date=to_date, customer=customer)
+    """.format(from_date=from_date, to_date=to_date, customer=customer, shipping_account=shipping_account)
     entries = frappe.db.sql(sql_query, as_dict=True)
     return entries
 

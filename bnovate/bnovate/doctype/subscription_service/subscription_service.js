@@ -2,14 +2,6 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Subscription Service', {
-	before_load(frm) {
-		frm.dashboard.show();
-		frm.dashboard.add_transactions({
-			'items': ['Sales Invoice'],
-			'label': 'Invoicing',
-		});
-	},
-
 	refresh(frm) {
 		frm.add_custom_button(__("Create Invoice"), async function () {
 			frappe.route_options = {};
