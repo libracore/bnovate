@@ -21,3 +21,11 @@ span.coloured {
     height: 100%;
     padding: var(--dt-spacer-2);
 }
+
+span.coloured.light {
+    background-color: #f5f8fd;
+}
+
+span.coloured.dark {
+    background-color: #dde6f7;
+}

@@ -32,12 +32,11 @@ frappe.query_reports["Aggregate Invoicing"] = {
         console.log("Report:", report);
         this.report = report;
         this.ref_index = 1;
-        this.colours = ["#e9a3c9", "#f7f7f7", "#a1d76a"];
+        this.bp_index = 1; // billing period
+        this.colours = ["#e5e5e5", "#f7f7f7"];
+        this.colours = ["light", "dark"];
     },
     formatter(value, row, col, data, default_formatter) {
-        if (row[0].rowIndex == 1) {
-            // console.log(value, row, col, data)
-        }
         if (data.indent == 0) {
             return '<b>' + default_formatter(value, row, col, data) + "</b>";
         }
@@ -49,7 +48,14 @@ frappe.query_reports["Aggregate Invoicing"] = {
             if (this.report.data[row[0].rowIndex - 1].reference != data.reference) {
                 this.ref_index += 1
             }
-            return `<span class="coloured" style="background-color: ${this.colours[this.ref_index % this.colours.length]}">${default_formatter(value, row, col, data)}</span>`
+            return `<span class="coloured ${this.colours[this.ref_index % this.colours.length]}">${default_formatter(value, row, col, data)}</span>`
+        } else if (col.fieldname == "date") {
+            if (this.report.data[row[0].rowIndex - 1].date != data.date) {
+                this.bp_index += 1
+            }
+            return `<span class="coloured ${this.colours[this.bp_index % this.colours.length]}">${default_formatter(value, row, col, data)}</span>`
+        } else if (col.fieldname == "period_end") {
+            return `<span class="coloured ${this.colours[this.bp_index % this.colours.length]}">${default_formatter(value, row, col, data)}</span>`
         }
         return default_formatter(value, row, col, data);
     }
