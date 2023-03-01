@@ -49,7 +49,7 @@ frappe.query_reports["Aggregate Invoicing"] = {
             if (this.report.data[row[0].rowIndex - 1].reference != data.reference) {
                 this.ref_index += 1
             }
-            return `<span style="background-color: ${this.colours[this.ref_index % this.colours.length]}">${default_formatter(value, row, col, data)}</span>`
+            return `<span class="coloured" style="background-color: ${this.colours[this.ref_index % this.colours.length]}">${default_formatter(value, row, col, data)}</span>`
         }
         return default_formatter(value, row, col, data);
     }

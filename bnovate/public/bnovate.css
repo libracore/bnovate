@@ -8,3 +8,16 @@ body {
 .dt-scrollable {
     border-top: 0px;
 }
+
+/* Change padding of table cells to simulate a full background fill */
+div:has(> span.coloured) {
+    padding: 0px;
+    padding-bottom: var(--dt-focus-border-width);
+}
+
+span.coloured {
+    display: block;
+    width: 100%;
+    height: 100%;
+    padding: var(--dt-spacer-2);
+}
