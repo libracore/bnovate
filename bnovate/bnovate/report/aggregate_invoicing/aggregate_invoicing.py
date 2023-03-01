@@ -17,13 +17,13 @@ import datetime
 from frappe.utils import cint
 
 def execute(filters=None):
-    columns = get_columns()
+    columns = get_columns(filters)
     data = get_data(filters)
     return columns, data
 
 
-def get_columns():
-    return [
+def get_columns(filters):
+    cols = [
         {'fieldname': 'customer', 'label': _('Customer'), 'fieldtype': 'Link', 'options': 'Customer', 'width': 100},
         {'fieldname': 'customer_name', 'label': _('Customer name'), 'fieldtype': 'Data', 'width': 150},
         {'fieldname': 'date', 'label': _('Date'), 'fieldtype': 'Date', 'width': 80},
@@ -35,13 +35,23 @@ def get_columns():
         {'fieldname': 'reference', 'label': _('Reference'), 'fieldtype': 'Dynamic Link', 'options': 'dt', 'width': 120},
         {'fieldname': 'last_invoice_date', 'label': _('Last Invoiced'), 'fieldtype': 'Date', 'width': 120},
         {'fieldname': 'payment_terms_template', 'label': _('Payment Terms'), 'fieldtype': 'link', 'options': 'Payment Terms Template', 'width': 120},
-        {'fieldname': 'action', 'label': _('Action'), 'fieldtype': 'Data', 'width': 200}
-    ]
+        {'fieldname': 'action', 'label': _('Action'), 'fieldtype': 'Data', 'width': 200},
+        {'fieldname': 'start_date', 'label': _('Subscription Start'), 'fieldtype': 'Date', 'width': 80},
+        {'fieldname': 'end_date', 'label': _('Subscription End'), 'fieldtype': 'Date', 'width': 80},
+        {'fieldname': 'period_start', 'label': _('Billing Period Start'), 'fieldtype': 'Date', 'width': 80},
+        {'fieldname': 'period_end', 'label': _('Billing Period End'), 'fieldtype': 'Date', 'width': 80},
+        {'fieldname': 'sinv_name', 'label': _('Invoice'), 'fieldtype': 'Link', 'options': 'Sales Invoice', 'width': 200},
+        {'fieldname': 'posting_date', 'label': _('Posting Date'), 'fieldtype': 'Date', 'width': 80},
+        {'fieldname': 'sii_start_date', 'label': _('SINV detail Period Start'), 'fieldtype': 'Date', 'width': 80},
+        {'fieldname': 'sii_end_date', 'label': _('SINV detail Period End'), 'fieldtype': 'Date', 'width': 80},
+        ]
+    return cols
 
 def get_data(filters):
     entries = get_invoiceable_entries(from_date=filters.from_date, 
-        to_date=filters.to_date, customer=filters.customer)
-    
+        to_date=filters.to_date, customer=filters.customer,
+        show_invoiced=filters.show_invoiced)
+
     # find customers
     customers = []
     for e in entries:
@@ -100,7 +110,7 @@ def get_data(filters):
     return output
 
 
-def get_invoiceable_entries(from_date=None, to_date=None, customer=None):
+def get_invoiceable_entries(from_date=None, to_date=None, customer=None, show_invoiced=False):
     if not from_date:
         from_date = "2000-01-01"
     if not to_date:
@@ -108,6 +118,9 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None):
     if not customer:
         customer = "%"
 
+    invoiced_filter = ""
+    if show_invoiced:
+        invoiced_filter = "OR si.docstatus < 2"
     shipping_account = frappe.get_single("bNovate Settings").shipping_income_account
         
     sql_query = """
@@ -136,7 +149,16 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None):
             IFNULL(dns.shipping, 0) AS shipping,
             dn.payment_terms_template,
             NULL AS sub_interval,
-            NULL AS last_invoice_date
+
+            -- Only relevant for subscriptions:
+            NULL AS start_date,
+            NULL AS end_date,
+            NULL AS period_start,
+            NULL AS period_end,
+            NULL AS sinv_name,
+            NULL AS posting_date,
+            NULL AS sii_start_date,
+            NULL AS sii_end_date
         FROM `tabDelivery Note Item` dni
         LEFT JOIN `tabDelivery Note` dn ON dn.name = dni.parent
         LEFT JOIN `tabSales Invoice Item` sii ON (
@@ -160,48 +182,78 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None):
             AND (dn.posting_date >= "{from_date}" AND dn.posting_date <= "{to_date}")
             AND sii.name IS NULL
             
-        UNION SELECT * FROM ( SELECT
-                1 AS indent,
-                ss.customer AS customer,
-                ss.customer_name AS customer_name,
-                ss.start_date AS date,
-                "Subscription Service" AS dt,
-                ss.name AS reference,
-                ssi.name AS detail,
-                NULL AS sales_order,
-                NULL AS so_detail,
-                ssi.item AS item,
-                ssi.item_name AS item_name,
-                NULL AS hours,
-                ssi.qty AS qty,
-                ssi.rate AS rate,
-                NULL AS price_list_rate,
-                (IFNULL(ssi.qty, 1) * IFNULL(ssi.rate, 0)) AS amount,
-                0 as additional_discount,
-                "CHF" AS currency,
-                ss.name AS remarks,
-                NULL as blanket_order_customer_reference,
-                IFNULL(ss.remarks, "") AS additional_remarks,
-                NULL AS shipping,
-                ss.payment_terms_template,
-                ss.interval AS sub_interval,
-                (SELECT MAX(_si.posting_date)
-                    FROM `tabSales Invoice Item` _sii
-                    JOIN `tabSales Invoice` _si ON _si.name = _sii.parent
-                    WHERE _sii.subscription = ss.name AND _si.docstatus < 2
-                ) AS last_invoice_date
+        UNION
+        -- For each subscription, generate a row for each period between start end end date.
+        SELECT * FROM (WITH RECURSIVE bp AS ( -- bp: billing periods
+            SELECT
+                ss.name,
+                ssi.name AS ssi_docname,
+                ssi.idx AS ssi_index,
+                start_date,
+                end_date,
+                DATE_FORMAT(start_date, '%Y-%m-01') AS period_start,
+                LAST_DAY(start_date) AS period_end
             FROM `tabSubscription Service Item` ssi
-            LEFT JOIN `tabSubscription Service` ss ON ss.name = ssi.parent
-            WHERE
-                ss.enabled = 1
-                AND ss.customer LIKE "{customer}"
-                AND ss.start_date <= "{to_date}" 
-                AND (ss.end_date IS NULL OR ss.end_date >= "{to_date}")
-        ) as sub WHERE
-            (sub_interval = "Monthly" AND IFNULL(last_invoice_date, '2001-01-01') <= DATE_FORMAT(NOW() ,'%Y-%m-01'))  -- Latest invoice is earlier than the first day of current month.
-            OR (sub_interval = "Yearly" AND IFNULL(last_invoice_date, '2001-01-01') <= DATE_FORMAT(DATE_SUB(NOW(), INTERVAL 12 MONTH) ,'%Y-%m-01'))  -- Latest invoice is earlier than one year before first day of current month.
-        ORDER BY date ASC, reference;
-    """.format(from_date=from_date, to_date=to_date, customer=customer, shipping_account=shipping_account)
+            JOIN `tabSubscription Service` ss on ssi.parent = ss.name
+            UNION ALL
+            SELECT
+                name,
+                ssi_docname,
+            ssi_index,
+                start_date,
+            end_date,
+                DATE_FORMAT(DATE_ADD(period_start, INTERVAL 1 MONTH), '%Y-%m-01') AS period_start,
+                LAST_DAY(DATE_ADD(period_start, INTERVAL 1 MONTH)) AS period_end
+            FROM bp
+            WHERE period_end < IFNULL(end_date, LAST_DAY(CURRENT_DATE()))
+        )
+        SELECT
+            1 AS indent,
+            ss.customer AS customer,
+            ss.customer_name AS customer_name,
+            ss.start_date AS date,
+            "Subscription Service" AS dt,
+            ss.name AS reference,
+            ssi.name AS detail,
+            NULL AS sales_order,
+            NULL AS so_detail,
+            ssi.item AS item,
+            ssi.item_name AS item_name,
+            NULL AS hours,
+            ssi.qty AS qty,
+            ssi.rate AS rate,
+            NULL AS price_list_rate,
+            (IFNULL(ssi.qty, 1) * IFNULL(ssi.rate, 0)) AS amount,
+            0 as additional_discount,
+            "CHF" AS currency,
+            ss.name AS remarks,
+            NULL as blanket_order_customer_reference,
+            IFNULL(ss.remarks, "") AS additional_remarks,
+            NULL AS shipping,
+            ss.payment_terms_template,
+            ss.interval AS sub_interval,
+
+            ss.start_date,
+            ss.end_date,
+            bp.period_start,
+            bp.period_end,
+            si.name AS sinv_name,
+            si.posting_date,
+            sii.start_date AS sii_start_date,
+            sii.end_date AS sii_end_date
+        FROM bp
+        JOIN `tabSubscription Service` ss on ss.name = bp.name
+        JOIN `tabSubscription Service Item` ssi on ssi.name = ssi_docname
+        LEFT JOIN `tabSales Invoice Item` sii on sii.subscription = ss.name AND sii.start_date = bp.period_start
+        LEFT JOIN `tabSales Invoice` si on sii.parent = si.name
+        WHERE si.name IS NULL 
+            {invoiced_filter}
+        ORDER BY ss.name, period_start, ssi_index
+        ) AS subs
+        
+        -- ORDER BY date ASC, reference;
+    """.format(from_date=from_date, to_date=to_date, customer=customer, shipping_account=shipping_account,
+        invoiced_filter=invoiced_filter)
     entries = frappe.db.sql(sql_query, as_dict=True)
     return entries
 

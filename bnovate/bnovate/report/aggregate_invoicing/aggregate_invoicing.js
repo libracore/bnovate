@@ -20,6 +20,12 @@ frappe.query_reports["Aggregate Invoicing"] = {
             "fieldtype": "Link",
             "options": "Customer"
         },
+        {
+            "fieldname": "show_invoiced",
+            "label": __("Show Invoiced Periods"),
+            "fieldtype": "Check",
+            "default": 0
+        },
     ],
     initial_depth: 1,
     onload(report) {

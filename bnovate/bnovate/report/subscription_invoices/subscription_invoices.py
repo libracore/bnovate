@@ -25,7 +25,8 @@ def get_data(filters):
     customer = filters.customer if filters.customer else "%" 
     sql_query = """
     SELECT
-        ss.name AS subscription,
+        sii.subscription,
+        -- ss.name AS subscription,
         ss.customer,
         c.customer_name AS customer_name,
         si.posting_date AS posting_date,
