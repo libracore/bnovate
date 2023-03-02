@@ -26,7 +26,7 @@ def get_columns(filters):
     cols = [
         {'fieldname': 'customer', 'label': _('Customer'), 'fieldtype': 'Link', 'options': 'Customer', 'width': 100},
         {'fieldname': 'customer_name', 'label': _('Customer name'), 'fieldtype': 'Data', 'width': 150},
-        {'fieldname': 'reference', 'label': _('Reference'), 'fieldtype': 'Dynamic Link', 'options': 'dt', 'width': 120},
+        {'fieldname': 'reference', 'label': _('Reference'), 'fieldtype': 'Dynamic Link', 'options': 'dt', 'width': 100},
         {'fieldname': 'date', 'label': _('Billing Start / Ship Date'), 'fieldtype': 'Date', 'width': 80},
         {'fieldname': 'period_end', 'label': _('Billing Period End'), 'fieldtype': 'Date', 'width': 80},
         {'fieldname': 'item', 'label': _('Item'), 'fieldtype': 'Link', 'options': 'Item', 'width': 200},
@@ -35,14 +35,15 @@ def get_columns(filters):
         {'fieldname': 'amount', 'label': _('Total'), 'fieldtype': 'Currency', 'options': 'currency', 'width': 100},
         {'fieldname': 'shipping', 'label': _('Shipping'), 'fieldtype': 'Currency', 'options': 'currency', 'width': 100},
         {'fieldname': 'payment_terms_template', 'label': _('Payment Terms'), 'fieldtype': 'link', 'options': 'Payment Terms Template', 'width': 120},
-        {'fieldname': 'action', 'label': _('Action'), 'fieldtype': 'Data', 'width': 200},
-        {'fieldname': 'start_date', 'label': _('Subscription Start'), 'fieldtype': 'Date', 'width': 80},
-        {'fieldname': 'end_date', 'label': _('Subscription End'), 'fieldtype': 'Date', 'width': 80},
+        {'fieldname': 'action', 'label': _('Action'), 'fieldtype': 'Data', 'width': 170},
+        {'fieldname': 'sub_interval', 'label': _('Interval'), 'fieldtype': 'Data', 'width': 80},
+        {'fieldname': 'start_date', 'label': _('Start Subscription'), 'fieldtype': 'Date', 'width': 80},
+        {'fieldname': 'end_date', 'label': _('End Subscription'), 'fieldtype': 'Date', 'width': 80},
     ]
 
     if filters.show_invoiced:
         cols.extend([
-            {'fieldname': 'sinv_name', 'label': _('Invoice'), 'fieldtype': 'Link', 'options': 'Sales Invoice', 'width': 200},
+            {'fieldname': 'sinv_name', 'label': _('Invoice'), 'fieldtype': 'Link', 'options': 'Sales Invoice', 'width': 100},
             {'fieldname': 'posting_date', 'label': _('Posting Date'), 'fieldtype': 'Date', 'width': 80},
             {'fieldname': 'sii_start_date', 'label': _('SINV detail Period Start'), 'fieldtype': 'Date', 'width': 80},
             {'fieldname': 'sii_end_date', 'label': _('SINV detail Period End'), 'fieldtype': 'Date', 'width': 80},
@@ -53,7 +54,8 @@ def get_columns(filters):
 def get_data(filters):
     entries = get_invoiceable_entries(from_date=filters.from_date, 
         to_date=filters.to_date, customer=filters.customer,
-        show_invoiced=filters.show_invoiced)
+        show_invoiced=filters.show_invoiced,
+        doctype=filters.doctype)
 
     # find customers
     customers = []
@@ -113,7 +115,7 @@ def get_data(filters):
     return output
 
 
-def get_invoiceable_entries(from_date=None, to_date=None, customer=None, show_invoiced=False):
+def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype=None, show_invoiced=False):
     if not from_date:
         from_date = "2000-01-01"
     if not to_date:
@@ -158,6 +160,7 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, show_in
             NULL AS end_date,
             NULL AS period_start,
             NULL AS period_end,
+            NULL AS sinv_status,
             NULL AS sinv_name,
             NULL AS posting_date,
             NULL AS sii_start_date,
@@ -193,16 +196,13 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, show_in
                 ssi.name AS ssi_docname,
                 ssi.idx AS ssi_index,
                 start_date,
-                -- Continue at most until end of current billing period 
-                CASE ss.interval
-                    WHEN 'Yearly' THEN LEAST(end_date, LAST_DAY(DATE_ADD(start_date, INTERVAL 11 MONTH)))
-                    WHEN 'Monthly' THEN LEAST(end_date, LAST_DAY(CURRENT_DATE()))
-                END AS end_date,
+                -- Continue at most until end of current month. For yearly we still generate an invoice for entire year 
+                LEAST(IFNULL(ss.end_date, '2099-12-31'), LAST_DAY(CURRENT_DATE())) AS end_date,
                 ss.interval,
-                DATE_FORMAT(start_date, '%Y-%m-01') AS period_start,
+                DATE_FORMAT(ss.start_date, '%Y-%m-01') AS period_start,
                 CASE ss.interval
-                    WHEN 'Yearly' THEN LAST_DAY(DATE_ADD(start_date, INTERVAL 11 MONTH))
-                    WHEN 'Monthly' THEN LAST_DAY(start_date)
+                    WHEN 'Yearly' THEN LAST_DAY(DATE_ADD(ss.start_date, INTERVAL 11 MONTH))
+                    WHEN 'Monthly' THEN LAST_DAY(ss.start_date)
                 END AS period_end
             FROM `tabSubscription Service Item` ssi
             JOIN `tabSubscription Service` ss on ssi.parent = ss.name
@@ -219,7 +219,7 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, show_in
                     WHEN 'Monthly' THEN DATE_FORMAT(DATE_ADD(period_start, INTERVAL 1 MONTH), '%Y-%m-01')
                 END AS period_start,
                 CASE bp.interval
-                    WHEN 'Yearly' THEN LAST_DAY(DATE_ADD(period_start, INTERVAL 1 YEAR)) 
+                    WHEN 'Yearly' THEN LAST_DAY(DATE_ADD(period_start, INTERVAL 12 + 11 MONTH))  -- period start from previous iteration...
                     WHEN 'Monthly' THEN LAST_DAY(DATE_ADD(period_start, INTERVAL 1 MONTH))
                 END AS period_end
             FROM bp
@@ -255,6 +255,7 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, show_in
             ss.end_date,
             bp.period_start,
             bp.period_end,
+            si.status AS sinv_status,
             si.name AS sinv_name,
             si.posting_date,
             sii.start_date AS sii_start_date,
@@ -275,13 +276,17 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, show_in
     """.format(from_date=from_date, to_date=to_date, customer=customer, shipping_account=shipping_account,
         invoiced_filter=invoiced_filter)
     entries = frappe.db.sql(sql_query, as_dict=True)
+
+    # Just filter in python...
+    if doctype:
+        return [e for e in entries if e.dt == doctype]
     return entries
 
 
 @frappe.whitelist()
-def create_invoice(from_date, to_date, customer):
+def create_invoice(from_date, to_date, customer, doctype):
     # fetch entries
-    entries = get_invoiceable_entries(from_date=from_date, to_date=to_date, customer=customer)
+    entries = get_invoiceable_entries(from_date=from_date, to_date=to_date, customer=customer, doctype=doctype)
 
     # Refuse to create invoice for mixed currency:
     currencies = set(e.currency for e in entries)
