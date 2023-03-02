@@ -9,7 +9,15 @@
 frappe.ui.form.on("Delivery Note", {
     refresh(frm) {
         setTimeout(() => {
-            frm.remove_custom_button("Subscription", "Create")
+            frm.remove_custom_button(__("Subscription"), "Create")
+            frm.add_custom_button(__("Aggregate Invoice"), async function () {
+                frappe.route_options = {
+                    "customer": frm.doc.customer,
+                    "doctype": "Delivery Note",
+                };
+                await frappe.set_route("query-report", "Aggregate Invoicing");
+                frappe.query_report.refresh();
+            }, __("Create"));
         }, 500);
     },
 })

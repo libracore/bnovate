@@ -9,12 +9,12 @@ frappe.ui.form.on('Subscription Service', {
 	},
 	refresh(frm) {
 		frm.add_custom_button(__("Create Invoice"), async function () {
-			frappe.route_options = {};
+			frappe.route_options = {
+				"customer": frm.doc.customer,
+			};
 			await frappe.set_route("query-report", "Aggregate Invoicing");
 			frappe.query_report.refresh();
 		});
-
-		draw_report(frm);
 	}
 });
 
@@ -44,6 +44,7 @@ frappe.ui.form.on('Subscription Service Item', {
 
 
 // Example of how to draw a report inside a form.
+// Assumes field "report" exists of type HTML.
 async function draw_report(frm) {
 	const resp = await frappe.call({
 		method: "frappe.desk.query_report.run",

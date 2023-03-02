@@ -16,8 +16,6 @@
   "items",
   "terms_section",
   "payment_terms_template",
-  "section_invoices",
-  "report",
   "section_remarks",
   "remarks",
   "sales_invoice"
@@ -72,11 +70,6 @@
    "reqd": 1
   },
   {
-   "fieldname": "section_invoices",
-   "fieldtype": "Section Break",
-   "label": "Sales Invoices"
-  },
-  {
    "fieldname": "section_remarks",
    "fieldtype": "Section Break",
    "label": "Remarks"
@@ -106,11 +99,6 @@
    "options": "Payment Terms Template"
   },
   {
-   "fieldname": "report",
-   "fieldtype": "HTML",
-   "label": "Report"
-  },
-  {
    "description": "Fake field just so that Dashboard links on SINV work...! Server-side logic needs this.",
    "fieldname": "sales_invoice",
    "fieldtype": "Data",
@@ -119,8 +107,8 @@
    "read_only": 1
   }
  ],
- "modified": "2023-03-02 08:55:59.625371",
- "modified_by": "Administrator",
+ "modified": "2023-03-02 17:50:38.318475",
+ "modified_by": "douglas.watson@bnovate.com",
  "module": "bNovate",
  "name": "Subscription Service",
  "owner": "Administrator",
