@@ -194,19 +194,30 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, show_in
                 ssi.idx AS ssi_index,
                 start_date,
                 end_date,
+                ss.interval,
                 DATE_FORMAT(start_date, '%Y-%m-01') AS period_start,
-                LAST_DAY(start_date) AS period_end
+                CASE ss.interval
+                    WHEN 'Yearly' THEN LAST_DAY(DATE_ADD(start_date, INTERVAL 11 MONTH))
+                    WHEN 'Monthly' THEN LAST_DAY(start_date)
+                END AS period_end
             FROM `tabSubscription Service Item` ssi
             JOIN `tabSubscription Service` ss on ssi.parent = ss.name
             UNION ALL
             SELECT
                 name,
                 ssi_docname,
-            ssi_index,
+                ssi_index,
                 start_date,
-            end_date,
-                DATE_FORMAT(DATE_ADD(period_start, INTERVAL 1 MONTH), '%Y-%m-01') AS period_start,
-                LAST_DAY(DATE_ADD(period_start, INTERVAL 1 MONTH)) AS period_end
+                end_date,
+                bp.interval,
+                CASE bp.interval
+                    WHEN 'Yearly' THEN DATE_FORMAT(DATE_ADD(period_start, INTERVAL 1 YEAR), '%Y-%m-01') 
+                    WHEN 'Monthly' THEN DATE_FORMAT(DATE_ADD(period_start, INTERVAL 1 MONTH), '%Y-%m-01')
+                END AS period_start,
+                CASE bp.interval
+                    WHEN 'Yearly' THEN LAST_DAY(DATE_ADD(period_start, INTERVAL 1 YEAR)) 
+                    WHEN 'Monthly' THEN LAST_DAY(DATE_ADD(period_start, INTERVAL 1 MONTH))
+                END AS period_end
             FROM bp
             WHERE period_end < IFNULL(end_date, LAST_DAY(CURRENT_DATE()))
         )
@@ -252,6 +263,7 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, show_in
         WHERE si.name IS NULL 
             {invoiced_filter}
             AND ss.customer LIKE "{customer}"
+            AND (bp.period_start >= "{from_date}" AND bp.period_end <= "{to_date}")
         ORDER BY ss.name, period_start, ssi_index
         ) AS subs
         

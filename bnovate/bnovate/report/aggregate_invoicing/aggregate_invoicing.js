@@ -33,7 +33,6 @@ frappe.query_reports["Aggregate Invoicing"] = {
         this.report = report;
         this.ref_index = 1;
         this.bp_index = 1; // billing period
-        this.colours = ["#e5e5e5", "#f7f7f7"];
         this.colours = ["light", "dark"];
     },
     formatter(value, row, col, data, default_formatter) {
