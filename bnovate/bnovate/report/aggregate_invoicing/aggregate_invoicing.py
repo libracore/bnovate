@@ -193,7 +193,11 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, show_in
                 ssi.name AS ssi_docname,
                 ssi.idx AS ssi_index,
                 start_date,
-                end_date,
+                -- Continue at most until end of current billing period 
+                CASE ss.interval
+                    WHEN 'Yearly' THEN LEAST(end_date, LAST_DAY(DATE_ADD(start_date, INTERVAL 11 MONTH)))
+                    WHEN 'Monthly' THEN LEAST(end_date, LAST_DAY(CURRENT_DATE()))
+                END AS end_date,
                 ss.interval,
                 DATE_FORMAT(start_date, '%Y-%m-01') AS period_start,
                 CASE ss.interval
@@ -219,7 +223,7 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, show_in
                     WHEN 'Monthly' THEN LAST_DAY(DATE_ADD(period_start, INTERVAL 1 MONTH))
                 END AS period_end
             FROM bp
-            WHERE period_end < IFNULL(end_date, LAST_DAY(CURRENT_DATE()))
+            WHERE period_end < end_date -- note this is period_end from previous iteration!
         )
         SELECT
             1 AS indent,
