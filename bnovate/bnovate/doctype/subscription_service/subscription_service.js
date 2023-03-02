@@ -2,6 +2,11 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Subscription Service', {
+	onload(frm) {
+		frm.set_query("item", "items", function () {
+			return { filters: { is_subscription_item: true, } }
+		});
+	},
 	refresh(frm) {
 		frm.add_custom_button(__("Create Invoice"), async function () {
 			frappe.route_options = {};

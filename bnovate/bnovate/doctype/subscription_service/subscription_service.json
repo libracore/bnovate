@@ -46,6 +46,7 @@
    "default": "1",
    "fieldname": "enabled",
    "fieldtype": "Check",
+   "hidden": 1,
    "label": "Enabled"
   },
   {
@@ -118,7 +119,7 @@
    "read_only": 1
   }
  ],
- "modified": "2023-02-27 19:06:48.721232",
+ "modified": "2023-03-02 08:55:59.625371",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Subscription Service",

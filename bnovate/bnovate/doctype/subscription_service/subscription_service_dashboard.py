@@ -9,5 +9,9 @@ def get_data():
 				'label': _('Invoicing'),
 				'items': ['Sales Invoice']
 			},
+			{
+				'label': _('Packages'),
+				'items': ['Connectivity Package']
+			},
 		]
 	}

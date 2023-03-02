@@ -27,6 +27,7 @@ fixtures = [
     {
         "dt": "Custom Field",
         "filters": [["name", "in", [
+            "Item-is_subscription_item", # Used to filter subscription items
             "Customer Group-taxes_and_charges_template", # Used to invoice subscriptions
             "Sales Invoice Item-subscription",
             "Sales Invoice Item-start_date",

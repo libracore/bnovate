@@ -2,6 +2,16 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Connectivity Package', {
+	onload(frm) {
+		frm.set_query("subscription", function () {
+			return {
+				filters: {
+					customer: frm.doc.customer,
+				}
+			}
+		});
+	},
+
 	async refresh(frm) {
 		frm.rms_modal = rms_modal;
 		frm.start_session = (config_id, device_id) => start_session(frm, config_id, device_id);
