@@ -27,8 +27,8 @@ def get_columns(filters):
         {'fieldname': 'customer', 'label': _('Customer'), 'fieldtype': 'Link', 'options': 'Customer', 'width': 100},
         {'fieldname': 'customer_name', 'label': _('Customer name'), 'fieldtype': 'Data', 'width': 150},
         {'fieldname': 'reference', 'label': _('Reference'), 'fieldtype': 'Dynamic Link', 'options': 'dt', 'width': 100},
-        {'fieldname': 'date', 'label': _('Billing Start / Ship Date'), 'fieldtype': 'Date', 'width': 80},
-        {'fieldname': 'period_end', 'label': _('Billing Period End'), 'fieldtype': 'Date', 'width': 80},
+        {'fieldname': 'date', 'label': _('Start Billing / Ship Date'), 'fieldtype': 'Date', 'width': 80},
+        {'fieldname': 'period_end', 'label': _('End Billing Period'), 'fieldtype': 'Date', 'width': 80},
         {'fieldname': 'item', 'label': _('Item'), 'fieldtype': 'Link', 'options': 'Item', 'width': 200},
         {'fieldname': 'qty', 'label': _('Qty'), 'fieldtype': 'Float', 'width': 50},
         {'fieldname': 'rate', 'label': _('Item Rate'), 'fieldtype': 'Currency', 'options': 'currency', 'width': 100},
@@ -45,8 +45,8 @@ def get_columns(filters):
         cols.extend([
             {'fieldname': 'sinv_name', 'label': _('Invoice'), 'fieldtype': 'Link', 'options': 'Sales Invoice', 'width': 100},
             {'fieldname': 'posting_date', 'label': _('Posting Date'), 'fieldtype': 'Date', 'width': 80},
-            {'fieldname': 'sii_start_date', 'label': _('SINV detail Period Start'), 'fieldtype': 'Date', 'width': 80},
-            {'fieldname': 'sii_end_date', 'label': _('SINV detail Period End'), 'fieldtype': 'Date', 'width': 80},
+            {'fieldname': 'sii_start_date', 'label': _('SINV Start Period'), 'fieldtype': 'Date', 'width': 80},
+            {'fieldname': 'sii_end_date', 'label': _('SINV End Period'), 'fieldtype': 'Date', 'width': 80},
         ])
 
     return cols
@@ -258,15 +258,14 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
             si.status AS sinv_status,
             si.name AS sinv_name,
             si.posting_date,
-            sii.start_date AS sii_start_date,
-            sii.end_date AS sii_end_date
+            sii.service_start_date AS sii_start_date,
+            sii.service_end_date AS sii_end_date
         FROM bp
         JOIN `tabSubscription Service` ss on ss.name = bp.name
         JOIN `tabSubscription Service Item` ssi on ssi.name = ssi_docname
-        LEFT JOIN `tabSales Invoice Item` sii on sii.subscription = ss.name AND sii.start_date = bp.period_start
+        LEFT JOIN `tabSales Invoice Item` sii on sii.subscription = ss.name AND sii.service_start_date = bp.period_start
         LEFT JOIN `tabSales Invoice` si on sii.parent = si.name
-        WHERE si.name IS NULL 
-            {invoiced_filter}
+        WHERE (si.name IS NULL {invoiced_filter})
             AND ss.customer LIKE "{customer}"
             AND (bp.period_start >= "{from_date}" AND bp.period_end <= "{to_date}")
         ORDER BY ss.name, period_start, ssi_index
@@ -359,8 +358,9 @@ def create_invoice(from_date, to_date, customer, doctype):
             last_dn = e.reference
         elif e.dt == "Subscription Service":
             item['subscription'] = e.reference
-            item['start_date'] = e.period_start
-            item['end_date'] = e.period_end
+            item['enable_deferred_revenue'] = 1  # Should be automatic if activated on item
+            item['service_start_date'] = e.period_start
+            item['service_end_date'] = e.period_end
 
         sinv.append('items', item)
 

@@ -4,7 +4,7 @@
 frappe.ui.form.on('Subscription Service', {
 	onload(frm) {
 		frm.set_query("item", "items", function () {
-			return { filters: { is_subscription_item: true, } }
+			return { filters: { enable_deferred_revenue: true } }
 		});
 	},
 	refresh(frm) {
