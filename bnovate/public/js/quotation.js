@@ -7,6 +7,15 @@
  */
 
 frappe.ui.form.on("Quotation", {
+    setup(frm) {
+        frm.custom_make_buttons['Subscription Service'] = 'Make Subscription';
+        cur_frm.cscript['Make Subscription'] = function () {
+            frappe.model.open_mapped_doc({
+                method: "erpnext.selling.doctype.quotation.quotation.make_sales_order",
+                frm: cur_frm
+            })
+        }
+    },
     refresh(frm) {
         setTimeout(() => {
             frm.remove_custom_button("Subscription", "Create")
