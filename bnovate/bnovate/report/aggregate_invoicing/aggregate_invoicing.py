@@ -148,8 +148,7 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
             dni.amount AS amount,
             dn.discount_amount AS additional_discount,
             dn.currency AS currency,
-            dni.description AS remarks,
-            "" AS additional_remarks,
+            dni.description,
             dni.blanket_order_customer_reference,
             IFNULL(dns.shipping, 0) AS shipping,
             dn.payment_terms_template,
@@ -244,9 +243,8 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
             (IFNULL(ssi.qty, 1) * IFNULL(ssi.rate, 0)) AS amount,
             0 as additional_discount,
             "CHF" AS currency,
-            ss.name AS remarks,
+            ssi.description,
             NULL as blanket_order_customer_reference,
-            IFNULL(ss.remarks, "") AS additional_remarks,
             NULL AS shipping,
             ss.payment_terms_template,
             ss.interval AS sub_interval,
@@ -335,14 +333,12 @@ def create_invoice(from_date, to_date, customer, doctype):
     last_dn = None
     for e in entries:
         #Format Remarks 
-        remarkstring = e.remarks.replace("\n", "<br>")
-        remarkstring += ("<br>" + e.additional_remarks.replace("\n", "<br>")) if e.additional_remarks else ""
 
         item = {
             'item_code': e.item_code,
             'qty': e.qty,
             'rate': e.rate,
-            'description': remarkstring,
+            'description': e.description,
         }
         if e.dt == "Delivery Note":
             item['delivery_note'] = e.reference

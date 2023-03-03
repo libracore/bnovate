@@ -8,7 +8,6 @@
   "customer",
   "customer_name",
   "teltonika_serial",
-  "subscription",
   "column_break_4",
   "info",
   "remote_connections_section",
@@ -64,15 +63,9 @@
   {
    "fieldname": "column_break_4",
    "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "subscription",
-   "fieldtype": "Link",
-   "label": "Subscription",
-   "options": "Subscription Contract"
   }
  ],
- "modified": "2023-03-03 16:04:37.162472",
+ "modified": "2023-03-03 17:05:30.569613",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Connectivity Package",

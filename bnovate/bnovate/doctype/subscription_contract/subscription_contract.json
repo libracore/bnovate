@@ -16,10 +16,9 @@
   "end_date",
   "section_items",
   "items",
-  "terms_section",
+  "terms_section_break",
   "payment_terms_template",
-  "section_remarks",
-  "remarks",
+  "terms",
   "sales_invoice",
   "amended_from"
  ],
@@ -75,27 +74,12 @@
    "reqd": 1
   },
   {
-   "fieldname": "section_remarks",
-   "fieldtype": "Section Break",
-   "label": "Remarks"
-  },
-  {
-   "fieldname": "remarks",
-   "fieldtype": "Text Editor",
-   "label": "Remarks"
-  },
-  {
    "default": "Yearly",
    "fieldname": "interval",
    "fieldtype": "Select",
    "label": "Interval",
    "options": "Yearly\nMonthly",
    "reqd": 1
-  },
-  {
-   "fieldname": "terms_section",
-   "fieldtype": "Section Break",
-   "label": "Terms"
   },
   {
    "description": "Specify if different from customer's default terms.",
@@ -128,10 +112,20 @@
    "fieldtype": "Data",
    "hidden": 1,
    "label": "Title"
+  },
+  {
+   "fieldname": "terms_section_break",
+   "fieldtype": "Section Break",
+   "label": "Terms"
+  },
+  {
+   "fieldname": "terms",
+   "fieldtype": "Text Editor",
+   "label": "Terms and Conditions"
   }
  ],
  "is_submittable": 1,
- "modified": "2023-03-03 16:54:12.535503",
+ "modified": "2023-03-03 17:02:40.260783",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Subscription Contract",

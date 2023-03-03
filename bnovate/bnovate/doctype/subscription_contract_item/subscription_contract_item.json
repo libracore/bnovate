@@ -8,15 +8,15 @@
   "item_name",
   "qty",
   "rate",
+  "description",
   "prevdoc_docname"
  ],
  "fields": [
   {
-   "fetch_from": "item.item_name",
+   "fetch_from": "item_code.item_name",
    "fieldname": "item_name",
    "fieldtype": "Data",
-   "label": "Item name",
-   "read_only": 1
+   "label": "Item name"
   },
   {
    "default": "1",
@@ -52,10 +52,15 @@
    "label": "Item",
    "options": "Item",
    "reqd": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text Editor",
+   "label": "Description"
   }
  ],
  "istable": 1,
- "modified": "2023-03-03 16:16:56.256519",
+ "modified": "2023-03-03 17:04:10.391247",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Subscription Contract Item",

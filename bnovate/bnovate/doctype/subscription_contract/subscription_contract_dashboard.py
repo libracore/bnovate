@@ -12,9 +12,9 @@ def get_data():
 				'label': _('Sales'),
 				'items': ['Quotation', 'Sales Invoice']
 			},
-			{
-				'label': _('Packages'),
-				'items': ['Connectivity Package']
-			},
+			# {
+			# 	'label': _('Packages'),
+			# 	'items': ['Connectivity Package']
+			# },
 		]
 	}
