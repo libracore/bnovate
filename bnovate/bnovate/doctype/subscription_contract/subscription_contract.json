@@ -6,6 +6,7 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "title",
   "customer",
   "customer_name",
   "interval",
@@ -119,10 +120,18 @@
    "options": "Subscription Contract",
    "print_hide": 1,
    "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "{customer_name}",
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Title"
   }
  ],
  "is_submittable": 1,
- "modified": "2023-03-03 16:20:04.445026",
+ "modified": "2023-03-03 16:54:12.535503",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Subscription Contract",
@@ -168,6 +177,6 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "title_field": "customer_name",
+ "title_field": "title",
  "track_changes": 1
 }

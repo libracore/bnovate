@@ -55,6 +55,7 @@ app_include_js = [ # Note to self: in case of changes, may need to run bench bui
 
 # include js in doctype views
 doctype_js = {
+    "Item" : ["public/js/item.js"],
     "Customer" : ["public/js/customer.js"],
     "Quotation" : ["public/js/quotation.js"],
     "Sales Order" : ["public/js/sales_order.js"],
