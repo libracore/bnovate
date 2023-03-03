@@ -28,7 +28,9 @@ def get_columns():
 def get_data(filters):
     
     if not filters.item_code or not filters.warehouse:
-        return None
+        filters.item_code = "200001"
+        filters.warehouse = "Stores - bN"
+        # return None
         
     sql_query = """
 SELECT 
@@ -39,7 +41,8 @@ SELECT
     i.item_name,
     e.warehouse,
     e.qty,
-    ROUND(@running_total := @running_total + qty, 3) AS balance
+    ROUND(@running_total := IF(e.item_code = @prev_item_code, @running_total + e.qty, e.qty), 3) AS balance,
+    @prev_item_code := e.item_code AS item_code_tracker
 FROM (
   (SELECT
     0 as order_prio, -- to keep stock balance as first item in list
@@ -126,7 +129,7 @@ WHERE wo.docstatus = 1
     AND wo.qty > wo.produced_qty
     AND wo.status != 'Stopped'
 )) as e -- "entries"
-JOIN (SELECT @running_total := 0) r
+JOIN (SELECT @running_total := 0, @prev_item_code := "" COLLATE utf8mb4_unicode_ci) r
 JOIN `tabItem` as i on e.item_code = i.name
 WHERE e.item_code = '{item_code}' AND e.warehouse = '{warehouse}'
 ORDER BY order_prio, date ASC
