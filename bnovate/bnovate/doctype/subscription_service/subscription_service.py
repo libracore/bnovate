@@ -42,6 +42,7 @@ def _make_from_quotation(source_name, target_doc=None, ignore_permissions=False)
 			"Quotation Item": {
 				"doctype": "Subscription Service Item",
 				"field_map": {
+					"item_code": "item",
 					"parent": "prevdoc_docname"
 				},
 				"condition": is_subscription_item,

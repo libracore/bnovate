@@ -72,7 +72,7 @@
    "options": "Subscription Service"
   }
  ],
- "modified": "2023-03-02 08:54:00.147408",
+ "modified": "2023-03-03 15:29:30.623065",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Connectivity Package",
@@ -89,6 +89,27 @@
    "role": "System Manager",
    "share": 1,
    "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "IoT Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "IoT User",
+   "share": 1
   }
  ],
  "quick_entry": 1,

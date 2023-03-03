@@ -6,6 +6,10 @@ frappe.ui.form.on('Subscription Service', {
 		frm.set_query("item", "items", function () {
 			return { filters: { enable_deferred_revenue: true } }
 		});
+
+		if (!frm.doc.start_date) {
+			frm.doc.start_date = frappe.datetime.add_days(frappe.datetime.month_end(), 1);
+		}
 	},
 	refresh(frm) {
 		frm.add_custom_button(__("Create Invoice"), async function () {
@@ -15,6 +19,14 @@ frappe.ui.form.on('Subscription Service', {
 			await frappe.set_route("query-report", "Aggregate Invoicing");
 			frappe.query_report.refresh();
 		});
+	},
+	before_cancel(frm) {
+		frappe.msgprint({
+			title: __("Noooo"),
+			message: __("Please don't cancel me"),
+			indicator: "red",
+		});
+		frappe.validated = false;
 	}
 });
 

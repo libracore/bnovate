@@ -7,6 +7,12 @@
  */
 
 frappe.ui.form.on("Quotation", {
+    before_load(frm) {
+        frm.dashboard.add_transactions({
+            'items': ['Subscription Service'],
+            'label': 'Subscription',
+        });
+    },
     setup(frm) {
         frm.custom_make_buttons['Subscription'] = 'Make Subscription';
         frm.cscript['Make Subscription'] = function () {

@@ -4,10 +4,13 @@ from frappe import _
 def get_data():
 	return {
 		'fieldname': 'subscription',
+		'internal_links': {
+			'Quotation': ['items', 'prevdoc_docname']
+		},
 		'transactions': [
 			{
-				'label': _('Invoicing'),
-				'items': ['Sales Invoice']
+				'label': _('Sales'),
+				'items': ['Quotation', 'Sales Invoice']
 			},
 			{
 				'label': _('Packages'),
