@@ -1,0 +1,173 @@
+{
+ "autoname": "SS-.#####",
+ "beta": 1,
+ "creation": "2023-02-22 15:50:34.906998",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "customer",
+  "customer_name",
+  "interval",
+  "column_main",
+  "enabled",
+  "start_date",
+  "end_date",
+  "section_items",
+  "items",
+  "terms_section",
+  "payment_terms_template",
+  "section_remarks",
+  "remarks",
+  "sales_invoice",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Customer",
+   "options": "Customer",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "customer.customer_name",
+   "fieldname": "customer_name",
+   "fieldtype": "Data",
+   "label": "Customer name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_main",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Enabled"
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "label": "Start Date",
+   "reqd": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "label": "End Date"
+  },
+  {
+   "fieldname": "section_items",
+   "fieldtype": "Section Break",
+   "label": "Items"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "Subscription Contract Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_remarks",
+   "fieldtype": "Section Break",
+   "label": "Remarks"
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Text Editor",
+   "label": "Remarks"
+  },
+  {
+   "default": "Yearly",
+   "fieldname": "interval",
+   "fieldtype": "Select",
+   "label": "Interval",
+   "options": "Yearly\nMonthly",
+   "reqd": 1
+  },
+  {
+   "fieldname": "terms_section",
+   "fieldtype": "Section Break",
+   "label": "Terms"
+  },
+  {
+   "description": "Specify if different from customer's default terms.",
+   "fieldname": "payment_terms_template",
+   "fieldtype": "Link",
+   "label": "Payment Terms Template",
+   "options": "Payment Terms Template"
+  },
+  {
+   "description": "Fake field just so that Dashboard links on SINV work...! Server-side logic needs this.",
+   "fieldname": "sales_invoice",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Sales Invoice",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Subscription Contract",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "is_submittable": 1,
+ "modified": "2023-03-03 16:04:36.936121",
+ "modified_by": "Administrator",
+ "module": "bNovate",
+ "name": "Subscription Contract",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sales Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sales User",
+   "share": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "title_field": "customer_name",
+ "track_changes": 1
+}
