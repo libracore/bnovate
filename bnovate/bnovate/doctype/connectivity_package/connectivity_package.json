@@ -69,10 +69,10 @@
    "fieldname": "subscription",
    "fieldtype": "Link",
    "label": "Subscription",
-   "options": "Subscription Service"
+   "options": "Subscription Contract"
   }
  ],
- "modified": "2023-03-03 15:29:30.623065",
+ "modified": "2023-03-03 16:04:37.162472",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Connectivity Package",

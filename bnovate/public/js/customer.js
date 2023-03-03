@@ -7,9 +7,9 @@
 frappe.ui.form.on("Customer", {
     before_load(frm) {
         frm.dashboard.add_transactions({
-            'items': ['Subscription Service'],
+            'items': ['Subscription Contract'],
             'label': 'Subscription',
         })
-        frm.dashboard.data.internal_links['Subscription Service'] = ['items', 'subscription'];
+        frm.dashboard.data.internal_links['Subscription Contract'] = ['items', 'subscription'];
     },
 })

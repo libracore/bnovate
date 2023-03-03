@@ -204,8 +204,8 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
                     WHEN 'Yearly' THEN LAST_DAY(DATE_ADD(ss.start_date, INTERVAL 11 MONTH))
                     WHEN 'Monthly' THEN LAST_DAY(ss.start_date)
                 END AS period_end
-            FROM `tabSubscription Service Item` ssi
-            JOIN `tabSubscription Service` ss on ssi.parent = ss.name
+            FROM `tabSubscription Contract Item` ssi
+            JOIN `tabSubscription Contract` ss on ssi.parent = ss.name
             UNION ALL
             SELECT
                 name,
@@ -230,7 +230,7 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
             ss.customer AS customer,
             ss.customer_name AS customer_name,
             bp.period_start AS date,
-            "Subscription Service" AS dt,
+            "Subscription Contract" AS dt,
             ss.name AS reference,
             ssi.name AS detail,
             NULL AS sales_order,
@@ -261,8 +261,8 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
             sii.service_start_date AS sii_start_date,
             sii.service_end_date AS sii_end_date
         FROM bp
-        JOIN `tabSubscription Service` ss on ss.name = bp.name
-        JOIN `tabSubscription Service Item` ssi on ssi.name = ssi_docname
+        JOIN `tabSubscription Contract` ss on ss.name = bp.name
+        JOIN `tabSubscription Contract Item` ssi on ssi.name = ssi_docname
         LEFT JOIN `tabSales Invoice Item` sii on sii.subscription = ss.name AND sii.service_start_date = bp.period_start
         LEFT JOIN `tabSales Invoice` si on sii.parent = si.name
         WHERE (si.name IS NULL {invoiced_filter})
@@ -356,7 +356,7 @@ def create_invoice(from_date, to_date, customer, doctype):
                 shipping_total += e.shipping
                 shipping_remarks.append("{}: {} {}".format(e.reference, currency, e.shipping))
             last_dn = e.reference
-        elif e.dt == "Subscription Service":
+        elif e.dt == "Subscription Contract":
             item['subscription'] = e.reference
             item['enable_deferred_revenue'] = 1  # Should be automatic if activated on item
             item['service_start_date'] = e.period_start
@@ -374,19 +374,6 @@ def create_invoice(from_date, to_date, customer, doctype):
         })
     
     sinv.insert()
-    
-    # insert abo references (*renamed Abo to Subscription Service)
-    # abos = []
-    # for e in entries:
-    #     if e.dt == "Subscription Service" and e.reference not in abos:
-    #         abos.append(e.reference)
-    # for a in abos:
-    #     abo = frappe.get_doc("Subscription Service", a)
-    #     abo.append("invoices", {
-    #         'date': datetime.datetime.now(),
-    #         'sales_invoice': sinv.name
-    #     })
-    #     abo.save()
     
     frappe.db.commit()
     

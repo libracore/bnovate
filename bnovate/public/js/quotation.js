@@ -9,7 +9,7 @@
 frappe.ui.form.on("Quotation", {
     before_load(frm) {
         frm.dashboard.add_transactions({
-            'items': ['Subscription Service'],
+            'items': ['Subscription Contract'],
             'label': 'Subscription',
         });
     },
@@ -17,7 +17,7 @@ frappe.ui.form.on("Quotation", {
         frm.custom_make_buttons['Subscription'] = 'Make Subscription';
         frm.cscript['Make Subscription'] = function () {
             frappe.model.open_mapped_doc({
-                method: "bnovate.bnovate.doctype.subscription_service.subscription_service.make_from_quotation",
+                method: "bnovate.bnovate.doctype.subscription_contract.subscription_contract.make_from_quotation",
                 frm: cur_frm
             });
         }
