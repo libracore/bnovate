@@ -20,13 +20,21 @@ frappe.ui.form.on('Subscription Contract', {
 			frappe.query_report.refresh();
 		});
 	},
-	before_cancel(frm) {
-		frappe.msgprint({
-			title: __("Noooo"),
-			message: __("Please don't cancel me"),
-			indicator: "red",
+	async before_cancel(frm) {
+		// Only allow cancellation if no invoices are open
+		const invoices = await frappe.db.get_list("Sales Invoice", { filters: { subscription: frm.doc.name } });
+		if (!invoices.length) {
+			return;
+		}
+		await new Promise((resolve, reject) => {
+			frappe.confirm("If invoices are already created, do not cancel. Change the subscription End Date instead.<br><br>Do you still want to try?",
+				() => { resolve(); },
+				() => {
+					frappe.validated = false;
+					resolve();
+				}
+			)
 		});
-		frappe.validated = false;
 	}
 });
 
@@ -39,7 +47,7 @@ frappe.ui.form.on('Subscription Contract Item', {
 				'args': {
 					'doctype': "Item Price",
 					'filters': [
-						["item_code", "=", d.item],
+						["item_code", "=", d.item_code],
 						["selling", "=", 1]
 					],
 					'fields': ["price_list_rate"]

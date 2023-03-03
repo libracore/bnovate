@@ -268,6 +268,7 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
         WHERE (si.name IS NULL {invoiced_filter})
             AND ss.customer LIKE "{customer}"
             AND (bp.period_start >= "{from_date}" AND bp.period_end <= "{to_date}")
+            AND ss.docstatus = 1
         ORDER BY ss.name, period_start, ssi_index
         ) AS subs
         
