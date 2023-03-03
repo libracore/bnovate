@@ -4,21 +4,13 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "item",
+  "item_code",
   "item_name",
   "qty",
   "rate",
   "prevdoc_docname"
  ],
  "fields": [
-  {
-   "fieldname": "item",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Item",
-   "options": "Item",
-   "reqd": 1
-  },
   {
    "fetch_from": "item.item_name",
    "fieldname": "item_name",
@@ -52,10 +44,18 @@
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item",
+   "options": "Item",
+   "reqd": 1
   }
  ],
  "istable": 1,
- "modified": "2023-03-03 15:46:23.273465",
+ "modified": "2023-03-03 15:55:04.637263",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Subscription Service Item",

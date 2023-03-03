@@ -3,7 +3,7 @@
 
 frappe.ui.form.on('Subscription Service', {
 	onload(frm) {
-		frm.set_query("item", "items", function () {
+		frm.set_query("item_code", "items", function () {
 			return { filters: { enable_deferred_revenue: true } }
 		});
 
@@ -31,9 +31,9 @@ frappe.ui.form.on('Subscription Service', {
 });
 
 frappe.ui.form.on('Subscription Service Item', {
-	item(frm, cdt, cdn) {
+	item_code(frm, cdt, cdn) {
 		var d = locals[cdt][cdn];
-		if (d.item) {
+		if (d.item_code) {
 			frappe.call({
 				'method': "frappe.client.get_list",
 				'args': {

@@ -29,7 +29,7 @@ def get_columns(filters):
         {'fieldname': 'reference', 'label': _('Reference'), 'fieldtype': 'Dynamic Link', 'options': 'dt', 'width': 100},
         {'fieldname': 'date', 'label': _('Start Billing / Ship Date'), 'fieldtype': 'Date', 'width': 80},
         {'fieldname': 'period_end', 'label': _('End Billing Period'), 'fieldtype': 'Date', 'width': 80},
-        {'fieldname': 'item', 'label': _('Item'), 'fieldtype': 'Link', 'options': 'Item', 'width': 200},
+        {'fieldname': 'item_code', 'label': _('Item'), 'fieldtype': 'Link', 'options': 'Item', 'width': 200},
         {'fieldname': 'qty', 'label': _('Qty'), 'fieldtype': 'Float', 'width': 50},
         {'fieldname': 'rate', 'label': _('Item Rate'), 'fieldtype': 'Currency', 'options': 'currency', 'width': 100},
         {'fieldname': 'amount', 'label': _('Total'), 'fieldtype': 'Currency', 'options': 'currency', 'width': 100},
@@ -139,7 +139,7 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
             dni.against_sales_order AS sales_order,
             dni.so_detail AS so_detail,
             dni.name AS detail,
-            dni.item_code AS item,
+            dni.item_code,
             dni.item_name AS item_name,
             NULL AS hours,
             dni.qty AS qty,
@@ -235,8 +235,8 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
             ssi.name AS detail,
             NULL AS sales_order,
             NULL AS so_detail,
-            ssi.item AS item,
-            ssi.item_name AS item_name,
+            ssi.item_code,
+            ssi.item_name,
             NULL AS hours,
             ssi.qty AS qty,
             ssi.rate AS rate,
@@ -338,7 +338,7 @@ def create_invoice(from_date, to_date, customer, doctype):
         remarkstring += ("<br>" + e.additional_remarks.replace("\n", "<br>")) if e.additional_remarks else ""
 
         item = {
-            'item_code': e.item,
+            'item_code': e.item_code,
             'qty': e.qty,
             'rate': e.rate,
             'description': remarkstring,
