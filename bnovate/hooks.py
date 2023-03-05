@@ -11,6 +11,28 @@ app_color = "#3b6e8f"
 app_email = "info@libracore.com"
 app_license = "AGPL"
 
+# Fixtures
+# -----------------
+# (add docs created for this app): custom roles, permissions...
+# Need to run `bench export-fixtures` and add fixtures/ folder to git.
+fixtures = [
+    {
+        "dt": "Role",
+        "filters": [["role_name", "like", "IoT%"]],
+    },
+    {
+        "dt": "Custom Field",
+        "filters": [["name", "in", [
+            "Customer Group-taxes_and_charges_template", # Used to invoice subscriptions
+            "Sales Invoice Item-subscription",
+            "Delivery Note-payment_terms_template", # Used to match invoice to SO payment terms through DN
+            "Work Order-time_per_unit", # Used for time tracking from Work Order Execution page
+            "Work Order-total_time",
+            "Work Order-time_log",
+        ]]]
+    }
+]
+
 # Includes in <head>
 # ------------------
 
@@ -21,6 +43,7 @@ app_include_css = [
 app_include_js = [ # Note to self: in case of changes, may need to run bench build --app bnovate
     "/assets/bnovate/js/bnovate_common.js",
     "/assets/js/bnovate_libs.min.js",
+    # "/assets/js/bnovate.js",   # Empty probably because it wasn't coded as a module.
 ]
 
 # include js, css files in header of web template
@@ -31,7 +54,14 @@ app_include_js = [ # Note to self: in case of changes, may need to run bench bui
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-# doctype_js = {"doctype" : "public/js/doctype.js"}
+doctype_js = {
+    "Item" : ["public/js/item.js"],
+    "Customer" : ["public/js/customer.js"],
+    "Quotation" : ["public/js/quotation.js"],
+    "Sales Order" : ["public/js/sales_order.js"],
+    "Delivery Note" : ["public/js/delivery_note.js"],
+    "Sales Invoice" : ["public/js/sales_invoice.js"],
+}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}

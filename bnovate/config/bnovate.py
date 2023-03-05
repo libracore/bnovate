@@ -131,7 +131,14 @@ def get_data():
                         "name": "file_uploader",
                         "label": _("PINV uploader"),
                         "description": _("Bulk upload scanned purchase invoices")           
-                   }
+                   },
+                   {
+                        "type": "report",
+                        "name": "Aggregate Invoicing",
+                        "label": _("Aggregate Invoicing"),
+                        "doctype": "Subscription Contract",
+                        "is_query_report": True    
+                   }                   
             ]
         },
         #  {

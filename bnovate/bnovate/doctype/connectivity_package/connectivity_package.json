@@ -1,0 +1,113 @@
+{
+ "autoname": "CP-.#####",
+ "creation": "2023-02-15 13:57:23.655766",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "customer",
+  "customer_name",
+  "teltonika_serial",
+  "column_break_4",
+  "info",
+  "remote_connections_section",
+  "refresh_connections",
+  "connection_table"
+ ],
+ "fields": [
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Customer",
+   "options": "Customer"
+  },
+  {
+   "fieldname": "teltonika_serial",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Teltonika Serial",
+   "options": "Serial No",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fetch_from": "customer.customer_name",
+   "fieldname": "customer_name",
+   "fieldtype": "Read Only",
+   "in_list_view": 1,
+   "label": "Customer Name"
+  },
+  {
+   "depends_on": "eval:doc.creation",
+   "fieldname": "remote_connections_section",
+   "fieldtype": "Section Break",
+   "label": "Remote Connections",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "connection_table",
+   "fieldtype": "HTML",
+   "label": "Connections"
+  },
+  {
+   "fieldname": "refresh_connections",
+   "fieldtype": "Button",
+   "label": "Refresh"
+  },
+  {
+   "fieldname": "info",
+   "fieldtype": "HTML",
+   "label": "Info"
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  }
+ ],
+ "modified": "2023-03-03 17:05:30.569613",
+ "modified_by": "Administrator",
+ "module": "bNovate",
+ "name": "Connectivity Package",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "IoT Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "IoT User",
+   "share": 1
+  }
+ ],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "title_field": "teltonika_serial",
+ "track_changes": 1
+}

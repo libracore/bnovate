@@ -45,13 +45,15 @@ frappe.pages['device-map'].on_page_load = function (wrapper) {
 	function draw() {
 		page.set_secondary_action('Reload', () => load());
 		draw_map();
+		draw_table();
 	}
 
 	function draw_map() {
+		let [bn_lat, bn_long] = [46.35357481001013, 6.7310494232727764]
 		state.map?.off();
 		state.map?.remove();
 
-		let map = L.map('map').setView([46.35357481001013, 6.7310494232727764], 5);
+		let map = L.map('map').setView([bn_lat, bn_long], 5);
 		state.map = map;
 
 		L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -61,9 +63,27 @@ frappe.pages['device-map'].on_page_load = function (wrapper) {
 		map.addLayer(markers);
 
 		for (let device of state.devices) {
+			// if (device.accuracy || device.cell_tower_accuracy) {
+			// 	markers.addLayer(
+			// 		L.circle([
+			// 			device.latitude || device.cell_tower_latitude,
+			// 			device.longitude || device.cell_tower_longitude,
+
+			// 		], device.accuracy || device.cell_tower_accuracy, {
+
+			// 		})
+			// 	)
+			// }
 			markers.addLayer(
-				L.marker([device.latitude || device.user_set_latitude, device.longitude || device.user_set_longitude])
-					.bindPopup(device.name)
+				L.marker([
+					device.latitude || device.cell_tower_latitude || device.user_set_latitude || bn_lat,
+					device.longitude || device.cell_tower_longitude || device.user_set_longitude || bn_long
+				])
+					.bindPopup(`
+					<span class="indicator whitespace-nowrap ${device.status ? 'green' : 'red'}"></span><b>${device.name}</b><br />
+					${device.operator}, ${device.connection_type} [${device.signal} dBm] <br />
+					${frappe.utils.get_form_link("Connectivity Package", device.docname, true, "Manage")}
+					`)
 					.openPopup()
 			);
 		}
@@ -72,29 +92,15 @@ frappe.pages['device-map'].on_page_load = function (wrapper) {
 
 	async function draw_table() {
 		// Use Frappe's QueryReport class to transform data for DataTable:
-		let report = new frappe.views.QueryReport({ parent: page.form.fields_dict.table.wrapper });
-		report.report_settings = {}
-		window.report = report;
-		// report.report_name = 'Late Purchases';  // TODO: cleanup
-		// await report.get_report_doc();
-		// await report.get_report_settings();
-		// report.prepare_report_data(state.report_data);
-		report.columns = report.prepare_columns(state.report_data.columns);
-		report.data = report.prepare_data(state.report_data.result);
-		console.log(report.columns);
-		console.log(report.data);
-		// // report.prepare_columns(state.report_data.columns):
-
-		// let table_element = document.getElementById('table');
-		let dt = new DataTable(form.fields_dict.table.wrapper, {
-			columns: report.columns,
-			data: report.data,
-			inlineFilters: true,
-			treeView: false,
-			layout: 'fixed',
-			cellHeight: 33,
-			showTotalRow: false,
-		})
+		let report = new frappe.views.QueryReport({
+			report_name: "Connected Devices",
+			parent: page.form.fields_dict.table.wrapper,
+		});
+		await report.get_report_doc();
+		await report.get_report_settings();
+		report.$report = [form.fields_dict.table.wrapper];
+		report.prepare_report_data(state.report_data);
+		report.render_datatable();
 	}
 	window.draw_table = draw_table
 
@@ -103,20 +109,15 @@ frappe.pages['device-map'].on_page_load = function (wrapper) {
 	 ********************************/
 
 	async function load() {
-		await load_devices();
 		await load_report();
 
 		draw();
 	}
 
-	async function load_devices() {
-		state.devices = await get_devices();
-	}
-
 	async function load_report() {
 		state.report_data = await get_report();
+		state.devices = state.report_data.result.filter(row => row.indent == 1) // Devices are indented 1, customers 0.
 	}
-
 
 	load();
 
@@ -124,30 +125,27 @@ frappe.pages['device-map'].on_page_load = function (wrapper) {
 	 * SERVER CALLS
 	 *******************************/
 
-	async function get_devices() {
+	// Return array of all connected devices with current cycle data usage.
+	async function get_devices_and_data() {
 		let resp = await frappe.call({
-			method: "bnovate.bnovate.utils.iot_apis.rms_get_devices",
+			method: "bnovate.bnovate.utils.iot_apis.get_devices_and_data",
 			args: {}
 		});
-		console.log(resp);
-
-		return resp.message.data;
+		return resp.message;
 	}
+	window.get_devices_and_data = get_devices_and_data;
 
-	// Example of how we could get report data.
+	// Fetch report data
 	async function get_report() {
 		let resp = await frappe.call({
 			method: "frappe.desk.query_report.run",
 			args: {
-				report_name: "Late Purchases",
+				report_name: "Connected Devices",
 				filters: {
-					only_stock_items: 1,
+					// only_stock_items: 1,
 				}
 			}
 		})
-
-		console.log(resp);
-
 		return resp.message;
 	}
 }
