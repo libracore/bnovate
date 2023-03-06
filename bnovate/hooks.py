@@ -30,6 +30,8 @@ fixtures = [
             "Work Order-time_per_unit", # Used for time tracking from Work Order Execution page
             "Work Order-total_time",
             "Work Order-time_log",
+            "BOM-workstation", # Used to assign work order to a workstation
+            "Work Order-workstation",
         ]]]
     }
 ]
