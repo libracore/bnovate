@@ -198,10 +198,10 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
                 -- Continue at most until end of current month. For yearly we still generate an invoice for entire year 
                 LEAST(IFNULL(ss.end_date, '2099-12-31'), LAST_DAY(CURRENT_DATE())) AS end_date,
                 ss.interval,
-                DATE_FORMAT(ss.start_date, '%Y-%m-01') AS period_start,
+                start_date as period_start,
                 CASE ss.interval
-                    WHEN 'Yearly' THEN LAST_DAY(DATE_ADD(ss.start_date, INTERVAL 11 MONTH))
-                    WHEN 'Monthly' THEN LAST_DAY(ss.start_date)
+                    WHEN 'Yearly' THEN DATE_ADD(DATE_ADD(start_date, INTERVAL 1 YEAR), INTERVAL -1 DAY)
+                    WHEN 'Monthly' THEN DATE_ADD(DATE_ADD(start_date, INTERVAL 1 MONTH), INTERVAL -1 DAY)
                 END AS period_end
             FROM `tabSubscription Contract Item` ssi
             JOIN `tabSubscription Contract` ss on ssi.parent = ss.name
@@ -214,12 +214,13 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
                 end_date,
                 bp.interval,
                 CASE bp.interval
-                    WHEN 'Yearly' THEN DATE_FORMAT(DATE_ADD(period_start, INTERVAL 1 YEAR), '%Y-%m-01') 
-                    WHEN 'Monthly' THEN DATE_FORMAT(DATE_ADD(period_start, INTERVAL 1 MONTH), '%Y-%m-01')
+                    WHEN 'Yearly' THEN DATE_ADD(period_start, INTERVAL 1 YEAR) 
+                    WHEN 'Monthly' THEN DATE_ADD(period_start, INTERVAL 1 MONTH)
                 END AS period_start,
                 CASE bp.interval
-                    WHEN 'Yearly' THEN LAST_DAY(DATE_ADD(period_start, INTERVAL 12 + 11 MONTH))  -- period start from previous iteration...
-                    WHEN 'Monthly' THEN LAST_DAY(DATE_ADD(period_start, INTERVAL 1 MONTH))
+                    -- period_start is previous iteration -> add two intervals
+                    WHEN 'Yearly' THEN DATE_ADD(DATE_ADD(period_start, INTERVAL 2 YEAR), INTERVAL -1 DAY)
+                    WHEN 'Monthly' THEN DATE_ADD(DATE_ADD(period_start, INTERVAL 2 MONTH), INTERVAL -1 DAY)
                 END AS period_end
             FROM bp
             WHERE period_end < end_date -- note this is period_end from previous iteration!
