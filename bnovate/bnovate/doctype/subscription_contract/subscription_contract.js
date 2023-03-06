@@ -24,21 +24,28 @@ frappe.ui.form.on('Subscription Contract', {
 		// if end date is defined, set it to the end of a period.
 		if (frm.doc.end_date) {
 			const interval = frm.doc.interval === "Yearly" ? 12 : 1;
-			let date = frm.doc.start_date;
-			while (frappe.datetime.add_days(date, -1) < frm.doc.end_date) {
-				date = frappe.datetime.add_months(date, interval);
+			let billing_start = frm.doc.start_date;  // start of next billing period
+			let billing_end = frappe.datetime.add_days(date, -1) // end of previous billing period
+			while (billing_start <= frm.doc.start_date || billing_end < frm.doc.end_date) {
+				billing_start = frappe.datetime.add_months(billing_start, interval);
+				billing_end = frappe.datetime.add_days(billing_start, -1)
 			}
-			date = frappe.datetime.add_days(date, -1);
-			if (date != frm.doc.end_date) {
+			if (billing_end != frm.doc.end_date) {
 				frappe.msgprint({
 					title: __("Info"),
 					message: __("End date was changed to the next end of billing cycle"),
 					color: "green",
 				});
-				frm.doc.end_date = date;
+				frm.doc.end_date = billing_end;
 				frm.refresh_field('end_date');
 			}
 		}
+	},
+	start_date(frm) {
+		frm.trigger('end_date');
+	},
+	interval(frm) {
+		frm.trigger('end_date');
 	},
 	async before_cancel(frm) {
 		// Only allow cancellation if no invoices are open
