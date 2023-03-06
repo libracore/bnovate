@@ -29,7 +29,6 @@ frappe.query_reports["Work Order Planning"] = {
                 value = `<span title="${value}">${value}</span>`
             } else if (col.fieldname === 'status') {
                 let [legend, colour] = work_order_indicator(data);
-                console.log(colour, legend)
                 return `<span class="coloured ${this.colours[data.idx % this.colours.length]}">
                         <span class="indicator ${colour}">${legend}</span>
                     </span>
