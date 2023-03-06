@@ -163,7 +163,8 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
             NULL AS sinv_name,
             NULL AS posting_date,
             NULL AS sii_start_date,
-            NULL AS sii_end_date
+            NULL AS sii_end_date,
+            NULL AS ssi_name
         FROM `tabDelivery Note Item` dni
         LEFT JOIN `tabDelivery Note` dn ON dn.name = dni.parent
         LEFT JOIN `tabSales Invoice Item` sii ON (
@@ -258,11 +259,12 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
             si.name AS sinv_name,
             si.posting_date,
             sii.service_start_date AS sii_start_date,
-            sii.service_end_date AS sii_end_date
+            sii.service_end_date AS sii_end_date,
+            ssi.name AS ssi_name
         FROM bp
         JOIN `tabSubscription Contract` ss on ss.name = bp.name
         JOIN `tabSubscription Contract Item` ssi on ssi.name = ssi_docname
-        LEFT JOIN `tabSales Invoice Item` sii on sii.subscription = ss.name AND sii.service_start_date = bp.period_start
+        LEFT JOIN `tabSales Invoice Item` sii on sii.sc_detail = ssi.name AND sii.service_start_date = bp.period_start
         LEFT JOIN `tabSales Invoice` si on sii.parent = si.name
         WHERE (si.name IS NULL {invoiced_filter})
             AND ss.customer LIKE "{customer}"
@@ -356,6 +358,7 @@ def create_invoice(from_date, to_date, customer, doctype):
             last_dn = e.reference
         elif e.dt == "Subscription Contract":
             item['subscription'] = e.reference
+            item['sc_detail'] = e.ssi_name
             item['enable_deferred_revenue'] = 1  # Should be automatic if activated on item
             item['service_start_date'] = e.period_start
             item['service_end_date'] = e.period_end
