@@ -29,7 +29,7 @@ def get_columns():
 		{'fieldname': 'planned_start_date', 'fieldtype': 'Date', 'label': _('Start date'), 'width': 80},
 		# {'fieldname': 'item_name', 'fieldtype': 'Data', 'label': _('Item Name'), 'width': 300},
 		{'fieldname': 'required_qty', 'fieldtype': 'Int', 'label': _('Qty Required'), 'width': 100},
-		{'fieldname': 'item', 'fieldtype': 'Link', 'label':_('Item'), 'options': 'Item', 'width': 200},
+		{'fieldname': 'item', 'fieldtype': 'Link', 'label':_('Item'), 'options': 'Item', 'width': 300},
 		{'fieldname': 'comment', 'fieldtype': 'Text', 'label': _('Comment'), 'width': 200},
 		{'fieldname': 'item_group', 'fieldtype': 'Data', 'label': _('Item Group'), 'width': 100},
 		{'fieldname': 'available_stock', 'fieldtype': 'Int', 'label': _('Stock'), 'width': 70},
