@@ -163,7 +163,8 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
             NULL AS sinv_name,
             NULL AS posting_date,
             NULL AS sii_start_date,
-            NULL AS sii_end_date
+            NULL AS sii_end_date,
+            NULL AS ssi_name
         FROM `tabDelivery Note Item` dni
         LEFT JOIN `tabDelivery Note` dn ON dn.name = dni.parent
         LEFT JOIN `tabSales Invoice Item` sii ON (
@@ -198,10 +199,10 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
                 -- Continue at most until end of current month. For yearly we still generate an invoice for entire year 
                 LEAST(IFNULL(ss.end_date, '2099-12-31'), LAST_DAY(CURRENT_DATE())) AS end_date,
                 ss.interval,
-                DATE_FORMAT(ss.start_date, '%Y-%m-01') AS period_start,
+                start_date as period_start,
                 CASE ss.interval
-                    WHEN 'Yearly' THEN LAST_DAY(DATE_ADD(ss.start_date, INTERVAL 11 MONTH))
-                    WHEN 'Monthly' THEN LAST_DAY(ss.start_date)
+                    WHEN 'Yearly' THEN DATE_ADD(DATE_ADD(start_date, INTERVAL 1 YEAR), INTERVAL -1 DAY)
+                    WHEN 'Monthly' THEN DATE_ADD(DATE_ADD(start_date, INTERVAL 1 MONTH), INTERVAL -1 DAY)
                 END AS period_end
             FROM `tabSubscription Contract Item` ssi
             JOIN `tabSubscription Contract` ss on ssi.parent = ss.name
@@ -214,12 +215,13 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
                 end_date,
                 bp.interval,
                 CASE bp.interval
-                    WHEN 'Yearly' THEN DATE_FORMAT(DATE_ADD(period_start, INTERVAL 1 YEAR), '%Y-%m-01') 
-                    WHEN 'Monthly' THEN DATE_FORMAT(DATE_ADD(period_start, INTERVAL 1 MONTH), '%Y-%m-01')
+                    WHEN 'Yearly' THEN DATE_ADD(period_start, INTERVAL 1 YEAR) 
+                    WHEN 'Monthly' THEN DATE_ADD(period_start, INTERVAL 1 MONTH)
                 END AS period_start,
                 CASE bp.interval
-                    WHEN 'Yearly' THEN LAST_DAY(DATE_ADD(period_start, INTERVAL 12 + 11 MONTH))  -- period start from previous iteration...
-                    WHEN 'Monthly' THEN LAST_DAY(DATE_ADD(period_start, INTERVAL 1 MONTH))
+                    -- period_start is previous iteration -> add two intervals
+                    WHEN 'Yearly' THEN DATE_ADD(DATE_ADD(period_start, INTERVAL 2 YEAR), INTERVAL -1 DAY)
+                    WHEN 'Monthly' THEN DATE_ADD(DATE_ADD(period_start, INTERVAL 2 MONTH), INTERVAL -1 DAY)
                 END AS period_end
             FROM bp
             WHERE period_end < end_date -- note this is period_end from previous iteration!
@@ -257,11 +259,12 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
             si.name AS sinv_name,
             si.posting_date,
             sii.service_start_date AS sii_start_date,
-            sii.service_end_date AS sii_end_date
+            sii.service_end_date AS sii_end_date,
+            ssi.name AS ssi_name
         FROM bp
         JOIN `tabSubscription Contract` ss on ss.name = bp.name
         JOIN `tabSubscription Contract Item` ssi on ssi.name = ssi_docname
-        LEFT JOIN `tabSales Invoice Item` sii on sii.subscription = ss.name AND sii.service_start_date = bp.period_start
+        LEFT JOIN `tabSales Invoice Item` sii on sii.sc_detail = ssi.name AND sii.service_start_date = bp.period_start
         LEFT JOIN `tabSales Invoice` si on sii.parent = si.name
         WHERE (si.name IS NULL {invoiced_filter})
             AND ss.customer LIKE "{customer}"
@@ -355,6 +358,7 @@ def create_invoice(from_date, to_date, customer, doctype):
             last_dn = e.reference
         elif e.dt == "Subscription Contract":
             item['subscription'] = e.reference
+            item['sc_detail'] = e.ssi_name
             item['enable_deferred_revenue'] = 1  # Should be automatic if activated on item
             item['service_start_date'] = e.period_start
             item['service_end_date'] = e.period_end
