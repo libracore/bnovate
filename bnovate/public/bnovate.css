@@ -36,9 +36,7 @@ span.coloured.dark {
   background-color: #dde6f7;
 }
 
-.google-visualization-tooltip[clone] {
-  opacity: 1 !important;
-}
+/* Style popovers in reports */
 
 .bs-popover-bottom .arrow {
   /* Horizontally center the arrow */
@@ -48,4 +46,12 @@ span.coloured.dark {
 
 .popover {
   max-width: 500px;
+}
+
+/* sacrificial div used to bind popover at click location on chart */
+#sacrificial{
+  position: absolute;
+  width: 0px;
+  height: 0px;
+  z-index: 1; /* to ensure it appears above the target element */
 }

@@ -17,8 +17,6 @@ frappe.query_reports["Work Order Planning"] = {
         this.report = report;
         this.colours = ["dark", "light"];
 
-        console.log("on load")
-
         report.page.add_inner_button(__('Toggle Chart'), () => {
             if (this.report.$chart.is(':visible')) {
                 this.report.$chart.hide();
@@ -28,14 +26,7 @@ frappe.query_reports["Work Order Planning"] = {
         })
     },
     after_datatable_render(datatable) {
-        console.log("after render")
-        this.report.page.remove_inner_button(__('Set Chart'));
-        this.report.$chart.html(`
-                <div class="chart-container">
-                    <div id="timeline" class="report-chart">Timeline</div>
-                </div>
-        `);
-        draw_google_chart('timeline', this.report);
+        draw_google_chart(this.report);
     },
     formatter(value, row, col, data, default_formatter) {
         if (col.fieldname === "sufficient_stock") {
@@ -79,56 +70,58 @@ function work_order_indicator(doc) {
     }
 }
 
-function draw_google_chart(container_id, report) {
-    google.charts.load('current', { 'packages': ['timeline'] });
-    google.charts.setOnLoadCallback(drawChart);
-
+function draw_google_chart(report) {
+    report.$chart.html(`
+            <div class="chart-container">
+                <div id="timeline" class="report-chart">Timeline</div>
+            </div>
+    `);
 
     // Track mouse position in chart to draw popover at correct location
     report.mousePos = { x: 0, y: 0 };
-    let container = document.getElementById(container_id);
+    let container = document.getElementById("timeline");
     container.addEventListener("mousemove", (e) => {
         report.mousePos.x = e.offsetX;
         report.mousePos.y = e.offsetY;
     });
 
+    google.charts.load('current', { 'packages': ['timeline'] });
+    google.charts.setOnLoadCallback(drawChart);
     function drawChart() {
         let chart = new google.visualization.Timeline(container);
         report.chart = chart;
 
         report.chart_dt = build_google_dt(report);
 
+        // Show a popover when a timeline element is clicked. Popovers in bootstrap 3 don't
+        // delete nicely, so I made a workaround where I create a sacrificial div centered on the
+        // click and bind the popover to this div.
         google.visualization.events.addListener(chart, 'select', () => {
 
+            // Delete any existing popovers and sacrificial divs
+            $('#sacrificial').popover('hide');
+            $('#sacrificial').remove();
 
-            // Delete previous popover if it exists
-            // if (report.popover) {
-            //     report.popover.popover('hide');
-            //     report.popover.popover('dispose');
-            //     report.popover = null
-            // }
+            $(container).append(
+                `<div id="sacrificial" style="left: ${report.mousePos.x}px; top: ${report.mousePos.y}px"></div>`
+            )
 
             let row = chart.getSelection()[0].row;
             let contents = report.chart_dt.getValue(row, 2);
 
-            let { width, height } = container.getBoundingClientRect();
-            console.log(width, height, report.mousePos)
-            console.log(`${-width / 2 + report.mousePos.x}, ${-height + report.mousePos.y}`)
-            report.popover = $(container).popover({
-                container: "body", // TODO experiment with different containers
+            $("#sacrificial").popover({
+                container: "body",
                 title: "My fancy popover",
                 html: true,
                 content: contents,
                 placement: "bottom",
-                // offset: `${-width / 2 + report.mousePos.x}, ${-height + report.mousePos.y}`,
             }).popover('show');
 
             // Bind once: any click dismisses the popover
-            // $(document).one("click", () => {
-            //     report.popover.popover('hide');
-            //     report.popover.popover('dispose');
-            //     report.popover = null;
-            // });
+            $(document).one("click", () => {
+                $('#sacrificial').popover('hide');
+                $('#sacrificial').remove();
+            });
         });
 
 
@@ -166,6 +159,7 @@ function build_google_dt(report) {
                     <div class="preview-header">
                         <div class="preview-main">
                             <a class="preview-name bold" href="#Form/Work Order/{{ work_order }}">{{ work_order }}: {{ item_name }}</a>
+                            <br>
                             <span class="small preview-value">{{ planned_start_date }} {% if planned_end_date %} - {{ planned_end_date }}{% endif %}</span>
                             <br>
                             <span class="text-muted small">Item <a class="text-muted" href="#Form/Item/{{ item }}">{{ item }}</a></span>
@@ -214,6 +208,5 @@ function build_google_dt(report) {
             ),
         ])
     dataTable.addRows(rows);
-    console.log(dataTable);
     return dataTable;
 }
