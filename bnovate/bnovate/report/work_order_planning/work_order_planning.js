@@ -13,40 +13,18 @@ frappe.query_reports["Work Order Planning"] = {
             "options": "Workstation"
         },
     ],
-    async onload(report) {
+    onload(report) {
         this.report = report;
         this.colours = ["dark", "light"];
-
-        if (this.loaded === undefined) {
-            await report.refresh();
-            // report.$tree_footer.after(`
-            report.$report.before(`
-                <div class="chart-wrapper" style="display:block; min-height:300px; overflow: auto">
-                    <div class="chart-container">
-                        <div id="timeline" class="report-chart">Timeline</div>
-                    </div>
-                </div>
-            `);
-            this.loaded = true;
-
-            google.charts.load('current', { 'packages': ['timeline'] });
-            google.charts.setOnLoadCallback(drawChart);
-            function drawChart() {
-                var container = document.getElementById('timeline');
-                var chart = new google.visualization.Timeline(container);
-                let dt = build_google_dt(report);
-                chart.draw(dt);
-                report.chart = chart;
-            }
-        }
     },
     after_datatable_render(datatable) {
-        console.log(datatable);
+        this.report.$chart.html(`
+                <div class="chart-container">
+                    <div id="timeline" class="report-chart">Timeline</div>
+                </div>
+        `);
 
-        if (frappe.query_report.chart) {
-            let dt = build_google_dt(frappe.query_report);
-            frappe.query_report.chart.draw(dt);
-        }
+        draw_google_chart('timeline', this.report);
     },
     formatter(value, row, col, data, default_formatter) {
         if (col.fieldname === "sufficient_stock") {
@@ -90,7 +68,23 @@ function work_order_indicator(doc) {
     }
 }
 
-function refresh_google_chart(chart, report) {
+function draw_google_chart(container_id, report) {
+    google.charts.load('current', { 'packages': ['timeline'] });
+    google.charts.setOnLoadCallback(drawChart);
+    function drawChart() {
+        var container = document.getElementById(container_id);
+        var chart = new google.visualization.Timeline(container);
+        // google.visualization.events.addListener(chart, 'select', (event) => { console.log("selected", event, chart.getSelection()) });
+
+        chart.draw(build_google_dt(report), {
+            height: 300,
+            tooltip: {
+                isHtml: true,
+                // trigger: 'selection',
+            },
+        });
+        report.chart = chart;
+    }
 }
 
 function build_google_dt(report) {
@@ -98,6 +92,7 @@ function build_google_dt(report) {
 
     dataTable.addColumn({ type: 'string', id: 'Workstation' });
     dataTable.addColumn({ type: 'string', id: 'Work Order' });
+    dataTable.addColumn({ type: 'string', role: 'tooltip' });
     dataTable.addColumn({ type: 'string', id: 'style', role: 'style' });
     dataTable.addColumn({ type: 'date', id: 'Start' });
     dataTable.addColumn({ type: 'date', id: 'End' });
@@ -107,6 +102,58 @@ function build_google_dt(report) {
         .map(row => [
             row.workstation || "Unknown",
             row.work_order,
+            frappe.render_template(`
+            <div class="popover-container" style="display:table">
+                <div class="popover link-preview-popover in" style="display: block; position: relative;">
+                    <div class="popover-content">
+                        <div class="preview-popover-header">
+                            <div class="preview-header">
+                            </div>
+
+                            <div class="preview-header">
+                                <div class="preview-main">
+                                    <a class="preview-name bold" href="#Form/Work Order/{{ work_order }}">{{ work_order }}: {{ item_name }}</a>
+                                    <span class="text-muted small">Item <a class="text-muted" href="#Form/Item/{{ item }}">{{ item }}</a></span>
+                                </div>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="popover-body">
+                            <div class="preview-table" style="max-width: none;">
+                                <div class="preview-field">
+                                    <div class="small preview-label text-muted bold">Qty remaining to produce</div>
+                                    <div class="small preview-value">{{ required_qty }}</div>
+                                </div>
+                                <div class="preview-field">
+                                    <div class="small preview-value">
+                                        <table class="table table-condensed no-margin" style="border-bottom: 1px solid #d1d8dd; width:100%">
+                                        <thead>
+                                            <th></th>
+                                            <th class="text-left">Item</th>
+                                            <th class="text-left">Name</th>
+                                            <th class="text-right">Required</th>
+                                            <th class="text-right">Stock</th>
+                                        </thead>
+                                        <tbody>
+                                            {% for item in items %}
+                                            <tr>
+                                                <td><span class="indicator {{ item.sufficient_stock ? "green" : "red" }}"></span></td>
+                                                <td class="text-left">{{ item.item_code }}</td>
+                                                <td class="text-left">{{ frappe.ellipsis(item.item_name, 30) }}</td>
+                                                <td class="text-right">{{ item.required_qty }}</td>
+                                                <td class="text-right">{{ item.available_stock }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            `, row),
             row.sufficient_stock ? "color: #98d85b;" : "color: #ff5858;",
             frappe.datetime.str_to_obj(row.planned_start_date),
             frappe.datetime.str_to_obj(
@@ -114,7 +161,7 @@ function build_google_dt(report) {
                 row.planned_start_date + " 12:00:00"
             ),
         ])
-    console.log(rows)
     dataTable.addRows(rows);
+    console.log(dataTable);
     return dataTable;
 }
