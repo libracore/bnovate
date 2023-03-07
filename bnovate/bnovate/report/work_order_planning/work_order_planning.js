@@ -12,18 +12,27 @@ frappe.query_reports["Work Order Planning"] = {
             "fieldtype": "Link",
             "options": "Workstation"
         },
+        {
+            "fieldname": "hide_chart",
+            "label": __("Hide Chart"),
+            "fieldtype": "Check",
+            "default": 0
+        },
     ],
     onload(report) {
         this.report = report;
         this.colours = ["dark", "light"];
     },
     after_datatable_render(datatable) {
+        if (this.report.filters[1].last_value) {
+            // hide chart
+            return;
+        };
         this.report.$chart.html(`
                 <div class="chart-container">
                     <div id="timeline" class="report-chart">Timeline</div>
                 </div>
         `);
-
         draw_google_chart('timeline', this.report);
     },
     formatter(value, row, col, data, default_formatter) {
