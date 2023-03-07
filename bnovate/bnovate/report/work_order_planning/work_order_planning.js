@@ -12,22 +12,24 @@ frappe.query_reports["Work Order Planning"] = {
             "fieldtype": "Link",
             "options": "Workstation"
         },
-        {
-            "fieldname": "hide_chart",
-            "label": __("Hide Chart"),
-            "fieldtype": "Check",
-            "default": 0
-        },
     ],
     onload(report) {
         this.report = report;
         this.colours = ["dark", "light"];
+
+        console.log("on load")
+
+        report.page.add_inner_button(__('Toggle Chart'), () => {
+            if (this.report.$chart.is(':visible')) {
+                this.report.$chart.hide();
+            } else {
+                this.report.$chart.show();
+            }
+        })
     },
     after_datatable_render(datatable) {
-        if (this.report.filters[1].last_value) {
-            // hide chart
-            return;
-        };
+        console.log("after render")
+        this.report.page.remove_inner_button(__('Set Chart'));
         this.report.$chart.html(`
                 <div class="chart-container">
                     <div id="timeline" class="report-chart">Timeline</div>
@@ -80,19 +82,64 @@ function work_order_indicator(doc) {
 function draw_google_chart(container_id, report) {
     google.charts.load('current', { 'packages': ['timeline'] });
     google.charts.setOnLoadCallback(drawChart);
-    function drawChart() {
-        var container = document.getElementById(container_id);
-        var chart = new google.visualization.Timeline(container);
-        // google.visualization.events.addListener(chart, 'select', (event) => { console.log("selected", event, chart.getSelection()) });
 
-        chart.draw(build_google_dt(report), {
+
+    // Track mouse position in chart to draw popover at correct location
+    report.mousePos = { x: 0, y: 0 };
+    let container = document.getElementById(container_id);
+    container.addEventListener("mousemove", (e) => {
+        report.mousePos.x = e.offsetX;
+        report.mousePos.y = e.offsetY;
+    });
+
+    function drawChart() {
+        let chart = new google.visualization.Timeline(container);
+        report.chart = chart;
+
+        report.chart_dt = build_google_dt(report);
+
+        google.visualization.events.addListener(chart, 'select', () => {
+
+
+            // Delete previous popover if it exists
+            // if (report.popover) {
+            //     report.popover.popover('hide');
+            //     report.popover.popover('dispose');
+            //     report.popover = null
+            // }
+
+            let row = chart.getSelection()[0].row;
+            let contents = report.chart_dt.getValue(row, 2);
+
+            let { width, height } = container.getBoundingClientRect();
+            console.log(width, height, report.mousePos)
+            console.log(`${-width / 2 + report.mousePos.x}, ${-height + report.mousePos.y}`)
+            report.popover = $(container).popover({
+                container: "body", // TODO experiment with different containers
+                title: "My fancy popover",
+                html: true,
+                content: contents,
+                placement: "bottom",
+                // offset: `${-width / 2 + report.mousePos.x}, ${-height + report.mousePos.y}`,
+            }).popover('show');
+
+            // Bind once: any click dismisses the popover
+            // $(document).one("click", () => {
+            //     report.popover.popover('hide');
+            //     report.popover.popover('dispose');
+            //     report.popover = null;
+            // });
+        });
+
+
+        chart.draw(report.chart_dt, {
             height: 300,
             tooltip: {
-                isHtml: true,
-                // trigger: 'selection',
+                // isHtml: true,
+                trigger: 'both', // disable it
+
             },
         });
-        report.chart = chart;
     }
 }
 
@@ -101,7 +148,7 @@ function build_google_dt(report) {
 
     dataTable.addColumn({ type: 'string', id: 'Workstation' });
     dataTable.addColumn({ type: 'string', id: 'Work Order' });
-    dataTable.addColumn({ type: 'string', role: 'tooltip' });
+    dataTable.addColumn({ type: 'string', id: 'tooltip', role: 'tooltip' });
     dataTable.addColumn({ type: 'string', id: 'style', role: 'style' });
     dataTable.addColumn({ type: 'date', id: 'Start' });
     dataTable.addColumn({ type: 'date', id: 'End' });
@@ -112,56 +159,52 @@ function build_google_dt(report) {
             row.workstation || "Unknown",
             row.work_order,
             frappe.render_template(`
-            <div class="popover-container" style="display:table">
-                <div class="popover link-preview-popover in" style="display: block; position: relative;">
-                    <div class="popover-content">
-                        <div class="preview-popover-header">
-                            <div class="preview-header">
-                            </div>
+                <div class="preview-popover-header">
+                    <div class="preview-header">
+                    </div>
 
-                            <div class="preview-header">
-                                <div class="preview-main">
-                                    <a class="preview-name bold" href="#Form/Work Order/{{ work_order }}">{{ work_order }}: {{ item_name }}</a>
-                                    <span class="text-muted small">Item <a class="text-muted" href="#Form/Item/{{ item }}">{{ item }}</a></span>
-                                </div>
-                            </div>
+                    <div class="preview-header">
+                        <div class="preview-main">
+                            <a class="preview-name bold" href="#Form/Work Order/{{ work_order }}">{{ work_order }}: {{ item_name }}</a>
+                            <span class="small preview-value">{{ planned_start_date }} {% if planned_end_date %} - {{ planned_end_date }}{% endif %}</span>
+                            <br>
+                            <span class="text-muted small">Item <a class="text-muted" href="#Form/Item/{{ item }}">{{ item }}</a></span>
                         </div>
-                        <hr>
-                        <div class="popover-body">
-                            <div class="preview-table" style="max-width: none;">
-                                <div class="preview-field">
-                                    <div class="small preview-label text-muted bold">Qty remaining to produce</div>
-                                    <div class="small preview-value">{{ required_qty }}</div>
-                                </div>
-                                <div class="preview-field">
-                                    <div class="small preview-value">
-                                        <table class="table table-condensed no-margin" style="border-bottom: 1px solid #d1d8dd; width:100%">
-                                        <thead>
-                                            <th></th>
-                                            <th class="text-left">Item</th>
-                                            <th class="text-left">Name</th>
-                                            <th class="text-right">Required</th>
-                                            <th class="text-right">Stock</th>
-                                        </thead>
-                                        <tbody>
-                                            {% for item in items %}
-                                            <tr>
-                                                <td><span class="indicator {{ item.sufficient_stock ? "green" : "red" }}"></span></td>
-                                                <td class="text-left">{{ item.item_code }}</td>
-                                                <td class="text-left">{{ frappe.ellipsis(item.item_name, 30) }}</td>
-                                                <td class="text-right">{{ item.required_qty }}</td>
-                                                <td class="text-right">{{ item.available_stock }}</td>
-                                            </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                        </table>
-                                    </div>
-                                </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="popover-body">
+                    <div class="preview-table" style="max-width: none;">
+                        <div class="preview-field">
+                            <div class="small preview-label text-muted bold">Qty remaining to produce</div>
+                            <div class="small preview-value">{{ required_qty }}</div>
+                        </div>
+                        <div class="preview-field">
+                            <div class="small preview-value">
+                                <table class="table table-condensed no-margin" style="border-bottom: 1px solid #d1d8dd; width:100%">
+                                <thead>
+                                    <th></th>
+                                    <th class="text-left">Item</th>
+                                    <th class="text-left">Name</th>
+                                    <th class="text-right">Required</th>
+                                    <th class="text-right">Stock</th>
+                                </thead>
+                                <tbody>
+                                    {% for item in items %}
+                                    <tr>
+                                        <td><span class="indicator {{ item.sufficient_stock ? "green" : "red" }}"></span></td>
+                                        <td class="text-left">{{ item.item_code }}</td>
+                                        <td class="text-left">{{ frappe.ellipsis(item.item_name, 30) }}</td>
+                                        <td class="text-right">{{ item.required_qty }}</td>
+                                        <td class="text-right">{{ item.available_stock }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
             `, row),
             row.sufficient_stock ? "color: #98d85b;" : "color: #ff5858;",
             frappe.datetime.str_to_obj(row.planned_start_date),
