@@ -75,6 +75,13 @@ def get_data():
                         "is_query_report": True,            
                    },
                    {
+                        "type": "report",
+                        "name": "Work Order Planning",
+                        "label": _("Work Order Planning"),
+                        "doctype": "Work Order",
+                        "is_query_report": True,            
+                   },
+                   {
                         "type": "page",
                         "name": "work-order-execution",
                         "label": _("Work Order Execution"),
@@ -136,7 +143,7 @@ def get_data():
                         "type": "report",
                         "name": "Aggregate Invoicing",
                         "label": _("Aggregate Invoicing"),
-                        "doctype": "Subscription Service",
+                        "doctype": "Subscription Contract",
                         "is_query_report": True    
                    }                   
             ]
