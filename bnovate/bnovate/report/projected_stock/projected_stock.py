@@ -10,7 +10,10 @@ from frappe import _
 def execute(filters=None):
     columns = get_columns()
     data = get_data(filters)
-    chart = get_chart(data)
+
+    chart = None
+    if filters.item_code and filters.warehouse:
+        chart = get_chart(data)
     
     return columns, data, None, chart
     
@@ -27,10 +30,12 @@ def get_columns():
     
 def get_data(filters):
     
-    if not filters.item_code or not filters.warehouse:
-        filters.item_code = "200001"
-        filters.warehouse = "Stores - bN"
-        # return None
+    item_filter = "true"
+    warehouse_filter = "true"
+    if filters.item_code:
+        item_filter = "e.item_code = '{}'".format(filters.item_code)
+    if filters.warehouse:
+        warehouse_filter = "e.warehouse = '{}'".format(filters.warehouse)
         
     sql_query = """
 SELECT 
@@ -41,8 +46,9 @@ SELECT
     i.item_name,
     e.warehouse,
     e.qty,
-    ROUND(@running_total := IF(e.item_code = @prev_item_code, @running_total + e.qty, e.qty), 3) AS balance,
-    @prev_item_code := e.item_code AS item_code_tracker
+    ROUND(SUM(e.qty) OVER (
+      PARTITION BY e.item_code, e.warehouse ORDER BY e.order_prio, e.date ASC, e.docname
+    ), 3) AS balance
 FROM (
   (SELECT
     0 as order_prio, -- to keep stock balance as first item in list
@@ -129,12 +135,11 @@ WHERE wo.docstatus = 1
     AND wo.qty > wo.produced_qty
     AND wo.status != 'Stopped'
 )) as e -- "entries"
-JOIN (SELECT @running_total := 0, @prev_item_code := "" COLLATE utf8mb4_unicode_ci) r
 JOIN `tabItem` as i on e.item_code = i.name
-WHERE e.item_code = '{item_code}' AND e.warehouse = '{warehouse}'
-ORDER BY order_prio, date ASC
+WHERE {item_filter} AND {warehouse_filter}
+ORDER BY item_code, warehouse, order_prio, date ASC, docname
 
-    """.format(item_code=filters.item_code, warehouse=filters.warehouse)
+    """.format(item_filter=item_filter, warehouse_filter=warehouse_filter)
     
     data = frappe.db.sql(sql_query, as_dict=True)
     
