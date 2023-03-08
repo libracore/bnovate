@@ -9,12 +9,13 @@
 #
 
 from __future__ import unicode_literals
-from email.policy import default
 import frappe
-from frappe import _
 import calendar
 import datetime
-from frappe.utils import cint
+
+from frappe import _
+from frappe.utils import cint, today
+from email.policy import default
 
 def execute(filters=None):
     columns = get_columns(filters)
@@ -29,7 +30,7 @@ def get_columns(filters):
         {'fieldname': 'reference', 'label': _('Reference'), 'fieldtype': 'Dynamic Link', 'options': 'dt', 'width': 100},
         {'fieldname': 'date', 'label': _('Start Billing / Ship Date'), 'fieldtype': 'Date', 'width': 80},
         {'fieldname': 'period_end', 'label': _('End Billing Period'), 'fieldtype': 'Date', 'width': 80},
-        {'fieldname': 'item_code', 'label': _('Item'), 'fieldtype': 'Link', 'options': 'Item', 'width': 200},
+        {'fieldname': 'item_code', 'label': _('Item'), 'fieldtype': 'Link', 'options': 'Item', 'width': 200, 'align': 'left'},
         {'fieldname': 'qty', 'label': _('Qty'), 'fieldtype': 'Float', 'width': 50},
         {'fieldname': 'rate', 'label': _('Item Rate'), 'fieldtype': 'Currency', 'options': 'currency', 'width': 100},
         {'fieldname': 'amount', 'label': _('Total'), 'fieldtype': 'Currency', 'options': 'currency', 'width': 100},
@@ -119,7 +120,7 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
     if not from_date:
         from_date = "2000-01-01"
     if not to_date:
-        to_date = "2099-12-31"
+        to_date = today()
     if not customer:
         customer = "%"
 
@@ -196,8 +197,8 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
                 ssi.name AS ssi_docname,
                 ssi.idx AS ssi_index,
                 start_date,
-                -- Continue at most until end of current month. For yearly we still generate an invoice for entire year 
-                LEAST(IFNULL(ss.end_date, '2099-12-31'), LAST_DAY(CURRENT_DATE())) AS end_date,
+                -- Continue at most until end of current month / filter end date month. For yearly we still generate an invoice for entire year 
+                LEAST(IFNULL(ss.end_date, '2099-12-31'), '{to_date}') AS end_date,
                 ss.interval,
                 start_date as period_start,
                 CASE ss.interval
@@ -268,7 +269,7 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
         LEFT JOIN `tabSales Invoice` si on sii.parent = si.name
         WHERE (si.name IS NULL {invoiced_filter})
             AND ss.customer LIKE "{customer}"
-            AND (bp.period_start >= "{from_date}" AND bp.period_end <= "{to_date}")
+            AND (bp.period_start >= "{from_date}") -- AND bp.period_end <= "{to_date}") -- already filtered by RECURSIVE above
             AND ss.docstatus = 1
         ORDER BY ss.name, period_start, ssi_index
         ) AS subs
