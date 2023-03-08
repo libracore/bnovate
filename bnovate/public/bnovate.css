@@ -55,3 +55,11 @@ span.coloured.dark {
   height: 0px;
   z-index: 1; /* to ensure it appears above the target element */
 }
+
+.tooltip-inner {
+  text-align: left;
+}
+
+.tooltip-inner ul {
+  padding-left: 20px;
+}

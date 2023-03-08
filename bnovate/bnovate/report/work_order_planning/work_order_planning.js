@@ -27,8 +27,14 @@ frappe.query_reports["Work Order Planning"] = {
     },
     after_datatable_render(datatable) {
         draw_google_chart(this.report);
+
+        // Activate tooltips on columns
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip()
+        })
     },
     formatter(value, row, col, data, default_formatter) {
+        skip_default = false;
         if (col.fieldname === "sufficient_stock") {
             color = ['red', 'orange', 'green'][value];
             return `<span class="indicator ${color}"></span>`;
@@ -48,6 +54,14 @@ frappe.query_reports["Work Order Planning"] = {
                     `;
             } else if (col.fieldname === 'planned_start_date') {
                 value = value.substr(0, 10);
+            } else if (col.fieldname === 'item_code') {
+                value = projected_stock_link(data.item_code, data.warehouse, data.item_name);
+                skip_default = true;
+            }
+
+
+            if (skip_default) {
+                return `<span class="coloured ${this.colours[data.idx % this.colours.length]}">${value}</span>`;
             }
             return `<span class="coloured ${this.colours[data.idx % this.colours.length]}">${default_formatter(value, row, col, data)}</span>`;
         }
@@ -70,6 +84,33 @@ function work_order_indicator(doc) {
             "Cancelled": "darkgrey"
         }[doc.status]];
     }
+}
+
+function dismiss_popover() {
+    $('#sacrificial').popover('hide');
+    $('#sacrificial').remove();
+}
+
+function projected_stock_link(item_code, warehouse, item_name) {
+    return `<a target="_blank" href="/desk#query-report/Projected%20Stock?item_code=${item_code}&warehouse=${warehouse}">
+        ${item_code}${item_name ? ': ' + item_name : ''}
+    </a>`
+    // return `<a onclick="show_modal('/desk#query-report/Projected%20Stock?item_code=${item_code}&warehouse=${warehouse}')">
+    //     ${item_code}${item_name && ': ' + item_name}
+    // </a>`
+}
+
+function show_modal(url) {
+    let d = new frappe.ui.Dialog({
+        title: 'Projected Stock',
+        fields: [{
+            label: 'iFrame',
+            fieldname: 'iframe',
+            fieldtype: 'HTML',
+            options: `<iframe src="${url}" width="800" height="480"></iframe>`,
+        }]
+    })
+    d.show();
 }
 
 function draw_google_chart(report) {
@@ -100,9 +141,7 @@ function draw_google_chart(report) {
         // click and bind the popover to this div.
         google.visualization.events.addListener(chart, 'select', () => {
 
-            // Delete any existing popovers and sacrificial divs
-            $('#sacrificial').popover('hide');
-            $('#sacrificial').remove();
+            dismiss_popover();
 
             $(container).append(
                 `<div id="sacrificial" style="left: ${report.mousePos.x}px; top: ${report.mousePos.y}px"></div>`
@@ -119,16 +158,23 @@ function draw_google_chart(report) {
                 placement: "bottom",
             }).popover('show');
 
-            // Bind once: any click dismisses the popover
-            $(document).one("click", () => {
-                $('#sacrificial').popover('hide');
-                $('#sacrificial').remove();
-            });
         });
+
+        // Any click outside the popover dismisses it. May interfere with other popovers...
+        $(document).bind("click", (event) => {
+            const popover = $(".popover");
+            if (popover.is(event.target) || popover.has(event.target).length) {
+                // Ignore if click target is inside the popover
+                return;
+            }
+            dismiss_popover();
+        });
+        frappe.route.on('change', () => { console.log("change route"), dismiss_popover() });
 
 
         chart.draw(report.chart_dt, {
             height: 250,
+            fontName: "Open Sans",
             tooltip: {
                 // isHtml: true,
                 trigger: 'both', // disable it
@@ -169,7 +215,9 @@ function build_google_dt(report) {
                         <div class="preview-main">
                             <a class="preview-name bold" href="#Form/Work Order/{{ work_order }}">{{ work_order }}: {{ item_name }}</a>
                             <br>
-                            <span class="small preview-value">Item <a class="text-muted" href="#Form/Item/{{ item_code }}">{{ item_code }}</a></span>
+                            <span class="small preview-value">
+                                Item {{ projected_stock_link(item_code, warehouse) }}
+                            </span>
                             <br>
                             <span class="small text-muted">{{ planned_start_date }} {% if planned_end_date %} - {{ planned_end_date }}{% endif %}</span>
                         </div>
@@ -212,9 +260,7 @@ function build_google_dt(report) {
                                     <tr>
                                         <td><span class="indicator {{ ["red", "orange", "green"][item.sufficient_stock] }}"></span></td>
                                         <td class="text-left">
-                                            <a href="/desk#query-report/Projected%20Stock?item_code={{item.item_code}}&warehouse={{item.warehouse}}">
-                                                {{ item.item_code }}
-                                            </a>
+                                            {{ projected_stock_link(item.item_code, item.warehouse) }}
                                         </td>
                                         <td class="text-left">{{ frappe.ellipsis(item.item_name, 30) }}</td>
                                         <td class="text-right">{{ -item.qty }}</td>

@@ -21,19 +21,52 @@ def execute(filters=None):
     return columns, data
 
 def get_columns():
+    guaranteed_info = """
+<p>Guaranteed stock before WO is executed.</p>
+
+<p align='left'>Calculation: 
+<ul>
+    <li>Current stock balance</li>
+    <li>- items <b>consumed</b> by WO (at <i>start date</i>)</li>
+    <li>- SO (at <i>ship date</i>)</li>
+</ul>
+</p>
+"""
+
+    projected_info = """
+<p>Projected stock before WO is executed.</p>
+
+<p align='left'>Calculation: 
+<ul>
+    <li>Current stock balance</li>
+    <li>- items <b>consumed</b> by WO (at <i>start date</i>)</li>
+    <li>- SO (at <i>ship date</i>)</li>
+    <li>+ PO (at <i>expected delivery date</i> or <i>Reqd by date</i>)</li>
+    <li>+ items <b>produced</b> by WO (at <i>expected delivery date</i> if it exists, otherwise <i>start date</i>).</li>
+</ul>
+</p>
+"""
+
     return [
         {'fieldname': 'sufficient_stock', 'fieldtype': 'Data', 'label': _('Go?'), 'width': 50},
         {'fieldname': 'work_order', 'fieldtype': 'Link', 'label': _('Work Order'), 'options': 'Work Order', 'width': 100},
-        {'fieldname': 'workstation', 'fieldtype': 'Data', 'label': _('Workstation'), 'width': 100},
+        {'fieldname': 'workstation', 'fieldtype': 'Data', 'label': _('Workstation'), 'width': 100, 'align': 'left'},
         {'fieldname': 'status', 'fieldtype': 'Data', 'label': _('Status'), 'width': 100},
         {'fieldname': 'planned_start_date', 'fieldtype': 'Date', 'label': _('Start date'), 'width': 80},
-        # {'fieldname': 'item_name', 'fieldtype': 'Data', 'label': _('Item Name'), 'width': 300},
-        {'fieldname': 'qty', 'fieldtype': 'Int', 'label': _('Qty'), 'width': 100},
-        {'fieldname': 'item_code', 'fieldtype': 'Link', 'label':_('Item'), 'options': 'Item', 'width': 300},
-        {'fieldname': 'comment', 'fieldtype': 'Text', 'label': _('Comment'), 'width': 200},
+        {'fieldname': 'expected_delivery_date', 'fieldtype': 'Date', 'label': _('Delivery date'), 'width': 80},
+        {'fieldname': 'qty', 'fieldtype': 'Float', 'label': _('Qty'), 'width': 100},
+        {'fieldname': 'item_code', 'fieldtype': 'Data', 'label':_('Item'), 'options': 'Item', 'width': 300, 'align': 'left'},
+        {'fieldname': 'comment', 'fieldtype': 'Data', 'label': _('Comment'), 'width': 200, 'align': 'left'},
         {'fieldname': 'item_group', 'fieldtype': 'Data', 'label': _('Item Group'), 'width': 100},
-        {'fieldname': 'projected_qty', 'fieldtype': 'Int', 'label': _('Projected Stock'), 'width': 70},
-        {'fieldname': 'guaranteed_qty', 'fieldtype': 'Int', 'label': _('Guaranteed Stock'), 'width': 70},
+        {'fieldname': 'projected_stock', 'fieldtype': 'Int', 
+            'label': '<span data-html="true" data-toggle="tooltip" data-placement="bottom" data-container="body" title="{}">Proj. Stock <i class="fa fa-info-circle"></i></span>'.format(projected_info), 
+            'width': 110},
+        {'fieldname': 'guaranteed_stock', 'fieldtype': 'Int', 
+            'label': '<span data-html="true" data-toggle="tooltip" data-placement="bottom" data-container="body" title="{}">Guar. Stock <i class="fa fa-info-circle"></i></span>'.format(guaranteed_info), 
+            'width': 110},
+        # {'fieldname': 'projected_qty', 'fieldtype': 'Int', 'label': 'Proj. AFTER WO', 'width': 110},
+        # {'fieldname': 'guaranteed_qty', 'fieldtype': 'Int', 'label': 'Guar. AFTER WO', 'width': 110},
+        {'fieldname': 'stock_uom', 'fieldtype': 'Data', 'label': _('Unit'), 'width': 100},
         {'fieldname': 'warehouse', 'fieldtype': 'Data', 'label': _('Warehouse'), 'width': 100},
     ]
 
@@ -57,10 +90,10 @@ SELECT
     ROUND(p.qty, 3) AS qty,
     -- Qty remaining AFTER WO...
     p.projected_qty,  -- ...if all planned SO, WO and PO go through
-    p.guaranteed_qty, -- ...if all planned SO and WO go through, ignoring PO
+    p.guaranteed_qty, -- ...taking only items CONSUMED by WO and SO.
     -- Qty remaining BEFORE WO
     (p.projected_qty - p.qty) AS projected_stock,
-    (p.guaranteed_qty - p.qty) AS guaranteed_stock,
+    (p.guaranteed_qty - IF(p.detail_doctype = "Work Order", 0, p.qty)) AS guaranteed_stock, -- Work orders were already subtracted by a filter lower down
     p.warehouse,
     it.stock_uom,
     it.item_name,
@@ -68,10 +101,10 @@ SELECT
     p.detail_doctype,
     
     -- Fields for Work Orders (produced items)
-    p.idx,
     wo.workstation,
     wo.planned_start_date,
     wo.planned_end_date,
+    wo.expected_delivery_date,
     wo.qty as planned_qty,
     wo.produced_qty,
     (wo.qty - wo.produced_qty) AS required_qty,
@@ -92,12 +125,9 @@ FROM (
       ROUND(SUM(e.qty) 
         OVER ( PARTITION BY e.item_code, e.warehouse ORDER BY e.order_prio, e.date ASC, e.docname )
       , 3) AS projected_qty,
-      ROUND(SUM(IF(e.doctype = "Purchase Order", 0, e.qty)) 
+      ROUND(SUM(IF(e.detail_doctype in ("Purchase Order Item", "Work Order"), 0, e.qty)) 
         OVER ( PARTITION BY e.item_code, e.warehouse ORDER BY e.order_prio, e.date ASC, e.docname )
-      , 3) AS guaranteed_qty,
-      SUM( IF(e.detail_doctype = "Work Order", 1, 0) )
-        OVER ( ORDER BY e.date, e.docname )
-      AS idx -- for alternating colours
+      , 3) AS guaranteed_qty
   FROM (
     (SELECT
       0 as order_prio, -- to keep stock balance as first item in list
@@ -217,10 +247,13 @@ ORDER BY wo2.planned_start_date, p.docname, p.detail_doctype -- Put 'Work Order 
     data = frappe.db.sql(sql_query, as_dict=True)
 
     # Check stock levels. 0 = no go, 1 = projected, 2 = guaranted
+    idx = 0
     wo_go = 2
     for row in data[::-1]: 
         if row.detail_doctype == "Work Order":
+            row.idx = idx
             row.sufficient_stock = wo_go
+            idx += 1
             wo_go = 2
             continue
         
@@ -237,9 +270,9 @@ ORDER BY wo2.planned_start_date, p.docname, p.detail_doctype -- Put 'Work Order 
         row.stock_indicator = ["red", "orange", "green"][row.sufficient_stock]
             
 
-    import pprint
-    pp = pprint.PrettyPrinter(indent=4)
-    print("\n\n\n------", pp.pprint([r for r in data if r.item_code == "100072"]))
+    # import pprint
+    # pp = pprint.PrettyPrinter(indent=4)
+    # print("\n\n\n------", pp.pprint([r for r in data if r.item_code == "100072"]))
 
     return data
 
