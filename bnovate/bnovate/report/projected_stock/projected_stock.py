@@ -21,11 +21,12 @@ def get_columns():
     return [
         {'fieldname': 'date', 'fieldtype': 'Date', 'label': _('Date'), 'width': 80},
         {'fieldname': 'doctype', 'fieldtype': 'Data', 'label': _('Doctype'), 'width': 100},
-        {'fieldname': 'docname', 'fieldtype': 'Data', 'label': _('Docname'), 'width': 100},
-        {'fieldname': 'item_code', 'fieldtype': 'Link', 'label': _('Item code'), 'options': 'Item', 'width': 300},
-        {'fieldname': 'warehouse', 'fieldtype': 'Link', 'label': _('Warehouse'), 'options': 'Warehouse', 'width': 300},
-        {'fieldname': 'qty', 'fieldtype': 'Number', 'label': _('Qty'), 'width': 100}, 
-        {'fieldname': 'balance', 'fieldtype': 'Number', 'label': _('Stock balance'), 'width': 100}, 
+        {'fieldname': 'docname', 'fieldtype': 'Data', 'label': _('Docname'), 'width': 100, 'align': 'left'},
+        {'fieldname': 'item_code', 'fieldtype': 'Link', 'label': _('Item code'), 'options': 'Item', 'width': 300, 'align': 'left'},
+        {'fieldname': 'warehouse', 'fieldtype': 'Link', 'label': _('Warehouse'), 'options': 'Warehouse', 'width': 100},
+        {'fieldname': 'qty', 'fieldtype': 'Number', 'label': _('Qty'), 'width': 80}, 
+        {'fieldname': 'balance', 'fieldtype': 'Number', 'label': _('Balance'), 'width': 80}, 
+        {'fieldname': 'stock_uom', 'fieldtype': 'Data', 'label': _('Unit'), 'width': 100}, 
     ]
     
 def get_data(filters):
@@ -44,6 +45,7 @@ SELECT
     e.docname,
     e.item_code,
     i.item_name,
+    i.stock_uom,
     e.warehouse,
     e.qty,
     ROUND(SUM(e.qty) OVER (

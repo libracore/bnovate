@@ -30,7 +30,7 @@ def get_columns(filters):
         {'fieldname': 'reference', 'label': _('Reference'), 'fieldtype': 'Dynamic Link', 'options': 'dt', 'width': 100},
         {'fieldname': 'date', 'label': _('Start Billing / Ship Date'), 'fieldtype': 'Date', 'width': 80},
         {'fieldname': 'period_end', 'label': _('End Billing Period'), 'fieldtype': 'Date', 'width': 80},
-        {'fieldname': 'item_code', 'label': _('Item'), 'fieldtype': 'Link', 'options': 'Item', 'width': 200},
+        {'fieldname': 'item_code', 'label': _('Item'), 'fieldtype': 'Link', 'options': 'Item', 'width': 200, 'align': 'left'},
         {'fieldname': 'qty', 'label': _('Qty'), 'fieldtype': 'Float', 'width': 50},
         {'fieldname': 'rate', 'label': _('Item Rate'), 'fieldtype': 'Currency', 'options': 'currency', 'width': 100},
         {'fieldname': 'amount', 'label': _('Total'), 'fieldtype': 'Currency', 'options': 'currency', 'width': 100},
