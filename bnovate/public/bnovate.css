@@ -74,4 +74,6 @@ span.coloured.dark {
 
 #reportModal .datatable {
   min-height: 500px;
+  display: flex;
+  flex-direction: column;
 }
