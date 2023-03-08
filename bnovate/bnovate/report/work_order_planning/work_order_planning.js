@@ -30,7 +30,7 @@ frappe.query_reports["Work Order Planning"] = {
     },
     formatter(value, row, col, data, default_formatter) {
         if (col.fieldname === "sufficient_stock") {
-            let color = value ? 'green' : 'red';
+            color = ['red', 'orange', 'green'][value];
             return `<span class="indicator ${color}"></span>`;
         }
         if (data.indent === 1) {
@@ -46,6 +46,8 @@ frappe.query_reports["Work Order Planning"] = {
                         <span class="indicator ${colour}">${legend}</span>
                     </span>
                     `;
+            } else if (col.fieldname === 'planned_start_date') {
+                value = value.substr(0, 10);
             }
             return `<span class="coloured ${this.colours[data.idx % this.colours.length]}">${default_formatter(value, row, col, data)}</span>`;
         }
@@ -126,7 +128,7 @@ function draw_google_chart(report) {
 
 
         chart.draw(report.chart_dt, {
-            height: 300,
+            height: 250,
             tooltip: {
                 // isHtml: true,
                 trigger: 'both', // disable it
@@ -146,11 +148,18 @@ function build_google_dt(report) {
     dataTable.addColumn({ type: 'date', id: 'Start' });
     dataTable.addColumn({ type: 'date', id: 'End' });
 
+    frappeColors = {
+        red: "#ff5858",
+        orange: "#ffb65c",
+        green: "#98d85b",
+    }
+
     rows = report.data
         .filter(row => row.indent == 0)
         .map(row => [
             row.workstation || "Unknown",
             row.work_order,
+            // "fill me later",
             frappe.render_template(`
                 <div class="preview-popover-header">
                     <div class="preview-header">
@@ -160,9 +169,9 @@ function build_google_dt(report) {
                         <div class="preview-main">
                             <a class="preview-name bold" href="#Form/Work Order/{{ work_order }}">{{ work_order }}: {{ item_name }}</a>
                             <br>
-                            <span class="small preview-value">{{ planned_start_date }} {% if planned_end_date %} - {{ planned_end_date }}{% endif %}</span>
+                            <span class="small preview-value">Item <a class="text-muted" href="#Form/Item/{{ item_code }}">{{ item_code }}</a></span>
                             <br>
-                            <span class="text-muted small">Item <a class="text-muted" href="#Form/Item/{{ item }}">{{ item }}</a></span>
+                            <span class="small text-muted">{{ planned_start_date }} {% if planned_end_date %} - {{ planned_end_date }}{% endif %}</span>
                         </div>
                     </div>
                 </div>
@@ -170,8 +179,22 @@ function build_google_dt(report) {
                 <div class="popover-body">
                     <div class="preview-table" style="max-width: none;">
                         <div class="preview-field">
-                            <div class="small preview-label text-muted bold">Qty remaining to produce</div>
-                            <div class="small preview-value">{{ required_qty }}</div>
+                            <div class="small preview-value text-muted">
+                                <table class="table table-condensed no-margin" style="border-bottom: 1px solid #d1d8dd; width:100%">
+                                <thead>
+                                    <th class="text-center">Qty planned</th>
+                                    <th class="text-center">produced</th>
+                                    <th class="text-center">remaining</th>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="text-center">{{ planned_qty }}</td>
+                                        <td class="text-center">{{ produced_qty }}</td>
+                                        <td class="text-center">{{ required_qty }}</td>
+                                    </tr>
+                                </tbody>
+                                </table>
+                            </div>
                         </div>
                         <div class="preview-field">
                             <div class="small preview-value">
@@ -181,16 +204,22 @@ function build_google_dt(report) {
                                     <th class="text-left">Item</th>
                                     <th class="text-left">Name</th>
                                     <th class="text-right">Required</th>
-                                    <th class="text-right">Stock</th>
+                                    <th class="text-right">Proj. Stock</th>
+                                    <th class="text-right">Guar. Stock</th>
                                 </thead>
                                 <tbody>
                                     {% for item in items %}
                                     <tr>
-                                        <td><span class="indicator {{ item.sufficient_stock ? "green" : "red" }}"></span></td>
-                                        <td class="text-left">{{ item.item_code }}</td>
+                                        <td><span class="indicator {{ ["red", "orange", "green"][item.sufficient_stock] }}"></span></td>
+                                        <td class="text-left">
+                                            <a href="/desk#query-report/Projected%20Stock?item_code={{item.item_code}}&warehouse={{item.warehouse}}">
+                                                {{ item.item_code }}
+                                            </a>
+                                        </td>
                                         <td class="text-left">{{ frappe.ellipsis(item.item_name, 30) }}</td>
-                                        <td class="text-right">{{ item.required_qty }}</td>
-                                        <td class="text-right">{{ item.available_stock }}</td>
+                                        <td class="text-right">{{ -item.qty }}</td>
+                                        <td class="text-right">{{ item.projected_stock }}</td>
+                                        <td class="text-right">{{ item.guaranteed_stock }}</td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
@@ -199,8 +228,11 @@ function build_google_dt(report) {
                         </div>
                     </div>
                 </div>
-            `, row),
-            row.sufficient_stock ? "color: #98d85b;" : "color: #ff5858;",
+            `, {
+                ...row,
+                items: report.data.filter(item => item.detail_doctype === "Work Order Item" && item.work_order === row.work_order)
+            }),
+            `color: ${frappeColors[row.stock_indicator]}`,
             frappe.datetime.str_to_obj(row.planned_start_date),
             frappe.datetime.str_to_obj(
                 row.planned_end_date ||
