@@ -63,3 +63,15 @@ span.coloured.dark {
 .tooltip-inner ul {
   padding-left: 20px;
 }
+
+#reportModal {
+  z-index: 9999;
+}
+
+#reportModal .modal-xl {
+  min-width: 1050px;
+}
+
+#reportModal .datatable {
+  min-height: 500px;
+}

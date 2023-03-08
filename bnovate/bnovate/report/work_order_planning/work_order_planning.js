@@ -24,6 +24,41 @@ frappe.query_reports["Work Order Planning"] = {
                 this.report.$chart.show();
             }
         })
+
+        // Add a modal in which we can render other reports
+        report.$page.append(`
+            <div class="modal fade" id="reportModal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="reportModalLabel">Loading...</h5>
+                </div>
+                <div class="modal-body">
+                    <div class="message-wrapper">
+                        <!-- Placeholder for chart -->
+                    </div>
+                    <div class="chart-wrapper">
+                        <!-- Placeholder for chart -->
+                    </div>
+                    <div class="report-wrapper" align="center" style="display: block">
+                        <i class="fa fa-cog fa-spin" style="font-size: 20px"></i>
+                    </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+            </div>
+        `)
+        $('#reportModal').on('hide.bs.modal', (e) => {
+            // reset contents when modal is hidden
+            $(e.target).find('.chart-wrapper').html('');
+            $(e.target).find('.report-wrapper').html('<i class="fa fa-cog fa-spin" style="font-size: 20px"></i>');
+        });
+        $('#reportModal').on('show.bs.modal', (e) => {
+            console.log(e)
+            draw_stock_report($(e.target), e.relatedTarget.dataset.item, e.relatedTarget.dataset.warehouse);
+        });
+
     },
     after_datatable_render(datatable) {
         draw_google_chart(this.report);
@@ -42,6 +77,8 @@ frappe.query_reports["Work Order Planning"] = {
         if (data.indent === 1) {
             if (['planned_start_date', 'comment', 'status'].indexOf(col.fieldname) >= 0) {
                 return '';
+            } else if (col.fieldname === 'item_code') {
+                return projected_stock_link(data.item_code, data.warehouse, data.item_name);
             }
         } else {
             if (col.fieldname === 'comment' && value) {
@@ -92,12 +129,42 @@ function dismiss_popover() {
 }
 
 function projected_stock_link(item_code, warehouse, item_name) {
-    return `<a target="_blank" href="/desk#query-report/Projected%20Stock?item_code=${item_code}&warehouse=${warehouse}">
-        ${item_code}${item_name ? ': ' + item_name : ''}
+    return `<a target="_blank" data-toggle="modal" data-target="#reportModal" data-item="${item_code}" data-warehouse="${warehouse}">
+         ${item_code}${item_name ? ': ' + item_name : ''}
     </a>`
-    // return `<a onclick="show_modal('/desk#query-report/Projected%20Stock?item_code=${item_code}&warehouse=${warehouse}')">
-    //     ${item_code}${item_name && ': ' + item_name}
-    // </a>`
+}
+
+async function draw_stock_report(target, item_code, warehouse) {
+    console.log(item_code, warehouse)
+    target.find(".modal-title").html(`Projected stock for ${item_code} in ${warehouse}`);
+    const resp = await frappe.call({
+        method: "frappe.desk.query_report.run",
+        args: {
+            report_name: "Projected Stock",
+            filters: {
+                item_code: item_code,
+                warehouse: warehouse,
+            }
+        }
+    })
+    const report_data = resp.message;
+
+    let report = new frappe.views.QueryReport({
+        parent: target.find('.report-wrapper'),
+        report_name: "Projected Stock",
+        $report: target.find('.report-wrapper'),
+        $chart: target.find('.chart-wrapper'),
+        $message: target.find('.message-wrapper'),
+    });
+    await report.get_report_doc();
+    await report.get_report_settings();
+
+    await report.prepare_report_data(report_data);
+
+    setTimeout(() => {
+        report.render_datatable();
+        report.render_chart(report_data.chart);
+    }, 500)
 }
 
 function show_modal(url) {

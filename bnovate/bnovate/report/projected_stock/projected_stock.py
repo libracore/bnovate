@@ -11,6 +11,8 @@ def execute(filters=None):
     columns = get_columns()
     data = get_data(filters)
 
+    print("\n\n\n\n\nfilters---------------", filters)
+
     chart = None
     if filters.item_code and filters.warehouse:
         chart = get_chart(data)
@@ -22,7 +24,7 @@ def get_columns():
         {'fieldname': 'date', 'fieldtype': 'Date', 'label': _('Date'), 'width': 80},
         {'fieldname': 'doctype', 'fieldtype': 'Data', 'label': _('Doctype'), 'width': 100},
         {'fieldname': 'docname', 'fieldtype': 'Data', 'label': _('Docname'), 'width': 100, 'align': 'left'},
-        {'fieldname': 'item_code', 'fieldtype': 'Link', 'label': _('Item code'), 'options': 'Item', 'width': 300, 'align': 'left'},
+        {'fieldname': 'item_code', 'fieldtype': 'Link', 'label': _('Item code'), 'options': 'Item', 'width': 250, 'align': 'left'},
         {'fieldname': 'warehouse', 'fieldtype': 'Link', 'label': _('Warehouse'), 'options': 'Warehouse', 'width': 100},
         {'fieldname': 'qty', 'fieldtype': 'Number', 'label': _('Qty'), 'width': 80}, 
         {'fieldname': 'balance', 'fieldtype': 'Number', 'label': _('Balance'), 'width': 80}, 
@@ -30,7 +32,6 @@ def get_columns():
     ]
     
 def get_data(filters):
-    
     item_filter = "true"
     warehouse_filter = "true"
     if filters.item_code:
