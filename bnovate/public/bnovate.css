@@ -64,14 +64,14 @@ span.coloured.dark {
   padding-left: 20px;
 }
 
-#reportModal {
+.bn-modal {
   z-index: 9999;
 }
 
-#reportModal .modal-xl {
+.bn-modal .modal-xl {
   min-width: 1050px;
 }
 
-#reportModal .datatable {
+.bn-modal .datatable {
   min-height: 500px;
 }

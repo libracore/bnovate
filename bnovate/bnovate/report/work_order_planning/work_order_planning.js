@@ -3,6 +3,7 @@
 /* eslint-disable */
 
 frappe.require("/assets/bnovate/js/lib/gcharts/loader.js")
+frappe.require("/assets/bnovate/js/modals.js")  // provides bnovate.modals
 
 frappe.query_reports["Work Order Planning"] = {
     filters: [
@@ -25,40 +26,8 @@ frappe.query_reports["Work Order Planning"] = {
             }
         })
 
-        // Add a modal in which we can render other reports
-        report.$page.append(`
-            <div class="modal fade" id="reportModal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-xl">
-                <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="reportModalLabel">Loading...</h5>
-                </div>
-                <div class="modal-body">
-                    <div class="message-wrapper">
-                        <!-- Placeholder for chart -->
-                    </div>
-                    <div class="chart-wrapper">
-                        <!-- Placeholder for chart -->
-                    </div>
-                    <div class="report-wrapper" align="center" style="display: block">
-                        <i class="fa fa-cog fa-spin" style="font-size: 20px"></i>
-                    </div>
-                    </div>
-                </div>
-                </div>
-            </div>
-            </div>
-        `)
-        $('#reportModal').on('hide.bs.modal', (e) => {
-            // reset contents when modal is hidden
-            $(e.target).find('.chart-wrapper').html('');
-            $(e.target).find('.report-wrapper').html('<i class="fa fa-cog fa-spin" style="font-size: 20px"></i>');
-        });
-        $('#reportModal').on('show.bs.modal', (e) => {
-            console.log(e)
-            draw_stock_report($(e.target), e.relatedTarget.dataset.item, e.relatedTarget.dataset.warehouse);
-        });
-
+        // bind_modal(report);
+        bnovate.modals.attach_report_modal("reportModal");
     },
     after_datatable_render(datatable) {
         draw_google_chart(this.report);
@@ -123,61 +92,24 @@ function work_order_indicator(doc) {
     }
 }
 
+
+function projected_stock_link(item_code, warehouse, item_name) {
+    return bnovate.modals.report_link(
+        `${item_code}${item_name ? ': ' + item_name : ''}`,
+        'reportModal',
+        'Projected Stock',
+        `Projected stock for ${item_code} in ${warehouse}`,
+        {
+            item_code,
+            warehouse,
+        });
+}
+
+// Popover is the popup shown when clicking a bar on the timeline chart.
+// #sacrificial is a little 0x0 px square created at the location clicked.
 function dismiss_popover() {
     $('#sacrificial').popover('hide');
     $('#sacrificial').remove();
-}
-
-function projected_stock_link(item_code, warehouse, item_name) {
-    return `<a target="_blank" data-toggle="modal" data-target="#reportModal" data-item="${item_code}" data-warehouse="${warehouse}">
-         ${item_code}${item_name ? ': ' + item_name : ''}
-    </a>`
-}
-
-async function draw_stock_report(target, item_code, warehouse) {
-    console.log(item_code, warehouse)
-    target.find(".modal-title").html(`Projected stock for ${item_code} in ${warehouse}`);
-    const resp = await frappe.call({
-        method: "frappe.desk.query_report.run",
-        args: {
-            report_name: "Projected Stock",
-            filters: {
-                item_code: item_code,
-                warehouse: warehouse,
-            }
-        }
-    })
-    const report_data = resp.message;
-
-    let report = new frappe.views.QueryReport({
-        parent: target.find('.report-wrapper'),
-        report_name: "Projected Stock",
-        $report: target.find('.report-wrapper'),
-        $chart: target.find('.chart-wrapper'),
-        $message: target.find('.message-wrapper'),
-    });
-    await report.get_report_doc();
-    await report.get_report_settings();
-
-    await report.prepare_report_data(report_data);
-
-    setTimeout(() => {
-        report.render_datatable();
-        report.render_chart(report_data.chart);
-    }, 500)
-}
-
-function show_modal(url) {
-    let d = new frappe.ui.Dialog({
-        title: 'Projected Stock',
-        fields: [{
-            label: 'iFrame',
-            fieldname: 'iframe',
-            fieldtype: 'HTML',
-            options: `<iframe src="${url}" width="800" height="480"></iframe>`,
-        }]
-    })
-    d.show();
 }
 
 function draw_google_chart(report) {
@@ -228,16 +160,15 @@ function draw_google_chart(report) {
         });
 
         // Any click outside the popover dismisses it. May interfere with other popovers...
-        $(document).bind("click", (event) => {
+        document.addEventListener("click", (event) => {
             const popover = $(".popover");
             if (popover.is(event.target) || popover.has(event.target).length) {
-                // Ignore if click target is inside the popover
+                // Ignore if click target is inside a popover
                 return;
             }
             dismiss_popover();
         });
-        frappe.route.on('change', () => { console.log("change route"), dismiss_popover() });
-
+        frappe.route.on('change', () => { dismiss_popover() });
 
         chart.draw(report.chart_dt, {
             height: 250,
