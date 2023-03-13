@@ -245,7 +245,7 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
             NULL AS price_list_rate,
             (IFNULL(ssi.qty, 1) * IFNULL(ssi.rate, 0)) AS amount,
             0 as additional_discount,
-            "CHF" AS currency,
+            ss.currency AS currency,
             ssi.description,
             NULL as blanket_order_customer_reference,
             NULL AS shipping,
