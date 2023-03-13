@@ -171,7 +171,7 @@ function rms_modal(url) {
 			label: 'iFrame',
 			fieldname: 'iframe',
 			fieldtype: 'HTML',
-			options: `<iframe src="${url}" width="800" height="480"></iframe>`,
+			options: `<iframe src="${url}" sandbox="allow-scripts" width="800" height="480"></iframe>`,
 		}]
 	})
 	d.show();

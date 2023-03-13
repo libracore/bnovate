@@ -65,8 +65,8 @@
    "fieldtype": "Column Break"
   }
  ],
- "modified": "2023-03-03 17:05:30.569613",
- "modified_by": "Administrator",
+ "modified": "2023-03-13 18:33:37.969231",
+ "modified_by": "douglas.watson@bnovate.com",
  "module": "bNovate",
  "name": "Connectivity Package",
  "owner": "Administrator",
@@ -76,6 +76,18 @@
    "delete": 1,
    "email": 1,
    "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 1,
    "print": 1,
    "read": 1,
    "report": 1,
@@ -103,6 +115,18 @@
    "report": 1,
    "role": "IoT User",
    "share": 1
+  },
+  {
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "IoT Manager",
+   "share": 1,
+   "write": 1
   }
  ],
  "quick_entry": 1,
