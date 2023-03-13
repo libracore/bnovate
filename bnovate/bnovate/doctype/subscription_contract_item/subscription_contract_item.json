@@ -6,9 +6,25 @@
  "field_order": [
   "item_code",
   "item_name",
-  "qty",
-  "rate",
   "description",
+  "section_break_4",
+  "qty",
+  "column_break_6",
+  "price_list_rate",
+  "base_price_list_rate",
+  "section_break_9",
+  "rate",
+  "amount",
+  "column_break_12",
+  "base_rate",
+  "base_amount",
+  "section_break_7",
+  "net_rate",
+  "net_amount",
+  "column_break_20",
+  "base_net_rate",
+  "base_net_amount",
+  "section_break_17",
   "prevdoc_docname"
  ],
  "fields": [
@@ -57,10 +73,97 @@
    "fieldname": "description",
    "fieldtype": "Text Editor",
    "label": "Description"
+  },
+  {
+   "fieldname": "section_break_7",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "price_list_rate",
+   "fieldtype": "Currency",
+   "label": "Price List Rate",
+   "options": "currency",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "base_price_list_rate",
+   "fieldtype": "Currency",
+   "label": "Price List Rate (Company Currency)",
+   "options": "Company:company:default_currency",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "base_rate",
+   "fieldtype": "Currency",
+   "label": "Basic Rate (Company Currency)",
+   "options": "Company:company:default_currency",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "base_amount",
+   "fieldtype": "Currency",
+   "label": "Amount (Company Currency)",
+   "options": "Company:company:default_currency",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_4",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_6",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_9",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_12",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_17",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "net_rate",
+   "fieldtype": "Currency",
+   "label": "Net Rate"
+  },
+  {
+   "fieldname": "net_amount",
+   "fieldtype": "Currency",
+   "label": "Net Amount"
+  },
+  {
+   "fieldname": "column_break_20",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "base_net_rate",
+   "fieldtype": "Data",
+   "label": "Net Rate (Company Currency)"
+  },
+  {
+   "fieldname": "base_net_amount",
+   "fieldtype": "Data",
+   "label": "Net Amount (Company Currency)"
   }
  ],
  "istable": 1,
- "modified": "2023-03-03 17:04:10.391247",
+ "modified": "2023-03-13 16:48:06.216714",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Subscription Contract Item",
