@@ -25,6 +25,8 @@
   "ignore_pricing_rule",
   "section_items",
   "items",
+  "assets_section",
+  "assets",
   "terms_section_break",
   "payment_terms_template",
   "terms",
@@ -202,10 +204,22 @@
    "print_hide": 1,
    "remember_last_selected_value": 1,
    "reqd": 1
+  },
+  {
+   "fieldname": "assets_section",
+   "fieldtype": "Section Break",
+   "label": "Assets"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "assets",
+   "fieldtype": "Table",
+   "label": "Assets",
+   "options": "Subscription Contract Asset"
   }
  ],
  "is_submittable": 1,
- "modified": "2023-03-13 15:52:42.895031",
+ "modified": "2023-03-14 07:29:57.185855",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Subscription Contract",

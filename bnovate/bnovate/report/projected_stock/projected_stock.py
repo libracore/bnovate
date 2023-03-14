@@ -11,8 +11,6 @@ def execute(filters=None):
     columns = get_columns()
     data = get_data(filters)
 
-    print("\n\n\n\n\nfilters---------------", filters)
-
     chart = None
     if filters.item_code and filters.warehouse:
         chart = get_chart(data)
