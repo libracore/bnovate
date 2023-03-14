@@ -7,6 +7,13 @@ frappe.provide('bnovate.subscription_contract');
 
 frappe.ui.form.on('Subscription Contract', {
 	refresh(frm) {
+		frm.add_custom_button(__("Modify / Upgrade"), async function () {
+			frappe.model.open_mapped_doc({
+				method: "bnovate.bnovate.doctype.subscription_contract.subscription_contract.make_from_self",
+				frm: cur_frm
+			});
+		})
+
 		frm.add_custom_button(__("Create Invoice"), async function () {
 			frappe.route_options = {
 				"customer": frm.doc.customer,
