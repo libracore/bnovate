@@ -19,7 +19,7 @@ def get_columns():
     return [
         {'fieldtype': 'Data', 'label': '', 'width': 20},
         {'fieldname': 'weeknum', 'fieldtype': 'Data', 'label': _('Week'), 'width': 80},
-        {'fieldname': 'parent', 'fieldtype': 'Link', 'label': _('Sales Order'), 'options': 'Sales Order', 'width': 90},
+        {'fieldname': 'sales_order', 'fieldtype': 'Link', 'label': _('Sales Order'), 'options': 'Sales Order', 'width': 90},
         {'fieldname': 'indicator', 'fieldtype': 'Data', 'label': _('Status'), 'width': 90},
         {'fieldname': 'customer', 'fieldtype': 'Link', 'label': _('Customer'), 'options': 'Customer', 'width': 80, 'align': 'left'},
         {'fieldname': 'customer_name', 'fieldtype': 'Data', 'label': _('Customer Name'), 'width': 150, 'align': 'left'},
@@ -45,9 +45,10 @@ def get_data(filters):
     sql_query = """
 SELECT * FROM ((
     SELECT
+        0 AS indent,
         soi.name,
         WEEK(soi.delivery_date) as weeknum,
-        soi.parent as parent,
+        soi.parent as sales_order,
         so.customer as customer,
         so.customer_name as customer_name,
         soi.qty as qty,
@@ -58,6 +59,7 @@ SELECT * FROM ((
         it.item_group as item_group,
         FALSE as is_packed_item,
         soi.idx as idx,
+        0 as pidx, -- packed item index
         so.docstatus as docstatus
     FROM `tabSales Order Item` as soi
     JOIN `tabSales Order` as so ON soi.parent = so.name
@@ -71,11 +73,12 @@ SELECT * FROM ((
         {extra_filters}
 ) UNION (
     SELECT
+        1 AS indent,
         soi.name,
         WEEK(soi.delivery_date) as weeknum,
-        NULL as parent,
-        NULL as customer,
-        NULL as customer_name,
+        soi.parent as sales_order,
+        so.customer as customer,
+        so.customer_name as customer_name,
         pi.qty as qty,
         (soi.qty - soi.delivered_qty) * (pi.qty / soi.qty) AS remaining_qty,
         soi.delivery_date as delivery_date,
@@ -83,7 +86,8 @@ SELECT * FROM ((
         pi.item_name as item_name,
         NULL as item_group,
         TRUE as is_packed_item,
-        pi.idx as idx,
+        soi.idx as idx,
+        pi.idx as pidx,
         so.docstatus as docstatus
     FROM `tabSales Order Item` as soi
     JOIN `tabSales Order` as so ON soi.parent = so.name
@@ -99,9 +103,9 @@ SELECT * FROM ((
 )) as united
 ORDER BY 
 	delivery_date ASC,
-    parent,
-    is_packed_item,
-    idx;
+    sales_order,
+    idx,
+    pidx;
     """.format(status_filter=status_filter, extra_filters=extra_filters)
 
     print(sql_query)
@@ -110,11 +114,12 @@ ORDER BY
     last_day = ''
     week_index = 0
     day_index = 0
+
+    import pprint
+    pp = pprint.PrettyPrinter(indent=4)
+    print("\n\n\n------", pp.pprint([ r for r in data if r.weeknum == 8]))
     
     for row in data:       
-        row['week_index'] = week_index
-        row['day_index'] = day_index
-
         if row['weeknum'] != last_week_num:
             week_index += 1
             last_week_num = row['weeknum']
@@ -122,12 +127,13 @@ ORDER BY
         if row['delivery_date'] != last_day:
             day_index += 1
             last_day = row['delivery_date']
+        row['week_index'] = week_index
+        row['day_index'] = day_index
+
         row['ship_date'] = row['delivery_date']
 
-        if row['is_packed_item']:
-            row['indent'] = 1
-        else:
-            row['indent'] = 0
+        # TODO move to frontend formatting?
+        if not row['is_packed_item']:
             row['item_name'] = "<b>{name}</b>".format(name=row['item_name'])
 
         if row['docstatus'] == 0:
