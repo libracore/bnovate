@@ -12,7 +12,8 @@ frappe.query_reports["Aggregate Invoicing"] = {
         {
             "fieldname": "to_date",
             "label": __("To Date"),
-            "fieldtype": "Date"
+            "fieldtype": "Date",
+            "default": frappe.datetime.month_end(),
         },
         {
             "fieldname": "customer",

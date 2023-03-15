@@ -90,3 +90,24 @@ def close(docname, end_date=None):
 
 	doc = frappe.get_doc("Subscription Contract", docname)
 	doc.db_set("end_date", end_date)
+
+	# Find associated sales invoice iems (#TODO: exclude credit notes)
+	items = [it.name for it in doc.items]
+	sinv_items = frappe.db.get_all("Sales Invoice Item", 
+		filters={ 'sc_detail': ['IN', tuple(items)] },
+		fields=['name', 'service_start_date', 'service_end_date', 'service_stop_date', 'idx', 'parent']
+	)
+
+	# For any item within current or future billing period (relative to end_date), stop service early
+	modified = []
+	for si in sinv_items:
+		if getdate(end_date) < si.service_end_date:
+			modified.append(si.parent)
+			stop_date = max(getdate(end_date), si.service_start_date)
+			frappe.db.set_value("Sales Invoice Item", si.name, "service_stop_date", stop_date)
+
+	# TODO: relay list of modified SINV items back to user
+	frappe.msgprint("Modified these invoices: {}".format(set(modified)))
+	print(modified)
+
+

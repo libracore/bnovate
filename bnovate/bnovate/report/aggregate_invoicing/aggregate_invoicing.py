@@ -130,6 +130,7 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
     shipping_account = frappe.get_single("bNovate Settings").shipping_income_account
         
     sql_query = """
+        -- --sql
         SELECT
             1 AS indent,
             dn.customer AS customer,
@@ -269,7 +270,7 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
         LEFT JOIN `tabSales Invoice` si on sii.parent = si.name
         WHERE (si.name IS NULL {invoiced_filter})
             AND ss.customer LIKE "{customer}"
-            AND (bp.period_start >= "{from_date}") -- AND bp.period_end <= "{to_date}") -- already filtered by RECURSIVE above
+            AND (bp.period_start >= "{from_date}" OR "{from_date}" <= bp.period_end) -- Keep contracts active on from_date. end_date already filtered by RECURSIVE above
             AND ss.docstatus = 1
         ORDER BY ss.name, period_start, ssi_index
         ) AS subs

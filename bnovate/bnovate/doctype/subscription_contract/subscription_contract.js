@@ -6,34 +6,6 @@
 frappe.provide('bnovate.subscription_contract');
 
 frappe.ui.form.on('Subscription Contract', {
-	refresh(frm) {
-		frm.add_custom_button(__('Modify / Upgrade'), async function () {
-			const div = document.createElement('div');
-			div.setAttribute('class', 'row form-section');
-			div.appendChild(document.createTextNode("Hello world"));
-			document.querySelector('.form-page').prepend(div);
-			await frappe.call({
-				method: 'bnovate.bnovate.doctype.subscription_contract.subscription_contract.close',
-				args: {
-					docname: frm.doc.name,
-					end_date: frm.doc.end_date,
-				}
-			})
-			frm.reload_doc();
-			await frappe.model.open_mapped_doc({
-				method: 'bnovate.bnovate.doctype.subscription_contract.subscription_contract.make_from_self',
-				frm: cur_frm
-			});
-		})
-
-		frm.add_custom_button(__("Create Invoice"), async function () {
-			frappe.route_options = {
-				"customer": frm.doc.customer,
-			};
-			await frappe.set_route("query-report", "Aggregate Invoicing");
-			frappe.query_report.refresh();
-		});
-	},
 	async before_cancel(frm) {
 		// Only allow cancellation if no invoices are open
 		// Cancelling is blocked by the backend anyway, but I want a more helpful message for users.
@@ -68,6 +40,32 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 			this.frm.set_value('start_date', frappe.datetime.add_days(frappe.datetime.month_end(), 1));
 		}
 	},
+	refresh() {
+		this.frm.add_custom_button(__('Modify / Upgrade'), async () => {
+			// TODO: restrict permissions to Sales Managers (or whoever can modify SINVs)
+			const div = document.createElement('div');
+			div.setAttribute('class', 'row form-section');
+			div.appendChild(document.createTextNode("Hello world"));
+			document.querySelector('.form-page').prepend(div);
+
+			let end_date = await prompt_end_date(this._get_next_billing_end(this.frm.doc.end_date));
+			this.end_contract(end_date);
+			return;
+
+			await frappe.model.open_mapped_doc({
+				method: 'bnovate.bnovate.doctype.subscription_contract.subscription_contract.make_from_self',
+				frm: this.frm
+			});
+		})
+
+		this.frm.add_custom_button(__("Create Invoice"), async () => {
+			frappe.route_options = {
+				"customer": this.frm.doc.customer,
+			};
+			await frappe.set_route("query-report", "Aggregate Invoicing");
+			frappe.query_report.refresh();
+		});
+	},
 	start_date() {
 		this.frm.doc.transaction_date = this.frm.doc.start_date; // Helps SellingController methods work for pricing for example
 		this.frm.trigger('currency');
@@ -81,7 +79,7 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 	planned_end_date() {
 		console.log("trigged")
 		if (this.frm.doc.planned_end_date) {
-			const billing_end = this._get_next_billing_end(this.frm.doc.planned_end_date);
+			const billing_end = this._get_next_billing_end(this.frm.doc.planned_end_date || frappe.datetime.get_today());
 			if (billing_end != this.frm.doc.planned_end_date) {
 				frappe.msgprint({
 					title: __("Info"),
@@ -94,6 +92,7 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 			}
 		}
 	},
+	// TODO: allow any end date, but we may need to simplify credit notes
 	end_date() {
 		// if end date is defined, set it to the end of a period.
 		if (this.frm.doc.end_date) {
@@ -120,6 +119,23 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 		return billing_end;
 	},
 
+	// Modification workflow
+	// - Confirm end date of current SC
+	// - Set status to show contract is over?
+	// - If applicable, find last invoice and adjust service end date
+	// - If applicable, issue corresponding credit note
+	// - Duplicate SC, starting from day after end date.
+	//   - Show on print format that it replaces previous SC.
+	async end_contract(end_date) {
+		await frappe.call({
+			method: 'bnovate.bnovate.doctype.subscription_contract.subscription_contract.close',
+			args: {
+				docname: this.frm.doc.name,
+				end_date: end_date,
+			}
+		})
+		this.frm.reload_doc();
+	},
 
 	// override some methods from transaction.js
 
@@ -172,3 +188,31 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 })
 
 $.extend(cur_frm.cscript, new bnovate.subscription_contract.SubscriptionContractController({ frm: cur_frm }));
+
+
+/***************************
+ * HELPERS
+ ***************************/
+
+function prompt_end_date(default_date) {
+	return new Promise((resolve, reject) => {
+		let d = new frappe.ui.Dialog({
+			title: "Confirm end date of current Subscription",
+			fields: [{
+				label: "Actual End Date",
+				fieldname: "end_date",
+				fieldtype: "Date",
+				default: default_date,
+			}],
+			primary_action_label: 'End Contract',
+			primary_action(values) {
+				resolve(values.end_date);
+				d.hide();
+			},
+			secondary_action() {
+				reject();
+			}
+		});
+		d.show();
+	})
+}
