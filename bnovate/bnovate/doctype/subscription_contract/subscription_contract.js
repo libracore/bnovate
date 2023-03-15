@@ -7,9 +7,21 @@ frappe.provide('bnovate.subscription_contract');
 
 frappe.ui.form.on('Subscription Contract', {
 	refresh(frm) {
-		frm.add_custom_button(__("Modify / Upgrade"), async function () {
-			frappe.model.open_mapped_doc({
-				method: "bnovate.bnovate.doctype.subscription_contract.subscription_contract.make_from_self",
+		frm.add_custom_button(__('Modify / Upgrade'), async function () {
+			const div = document.createElement('div');
+			div.setAttribute('class', 'row form-section');
+			div.appendChild(document.createTextNode("Hello world"));
+			document.querySelector('.form-page').prepend(div);
+			await frappe.call({
+				method: 'bnovate.bnovate.doctype.subscription_contract.subscription_contract.close',
+				args: {
+					docname: frm.doc.name,
+					end_date: frm.doc.end_date,
+				}
+			})
+			frm.reload_doc();
+			await frappe.model.open_mapped_doc({
+				method: 'bnovate.bnovate.doctype.subscription_contract.subscription_contract.make_from_self',
 				frm: cur_frm
 			});
 		})
@@ -42,44 +54,6 @@ frappe.ui.form.on('Subscription Contract', {
 });
 
 
-// Example of how to draw a report inside a form.
-// Assumes field "report" exists of type HTML.
-async function draw_report(frm) {
-	const resp = await frappe.call({
-		method: "frappe.desk.query_report.run",
-		args: {
-			report_name: "Subscription Invoices",
-			filters: {
-				subscription: frm.doc.name,
-			}
-		}
-	})
-	const report_data = resp.message;
-	// if (!report_data.result.length) {
-	// 	return;
-	// }
-	let report = new frappe.views.QueryReport({
-		parent: frm.fields_dict.report.wrapper,
-		report_name: "Subscription Invoices"
-	});
-	await report.get_report_doc();
-	await report.get_report_settings();
-	report.$report = [frm.fields_dict.report.wrapper];
-	report.prepare_report_data(report_data);
-	report.render_datatable()
-}
-
-// Add to custom scripts on Sales Invoice for example, to show links on dashboard:
-// Needs to be included in hooks.py (doctype_js)
-// frappe.ui.form.on("Sales Invoice", {
-// 	before_load(frm) {
-// 		frm.dashboard.add_transactions({
-// 			'items': ['Subscription Contract'],
-// 			'label': 'Subscription',
-// 		})
-// 		frm.dashboard.data.internal_links['Subscription Contract'] = ['items', 'subscription'];
-// 	},
-// })
 
 // Subclass SellingController to use their price rate mechanisms
 bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.SellingController.extend({

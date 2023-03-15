@@ -59,7 +59,6 @@ def calculate_total_time(doc, method=None):
     wo.total_time = sum([row.duration for row in wo.time_log if row.duration is not None])
     wo.time_per_unit = 0 if wo.produced_qty == 0 else wo.total_time / wo.produced_qty
     wo.db_set("total_time", wo.total_time)
-    # If we wanted time per unit, we would need hooks on Stock Entry, after submit and after cancel.
     wo.db_set("time_per_unit", wo.time_per_unit)
 
 def update_work_order_unit_time(stock_entry, method=None):
@@ -72,6 +71,3 @@ def update_work_order_unit_time(stock_entry, method=None):
 
     wo = frappe.get_doc("Work Order", stock_entry.work_order)
     calculate_total_time(wo)
-
-#TODO: method that calculates total time and time per part. Use frappe hooks to call when WO is saved.
-# See https://youtu.be/GGdWRe-aoxA?t=383
