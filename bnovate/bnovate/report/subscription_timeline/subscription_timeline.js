@@ -35,9 +35,10 @@ function draw_google_chart(report) {
     // Track mouse position in chart to draw popover at correct location
     report.mousePos = { x: 0, y: 0 };
     let container = document.getElementById("timeline");
-    container.addEventListener("mousemove", (e) => {
-        report.mousePos.x = e.offsetX;
-        report.mousePos.y = e.offsetY;
+    document.addEventListener("mousemove", (e) => {
+        console.log(e)
+        report.mousePos.x = e.pageX;
+        report.mousePos.y = e.pageY;
     });
 
     // Popover is the popup shown when clicking a bar on the timeline chart.
@@ -62,9 +63,11 @@ function draw_google_chart(report) {
 
             dismiss_popover();
 
-            $(container).append(
+
+            $(document.body).append(
                 `<div id="sacrificial" style="left: ${report.mousePos.x}px; top: ${report.mousePos.y}px"></div>`
             )
+            console.log("reached here")
 
             let row = chart.getSelection()[0].row;
             let contents = report.chart_dt.getValue(row, 2);
