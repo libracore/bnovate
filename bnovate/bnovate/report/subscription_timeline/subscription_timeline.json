@@ -1,6 +1,6 @@
 {
  "add_total_row": 0,
- "creation": "2023-02-24 18:16:27.267210",
+ "creation": "2023-03-14 17:00:54.366653",
  "disable_prepared_report": 0,
  "disabled": 0,
  "docstatus": 0,
@@ -8,14 +8,14 @@
  "idx": 0,
  "is_standard": "Yes",
  "letter_head": "Small logo",
- "modified": "2023-02-24 18:16:27.267210",
+ "modified": "2023-03-14 17:00:54.366653",
  "modified_by": "Administrator",
  "module": "bNovate",
- "name": "Subscription Invoices",
+ "name": "Subscription Timeline",
  "owner": "Administrator",
  "prepared_report": 0,
  "ref_doctype": "Subscription Contract",
- "report_name": "Subscription Invoices",
+ "report_name": "Subscription Timeline",
  "report_type": "Script Report",
  "roles": [
   {

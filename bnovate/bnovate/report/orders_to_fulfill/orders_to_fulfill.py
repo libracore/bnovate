@@ -108,16 +108,16 @@ ORDER BY
     pidx;
     """.format(status_filter=status_filter, extra_filters=extra_filters)
 
-    print(sql_query)
+    # print(sql_query)
     data = frappe.db.sql(sql_query, as_dict=True)
     last_week_num = ''
     last_day = ''
     week_index = 0
     day_index = 0
 
-    import pprint
-    pp = pprint.PrettyPrinter(indent=4)
-    print("\n\n\n------", pp.pprint([ r for r in data if r.weeknum == 8]))
+    # import pprint
+    # pp = pprint.PrettyPrinter(indent=4)
+    # print("\n\n\n------", pp.pprint([ r for r in data if r.weeknum == 8]))
     
     for row in data:       
         if row['weeknum'] != last_week_num:
