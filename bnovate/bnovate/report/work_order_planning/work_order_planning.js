@@ -1,4 +1,4 @@
-// Copyright (c) 2016, libracore and contributors
+// Copyright (c) 2023, bNovate, libracore and contributors
 // For license information, please see license.txt
 /* eslint-disable */
 
@@ -198,7 +198,7 @@ function build_google_dt(report) {
         green: "#98d85b",
     }
 
-    rows = report.data
+    let rows = report.data
         .filter(row => row.indent == 0)
         .map(row => [
             row.workstation || "Unknown",
