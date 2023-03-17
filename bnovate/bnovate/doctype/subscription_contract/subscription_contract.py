@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
-from frappe.utils import flt, nowdate, getdate, add_days
+from frappe.utils import flt, nowdate, getdate, add_days, date_diff
 from erpnext.selling.doctype.quotation.quotation import _make_customer
 
 class SubscriptionContract(Document):
@@ -95,7 +95,7 @@ def close(docname, end_date=None):
 	items = [it.name for it in doc.items]
 	sinv_items = frappe.db.get_all("Sales Invoice Item", 
 		filters={ 'sc_detail': ['IN', tuple(items)] },
-		fields=['name', 'service_start_date', 'service_end_date', 'service_stop_date', 'idx', 'parent']
+		fields=['name', 'service_start_date', 'service_end_date', 'service_stop_date', 'idx', 'parent', 'net_amount']
 	)
 
 	# For any item within current or future billing period (relative to end_date), stop service early
@@ -106,8 +106,16 @@ def close(docname, end_date=None):
 			stop_date = max(getdate(end_date), si.service_start_date)
 			frappe.db.set_value("Sales Invoice Item", si.name, "service_stop_date", stop_date)
 
+			# Calculate refund amount
+			period_days = (si.service_end_date - si.service_start_date).days
+			remaining_days = (si.service_end_date - stop_date).days
+
+			si.refund = si.net_amount * remaining_days / period_days
+
 	# TODO: relay list of modified SINV items back to user
+	print("\n\n\n--------------------------------------------")
+	print(modified, sinv_items)
 	frappe.msgprint("Modified these invoices: {}".format(set(modified)))
-	print(modified)
+	frappe.msgprint(sinv_items)
 
 

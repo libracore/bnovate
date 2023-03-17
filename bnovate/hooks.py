@@ -83,6 +83,10 @@ doctype_js = {
 # Website user home page (by function)
 # get_website_user_home_page = "bnovate.utils.get_home_page"
 
+has_website_permission = {
+    # 'Blanket Order': ['TBD']
+}
+
 # Generators
 # ----------
 
