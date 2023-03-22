@@ -172,7 +172,7 @@ doc_events = {
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
 # along with any modifications made in other Frappe apps
-# override_doctype_dashboards = {
-# 	"Task": "bnovate.task.get_dashboard_data"
-# }
+override_doctype_dashboards = {
+	"Serial No": "bnovate.bnovate.utils.dashboards.get_serial_no_dashboard_data"
+}
 
