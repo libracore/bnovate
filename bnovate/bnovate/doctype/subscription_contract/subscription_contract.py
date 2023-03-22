@@ -6,11 +6,33 @@ from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
-from frappe.utils import flt, nowdate, getdate
+from frappe.utils import flt, nowdate, getdate, add_days
 from erpnext.selling.doctype.quotation.quotation import _make_customer
 
 class SubscriptionContract(Document):
 	pass
+
+@frappe.whitelist()
+def make_from_self(source_name, target_doc=None):
+	""" Make a copy of the subscription, but starting at the end date of previous one.
+
+	Can be used to renew or modify (upgrade) a subscription.
+	"""
+	closing_doc = frappe.db.get_value("Subscription Contract", source_name, ["end_date"], as_dict=1)
+
+	end_date = closing_doc.end_date
+	if not end_date:
+		end_date = nowdate()
+	
+	def postprocess(source, target):
+		target.start_date = add_days(end_date, 1) 
+
+	return get_mapped_doc("Subscription Contract", source_name, {
+		"Subscription Contract": {
+			"doctype": "Subscription Contract",
+		}
+	}, postprocess=postprocess)
+
 
 @frappe.whitelist()
 def make_from_quotation(source_name, target_doc=None):
@@ -52,7 +74,6 @@ def _make_from_quotation(source_name, target_doc=None, ignore_permissions=False)
 				"add_if_empty": True
 			},
 		}, target_doc, set_missing_values, ignore_permissions=ignore_permissions)
-
 
 	return doclist
 

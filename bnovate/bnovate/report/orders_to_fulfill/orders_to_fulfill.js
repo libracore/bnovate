@@ -25,17 +25,15 @@ frappe.query_reports["Orders to Fulfill"] = {
 		this.colours = ["light", "dark"];
 	},
 	formatter(value, row, col, data, default_formatter) {
+		// Keep only qty and item code for packed items.
+		if (data.indent === 1 && ['remaining_qty', 'item_code'].indexOf(col.fieldname) < 0) {
+			return "";
+		}
 		if (col.fieldname === "weeknum") {
-			if (data.indent === 1) {
-				return ""
-			}
-			return `<span class="coloured ${this.colours[data.week_index % this.colours.length]}">${default_formatter(value, row, col, data)}</span>`
+			return `<span class="coloured ${this.colours[data.week_index % this.colours.length]}">${default_formatter(value, row, col, data)}</span>`;
 		}
 		if (col.fieldname === "ship_date") {
-			if (data.indent === 1) {
-				return ""
-			}
-			return `<span class="coloured ${this.colours[data.day_index % this.colours.length]}">${default_formatter(value, row, col, data)}</span>`
+			return `<span class="coloured ${this.colours[data.day_index % this.colours.length]}">${default_formatter(value, row, col, data)}</span>`;
 		}
 		return default_formatter(value, row, col, data);
 	}

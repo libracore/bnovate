@@ -2,6 +2,7 @@
 *.pyc
 *.egg-info
 *.swp
+*.vscode
 tags
 bnovate/docs/current
 __pycache__

@@ -13,20 +13,33 @@
   "column_main",
   "enabled",
   "start_date",
+  "planned_end_date",
   "end_date",
+  "currency_and_price_list",
+  "currency",
+  "conversion_rate",
+  "column_break_13",
+  "selling_price_list",
+  "price_list_currency",
+  "plc_conversion_rate",
+  "ignore_pricing_rule",
   "section_items",
   "items",
+  "assets_section",
+  "assets",
   "terms_section_break",
   "payment_terms_template",
   "terms",
   "sales_invoice",
-  "amended_from"
+  "amended_from",
+  "company"
  ],
  "fields": [
   {
    "fieldname": "customer",
    "fieldtype": "Link",
    "in_list_view": 1,
+   "in_preview": 1,
    "label": "Customer",
    "options": "Customer",
    "reqd": 1
@@ -52,6 +65,7 @@
   {
    "fieldname": "start_date",
    "fieldtype": "Date",
+   "in_preview": 1,
    "label": "Start Date",
    "reqd": 1
   },
@@ -59,7 +73,8 @@
    "allow_on_submit": 1,
    "fieldname": "end_date",
    "fieldtype": "Date",
-   "label": "End Date"
+   "in_preview": 1,
+   "label": "Actual End Date"
   },
   {
    "fieldname": "section_items",
@@ -77,6 +92,8 @@
    "default": "Yearly",
    "fieldname": "interval",
    "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_preview": 1,
    "label": "Interval",
    "options": "Yearly\nMonthly",
    "reqd": 1
@@ -111,6 +128,7 @@
    "fieldname": "title",
    "fieldtype": "Data",
    "hidden": 1,
+   "in_preview": 1,
    "label": "Title"
   },
   {
@@ -122,10 +140,86 @@
    "fieldname": "terms",
    "fieldtype": "Text Editor",
    "label": "Terms and Conditions"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "planned_end_date",
+   "fieldtype": "Date",
+   "label": "Planned End Date"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "currency_and_price_list",
+   "fieldtype": "Section Break",
+   "label": "Currency and Price List",
+   "options": "fa fa-tag"
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "reqd": 1
+  },
+  {
+   "description": "Rate at which customer's currency is converted to company's base currency",
+   "fieldname": "conversion_rate",
+   "fieldtype": "Float",
+   "label": "Exchange Rate",
+   "precision": "9",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_13",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "selling_price_list",
+   "fieldtype": "Link",
+   "label": "Price List",
+   "options": "Price List"
+  },
+  {
+   "fieldname": "price_list_currency",
+   "fieldtype": "Link",
+   "label": "Price list Currency",
+   "options": "Currency"
+  },
+  {
+   "fieldname": "plc_conversion_rate",
+   "fieldtype": "Float",
+   "label": "Price List Exchange Rate"
+  },
+  {
+   "default": "0",
+   "fieldname": "ignore_pricing_rule",
+   "fieldtype": "Check",
+   "label": "Ignore Pricing Rule"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "print_hide": 1,
+   "remember_last_selected_value": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "assets_section",
+   "fieldtype": "Section Break",
+   "label": "Assets"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "assets",
+   "fieldtype": "Table",
+   "label": "Assets",
+   "options": "Subscription Contract Asset"
   }
  ],
  "is_submittable": 1,
- "modified": "2023-03-03 17:02:40.260783",
+ "modified": "2023-03-14 07:29:57.185855",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Subscription Contract",

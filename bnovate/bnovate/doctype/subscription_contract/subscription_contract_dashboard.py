@@ -5,16 +5,20 @@ def get_data():
 	return {
 		'fieldname': 'subscription',
 		'internal_links': {
-			'Quotation': ['items', 'prevdoc_docname']
+			'Quotation': ['items', 'prevdoc_docname'],
+			'Serial No': ['assets', 'serial_no'],
+			# TODO: Can't link to Connectivity packages, links always point to document name, not a field.
+			# Alternatives: monkey patch dashboard code or link to a report.
+			# 'Connectivity Package': ['assets', 'serial_no'],
 		},
 		'transactions': [
 			{
 				'label': _('Sales'),
 				'items': ['Quotation', 'Sales Invoice']
 			},
-			# {
-			# 	'label': _('Packages'),
-			# 	'items': ['Connectivity Package']
-			# },
+			{
+				'label': _('Assets'),
+				'items': ['Serial No']
+			},
 		]
 	}

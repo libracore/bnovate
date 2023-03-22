@@ -58,12 +58,15 @@ app_include_js = [ # Note to self: in case of changes, may need to run bench bui
 
 # include js in doctype views
 doctype_js = {
-    "Item" : ["public/js/item.js"],
-    "Customer" : ["public/js/customer.js"],
-    "Quotation" : ["public/js/quotation.js"],
-    "Sales Order" : ["public/js/sales_order.js"],
-    "Delivery Note" : ["public/js/delivery_note.js"],
-    "Sales Invoice" : ["public/js/sales_invoice.js"],
+    "Item" : ["public/js/doctype_includes/item.js"],
+    "Customer" : ["public/js/doctype_includes/customer.js"],
+    "Quotation" : ["public/js/doctype_includes/quotation.js"],
+    "Sales Order" : ["public/js/doctype_includes/sales_order.js"],
+    "Delivery Note" : ["public/js/doctype_includes/delivery_note.js"],
+    "Sales Invoice" : ["public/js/doctype_includes/sales_invoice.js"],
+}
+doctype_list_js = {
+    "Item" : ["public/js/doctype_includes/item_list.js"],
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -169,7 +172,7 @@ doc_events = {
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
 # along with any modifications made in other Frappe apps
-# override_doctype_dashboards = {
-# 	"Task": "bnovate.task.get_dashboard_data"
-# }
+override_doctype_dashboards = {
+	"Serial No": "bnovate.bnovate.utils.dashboards.get_serial_no_dashboard_data"
+}
 
