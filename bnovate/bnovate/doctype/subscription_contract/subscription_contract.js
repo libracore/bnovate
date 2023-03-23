@@ -49,7 +49,8 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 			document.querySelector('.form-page').prepend(div);
 
 			let end_date = await prompt_end_date(this._get_next_billing_end(this.frm.doc.end_date));
-			this.end_contract(end_date);
+			let reimbursable_sinv_items = await this.end_contract(end_date);
+			await prompt_credit_note_choice(reimbursable_sinv_items);
 			return;
 
 			await frappe.model.open_mapped_doc({
@@ -127,7 +128,7 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 	// - Duplicate SC, starting from day after end date.
 	//   - Show on print format that it replaces previous SC.
 	async end_contract(end_date) {
-		await frappe.call({
+		const resp = await frappe.call({
 			method: 'bnovate.bnovate.doctype.subscription_contract.subscription_contract.close',
 			args: {
 				docname: this.frm.doc.name,
@@ -135,6 +136,7 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 			}
 		})
 		this.frm.reload_doc();
+		return resp.message; // list of reimbursable SINV items
 	},
 
 	// override some methods from transaction.js
@@ -207,6 +209,49 @@ function prompt_end_date(default_date) {
 			primary_action_label: 'End Contract',
 			primary_action(values) {
 				resolve(values.end_date);
+				d.hide();
+			},
+			secondary_action() {
+				reject();
+			}
+		});
+		d.show();
+	})
+}
+
+function prompt_credit_note_choice(refundable_items) {
+	const template = `
+	<table class="table">
+	<tbody>
+		<tr>
+			<th>SINV</th>
+			<th>Period Start</th>
+			<th>Net Amount</th>
+			<th>Refundable Amount</th>
+		</tr>
+		{% for item in refundable_items %}
+		<tr>
+			<td>{{ item.sinv_name }}</td>
+			<td>{{ item.service_start_date }} </td>
+			<td>{{ item.net_amount }} </td>
+			<td>{{ item.refund }} </td>
+		</tr>
+		{% endfor %}
+	</tbody>
+	</table>
+	`
+	return new Promise((resolve, reject) => {
+		let d = new frappe.ui.Dialog({
+			title: "Chose invoices for credit note",
+			fields: [{
+				label: "Table",
+				fieldname: "table",
+				fieldtype: "HTML",
+				options: frappe.render_template(template, { refundable_items })
+			}],
+			primary_action_label: 'Create Credit Notes',
+			primary_action(values) {
+				resolve('TODO: select items');
 				d.hide();
 			},
 			secondary_action() {
