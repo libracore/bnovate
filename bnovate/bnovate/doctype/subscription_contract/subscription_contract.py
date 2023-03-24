@@ -3,6 +3,7 @@
 # For license information, please see license.txt
 
 from __future__ import unicode_literals
+import json
 import frappe
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
@@ -132,22 +133,13 @@ def close(docname, end_date=None):
 	""".format(items='("' + '", "'.join(items) + '")')
 	sinv_items = frappe.db.sql(query, {'items': items}, as_dict=True)
 
-	print(sinv_items)
-
 	# For any item within current or future billing period (relative to end_date), stop service early
 	# and calculate refund amount
-	to_modify = {}
-	refunds = {}
 	matching_items = []
 	for si in sinv_items:
 		if getdate(end_date) < si.service_end_date and si.refunded_amount is None:
 
 			matching_items.append(si)
-
-			if si.sinv_name not in to_modify:
-				to_modify[si.sinv_name] = [si]
-			else:
-				to_modify[si.sinv_name].append(si)
 
 			stop_date = max(getdate(end_date), si.service_start_date)
 			frappe.db.set_value("Sales Invoice Item", si.name, "service_stop_date", stop_date)
@@ -158,16 +150,37 @@ def close(docname, end_date=None):
 
 			si.refund = si.net_amount * remaining_days / period_days
 
-			if si.sc_detail not in refunds:
-				refunds[si.sc_detail] = {}
-
-			refunds[si.sc_detail][si.service_start_date] = si.refund
 
 	return matching_items
 
 
+@frappe.whitelist()
+def create_credit_notes(sinv_items, selected_items):
+	""" Create credit notes for sinv_items as returned by close(), only for item names in selected_items """
+
+	sinv_items = json.loads(sinv_items)
+	selected_items = json.loads(selected_items)
+	
+	print("\n\n\n\n-------------------------------")
+	print(sinv_items, selected_items)
+
+	filtered = [ frappe._dict(it) for it in sinv_items if it['name'] in selected_items]
+	invoices = {}
+	refunds = {}
+	for it in filtered:
+		if it.sinv_name not in invoices:
+			invoices[it.sinv_name] = [it]
+		else:
+			invoices[it.sinv_name].append(it)
+
+		if it.sc_detail not in refunds:
+			refunds[it.sc_detail] = {}
+
+		refunds[it.sc_detail][it.service_start_date] = it.refund
+
 	# Create Credit Note for each invoice
-	for sinv_name, items in to_modify.items():
+	credit_notes = []
+	for sinv_name, items in invoices.items():
 		# Inspired by make_mapped_doc: flags are read by get_mapped_doc, which is called
 		# by make_return_doc()
 		frappe.flags.selected_children = {'items': [ it.name for it in items]}
@@ -180,8 +193,8 @@ def close(docname, end_date=None):
 			item.enable_deferred_revenue = False
 
 		sinv_ret.insert()
-		print(sinv_ret)
+		credit_notes.append(sinv_ret)
 
-	frappe.msgprint("Modified these invoices: {}".format(to_modify.keys()))
+	return credit_notes
 
 

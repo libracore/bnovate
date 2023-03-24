@@ -50,7 +50,10 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 
 			let end_date = await prompt_end_date(this._get_next_billing_end(this.frm.doc.end_date));
 			let reimbursable_sinv_items = await this.end_contract(end_date);
-			await prompt_credit_note_choice(reimbursable_sinv_items);
+			let selected = await prompt_credit_note_choice(reimbursable_sinv_items);
+			console.log(selected);
+			let credit_notes = await this.create_credit_notes(reimbursable_sinv_items, selected);
+			console.log(credit_notes);
 			return;
 
 			await frappe.model.open_mapped_doc({
@@ -138,6 +141,16 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 		this.frm.reload_doc();
 		return resp.message; // list of reimbursable SINV items
 	},
+	async create_credit_notes(sinv_items, selected_items) {
+		const resp = await frappe.call({
+			method: 'bnovate.bnovate.doctype.subscription_contract.subscription_contract.create_credit_notes',
+			args: {
+				sinv_items,
+				selected_items,
+			}
+		})
+		return resp.message
+	},
 
 	// override some methods from transaction.js
 
@@ -224,6 +237,7 @@ function prompt_credit_note_choice(refundable_items) {
 	<table class="table">
 	<tbody>
 		<tr>
+		 	<th></th>
 			<th>SINV</th>
 			<th>Period Start</th>
 			<th>Net Amount</th>
@@ -231,10 +245,11 @@ function prompt_credit_note_choice(refundable_items) {
 		</tr>
 		{% for item in refundable_items %}
 		<tr>
+			<td><input type="checkbox" class="cn-select" data-name="{{ item.name }}" checked></td>
 			<td>{{ item.sinv_name }}</td>
-			<td>{{ item.service_start_date }} </td>
-			<td>{{ item.net_amount }} </td>
-			<td>{{ item.refund }} </td>
+			<td>{{ frappe.format(item.service_start_date, { fieldtype: 'Date' }) }} </td>
+			<td>{{ format_currency(item.net_amount, item.currency) }} </td>
+			<td>{{ format_currency(item.refund, item.currency) }} </td>
 		</tr>
 		{% endfor %}
 	</tbody>
@@ -251,7 +266,10 @@ function prompt_credit_note_choice(refundable_items) {
 			}],
 			primary_action_label: 'Create Credit Notes',
 			primary_action(values) {
-				resolve('TODO: select items');
+				const selected = [...document.querySelectorAll('.cn-select')]
+					.filter(el => el.checked)
+					.map(el => el.dataset.name);
+				resolve(selected);
 				d.hide();
 			},
 			secondary_action() {
