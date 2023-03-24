@@ -36,31 +36,24 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 		this.frm.set_query("item_code", "items", function () {
 			return { filters: { enable_deferred_revenue: true } }
 		});
+
 		if (!this.frm.doc.start_date) {
 			this.frm.set_value('start_date', frappe.datetime.add_days(frappe.datetime.month_end(), 1));
 		}
 	},
 	refresh() {
+		if (this.frm.doc.docstatus == 1 && this.frm.doc.stopped) {
+			render_checklist(this.frm);
+		}
+
 		if (this.frm.doc.docstatus == 1) {
-			this.frm.add_custom_button(__('Modify / Upgrade'), async () => {
-
-				// TODO: restrict permissions to Sales Managers (or whoever can modify SINVs)
-				const div = document.createElement('div');
-				div.setAttribute('class', 'row form-section');
-				div.appendChild(document.createTextNode("Hello world"));
-				document.querySelector('.form-page').prepend(div);
-
-				let end_date = await prompt_end_date(this._get_next_billing_end(this.frm.doc.end_date));
-				let reimbursable_sinv_items = await this.end_contract(end_date);
-				let selected = await prompt_credit_note_choice(reimbursable_sinv_items);
-				console.log(selected);
-				let credit_notes = await this.create_credit_notes(reimbursable_sinv_items, selected);
-				frappe.msgprint(`Created credit note(s): ${credit_notes.map(cn => cn.name)}`);
-				await frappe.model.open_mapped_doc({
-					method: 'bnovate.bnovate.doctype.subscription_contract.subscription_contract.make_from_self',
-					frm: this.frm
-				});
-			})
+			if (!this.frm.doc.stopped) {
+				this.frm.add_custom_button(__('Modify / Upgrade'), async () => {
+					// TODO: restrict permissions to Sales Managers (or whoever can modify SINVs)
+					let end_date = await prompt_end_date(this._get_next_billing_end(this.frm.doc.end_date));
+					await this.end_contract(end_date);
+				})
+			}
 
 			this.frm.add_custom_button(__("Create Invoice"), async () => {
 				frappe.route_options = {
@@ -97,8 +90,8 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 			}
 		}
 	},
-	// TODO: allow any end date, but we may need to simplify credit notes
 	end_date() {
+		// Note: to force an end date in the middle of a billing period, use the "end_contract" workflow.
 		// if end date is defined, set it to the end of a period.
 		if (this.frm.doc.end_date) {
 			const billing_end = this._get_next_billing_end(this.frm.doc.end_date);
@@ -132,11 +125,24 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 	// - Duplicate SC, starting from day after end date.
 	//   - Show on print format that it replaces previous SC.
 	async end_contract(end_date) {
+		// TODO: prevent if any draft invoices exist, else the drafts may be submitted after this workflow...
+		// TODO: Also only allow if billing is up to date.
+		// TODO: prevent billing on stopped contracts
 		const resp = await frappe.call({
-			method: 'bnovate.bnovate.doctype.subscription_contract.subscription_contract.close',
+			method: 'bnovate.bnovate.doctype.subscription_contract.subscription_contract.end_contract',
 			args: {
 				docname: this.frm.doc.name,
 				end_date: end_date,
+			}
+		})
+		this.frm.reload_doc();
+		return resp.message;
+	},
+	async stop_invoices() {
+		const resp = await frappe.call({
+			method: 'bnovate.bnovate.doctype.subscription_contract.subscription_contract.stop_invoices',
+			args: {
+				docname: this.frm.doc.name,
 			}
 		})
 		this.frm.reload_doc();
@@ -146,12 +152,28 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 		const resp = await frappe.call({
 			method: 'bnovate.bnovate.doctype.subscription_contract.subscription_contract.create_credit_notes',
 			args: {
+				docname: this.frm.doc.name,
 				sinv_items,
 				selected_items,
 			}
 		})
 		this.frm.reload_doc();
 		return resp.message
+	},
+	// Set stop date on invoices, calculated reimbursable amounts, create credit notes if user choses to.
+	async adjust_billing() {
+		let reimbursable_sinv_items = await this.stop_invoices();
+		let selected = await prompt_credit_note_choice(reimbursable_sinv_items);
+		console.log(selected);
+		let credit_notes = await this.create_credit_notes(reimbursable_sinv_items, selected);
+		frappe.msgprint(`Created credit note(s): ${credit_notes.map(cn => frappe.utils.get_form_link("Sales Invoice", cn.name, true, cn.name))}`);
+	},
+	// Create a copy of current doc, but starting from day after end date.
+	amend_stopped() {
+		frappe.model.open_mapped_doc({
+			method: 'bnovate.bnovate.doctype.subscription_contract.subscription_contract.make_from_self',
+			frm: this.frm
+		});
 	},
 
 	// override some methods from transaction.js
@@ -279,5 +301,52 @@ function prompt_credit_note_choice(refundable_items) {
 			}
 		});
 		d.show();
+	})
+}
+
+async function render_checklist(frm) {
+	const div = document.createElement('div');
+	div.setAttribute('class', 'row form-section');
+	div.setAttribute('id', 'checklist');
+	document.querySelector('.form-page').prepend(div);
+
+	const template = `
+	<div class="col-sm-12">
+		<p>This contract has been stopped. Please ensure the following steps are completed:</p>
+		<ul>
+			<li class="done">
+				Set End Date
+			</li>
+			<li class="{% if doc.credit_confirmed %}done{% endif %}">
+				Update Invoices and create Credit Notes if needed 
+				{% if !doc.credit_confirmed %}
+				<button id="adjust-billing" class="btn btn-primary btn-xs">Adjust Billing</button>
+				{% endif %}
+			</li>
+			<li class="{% if amended_links %}done{% endif %}">
+				Create new subscription 
+				{% if !amended_links %}
+					<button id="amend" class="btn btn-primary btn-xs">Amend</button>
+				{% else %}
+				: {{ amended_links }}
+				{% endif %}
+			</li>
+		</ul>
+	</div>
+	`
+
+	const amended = await frappe.db.get_list("Subscription Contract", { filters: { amended_from: frm.doc.name } })
+	const amended_links = amended
+		.map(doc => frappe.utils.get_form_link("Subscription Contract", doc.name, true, doc.name))
+		.join(", ");
+
+	div.innerHTML = frappe.render_template(template, { doc: frm.doc, amended_links })
+
+	document.querySelector('#adjust-billing')?.addEventListener('click', () => {
+		frm.trigger('adjust_billing');
+	})
+
+	document.querySelector('#amend')?.addEventListener('click', () => {
+		frm.trigger('amend_stopped');
 	})
 }

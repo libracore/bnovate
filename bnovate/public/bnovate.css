@@ -77,3 +77,27 @@ span.coloured.dark {
   display: flex;
   flex-direction: column;
 }
+
+/* Subscription contract checklist styling */
+#checklist {
+  background-color: beige;
+}
+
+#checklist ul {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+#checklist li:before {
+  content: "\2610";
+  font-weight: bold;
+  margin-right: 8px;
+  color: #f0a24a;
+}
+
+#checklist li.done:before {
+  content: "\2611";
+  font-weight: bold;
+  margin-right: 8px;
+  color: #6ad63f;
+}

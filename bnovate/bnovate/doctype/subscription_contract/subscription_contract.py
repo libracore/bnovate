@@ -5,6 +5,7 @@
 from __future__ import unicode_literals
 import json
 import frappe
+from frappe import _
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
 from frappe.utils import flt, nowdate, getdate, add_days, date_diff
@@ -12,7 +13,34 @@ from erpnext.selling.doctype.quotation.quotation import _make_customer
 from erpnext.controllers.sales_and_purchase_return import make_return_doc
 
 class SubscriptionContract(Document):
-	pass
+	def validate(self):
+
+		self.set_status()
+
+	def on_cancel(self):
+		frappe.db.set(self, 'status', 'Cancelled')
+
+	def set_status(self):
+		if self.docstatus == 2:
+			self.status = "Cancelled"
+		elif self.docstatus == 1:
+			if self.stopped:
+				self.status = "Stopped"
+			elif getdate(self.end_date) < getdate(nowdate()):
+				self.status = "Finished"
+			else:
+				self.status = "Active"
+		else:
+			self.status = "Draft"
+
+		self.db_set('status', self.status)
+
+def update_subscription_status():
+	""" Update status on finished contracts. Called daily (hooks.py). """
+	frappe.db.sql("""
+		UPDATE `tabSubscription Contract` SET status = 'Finished'
+		WHERE end_date < CURDATE() AND docstatus = 1
+	""")
 
 @frappe.whitelist()
 def make_from_quotation(source_name, target_doc=None):
@@ -74,9 +102,12 @@ def make_from_self(source_name, target_doc=None):
 		end_date = nowdate()
 	
 	def postprocess(source, target):
+		target.stopped = False
+		target.credit_confirmed = False
 		target.start_date = add_days(end_date, 1) 
 		target.end_date = None
 		target.planned_end_date = None
+		target.amended_from = source_name
 
 	return get_mapped_doc("Subscription Contract", source_name, {
 		"Subscription Contract": {
@@ -85,15 +116,26 @@ def make_from_self(source_name, target_doc=None):
 	}, postprocess=postprocess)
 
 @frappe.whitelist()
-def close(docname, end_date=None):
-	""" Set end date of a subscription """
+def end_contract(docname, end_date=None):
+	""" End a subscription before the planned end date """
 	if end_date is None:
 		end_date = nowdate()
 
 	doc = frappe.get_doc("Subscription Contract", docname)
+	if getdate(end_date) < getdate(doc.start_date):
+		frappe.msgprint(_("End date must be later than start date."), raise_exception=True)
 	doc.db_set("end_date", end_date)
+	doc.db_set("stopped", True)
+	doc.db_set("status", "Stopped")
+
+@frappe.whitelist()
+def stop_invoices(docname):
 
 	# Find associated sales invoice items and matching credit notes, if any
+	doc = frappe.get_doc("Subscription Contract", docname)
+	if not doc.end_date:
+		frappe.msgprint(_("End date must be defined."), raise_exception=True)
+	end_date = doc.end_date
 	items = [it.name for it in doc.items]
 	query = """
 	WITH sinv_items as (
@@ -155,8 +197,11 @@ def close(docname, end_date=None):
 
 
 @frappe.whitelist()
-def create_credit_notes(sinv_items, selected_items):
+def create_credit_notes(docname, sinv_items, selected_items):
 	""" Create credit notes for sinv_items as returned by close(), only for item names in selected_items """
+
+	doc = frappe.get_doc("Subscription Contract", docname)
+	doc.db_set("credit_confirmed", True)
 
 	sinv_items = json.loads(sinv_items)
 	selected_items = json.loads(selected_items)

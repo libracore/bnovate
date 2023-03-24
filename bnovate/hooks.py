@@ -140,13 +140,13 @@ doc_events = {
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
+scheduler_events = {
 # 	"all": [
 # 		"bnovate.tasks.all"
 # 	],
-# 	"daily": [
-# 		"bnovate.tasks.daily"
-# 	],
+	"daily": [
+        "bnovate.bnovate.doctype.subscription_contract.subscription_contract.update_subscription_status",
+	],
 # 	"hourly": [
 # 		"bnovate.tasks.hourly"
 # 	],
@@ -156,7 +156,7 @@ doc_events = {
 # 	"monthly": [
 # 		"bnovate.tasks.monthly"
 # 	]
-# }
+}
 
 # Testing
 # -------

@@ -7,6 +7,7 @@
  "engine": "InnoDB",
  "field_order": [
   "title",
+  "status",
   "customer",
   "customer_name",
   "interval",
@@ -15,6 +16,8 @@
   "start_date",
   "planned_end_date",
   "end_date",
+  "stopped",
+  "credit_confirmed",
   "currency_and_price_list",
   "currency",
   "conversion_rate",
@@ -216,11 +219,40 @@
    "fieldtype": "Table",
    "label": "Assets",
    "options": "Subscription Contract Asset"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "no_copy": 1,
+   "options": "\nDraft\nActive\nFinished\nStopped\nCancelled",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "stopped",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Stopped",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "If true, Sales Admin has confirmed whether credit notes are needed.",
+   "fieldname": "credit_confirmed",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Credit Confirmed",
+   "read_only": 1
   }
  ],
  "is_submittable": 1,
- "modified": "2023-03-14 07:29:57.185855",
- "modified_by": "Administrator",
+ "modified": "2023-03-24 14:45:46.621807",
+ "modified_by": "douglas.watson@bnovate.com",
  "module": "bNovate",
  "name": "Subscription Contract",
  "owner": "Administrator",
