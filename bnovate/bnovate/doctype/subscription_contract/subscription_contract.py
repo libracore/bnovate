@@ -176,7 +176,7 @@ def create_credit_notes(sinv_items, selected_items):
 		if it.sc_detail not in refunds:
 			refunds[it.sc_detail] = {}
 
-		refunds[it.sc_detail][it.service_start_date] = it.refund
+		refunds[it.sc_detail][getdate(it.service_start_date)] = it.refund
 
 	# Create Credit Note for each invoice
 	credit_notes = []
