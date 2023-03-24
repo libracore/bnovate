@@ -41,34 +41,35 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 		}
 	},
 	refresh() {
-		this.frm.add_custom_button(__('Modify / Upgrade'), async () => {
-			// TODO: restrict permissions to Sales Managers (or whoever can modify SINVs)
-			const div = document.createElement('div');
-			div.setAttribute('class', 'row form-section');
-			div.appendChild(document.createTextNode("Hello world"));
-			document.querySelector('.form-page').prepend(div);
+		if (this.frm.doc.docstatus == 1) {
+			this.frm.add_custom_button(__('Modify / Upgrade'), async () => {
 
-			let end_date = await prompt_end_date(this._get_next_billing_end(this.frm.doc.end_date));
-			let reimbursable_sinv_items = await this.end_contract(end_date);
-			let selected = await prompt_credit_note_choice(reimbursable_sinv_items);
-			console.log(selected);
-			let credit_notes = await this.create_credit_notes(reimbursable_sinv_items, selected);
-			console.log(credit_notes);
-			return;
+				// TODO: restrict permissions to Sales Managers (or whoever can modify SINVs)
+				const div = document.createElement('div');
+				div.setAttribute('class', 'row form-section');
+				div.appendChild(document.createTextNode("Hello world"));
+				document.querySelector('.form-page').prepend(div);
 
-			await frappe.model.open_mapped_doc({
-				method: 'bnovate.bnovate.doctype.subscription_contract.subscription_contract.make_from_self',
-				frm: this.frm
+				let end_date = await prompt_end_date(this._get_next_billing_end(this.frm.doc.end_date));
+				let reimbursable_sinv_items = await this.end_contract(end_date);
+				let selected = await prompt_credit_note_choice(reimbursable_sinv_items);
+				console.log(selected);
+				let credit_notes = await this.create_credit_notes(reimbursable_sinv_items, selected);
+				frappe.msgprint(`Created credit note(s): ${credit_notes.map(cn => cn.name)}`);
+				await frappe.model.open_mapped_doc({
+					method: 'bnovate.bnovate.doctype.subscription_contract.subscription_contract.make_from_self',
+					frm: this.frm
+				});
+			})
+
+			this.frm.add_custom_button(__("Create Invoice"), async () => {
+				frappe.route_options = {
+					"customer": this.frm.doc.customer,
+				};
+				await frappe.set_route("query-report", "Aggregate Invoicing");
+				frappe.query_report.refresh();
 			});
-		})
-
-		this.frm.add_custom_button(__("Create Invoice"), async () => {
-			frappe.route_options = {
-				"customer": this.frm.doc.customer,
-			};
-			await frappe.set_route("query-report", "Aggregate Invoicing");
-			frappe.query_report.refresh();
-		});
+		}
 	},
 	start_date() {
 		this.frm.doc.transaction_date = this.frm.doc.start_date; // Helps SellingController methods work for pricing for example
@@ -149,6 +150,7 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 				selected_items,
 			}
 		})
+		this.frm.reload_doc();
 		return resp.message
 	},
 
@@ -246,7 +248,7 @@ function prompt_credit_note_choice(refundable_items) {
 		{% for item in refundable_items %}
 		<tr>
 			<td><input type="checkbox" class="cn-select" data-name="{{ item.name }}" checked></td>
-			<td>{{ item.sinv_name }}</td>
+			<td><a href="{{ frappe.utils.get_form_link('Sales Invoice', item.sinv_name) }}" target="_blank">{{ item.sinv_name }}</a></td>
 			<td>{{ frappe.format(item.service_start_date, { fieldtype: 'Date' }) }} </td>
 			<td>{{ format_currency(item.net_amount, item.currency) }} </td>
 			<td>{{ format_currency(item.refund, item.currency) }} </td>

@@ -110,7 +110,7 @@ def close(docname, end_date=None):
 		FROM `tabSales Invoice Item` sii
 		JOIN `tabSales Invoice` si ON sii.parent = si.name
 		WHERE sii.sc_detail IN {items} 
-			AND sii.docstatus <= 1
+			AND sii.docstatus = 1
 			AND si.is_return = 0
 	), ret_items as (
 		SELECT
@@ -121,7 +121,7 @@ def close(docname, end_date=None):
 		FROM `tabSales Invoice Item` sii
 		JOIN `tabSales Invoice` si ON sii.parent = si.name
 		WHERE sii.sc_detail IN {items}
-			AND sii.docstatus <= 1
+			AND sii.docstatus = 1
 			AND si.is_return = 1
 	)
 	SELECT 
