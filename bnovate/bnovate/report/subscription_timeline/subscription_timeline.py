@@ -23,6 +23,7 @@ def get_columns():
         {'fieldname': 'start_date', 'label': _('Start Date'), 'fieldtype': 'Date', 'width': 80},
         {'fieldname': 'planned_end_date', 'label': _('Planned End Date'), 'fieldtype': 'Date', 'width': 80},
         {'fieldname': 'end_date', 'label': _('Actual End Date'), 'fieldtype': 'Date', 'width': 80},
+        {'fieldname': 'renewal_reminder_from', 'label': _('Renewal Reminder From'), 'fieldtype': 'Date', 'width': 80},
     ]
     return cols
 
@@ -33,6 +34,10 @@ def get_data(filters):
     customer_filter = "%"
     if filters.customer:
         customer_filter = filters.customer
+
+    reminder_filter = ""
+    if filters.reminders_only:
+        reminder_filter = "AND DATE_SUB(planned_end_date, INTERVAL renewal_reminder WEEK) < CURRENT_DATE()"
 
     sql_query = """
     -- sql
@@ -48,11 +53,15 @@ SELECT
   IFNULL(end_date, 
     IFNULL(planned_end_date, 
         IFNULL((SELECT GREATEST(MAX(end_date), MAX(start_date)) FROM `tabSubscription Contract`), 
-            CURRENT_DATE()))) AS computed_end_date
+            CURRENT_DATE()))) AS computed_end_date,
+  renewal_reminder,
+  DATE_SUB(planned_end_date, INTERVAL renewal_reminder WEEK) as renewal_reminder_from
 FROM `tabSubscription Contract` sc
 JOIN `tabCustomer` c ON sc.customer = c.name
+WHERE sc.docstatus = 1
+    {reminder_filter}
     ;
-    """.format(customer_filter=customer_filter)
+    """.format(customer_filter=customer_filter, reminder_filter=reminder_filter)
 
     data = frappe.db.sql(sql_query, as_dict=True)
 
