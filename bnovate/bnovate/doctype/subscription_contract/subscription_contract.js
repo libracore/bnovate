@@ -48,23 +48,16 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 
 		if (this.frm.doc.docstatus == 1) {
 			if (!this.frm.doc.stopped) {
-				this.frm.add_custom_button(__('Modify / Upgrade'), async () => {
+				const label = __('Modify / Upgrade');
+				this.frm.add_custom_button(label, async () => {
 					// TODO: restrict permissions to Sales Managers (or whoever can modify SINVs)
-					let end_date = await prompt_end_date(this._get_next_billing_end(this.frm.doc.end_date));
-					try {
-						await this.end_contract(end_date);
-					} finally {
-						this.frm.reload_doc();
-					}
+					render_checklist(this.frm);
+					this.frm.remove_custom_button(label);
 				})
 			}
 
 			this.frm.add_custom_button(__("Create Invoice"), async () => {
-				frappe.route_options = {
-					"customer": this.frm.doc.customer,
-				};
-				await frappe.set_route("query-report", "Aggregate Invoicing");
-				frappe.query_report.refresh();
+				this.frm.trigger('create_invoices');
 			});
 		}
 	},
@@ -120,6 +113,13 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 		}
 		return billing_end;
 	},
+	async create_invoices() {
+		frappe.route_options = {
+			"customer": this.frm.doc.customer,
+		};
+		await frappe.set_route("query-report", "Aggregate Invoicing");
+		frappe.query_report.refresh();
+	},
 
 	// Modification workflow
 	// - Confirm end date of current SC
@@ -129,6 +129,23 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 	// - If applicable, issue corresponding credit note
 	// - Duplicate SC, starting from day after end date.
 	//   - Show on print format that it replaces previous SC.
+	async check_invoice_status() {
+		const resp = await frappe.call({
+			method: 'bnovate.bnovate.report.aggregate_invoicing.aggregate_invoicing.check_invoice_status',
+			args: {
+				docname: this.frm.doc.name,
+			},
+		});
+		return resp.message;
+	},
+	async confirm_end_date() {
+		let end_date = await prompt_end_date(this._get_next_billing_end(this.frm.doc.end_date));
+		try {
+			await this.end_contract(end_date);
+		} finally {
+			this.frm.reload_doc();
+		}
+	},
 	async end_contract(end_date) {
 		// TODO: prevent if any draft invoices exist, else the drafts may be submitted after this workflow...
 		// TODO: prevent billing on stopped contracts
@@ -318,33 +335,55 @@ async function render_checklist(frm) {
 	<div class="col-sm-12">
 		<p>This contract has been stopped. Please ensure the following steps are completed:</p>
 		<ul>
-			<li class="done">
+			<li class="{% if invoices_done %}done{% endif %}">
+				Create all invoices until end date
+				{% if !invoices_done %}
+				<button id="create-invoices" class="btn btn-primary btn-xs">Create Invoices</button>
+				{% endif %}
+			</li>
+			<li class="{% if doc.stopped %}done{% endif %}">
 				Set End Date
+				{% if invoices_done && !doc.stopped %}
+				<button id="end-contract" class="btn btn-primary btn-xs">Set End Date</button>
+				{% endif %}
 			</li>
 			<li class="{% if doc.credit_confirmed %}done{% endif %}">
 				Update Invoices and create Credit Notes if needed 
-				{% if !doc.credit_confirmed %}
+				{% if doc.stopped && !doc.credit_confirmed %}
 				<button id="adjust-billing" class="btn btn-primary btn-xs">Adjust Billing</button>
 				{% endif %}
 			</li>
 			<li class="{% if amended_links %}done{% endif %}">
 				Create new subscription 
-				{% if !amended_links %}
-					<button id="amend" class="btn btn-primary btn-xs">Amend</button>
-				{% else %}
-				: {{ amended_links }}
+				{% if doc.credit_confirmed %}
+					{% if !amended_links %}
+						<button id="amend" class="btn btn-primary btn-xs">Amend</button>
+					{% else %}
+					: {{ amended_links }}
+					{% endif %}
 				{% endif %}
 			</li>
 		</ul>
 	</div>
 	`
 
+	const invoiceable_entries = await frm.trigger('check_invoice_status');
+	const invoices_done = invoiceable_entries.length == 0;
+
 	const amended = await frappe.db.get_list("Subscription Contract", { filters: { amended_from: frm.doc.name } })
 	const amended_links = amended
 		.map(doc => frappe.utils.get_form_link("Subscription Contract", doc.name, true, doc.name))
 		.join(", ");
 
-	div.innerHTML = frappe.render_template(template, { doc: frm.doc, amended_links })
+	div.innerHTML = frappe.render_template(template, { doc: frm.doc, invoices_done, amended_links })
+
+	document.querySelector('#create-invoices')?.addEventListener('click', () => {
+		frm.trigger('create_invoices');
+	})
+
+	document.querySelector('#end-contract')?.addEventListener('click', () => {
+		frm.trigger('confirm_end_date');
+	})
 
 	document.querySelector('#adjust-billing')?.addEventListener('click', () => {
 		frm.trigger('adjust_billing');

@@ -9,6 +9,7 @@
 #
 
 from __future__ import unicode_literals
+import re
 import frappe
 import calendar
 import datetime
@@ -117,13 +118,16 @@ def get_data(filters):
 
 
 def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype=None, 
-    subscription=None, show_invoiced=False):
+    subscription=None, show_invoiced=False, show_drafts=True):
     if not from_date:
         from_date = "2000-01-01"
     if not to_date:
         to_date = today()
     if not customer:
         customer = "%"
+    sinv_docstatus = "= 1"
+    if show_drafts:
+        sinv_docstatus = "< 2"
 
     if subscription:
         # Don't show DN
@@ -178,7 +182,7 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
         LEFT JOIN `tabDelivery Note` dn ON dn.name = dni.parent
         LEFT JOIN `tabSales Invoice Item` sii ON (
             dni.name = sii.dn_detail
-            AND sii.docstatus < 2
+            AND sii.docstatus {sinv_docstatus}
         )
         LEFT JOIN (
           SELECT
@@ -273,7 +277,11 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
         FROM bp
         JOIN `tabSubscription Contract` ss on ss.name = bp.name
         JOIN `tabSubscription Contract Item` ssi on ssi.name = ssi_docname
-        LEFT JOIN `tabSales Invoice Item` sii on sii.sc_detail = ssi.name AND sii.service_start_date = bp.period_start
+        LEFT JOIN `tabSales Invoice Item` sii on (
+            sii.sc_detail = ssi.name 
+            AND sii.service_start_date = bp.period_start
+            AND sii.docstatus {sinv_docstatus}
+        )
         LEFT JOIN `tabSales Invoice` si on sii.parent = si.name
         WHERE (si.name IS NULL {invoiced_filter})
             AND ss.customer LIKE "{customer}"
@@ -285,13 +293,25 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
         
         ORDER BY reference, date;
     """.format(from_date=from_date, to_date=to_date, customer=customer, shipping_account=shipping_account,
-        invoiced_filter=invoiced_filter, subscription=subscription)
+        invoiced_filter=invoiced_filter, subscription=subscription, sinv_docstatus=sinv_docstatus)
     entries = frappe.db.sql(sql_query, as_dict=True)
 
     # Just filter in python...
     if doctype:
         return [e for e in entries if e.dt == doctype]
     return entries
+
+@frappe.whitelist()
+def check_invoice_status(docname):
+    """ Return list of invoiceable periods for a subscription.
+
+    Empty list if invoices are up to date.
+    """
+    # Elementary SQL injection prevention...
+    if not re.match(r'^SC-\d{5}$', docname):
+        frappe.throw("Invalid docname for Subscription Contract: {}".format(docname))
+
+    return get_invoiceable_entries(subscription=docname, show_drafts=False)
 
 
 @frappe.whitelist()
