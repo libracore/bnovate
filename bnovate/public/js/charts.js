@@ -59,7 +59,6 @@ bnovate.charts.draw_timeline_chart = function (report, build_dt) {
             $(document.body).append(
                 `<div id="sacrificial" style="left: ${report.mousePos.x}px; top: ${report.mousePos.y}px"></div>`
             )
-            console.log("reached here")
 
             let row = chart.getSelection()[0].row;
             let contents = report.chart_dt.getValue(row, 2);

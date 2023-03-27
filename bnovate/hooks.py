@@ -65,6 +65,9 @@ doctype_js = {
     "Delivery Note" : ["public/js/doctype_includes/delivery_note.js"],
     "Sales Invoice" : ["public/js/doctype_includes/sales_invoice.js"],
 }
+doctype_list_js = {
+    "Item" : ["public/js/doctype_includes/item_list.js"],
+}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -173,7 +176,7 @@ scheduler_events = {
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
 # along with any modifications made in other Frappe apps
-# override_doctype_dashboards = {
-# 	"Task": "bnovate.task.get_dashboard_data"
-# }
+override_doctype_dashboards = {
+	"Serial No": "bnovate.bnovate.utils.dashboards.get_serial_no_dashboard_data"
+}
 

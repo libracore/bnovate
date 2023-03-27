@@ -30,6 +30,28 @@ function get_label(doctype, docname, print_format, label_reference) {
   );
 }
 
+async function get_highest_item_code(prefix) {
+  let resp = await frappe.call({
+    method: 'bnovate.bnovate.utils.items.get_highest_item_code',
+    args: {
+      prefix
+    }
+  })
+  return resp.message;
+}
+
+async function get_next_item_code(prefix) {
+  let resp = await frappe.call({
+    method: 'bnovate.bnovate.utils.items.get_next_item_code',
+    args: {
+      prefix
+    }
+  })
+  return resp.message;
+}
+
+
+
 /***********************************
  * Client-side wrappers for IoT APIS
  ***********************************/
