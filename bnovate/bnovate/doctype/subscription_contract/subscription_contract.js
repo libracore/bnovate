@@ -42,15 +42,21 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 		}
 	},
 	refresh() {
-		if (this.frm.doc.docstatus == 1 && this.frm.doc.stopped) {
+		if (this.frm.doc.docstatus == 1 && (this.frm.doc.stopped || this.frm.doc.tentative_end_date)) {
 			render_checklist(this.frm);
 		}
 
 		if (this.frm.doc.docstatus == 1) {
-			if (!this.frm.doc.stopped) {
+			if (!this.frm.doc.stopped && this.frm.has_perm(WRITE)) {
 				const label = __('Modify / Upgrade');
 				this.frm.add_custom_button(label, async () => {
 					// TODO: restrict permissions to Sales Managers (or whoever can modify SINVs)
+					try {
+						this.frm.doc.tentative_end_date = await prompt_end_date();
+					} catch {
+						this.frm.reload_doc();
+						return;
+					}
 					render_checklist(this.frm);
 					this.frm.remove_custom_button(label);
 				})
@@ -123,10 +129,10 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 
 	// Modification workflow
 	// - Confirm end date of current SC
-	// - Ensure billing is created up to end_date, if not stop
+	// - Ensure billing is created up to end_date
 	// - Set status to Stopped
-	// - If applicable, find last invoice and adjust service end date
-	// - If applicable, issue corresponding credit note
+	// - If applicable, find last invoice(s) and adjust service end date
+	// - If applicable, issue corresponding credit note(s)
 	// - Duplicate SC, starting from day after end date.
 	//   - Show on print format that it replaces previous SC.
 	async check_invoice_status() {
@@ -134,12 +140,13 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 			method: 'bnovate.bnovate.report.aggregate_invoicing.aggregate_invoicing.check_invoice_status',
 			args: {
 				docname: this.frm.doc.name,
+				end_date: this.frm.doc.tentative_end_date || this.frm.doc.end_date,
 			},
 		});
 		return resp.message;
 	},
 	async confirm_end_date() {
-		let end_date = await prompt_end_date(this._get_next_billing_end(this.frm.doc.end_date));
+		let end_date = await prompt_end_date(this.frm.doc.tentative_end_date);
 		try {
 			await this.end_contract(end_date);
 		} finally {
@@ -147,9 +154,6 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 		}
 	},
 	async end_contract(end_date) {
-		// TODO: prevent if any draft invoices exist, else the drafts may be submitted after this workflow...
-		// TODO: prevent billing on stopped contracts
-
 		const resp = await frappe.call({
 			method: 'bnovate.bnovate.doctype.subscription_contract.subscription_contract.end_contract',
 			args: {
@@ -263,6 +267,7 @@ function prompt_end_date(default_date) {
 				fieldname: "end_date",
 				fieldtype: "Date",
 				default: default_date,
+				reqd: 1
 			}],
 			primary_action_label: 'End Contract',
 			primary_action(values) {
@@ -326,14 +331,20 @@ function prompt_credit_note_choice(refundable_items) {
 }
 
 async function render_checklist(frm) {
-	const div = document.createElement('div');
+
+	// Empty element if it already existed
+
+	const div = document.querySelector('#checklist') || document.createElement('div');
+	div.innerHTML = '';
+
 	div.setAttribute('class', 'row form-section');
 	div.setAttribute('id', 'checklist');
 	document.querySelector('.form-page').prepend(div);
 
 	const template = `
 	<div class="col-sm-12">
-		<p>This contract has been stopped. Please ensure the following steps are completed:</p>
+		<p>Complete the following steps to terminate this contract:</p>
+
 		<ul>
 			<li class="{% if invoices_done %}done{% endif %}">
 				Create all invoices until end date

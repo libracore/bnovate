@@ -12,7 +12,7 @@ from frappe.utils import flt, nowdate, getdate, add_days, date_diff
 from erpnext.selling.doctype.quotation.quotation import _make_customer
 from erpnext.controllers.sales_and_purchase_return import make_return_doc
 
-from bnovate.bnovate.report.aggregate_invoicing.aggregate_invoicing import get_invoiceable_entries
+from bnovate.bnovate.report.aggregate_invoicing.aggregate_invoicing import check_invoice_status
 
 class SubscriptionContract(Document):
 	def validate(self):
@@ -124,8 +124,7 @@ def end_contract(docname, end_date=None):
 		end_date = nowdate()
 
 	# Ensure billing is up to date
-	missing_invoices = get_invoiceable_entries(subscription=docname)
-	print("\n\n\n\n---------------------------", missing_invoices)
+	missing_invoices = check_invoice_status(docname, end_date)
 	if len(missing_invoices) > 0:
 		frappe.msgprint(_("Please create all invoices up until the chosen end date."), raise_exception=True)
 
@@ -138,6 +137,9 @@ def end_contract(docname, end_date=None):
 
 @frappe.whitelist()
 def stop_invoices(docname):
+	""" Set stop date of existing SINVs for this subscription """
+
+	frappe.has_permission('Sales Invoice', 'write', throw=True)
 
 	# Find associated sales invoice items and matching credit notes, if any
 	doc = frappe.get_doc("Subscription Contract", docname)
@@ -208,15 +210,14 @@ def stop_invoices(docname):
 def create_credit_notes(docname, sinv_items, selected_items):
 	""" Create credit notes for sinv_items as returned by close(), only for item names in selected_items """
 
+	frappe.has_permission('Sales Invoice', 'write', throw=True)
+
 	doc = frappe.get_doc("Subscription Contract", docname)
 	doc.db_set("credit_confirmed", True)
 
 	sinv_items = json.loads(sinv_items)
 	selected_items = json.loads(selected_items)
 	
-	print("\n\n\n\n-------------------------------")
-	print(sinv_items, selected_items)
-
 	filtered = [ frappe._dict(it) for it in sinv_items if it['name'] in selected_items]
 	invoices = {}
 	refunds = {}
