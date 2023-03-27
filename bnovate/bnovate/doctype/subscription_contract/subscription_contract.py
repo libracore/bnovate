@@ -12,6 +12,8 @@ from frappe.utils import flt, nowdate, getdate, add_days, date_diff
 from erpnext.selling.doctype.quotation.quotation import _make_customer
 from erpnext.controllers.sales_and_purchase_return import make_return_doc
 
+from bnovate.bnovate.report.aggregate_invoicing.aggregate_invoicing import get_invoiceable_entries
+
 class SubscriptionContract(Document):
 	def validate(self):
 
@@ -120,6 +122,12 @@ def end_contract(docname, end_date=None):
 	""" End a subscription before the planned end date """
 	if end_date is None:
 		end_date = nowdate()
+
+	# Ensure billing is up to date
+	missing_invoices = get_invoiceable_entries(subscription=docname)
+	print("\n\n\n\n---------------------------", missing_invoices)
+	if len(missing_invoices) > 0:
+		frappe.msgprint(_("Please create all invoices up until the chosen end date."), raise_exception=True)
 
 	doc = frappe.get_doc("Subscription Contract", docname)
 	if getdate(end_date) < getdate(doc.start_date):

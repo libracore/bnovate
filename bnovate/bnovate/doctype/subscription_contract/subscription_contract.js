@@ -51,7 +51,11 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 				this.frm.add_custom_button(__('Modify / Upgrade'), async () => {
 					// TODO: restrict permissions to Sales Managers (or whoever can modify SINVs)
 					let end_date = await prompt_end_date(this._get_next_billing_end(this.frm.doc.end_date));
-					await this.end_contract(end_date);
+					try {
+						await this.end_contract(end_date);
+					} finally {
+						this.frm.reload_doc();
+					}
 				})
 			}
 
@@ -119,23 +123,23 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 
 	// Modification workflow
 	// - Confirm end date of current SC
-	// - Set status to show contract is over?
+	// - Ensure billing is created up to end_date, if not stop
+	// - Set status to Stopped
 	// - If applicable, find last invoice and adjust service end date
 	// - If applicable, issue corresponding credit note
 	// - Duplicate SC, starting from day after end date.
 	//   - Show on print format that it replaces previous SC.
 	async end_contract(end_date) {
 		// TODO: prevent if any draft invoices exist, else the drafts may be submitted after this workflow...
-		// TODO: Also only allow if billing is up to date.
 		// TODO: prevent billing on stopped contracts
+
 		const resp = await frappe.call({
 			method: 'bnovate.bnovate.doctype.subscription_contract.subscription_contract.end_contract',
 			args: {
 				docname: this.frm.doc.name,
 				end_date: end_date,
-			}
+			},
 		})
-		this.frm.reload_doc();
 		return resp.message;
 	},
 	async stop_invoices() {

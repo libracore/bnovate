@@ -116,13 +116,20 @@ def get_data(filters):
     return output
 
 
-def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype=None, show_invoiced=False):
+def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype=None, 
+    subscription=None, show_invoiced=False):
     if not from_date:
         from_date = "2000-01-01"
     if not to_date:
         to_date = today()
     if not customer:
         customer = "%"
+
+    if subscription:
+        # Don't show DN
+        doctype = "Subscription Contract"
+    else:
+        subscription = "%"
 
     invoiced_filter = ""
     if show_invoiced:
@@ -272,12 +279,13 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
             AND ss.customer LIKE "{customer}"
             AND (bp.period_start >= "{from_date}" OR "{from_date}" <= bp.period_end) -- Keep contracts active on from_date. end_date already filtered by RECURSIVE above
             AND ss.docstatus = 1
+            AND ss.name LIKE "{subscription}"
         ORDER BY ss.name, period_start, ssi_index
         ) AS subs
         
         ORDER BY reference, date;
     """.format(from_date=from_date, to_date=to_date, customer=customer, shipping_account=shipping_account,
-        invoiced_filter=invoiced_filter)
+        invoiced_filter=invoiced_filter, subscription=subscription)
     entries = frappe.db.sql(sql_query, as_dict=True)
 
     # Just filter in python...
