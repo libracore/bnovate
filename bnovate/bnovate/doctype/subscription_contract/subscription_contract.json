@@ -16,6 +16,8 @@
   "start_date",
   "planned_end_date",
   "end_date",
+  "po_no",
+  "po_date",
   "stopped",
   "credit_confirmed",
   "currency_and_price_list",
@@ -248,10 +250,23 @@
    "hidden": 1,
    "label": "Credit Confirmed",
    "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "po_no",
+   "fieldtype": "Data",
+   "label": "Customer's Purchase Order"
+  },
+  {
+   "allow_on_submit": 1,
+   "depends_on": "eval:doc.po_no",
+   "fieldname": "po_date",
+   "fieldtype": "Date",
+   "label": "Customer's Purchase Order Date"
   }
  ],
  "is_submittable": 1,
- "modified": "2023-03-24 14:45:46.621807",
+ "modified": "2023-03-27 17:12:37.210961",
  "modified_by": "douglas.watson@bnovate.com",
  "module": "bNovate",
  "name": "Subscription Contract",

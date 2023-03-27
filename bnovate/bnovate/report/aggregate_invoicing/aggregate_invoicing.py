@@ -162,6 +162,7 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
             dn.discount_amount AS additional_discount,
             dn.currency AS currency,
             dni.description,
+            dn.po_no,
             dni.blanket_order_customer_reference,
             IFNULL(dns.shipping, 0) AS shipping,
             dn.payment_terms_template,
@@ -259,6 +260,7 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
             0 as additional_discount,
             ss.currency AS currency,
             ssi.description,
+            ss.po_no,
             NULL as blanket_order_customer_reference,
             NULL AS shipping,
             ss.payment_terms_template,
@@ -360,7 +362,7 @@ def create_invoice(from_date, to_date, customer, doctype):
         'taxes': taxes_and_charges_template.taxes,
         'payment_terms_template': payment_terms,
     })
-    
+
     shipping_total = 0
     shipping_remarks = []
     last_dn = None
@@ -405,7 +407,7 @@ def create_invoice(from_date, to_date, customer, doctype):
         })
     
     sinv.insert()
-    
+    sinv.db_set("po_no", ", ".join(set([e.po_no for e in entries])))
     frappe.db.commit()
     
     return sinv.name
