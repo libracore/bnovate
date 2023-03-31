@@ -166,9 +166,10 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
             dni.blanket_order_customer_reference,
             IFNULL(dns.shipping, 0) AS shipping,
             dn.payment_terms_template,
-            NULL AS sub_interval,
+            dn.taxes_and_charges,
 
             -- Only relevant for subscriptions:
+            NULL AS sub_interval,
             NULL AS start_date,
             NULL AS end_date,
             NULL AS period_start,
@@ -264,8 +265,9 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
             NULL as blanket_order_customer_reference,
             NULL AS shipping,
             ss.payment_terms_template,
-            ss.interval AS sub_interval,
+            ss.taxes_and_charges,
 
+            ss.interval AS sub_interval,
             ss.start_date,
             ss.end_date,
             bp.period_start,
@@ -336,17 +338,27 @@ def create_invoice(from_date, to_date, customer, doctype):
     discounts = sum(e.additional_discount for e in entries)
     if discounts:
         frappe.throw("A DN contains an additional discount. I can't handle this. Please create invoice by hand.")
-    
-    # determine tax template
-    customer_group_name = frappe.get_value("Customer", customer, "customer_group")
-    customer_group = frappe.get_doc("Customer Group", customer_group_name)
-    default_taxes = customer_group.taxes_and_charges_template
-    # default_taxes = frappe.get_all("Sales Taxes and Charges Template", filters={'is_default': 1}, fields=['name'])
-    if not default_taxes:
-        frappe.throw(
-             _("Please define a default sales taxes and charges template for customer group {}.".format(customer_group_name)), 
-             _("Configuration missing")
+
+    tax_templates = set(e.taxes_and_charges for e in entries)
+    if len(tax_templates) > 1:
+        frappe.msgprint(
+             _("Multiple taxes and charges templates found, using the default template for this customer. Consider creating the invoice by hand."), 
+             _("Tax Conflict")
         )
+
+        # determine tax template
+        customer_group_name = frappe.get_value("Customer", customer, "customer_group")
+        customer_group = frappe.get_doc("Customer Group", customer_group_name)
+        default_taxes = customer_group.taxes_and_charges_template
+        # default_taxes = frappe.get_all("Sales Taxes and Charges Template", filters={'is_default': 1}, fields=['name'])
+        if not default_taxes:
+            frappe.throw(
+                _("Please define a default sales taxes and charges template for customer group {}.".format(customer_group_name)), 
+                _("Configuration missing")
+            )
+    else:
+        default_taxes = tax_templates.pop()
+
     taxes_and_charges_template = frappe.get_doc("Sales Taxes and Charges Template", default_taxes)
 
     # Determine shipping item

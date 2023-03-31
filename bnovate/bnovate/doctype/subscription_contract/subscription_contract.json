@@ -33,12 +33,23 @@
   "ignore_pricing_rule",
   "section_items",
   "items",
-  "section_break_28",
-  "base_grand_total",
-  "column_break_30",
-  "grand_total",
   "assets_section",
   "assets",
+  "section_break_28",
+  "base_total",
+  "base_net_total",
+  "column_break_31",
+  "total",
+  "net_total",
+  "section_break_34",
+  "taxes_and_charges",
+  "taxes",
+  "section_break_31",
+  "base_total_taxes_and_charges",
+  "base_grand_total",
+  "column_break_30",
+  "total_taxes_and_charges",
+  "grand_total",
   "terms_section_break",
   "payment_terms_template",
   "terms",
@@ -301,8 +312,10 @@
    "read_only": 1
   },
   {
+   "collapsible": 1,
    "fieldname": "section_break_28",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Total Before Tax"
   },
   {
    "fieldname": "base_grand_total",
@@ -323,10 +336,85 @@
    "label": "Grand Total",
    "options": "currency",
    "read_only": 1
+  },
+  {
+   "fieldname": "base_total",
+   "fieldtype": "Currency",
+   "label": "Total (Company Currency)",
+   "options": "Company:company:default_currency",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "base_net_total",
+   "fieldtype": "Currency",
+   "label": "Net Total (Company Currency)",
+   "options": "Company:company:default_currency",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_break_31",
+   "fieldtype": "Section Break",
+   "label": "Grand Total"
+  },
+  {
+   "fieldname": "column_break_31",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total",
+   "fieldtype": "Currency",
+   "label": "Total",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "net_total",
+   "fieldtype": "Currency",
+   "label": "Net Total",
+   "options": "currency",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_34",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "taxes_and_charges",
+   "fieldtype": "Link",
+   "label": "Sales Taxes and Charges Template",
+   "options": "Sales Taxes and Charges Template",
+   "print_hide": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "taxes",
+   "fieldtype": "Table",
+   "label": "Sales Taxes and Charges",
+   "options": "Sales Taxes and Charges"
+  },
+  {
+   "fieldname": "base_total_taxes_and_charges",
+   "fieldtype": "Currency",
+   "label": "Total Taxes and Charges (Company Currency)",
+   "options": "Company:company:default_currency",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_taxes_and_charges",
+   "fieldtype": "Currency",
+   "label": "Total Taxes and Charges",
+   "options": "currency",
+   "print_hide": 1,
+   "read_only": 1
   }
  ],
  "is_submittable": 1,
- "modified": "2023-03-31 11:39:59.646719",
+ "modified": "2023-03-31 13:42:19.658382",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Subscription Contract",
