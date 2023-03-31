@@ -109,6 +109,25 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 			}
 		}
 	},
+	renewal_reminder_friendly(e) {
+		// Set reminder in weeks based on user friendly values
+		const lookup = {
+			'': [null, 'WEEK'],
+			'1 week': ['1', 'WEEK'],
+			'2 weeks': ['2', 'WEEK'],
+			'3 weeks': ['3', 'WEEK'],
+			'1 month': ['1', 'MONTH'],
+			'2 months': ['2', 'MONTH'],
+			'3 months': ['3', 'MONTH'],
+			'4 months': ['4', 'MONTH'],
+		}
+
+		let [count, period] = lookup[e.renewal_reminder_friendly];
+		this.frm.set_value("renewal_reminder", count);
+		this.frm.set_value("renewal_reminder_period", period);
+	},
+
+
 	_get_next_billing_end(current_end_date) {
 		const interval = this.frm.doc.interval === "Yearly" ? 12 : 1;
 		let billing_start = this.frm.doc.start_date;  // start of next billing period

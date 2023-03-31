@@ -116,6 +116,7 @@
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Amount",
+   "options": "currency",
    "read_only": 1
   },
   {
@@ -141,12 +142,14 @@
   {
    "fieldname": "net_rate",
    "fieldtype": "Currency",
-   "label": "Net Rate"
+   "label": "Net Rate",
+   "options": "currency"
   },
   {
    "fieldname": "net_amount",
    "fieldtype": "Currency",
-   "label": "Net Amount"
+   "label": "Net Amount",
+   "options": "currency"
   },
   {
    "fieldname": "column_break_20",
@@ -154,17 +157,19 @@
   },
   {
    "fieldname": "base_net_rate",
-   "fieldtype": "Data",
-   "label": "Net Rate (Company Currency)"
+   "fieldtype": "Currency",
+   "label": "Net Rate (Company Currency)",
+   "options": "Company:company:default_currency"
   },
   {
    "fieldname": "base_net_amount",
-   "fieldtype": "Data",
-   "label": "Net Amount (Company Currency)"
+   "fieldtype": "Currency",
+   "label": "Net Amount (Company Currency)",
+   "options": "Company:company:default_currency"
   }
  ],
  "istable": 1,
- "modified": "2023-03-13 18:16:54.400509",
+ "modified": "2023-03-31 10:29:02.021467",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Subscription Contract Item",

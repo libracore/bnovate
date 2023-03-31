@@ -35,12 +35,8 @@ def get_data(filters):
     if filters.customer:
         customer_filter = filters.customer
 
-    reminder_filter = ""
-    if filters.reminders_only:
-        reminder_filter = "AND DATE_SUB(planned_end_date, INTERVAL renewal_reminder WEEK) < CURRENT_DATE()"
-
     sql_query = """
-    -- sql
+    -- --sql
 SELECT
   sc.name AS subscription,
   sc.title,
@@ -55,14 +51,19 @@ SELECT
         IFNULL((SELECT GREATEST(MAX(end_date), MAX(start_date)) FROM `tabSubscription Contract`), 
             CURRENT_DATE()))) AS computed_end_date,
   renewal_reminder,
-  DATE_SUB(planned_end_date, INTERVAL renewal_reminder WEEK) as renewal_reminder_from
+  CASE renewal_reminder_period
+  	WHEN "WEEK" THEN DATE_SUB(planned_end_date, INTERVAL renewal_reminder WEEK)  	
+    WHEN "MONTH" THEN DATE_SUB(planned_end_date, INTERVAL renewal_reminder MONTH)
+  END as renewal_reminder_from
 FROM `tabSubscription Contract` sc
 JOIN `tabCustomer` c ON sc.customer = c.name
 WHERE sc.docstatus = 1
-    {reminder_filter}
     ;
-    """.format(customer_filter=customer_filter, reminder_filter=reminder_filter)
+    """.format(customer_filter=customer_filter)
 
     data = frappe.db.sql(sql_query, as_dict=True)
+
+    if filters.reminders_only:
+        return [d for d in data if d.renewal_reminder_from is not None]
 
     return data

@@ -407,7 +407,7 @@ def create_invoice(from_date, to_date, customer, doctype):
         })
     
     sinv.insert()
-    sinv.db_set("po_no", ", ".join(set([e.po_no for e in entries])))
+    sinv.db_set("po_no", ", ".join(set([e.po_no for e in entries if e.po_no])))
     frappe.db.commit()
     
     return sinv.name

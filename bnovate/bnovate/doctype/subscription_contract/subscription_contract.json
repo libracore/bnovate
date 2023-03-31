@@ -11,7 +11,9 @@
   "customer",
   "customer_name",
   "interval",
+  "renewal_reminder_friendly",
   "renewal_reminder",
+  "renewal_reminder_period",
   "column_main",
   "enabled",
   "start_date",
@@ -270,13 +272,33 @@
    "description": "Weeks before planned end date",
    "fieldname": "renewal_reminder",
    "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Renewal Reminder Hidden",
+   "options": "\n2\n3\n4\n8\n12\n16",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "description": "Before <b>Planned End Date</b>",
+   "fieldname": "renewal_reminder_friendly",
+   "fieldtype": "Select",
    "label": "Renewal Reminder",
-   "options": "\n2\n3\n4\n8\n12\n16"
+   "options": "\n1 week\n2 weeks\n3 weeks\n1 month\n2 months\n3 months\n4 months"
+  },
+  {
+   "allow_on_submit": 1,
+   "description": "Before <b>Planned End Date</b>",
+   "fieldname": "renewal_reminder_period",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": " Renewal Reminder Period",
+   "options": "WEEK\nMONTH",
+   "read_only": 1
   }
  ],
  "is_submittable": 1,
- "modified": "2023-03-27 17:43:59.736782",
- "modified_by": "douglas.watson@bnovate.com",
+ "modified": "2023-03-30 17:24:23.079033",
+ "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Subscription Contract",
  "owner": "Administrator",
