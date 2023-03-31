@@ -126,6 +126,9 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 		this.frm.set_value("renewal_reminder", count);
 		this.frm.set_value("renewal_reminder_period", period);
 	},
+	tc_name() {
+		this.get_terms();
+	},
 
 
 	_get_next_billing_end(current_end_date) {

@@ -52,6 +52,7 @@
   "grand_total",
   "terms_section_break",
   "payment_terms_template",
+  "tc_name",
   "terms",
   "sales_invoice",
   "amended_from",
@@ -411,10 +412,17 @@
    "options": "currency",
    "print_hide": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "tc_name",
+   "fieldtype": "Link",
+   "label": "Terms",
+   "options": "Terms and Conditions",
+   "print_hide": 1
   }
  ],
  "is_submittable": 1,
- "modified": "2023-03-31 13:42:19.658382",
+ "modified": "2023-03-31 14:52:26.258624",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Subscription Contract",

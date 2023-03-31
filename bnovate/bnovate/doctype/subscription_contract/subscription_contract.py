@@ -10,11 +10,12 @@ from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
 from frappe.utils import flt, nowdate, getdate, add_days, date_diff
 from erpnext.selling.doctype.quotation.quotation import _make_customer
+from erpnext.controllers.selling_controller import SellingController
 from erpnext.controllers.sales_and_purchase_return import make_return_doc
 
 from bnovate.bnovate.report.aggregate_invoicing.aggregate_invoicing import check_invoice_status
 
-class SubscriptionContract(Document):
+class SubscriptionContract(SellingController):
 	def validate(self):
 
 		self.set_status()
