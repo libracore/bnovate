@@ -33,6 +33,10 @@
   "ignore_pricing_rule",
   "section_items",
   "items",
+  "section_break_28",
+  "base_grand_total",
+  "column_break_30",
+  "grand_total",
   "assets_section",
   "assets",
   "terms_section_break",
@@ -196,7 +200,8 @@
   {
    "fieldname": "plc_conversion_rate",
    "fieldtype": "Float",
-   "label": "Price List Exchange Rate"
+   "label": "Price List Exchange Rate",
+   "precision": "9"
   },
   {
    "default": "0",
@@ -294,10 +299,34 @@
    "label": " Renewal Reminder Period",
    "options": "WEEK\nMONTH",
    "read_only": 1
+  },
+  {
+   "fieldname": "section_break_28",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "base_grand_total",
+   "fieldtype": "Currency",
+   "label": "Grand Total (Company Currency)",
+   "options": "Company:company:default_currency",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_30",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "grand_total",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Grand Total",
+   "options": "currency",
+   "read_only": 1
   }
  ],
  "is_submittable": 1,
- "modified": "2023-03-30 17:24:23.079033",
+ "modified": "2023-03-31 11:39:59.646719",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Subscription Contract",

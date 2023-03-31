@@ -12,6 +12,10 @@
   "column_break_6",
   "price_list_rate",
   "base_price_list_rate",
+  "discount_and_margin",
+  "column_break_16",
+  "discount_percentage",
+  "discount_amount",
   "section_break_9",
   "rate",
   "amount",
@@ -166,10 +170,33 @@
    "fieldtype": "Currency",
    "label": "Net Amount (Company Currency)",
    "options": "Company:company:default_currency"
+  },
+  {
+   "fieldname": "column_break_16",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "discount_and_margin",
+   "fieldtype": "Section Break",
+   "label": "Discount and Margin"
+  },
+  {
+   "depends_on": "price_list_rate",
+   "fieldname": "discount_percentage",
+   "fieldtype": "Percent",
+   "label": "Discount (%) on Price List Rate with Margin",
+   "print_hide": 1
+  },
+  {
+   "depends_on": "price_list_rate",
+   "fieldname": "discount_amount",
+   "fieldtype": "Currency",
+   "label": "Discount Amount",
+   "options": "currency"
   }
  ],
  "istable": 1,
- "modified": "2023-03-31 10:29:02.021467",
+ "modified": "2023-03-31 11:28:59.620304",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Subscription Contract Item",
