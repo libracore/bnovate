@@ -20,7 +20,13 @@ def get_data():
                         "label": _("Order Book"),
                         "doctype": "Sales Order",
                         "is_query_report": True               
-                   }         
+                   },
+                   {
+                       "type": "doctype",
+                       "name": "Subscription Contract",
+                       "label": _("Subscription Contract"),
+                       "description": _("Subscriptions and service contracts")
+                   },
             ]
         }, 
         {
