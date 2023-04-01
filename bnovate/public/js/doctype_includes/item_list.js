@@ -19,7 +19,7 @@ function prompt_new_item() {
                 label: 'Naming Series',
                 fieldname: 'series',
                 fieldtype: 'Select',
-                options: ['1xxxxx', '2xxxxx', '3xxxxx', '4xxxxx'],
+                options: ['', '1xxxxx', '2xxxxx', '3xxxxx', '4xxxxx'],
                 async change(e) {
                     const series = e.currentTarget.value;
                     const prev_code = await get_next_item_code(series.substring(0, 1));

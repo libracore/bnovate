@@ -12,7 +12,11 @@ frappe.query_reports["Subscription Timeline"] = {
             "label": __("Customer"),
             "fieldtype": "Link",
             "options": "Customer"
-        },
+        }, {
+            "fieldname": "reminders_only",
+            "label": __("Show only reminders"),
+            "fieldtype": "Check",
+        }
 
     ],
     onload(report) {

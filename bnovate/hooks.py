@@ -86,6 +86,10 @@ doctype_list_js = {
 # Website user home page (by function)
 # get_website_user_home_page = "bnovate.utils.get_home_page"
 
+has_website_permission = {
+    # 'Blanket Order': ['TBD']
+}
+
 # Generators
 # ----------
 
@@ -139,13 +143,13 @@ doc_events = {
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
+scheduler_events = {
 # 	"all": [
 # 		"bnovate.tasks.all"
 # 	],
-# 	"daily": [
-# 		"bnovate.tasks.daily"
-# 	],
+	"daily": [
+        "bnovate.bnovate.doctype.subscription_contract.subscription_contract.update_subscription_status",
+	],
 # 	"hourly": [
 # 		"bnovate.tasks.hourly"
 # 	],
@@ -155,7 +159,7 @@ doc_events = {
 # 	"monthly": [
 # 		"bnovate.tasks.monthly"
 # 	]
-# }
+}
 
 # Testing
 # -------

@@ -6,22 +6,6 @@
 frappe.provide('bnovate.subscription_contract');
 
 frappe.ui.form.on('Subscription Contract', {
-	refresh(frm) {
-		frm.add_custom_button(__("Modify / Upgrade"), async function () {
-			frappe.model.open_mapped_doc({
-				method: "bnovate.bnovate.doctype.subscription_contract.subscription_contract.make_from_self",
-				frm: cur_frm
-			});
-		})
-
-		frm.add_custom_button(__("Create Invoice"), async function () {
-			frappe.route_options = {
-				"customer": frm.doc.customer,
-			};
-			await frappe.set_route("query-report", "Aggregate Invoicing");
-			frappe.query_report.refresh();
-		});
-	},
 	async before_cancel(frm) {
 		// Only allow cancellation if no invoices are open
 		// Cancelling is blocked by the backend anyway, but I want a more helpful message for users.
@@ -42,44 +26,6 @@ frappe.ui.form.on('Subscription Contract', {
 });
 
 
-// Example of how to draw a report inside a form.
-// Assumes field "report" exists of type HTML.
-async function draw_report(frm) {
-	const resp = await frappe.call({
-		method: "frappe.desk.query_report.run",
-		args: {
-			report_name: "Subscription Invoices",
-			filters: {
-				subscription: frm.doc.name,
-			}
-		}
-	})
-	const report_data = resp.message;
-	// if (!report_data.result.length) {
-	// 	return;
-	// }
-	let report = new frappe.views.QueryReport({
-		parent: frm.fields_dict.report.wrapper,
-		report_name: "Subscription Invoices"
-	});
-	await report.get_report_doc();
-	await report.get_report_settings();
-	report.$report = [frm.fields_dict.report.wrapper];
-	report.prepare_report_data(report_data);
-	report.render_datatable()
-}
-
-// Add to custom scripts on Sales Invoice for example, to show links on dashboard:
-// Needs to be included in hooks.py (doctype_js)
-// frappe.ui.form.on("Sales Invoice", {
-// 	before_load(frm) {
-// 		frm.dashboard.add_transactions({
-// 			'items': ['Subscription Contract'],
-// 			'label': 'Subscription',
-// 		})
-// 		frm.dashboard.data.internal_links['Subscription Contract'] = ['items', 'subscription'];
-// 	},
-// })
 
 // Subclass SellingController to use their price rate mechanisms
 bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.SellingController.extend({
@@ -90,8 +36,35 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 		this.frm.set_query("item_code", "items", function () {
 			return { filters: { enable_deferred_revenue: true } }
 		});
+
 		if (!this.frm.doc.start_date) {
 			this.frm.set_value('start_date', frappe.datetime.add_days(frappe.datetime.month_end(), 1));
+		}
+	},
+	refresh() {
+		if (this.frm.doc.docstatus == 1 && (this.frm.doc.stopped || this.frm.doc.tentative_end_date)) {
+			render_checklist(this.frm);
+		}
+
+		if (this.frm.doc.docstatus == 1) {
+			if (!this.frm.doc.stopped && this.frm.has_perm(WRITE)) {
+				const label = __('Modify / Upgrade');
+				this.frm.add_custom_button(label, async () => {
+					// TODO: restrict permissions to Sales Managers (or whoever can modify SINVs)
+					try {
+						this.frm.doc.tentative_end_date = await prompt_end_date();
+					} catch {
+						this.frm.reload_doc();
+						return;
+					}
+					render_checklist(this.frm);
+					this.frm.remove_custom_button(label);
+				})
+			}
+
+			this.frm.add_custom_button(__("Create Invoice"), async () => {
+				this.frm.trigger('create_invoices');
+			});
 		}
 	},
 	start_date() {
@@ -107,7 +80,7 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 	planned_end_date() {
 		console.log("trigged")
 		if (this.frm.doc.planned_end_date) {
-			const billing_end = this._get_next_billing_end(this.frm.doc.planned_end_date);
+			const billing_end = this._get_next_billing_end(this.frm.doc.planned_end_date || frappe.datetime.get_today());
 			if (billing_end != this.frm.doc.planned_end_date) {
 				frappe.msgprint({
 					title: __("Info"),
@@ -121,6 +94,7 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 		}
 	},
 	end_date() {
+		// Note: to force an end date in the middle of a billing period, use the "end_contract" workflow.
 		// if end date is defined, set it to the end of a period.
 		if (this.frm.doc.end_date) {
 			const billing_end = this._get_next_billing_end(this.frm.doc.end_date);
@@ -135,6 +109,28 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 			}
 		}
 	},
+	renewal_reminder_friendly(e) {
+		// Set reminder in weeks based on user friendly values
+		const lookup = {
+			'': [null, 'WEEK'],
+			'1 week': ['1', 'WEEK'],
+			'2 weeks': ['2', 'WEEK'],
+			'3 weeks': ['3', 'WEEK'],
+			'1 month': ['1', 'MONTH'],
+			'2 months': ['2', 'MONTH'],
+			'3 months': ['3', 'MONTH'],
+			'4 months': ['4', 'MONTH'],
+		}
+
+		let [count, period] = lookup[e.renewal_reminder_friendly];
+		this.frm.set_value("renewal_reminder", count);
+		this.frm.set_value("renewal_reminder_period", period);
+	},
+	tc_name() {
+		this.get_terms();
+	},
+
+
 	_get_next_billing_end(current_end_date) {
 		const interval = this.frm.doc.interval === "Yearly" ? 12 : 1;
 		let billing_start = this.frm.doc.start_date;  // start of next billing period
@@ -145,7 +141,87 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 		}
 		return billing_end;
 	},
+	async create_invoices() {
+		frappe.route_options = {
+			"customer": this.frm.doc.customer,
+		};
+		await frappe.set_route("query-report", "Aggregate Invoicing");
+		frappe.query_report.refresh();
+	},
 
+	// Modification workflow
+	// - Confirm end date of current SC
+	// - Ensure billing is created up to end_date
+	// - Set status to Stopped
+	// - If applicable, find last invoice(s) and adjust service end date
+	// - If applicable, issue corresponding credit note(s)
+	// - Duplicate SC, starting from day after end date.
+	//   - Show on print format that it replaces previous SC.
+	async check_invoice_status() {
+		const resp = await frappe.call({
+			method: 'bnovate.bnovate.report.aggregate_invoicing.aggregate_invoicing.check_invoice_status',
+			args: {
+				docname: this.frm.doc.name,
+				end_date: this.frm.doc.tentative_end_date || this.frm.doc.end_date,
+			},
+		});
+		return resp.message;
+	},
+	async confirm_end_date() {
+		let end_date = await prompt_end_date(this.frm.doc.tentative_end_date);
+		try {
+			await this.end_contract(end_date);
+		} finally {
+			this.frm.reload_doc();
+		}
+	},
+	async end_contract(end_date) {
+		const resp = await frappe.call({
+			method: 'bnovate.bnovate.doctype.subscription_contract.subscription_contract.end_contract',
+			args: {
+				docname: this.frm.doc.name,
+				end_date: end_date,
+			},
+		})
+		return resp.message;
+	},
+	async stop_invoices() {
+		const resp = await frappe.call({
+			method: 'bnovate.bnovate.doctype.subscription_contract.subscription_contract.stop_invoices',
+			args: {
+				docname: this.frm.doc.name,
+			}
+		})
+		this.frm.reload_doc();
+		return resp.message; // list of reimbursable SINV items
+	},
+	async create_credit_notes(sinv_items, selected_items) {
+		const resp = await frappe.call({
+			method: 'bnovate.bnovate.doctype.subscription_contract.subscription_contract.create_credit_notes',
+			args: {
+				docname: this.frm.doc.name,
+				sinv_items,
+				selected_items,
+			}
+		})
+		this.frm.reload_doc();
+		return resp.message
+	},
+	// Set stop date on invoices, calculated reimbursable amounts, create credit notes if user choses to.
+	async adjust_billing() {
+		let reimbursable_sinv_items = await this.stop_invoices();
+		let selected = await prompt_credit_note_choice(reimbursable_sinv_items);
+		console.log(selected);
+		let credit_notes = await this.create_credit_notes(reimbursable_sinv_items, selected);
+		frappe.msgprint(`Created credit note(s): ${credit_notes.map(cn => frappe.utils.get_form_link("Sales Invoice", cn.name, true, cn.name))}`);
+	},
+	// Create a copy of current doc, but starting from day after end date.
+	amend_stopped() {
+		frappe.model.open_mapped_doc({
+			method: 'bnovate.bnovate.doctype.subscription_contract.subscription_contract.make_from_self',
+			frm: this.frm
+		});
+	},
 
 	// override some methods from transaction.js
 
@@ -198,3 +274,155 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 })
 
 $.extend(cur_frm.cscript, new bnovate.subscription_contract.SubscriptionContractController({ frm: cur_frm }));
+
+
+/***************************
+ * HELPERS
+ ***************************/
+
+function prompt_end_date(default_date) {
+	return new Promise((resolve, reject) => {
+		let d = new frappe.ui.Dialog({
+			title: "Confirm end date of current Subscription",
+			fields: [{
+				label: "Actual End Date",
+				fieldname: "end_date",
+				fieldtype: "Date",
+				default: default_date,
+				reqd: 1
+			}],
+			primary_action_label: 'End Contract',
+			primary_action(values) {
+				resolve(values.end_date);
+				d.hide();
+			},
+			secondary_action() {
+				reject();
+			}
+		});
+		d.show();
+	})
+}
+
+function prompt_credit_note_choice(refundable_items) {
+	const template = `
+	<table class="table">
+	<tbody>
+		<tr>
+		 	<th></th>
+			<th>SINV</th>
+			<th>Period Start</th>
+			<th>Net Amount</th>
+			<th>Refundable Amount</th>
+		</tr>
+		{% for item in refundable_items %}
+		<tr>
+			<td><input type="checkbox" class="cn-select" data-name="{{ item.name }}" checked></td>
+			<td><a href="{{ frappe.utils.get_form_link('Sales Invoice', item.sinv_name) }}" target="_blank">{{ item.sinv_name }}</a></td>
+			<td>{{ frappe.format(item.service_start_date, { fieldtype: 'Date' }) }} </td>
+			<td>{{ format_currency(item.net_amount, item.currency) }} </td>
+			<td>{{ format_currency(item.refund, item.currency) }} </td>
+		</tr>
+		{% endfor %}
+	</tbody>
+	</table>
+	`
+	return new Promise((resolve, reject) => {
+		let d = new frappe.ui.Dialog({
+			title: "Chose invoices for credit note",
+			fields: [{
+				label: "Table",
+				fieldname: "table",
+				fieldtype: "HTML",
+				options: frappe.render_template(template, { refundable_items })
+			}],
+			primary_action_label: 'Create Credit Notes',
+			primary_action(values) {
+				const selected = [...document.querySelectorAll('.cn-select')]
+					.filter(el => el.checked)
+					.map(el => el.dataset.name);
+				resolve(selected);
+				d.hide();
+			},
+			secondary_action() {
+				reject();
+			}
+		});
+		d.show();
+	})
+}
+
+async function render_checklist(frm) {
+
+	// Empty element if it already existed
+
+	const div = document.querySelector('#checklist') || document.createElement('div');
+	div.innerHTML = '';
+
+	div.setAttribute('class', 'row form-section');
+	div.setAttribute('id', 'checklist');
+	document.querySelector('.form-page').prepend(div);
+
+	const template = `
+	<div class="col-sm-12">
+		<p>Complete the following steps to terminate this contract:</p>
+
+		<ul>
+			<li class="{% if invoices_done %}done{% endif %}">
+				Create all invoices until end date
+				{% if !invoices_done %}
+				<button id="create-invoices" class="btn btn-primary btn-xs">Create Invoices</button>
+				{% endif %}
+			</li>
+			<li class="{% if doc.stopped %}done{% endif %}">
+				Set End Date
+				{% if invoices_done && !doc.stopped %}
+				<button id="end-contract" class="btn btn-primary btn-xs">Set End Date</button>
+				{% endif %}
+			</li>
+			<li class="{% if doc.credit_confirmed %}done{% endif %}">
+				Update Invoices and create Credit Notes if needed 
+				{% if doc.stopped && !doc.credit_confirmed %}
+				<button id="adjust-billing" class="btn btn-primary btn-xs">Adjust Billing</button>
+				{% endif %}
+			</li>
+			<li class="{% if amended_links %}done{% endif %}">
+				Create new subscription 
+				{% if doc.credit_confirmed %}
+					{% if !amended_links %}
+						<button id="amend" class="btn btn-primary btn-xs">Amend</button>
+					{% else %}
+					: {{ amended_links }}
+					{% endif %}
+				{% endif %}
+			</li>
+		</ul>
+	</div>
+	`
+
+	const invoiceable_entries = await frm.trigger('check_invoice_status');
+	const invoices_done = invoiceable_entries.length == 0;
+
+	const amended = await frappe.db.get_list("Subscription Contract", { filters: { amended_from: frm.doc.name } })
+	const amended_links = amended
+		.map(doc => frappe.utils.get_form_link("Subscription Contract", doc.name, true, doc.name))
+		.join(", ");
+
+	div.innerHTML = frappe.render_template(template, { doc: frm.doc, invoices_done, amended_links })
+
+	document.querySelector('#create-invoices')?.addEventListener('click', () => {
+		frm.trigger('create_invoices');
+	})
+
+	document.querySelector('#end-contract')?.addEventListener('click', () => {
+		frm.trigger('confirm_end_date');
+	})
+
+	document.querySelector('#adjust-billing')?.addEventListener('click', () => {
+		frm.trigger('adjust_billing');
+	})
+
+	document.querySelector('#amend')?.addEventListener('click', () => {
+		frm.trigger('amend_stopped');
+	})
+}

@@ -9,6 +9,7 @@
 #
 
 from __future__ import unicode_literals
+import re
 import frappe
 import calendar
 import datetime
@@ -116,13 +117,23 @@ def get_data(filters):
     return output
 
 
-def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype=None, show_invoiced=False):
+def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype=None, 
+    subscription=None, show_invoiced=False, show_drafts=True):
     if not from_date:
         from_date = "2000-01-01"
     if not to_date:
         to_date = today()
     if not customer:
         customer = "%"
+    sinv_docstatus = "= 1"
+    if show_drafts:
+        sinv_docstatus = "< 2"
+
+    if subscription:
+        # Don't show DN
+        doctype = "Subscription Contract"
+    else:
+        subscription = "%"
 
     invoiced_filter = ""
     if show_invoiced:
@@ -130,6 +141,7 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
     shipping_account = frappe.get_single("bNovate Settings").shipping_income_account
         
     sql_query = """
+        -- --sql
         SELECT
             1 AS indent,
             dn.customer AS customer,
@@ -150,12 +162,14 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
             dn.discount_amount AS additional_discount,
             dn.currency AS currency,
             dni.description,
+            dn.po_no,
             dni.blanket_order_customer_reference,
             IFNULL(dns.shipping, 0) AS shipping,
             dn.payment_terms_template,
-            NULL AS sub_interval,
+            dn.taxes_and_charges,
 
             -- Only relevant for subscriptions:
+            NULL AS sub_interval,
             NULL AS start_date,
             NULL AS end_date,
             NULL AS period_start,
@@ -170,7 +184,7 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
         LEFT JOIN `tabDelivery Note` dn ON dn.name = dni.parent
         LEFT JOIN `tabSales Invoice Item` sii ON (
             dni.name = sii.dn_detail
-            AND sii.docstatus < 2
+            AND sii.docstatus {sinv_docstatus}
         )
         LEFT JOIN (
           SELECT
@@ -247,11 +261,13 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
             0 as additional_discount,
             ss.currency AS currency,
             ssi.description,
+            ss.po_no,
             NULL as blanket_order_customer_reference,
             NULL AS shipping,
             ss.payment_terms_template,
-            ss.interval AS sub_interval,
+            ss.taxes_and_charges,
 
+            ss.interval AS sub_interval,
             ss.start_date,
             ss.end_date,
             bp.period_start,
@@ -265,24 +281,41 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
         FROM bp
         JOIN `tabSubscription Contract` ss on ss.name = bp.name
         JOIN `tabSubscription Contract Item` ssi on ssi.name = ssi_docname
-        LEFT JOIN `tabSales Invoice Item` sii on sii.sc_detail = ssi.name AND sii.service_start_date = bp.period_start
+        LEFT JOIN `tabSales Invoice Item` sii on (
+            sii.sc_detail = ssi.name 
+            AND sii.service_start_date = bp.period_start
+            AND sii.docstatus {sinv_docstatus}
+        )
         LEFT JOIN `tabSales Invoice` si on sii.parent = si.name
         WHERE (si.name IS NULL {invoiced_filter})
             AND ss.customer LIKE "{customer}"
-            AND (bp.period_start >= "{from_date}") -- AND bp.period_end <= "{to_date}") -- already filtered by RECURSIVE above
+            AND (bp.period_start >= "{from_date}" OR "{from_date}" <= bp.period_end) -- Keep contracts active on from_date. end_date already filtered by RECURSIVE above
             AND ss.docstatus = 1
+            AND ss.name LIKE "{subscription}"
         ORDER BY ss.name, period_start, ssi_index
         ) AS subs
         
         ORDER BY reference, date;
     """.format(from_date=from_date, to_date=to_date, customer=customer, shipping_account=shipping_account,
-        invoiced_filter=invoiced_filter)
+        invoiced_filter=invoiced_filter, subscription=subscription, sinv_docstatus=sinv_docstatus)
     entries = frappe.db.sql(sql_query, as_dict=True)
 
     # Just filter in python...
     if doctype:
         return [e for e in entries if e.dt == doctype]
     return entries
+
+@frappe.whitelist()
+def check_invoice_status(docname, end_date):
+    """ Return list of invoiceable periods for a subscription.
+
+    Empty list if invoices are up to date.
+    """
+    # Elementary SQL injection prevention...
+    if not re.match(r'^SC-\d{5}$', docname):
+        frappe.throw("Invalid docname for Subscription Contract: {}".format(docname))
+
+    return get_invoiceable_entries(to_date=end_date, subscription=docname, show_drafts=False)
 
 
 @frappe.whitelist()
@@ -305,17 +338,27 @@ def create_invoice(from_date, to_date, customer, doctype):
     discounts = sum(e.additional_discount for e in entries)
     if discounts:
         frappe.throw("A DN contains an additional discount. I can't handle this. Please create invoice by hand.")
-    
-    # determine tax template
-    customer_group_name = frappe.get_value("Customer", customer, "customer_group")
-    customer_group = frappe.get_doc("Customer Group", customer_group_name)
-    default_taxes = customer_group.taxes_and_charges_template
-    # default_taxes = frappe.get_all("Sales Taxes and Charges Template", filters={'is_default': 1}, fields=['name'])
-    if not default_taxes:
-        frappe.throw(
-             _("Please define a default sales taxes and charges template for customer group {}.".format(customer_group_name)), 
-             _("Configuration missing")
+
+    tax_templates = set(e.taxes_and_charges for e in entries)
+    if len(tax_templates) > 1:
+        frappe.msgprint(
+             _("Multiple taxes and charges templates found, using the default template for this customer. Consider creating the invoice by hand."), 
+             _("Tax Conflict")
         )
+
+        # determine tax template
+        customer_group_name = frappe.get_value("Customer", customer, "customer_group")
+        customer_group = frappe.get_doc("Customer Group", customer_group_name)
+        default_taxes = customer_group.taxes_and_charges_template
+        # default_taxes = frappe.get_all("Sales Taxes and Charges Template", filters={'is_default': 1}, fields=['name'])
+        if not default_taxes:
+            frappe.throw(
+                _("Please define a default sales taxes and charges template for customer group {}.".format(customer_group_name)), 
+                _("Configuration missing")
+            )
+    else:
+        default_taxes = tax_templates.pop()
+
     taxes_and_charges_template = frappe.get_doc("Sales Taxes and Charges Template", default_taxes)
 
     # Determine shipping item
@@ -331,7 +374,7 @@ def create_invoice(from_date, to_date, customer, doctype):
         'taxes': taxes_and_charges_template.taxes,
         'payment_terms_template': payment_terms,
     })
-    
+
     shipping_total = 0
     shipping_remarks = []
     last_dn = None
@@ -376,7 +419,7 @@ def create_invoice(from_date, to_date, customer, doctype):
         })
     
     sinv.insert()
-    
+    sinv.db_set("po_no", ", ".join(set([e.po_no for e in entries if e.po_no])))
     frappe.db.commit()
     
     return sinv.name
