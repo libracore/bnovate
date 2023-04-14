@@ -1,0 +1,51 @@
+<h1>Your cartridges stored at bNovate</h1>
+
+<div class="row">
+    <div class="col">
+        <button id="request-refill" class="btn btn-primary">Request Refill</button>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col">
+        <table class="table table-condensed" style="border-bottom: 1px solid #d1d8dd; width:100%">
+            <thead>
+                <th></th>
+                <th>Serial No</th>
+                <th>At bNovate since</th>
+            </thead>
+            <tbody>
+                {% for row in data %}
+                <tr>
+                    <td>
+                        <input class="serial-check" type="checkbox" data-serial="{{ row.serial_no }}">
+                    </td>
+                    <td>{{ row.serial_no }}</td>
+                    <td>{{ row.purchase_date }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+<script>
+    function getSelected() {
+        let serialNos = [...document.querySelectorAll(".serial-check")]
+            .filter(c => c.checked)
+            .map(c => c.dataset.serial);
+
+        return serialNos;
+    }
+
+    function createRequest(serialNos) {
+
+        console.log("Creating refill request for", serialNos)
+
+    }
+
+    document.querySelector("#request-refill").addEventListener("click", () => {
+        createRequest(getSelected());
+    })
+</script>

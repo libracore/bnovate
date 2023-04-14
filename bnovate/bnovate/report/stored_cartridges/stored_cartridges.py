@@ -26,7 +26,10 @@ def get_columns():
 def get_data(filters):
     extra_filters = ""
     if filters.customer:
-        extra_filters += 'AND ste.from_customer = "{}"'.format(filters.customer)
+        if type(filters.customer) == str:
+            filters.customer = [filters.customer]
+        customers = '("' + '", "'.join(filters.customer) + '")'
+        extra_filters += 'AND ste.from_customer IN {}'.format(customers)
 
     sql_query = """
         SELECT 
