@@ -78,6 +78,7 @@ def get_data(filters):
     JOIN `tabDelivery Note` as dn on di.delivery_note = dn.name
     JOIN `tabCustomer` as c on so.customer = c.name
     {sn_filter}
+    ORDER BY dn.posting_date
     ;
     """.format(from_date=filters.from_date, to_date=filters.to_date, sn_filter=sn_filter)
 
