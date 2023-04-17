@@ -35,6 +35,10 @@ fixtures = [
             "Work Order-time_log",
             "BOM-workstation",  # Used to assign work order to a workstation
             "Work Order-workstation",
+            # Used to track owners of enclosures
+            "Serial No-ownership_details",
+            "Serial No-owned_by",
+            "Serial No-owner_set_by",
         ]]]
     }
 ]
@@ -140,6 +144,10 @@ doc_events = {
     "Stock Entry": {
         "on_submit": "bnovate.bnovate.page.work_order_execution.work_order_execution.update_work_order_unit_time",
         "on_cancel": "bnovate.bnovate.page.work_order_execution.work_order_execution.update_work_order_unit_time",
+    },
+    "Delivery Note": {
+        "on_submit": "bnovate.bnovate.utils.enclosures.set_owner_from_dn",
+        "on_cancel": "bnovate.bnovate.utils.enclosures.set_owner_from_dn",
     }
 }
 

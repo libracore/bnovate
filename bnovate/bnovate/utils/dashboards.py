@@ -7,7 +7,6 @@ import frappe
 from frappe import _
 
 def get_serial_no_dashboard_data(data):
-    print("\n\n\n\n--------------------", data)
     return frappe._dict({
         'fieldname': 'serial_no',
         'non_standard_fieldnames': {},
