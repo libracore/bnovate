@@ -19,6 +19,8 @@ def get_columns():
         {'fieldname': 'warehouse', 'fieldtype': 'Link', 'label': _('Warehouse'), 'options': 'Warehouse', 'width': 100},
         {'fieldname': 'purchase_document_no', 'fieldtype': 'Link', 'label': _('Transfer doc'), 'options': 'Stock Entry', 'width': 100}, 
         {'fieldname': 'purchase_date', 'fieldtype': 'Date', 'label': _('Since date'), 'width': 80},
+        {'fieldname': 'owned_by', 'fieldtype': 'Link', 'label': _('Owned by Customer'), 'options': 'Customer', 'width': 120},
+        {'fieldname': 'owned_by_name', 'fieldtype': 'Data', 'label': _('Owned by Customer Name'), 'width': 300, 'align': 'left'}, 
         {'fieldname': 'from_customer', 'fieldtype': 'Link', 'label': _('Last Customer'), 'options': 'Customer', 'width': 120},
         {'fieldname': 'customer_name', 'fieldtype': 'Data', 'label': _('Last Customer Name'), 'width': 300, 'align': 'left'}, 
     ]
@@ -29,7 +31,7 @@ def get_data(filters):
         if type(filters.customer) == str:
             filters.customer = [filters.customer]
         customers = '("' + '", "'.join(filters.customer) + '")'
-        extra_filters += 'AND ste.from_customer IN {}'.format(customers)
+        extra_filters += 'AND sn.owned_by IN {}'.format(customers)
 
     sql_query = """
         SELECT 
@@ -40,6 +42,8 @@ def get_data(filters):
             sn.purchase_document_type,
             sn.purchase_document_no,
             sn.purchase_date,
+            sn.owned_by,
+            sn.owned_by_name,
             ste.from_customer,
             cr.customer_name
         FROM `tabSerial No` sn
