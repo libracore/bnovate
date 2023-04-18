@@ -5,6 +5,8 @@ from __future__ import unicode_literals
 import frappe
 from frappe import _
 
+from operator import attrgetter
+
 def execute(filters=None):
     columns = get_columns()
     data = get_data(filters)
@@ -70,12 +72,16 @@ def get_data(filters):
     for row in data:
         if row.warehouse == "Customer Locations - bN":
             row.status = "Shipped"
-        elif row.warehouse == "To Refill - bN":
-            row.status = "Ready for Refill"
+            row.status_index = 4
         elif row.warehouse == "Repairs - bN":
             row.status = "Refurbishing"
+            row.status_index = 1
+        elif row.warehouse == "To Refill - bN":
+            row.status = "Ready for Refill"
+            row.status_index = 2
         elif row.warehouse == "Finished Goods - bN":
             row.status = "Ready to Ship"
+            row.status_index = 3
 
         if row.carrier == "DHL":
             row.tracking_link = '''<a href="https://www.dhl.com/ch-en/home/tracking/tracking-express.html?submit=1&tracking-id={0}" target="_blank">{0}</a>'''.format(row.tracking_no)
@@ -83,5 +89,8 @@ def get_data(filters):
         if row['type'] == 'Rental' and row['customer_name']:
             row['type'] = '<span style="color: orangered">{}</span>'.format(row['type'])
             row['customer_name'] = '<span style="color: orangered">{}</span>'.format(row['customer_name'])
+
+    
+    data.sort(key=attrgetter('status_index'))
     
     return data

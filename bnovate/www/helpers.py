@@ -44,3 +44,30 @@ def get_session_contact():
     """.format(user=frappe.session.user), as_dict=True)
 
     return users[0].name
+
+@frappe.whitelist()
+def get_addresses():
+    """ Return addresses for the current contact """
+    addresses = frappe.db.sql("""
+        SELECT 
+            `tabAddress`.`name`,
+            `tabAddress`.`address_type`,
+            `tabAddress`.`address_line1`,
+            `tabAddress`.`address_line2`,
+            `tabAddress`.`pincode`,
+            `tabAddress`.`city`,
+            `tabAddress`.`country`,
+            `tabAddress`.`is_primary_address`,
+            `tabAddress`.`is_shipping_address`,
+            `tC1`.`link_name` AS `customer_name`
+        FROM `tabContact`
+        JOIN `tabDynamic Link` AS `tC1` ON `tC1`.`parenttype` = "Contact" 
+                                       AND `tC1`.`link_doctype` = "Customer" 
+                                       AND `tC1`.`parent` = `tabContact`.`name`
+        JOIN `tabDynamic Link` AS `tA1` ON `tA1`.`parenttype` = "Address" 
+                                       AND `tA1`.`link_doctype` = "Customer" 
+                                       AND `tA1`.`link_name` = `tC1`.`link_name`
+        LEFT JOIN `tabAddress` ON `tabAddress`.`name` = `tA1`.`parent`
+        WHERE `tabContact`.`user` = "{user}";
+    """.format(user=frappe.session.user), as_dict=True)
+    return addresses
