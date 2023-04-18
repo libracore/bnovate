@@ -12,7 +12,10 @@
             <thead>
                 <th></th>
                 <th>Serial No</th>
-                <th>At bNovate since</th>
+                <th>Location</th>
+                <th>Status</th>
+                <th>Since</th>
+                <th>Tracking No</th>
             </thead>
             <tbody>
                 {% for row in data %}
@@ -21,7 +24,14 @@
                         <input class="serial-check" type="checkbox" data-serial="{{ row.serial_no }}">
                     </td>
                     <td>{{ row.serial_no }}</td>
-                    <td>{{ row.purchase_date }}</td>
+                    <td>{{ row.location }}</td>
+                    <td>{{ row.status }}</td>
+                    <td>{{ row.posting_date }}</td>
+                    <td>
+                        {% if row.tracking_link %}
+                            {{ row.tracking_link }}
+                        {% endif %}
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>

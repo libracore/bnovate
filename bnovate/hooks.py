@@ -38,6 +38,7 @@ fixtures = [
             # Used to track owners of enclosures
             "Serial No-ownership_details",
             "Serial No-owned_by",
+            "Serial No-owned_by_name",
             "Serial No-owner_set_by",
         ]]]
     }
@@ -96,6 +97,20 @@ doctype_list_js = {
 has_website_permission = {
     # 'Blanket Order': ['TBD']
 }
+
+website_route_rules = [
+    {
+        "from_route": "/requests/<name>", 
+        "to_route": "request",
+        "defaults": {
+            "parents": [{"label": _("Refill Requests"), "route": "requests"}]
+        }}
+]
+
+standard_portal_menu_items = [
+    {"title": _("My Cartridges"), "route": "/cartridges", "reference_doctype": "", "role": "Customer"},
+    {"title": _("Refill Requests"), "route": "/requests", "reference_doctype": "Refill Request", "role": "Customer"},
+]
 
 # Generators
 # ----------
@@ -190,21 +205,3 @@ scheduler_events = {
 override_doctype_dashboards = {
     "Serial No": "bnovate.bnovate.utils.dashboards.get_serial_no_dashboard_data"
 }
-
-
-# Portal stuff
-# ------------
-
-standard_portal_menu_items = [
-    {"title": _("My Cartridges"), "route": "/cartridges", "reference_doctype": "", "role": "Customer"},
-    {"title": _("Refill Requests"), "route": "/requests", "reference_doctype": "Refill Request", "role": "Customer"},
-]
-
-website_route_rules = [
-    {
-        "from_route": "/requests/<name>", 
-        "to_route": "request",
-        "defaults": {
-            "parents": [{"label": _("Refill Requests"), "route": "requests"}]
-        }}
-]
