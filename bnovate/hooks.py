@@ -68,6 +68,7 @@ app_include_js = [  # Note to self: in case of changes, may need to run bench bu
 doctype_js = {
     "Item": ["public/js/doctype_includes/item.js"],
     "Customer": ["public/js/doctype_includes/customer.js"],
+    "Contact": ["public/js/doctype_includes/contact.js"],
     "Quotation": ["public/js/doctype_includes/quotation.js"],
     "Sales Order": ["public/js/doctype_includes/sales_order.js"],
     "Delivery Note": ["public/js/doctype_includes/delivery_note.js"],

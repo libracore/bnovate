@@ -1,4 +1,4 @@
-<h1>Your cartridges stored at bNovate</h1>
+<h1>Your cartridges</h1>
 
 <div class="row">
     <div class="col">
@@ -41,21 +41,36 @@
 
 
 <script>
-    function getSelected() {
-        let serialNos = [...document.querySelectorAll(".serial-check")]
+    function get_selected() {
+        let serial_nos = [...document.querySelectorAll(".serial-check")]
             .filter(c => c.checked)
             .map(c => c.dataset.serial);
 
-        return serialNos;
+        return serial_nos;
     }
 
-    function createRequest(serialNos) {
+    function build_request(serial_nos) {
+        console.log("Creating refill request for", serial_nos)
 
-        console.log("Creating refill request for", serialNos)
+        data = {
+            shipping_address: null,
+            billing_address: null,
+            items: [],
+        }
 
+        data.items = serial_nos.map( no => ({serial_no: no, type: "ICC"}));
+        return data
     }
 
-    document.querySelector("#request-refill").addEventListener("click", () => {
-        createRequest(getSelected());
-    })
+    async function post_request(data) {
+        const resp = await frappe.call("bnovate.www.request.make_request", {
+            data
+        })
+        return resp.message
+    }
+
+
+    document.querySelector("#request-refill").addEventListener("click", async () => {
+        await post_request(build_request(get_selected()));
+    });
 </script>

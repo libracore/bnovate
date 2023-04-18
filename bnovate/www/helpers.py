@@ -29,3 +29,18 @@ def get_session_customers():
 
 def get_session_primary_customer():
     return get_session_customers()[0]
+
+
+def get_session_contact():
+    """ Return names of contacts associated to this user id """
+
+    # TODO: prevent a user from owning several contacts.
+
+    users = frappe.db.sql("""
+    SELECT
+        name
+    FROM tabContact tc
+    WHERE tc.user = "{user}"
+    """.format(user=frappe.session.user), as_dict=True)
+
+    return users[0].name

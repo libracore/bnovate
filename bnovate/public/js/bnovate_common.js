@@ -14,7 +14,6 @@ if (parseInt(Math.random() * 100) == 42 || frappe.datetime.get_today().endsWith(
 
 /*  ***********************
  * This file contains common global functions 
- * 
  *  *********************** */
 
 function get_label(doctype, docname, print_format, label_reference) {
