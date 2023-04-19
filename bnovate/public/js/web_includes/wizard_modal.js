@@ -1,5 +1,4 @@
-const modal_template = `
-<style>
+const modal_style = `
 /* Style needs to be defined outside of shadow DOM. */
 :root {
     --number-of-steps: 4;
@@ -87,8 +86,8 @@ ol.wizard-ribbon {
 .wizard-page {
     text-align: center;
 }
-</style >
-    
+`
+const modal_template = `
 <div class="modal" tabindex="-1" role="dialog" id="myModal" style="display:none">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -130,10 +129,6 @@ ol.wizard-ribbon {
 `
 
 const template_page1 = `
-        {{ serial_nos }}
-                {% for sn in serial_nos %}
-                hello
-                {% endfor %}
         <table class="table">
             <thead>
                 <th>Serial No</th>
@@ -167,6 +162,11 @@ customElements.define('wizard-modal', class extends HTMLElement {
         this.attachShadow({ mode: "open" });
         this.shadowRoot.innerHTML = modal_template;
 
+        // Create some CSS to apply to the shadow DOM
+        const style = document.createElement("style");
+        style.textContent = modal_style;
+        document.head.appendChild(style)
+
         this.modal = this.shadowRoot.getElementById("myModal");
         this.next = this.shadowRoot.getElementById("next-button");
         this.prev = this.shadowRoot.getElementById("prev-button");
@@ -182,7 +182,7 @@ customElements.define('wizard-modal', class extends HTMLElement {
             }))
 
             e.target.querySelector('.modal-body #page1').innerHTML = frappe.render_template(template_page1, {
-                serial_nos: [{ serial_no: "1234" }, { serial_no: "456" }],
+                serial_nos: this.serial_nos,
             });
         })
 
