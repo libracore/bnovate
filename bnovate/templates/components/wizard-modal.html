@@ -40,7 +40,7 @@
     
     .wizard-ribbon li:before {
         counter-increment: wizard;
-        content: counter(wizard);
+        content: ""; /* counter(wizard); */
         display: block;
         color: var(--line-color);
         background-color: var(--completed-background-color);
@@ -78,6 +78,14 @@
     .wizard-ribbon .current ~ li:after {
         background-color: var(--line-color);
     }
+
+    .modal-header {
+        background-color: var(--completed-background-color);
+    }
+
+    .wizard-page {
+        text-align: center;
+    }
 </style>
 
 <template id="wizard-modal-template">
@@ -100,21 +108,20 @@
                     </ol>
                     
                     <div class="wizard-page" id="page1">
-                        <p>This is the first page of the wizard.</p>
+                        <i class="fa fa-cog fa-spin" style="font-size: 20px"></i>
                     </div>
                     
                     <div class="wizard-page" id="page2" style="display: none;">
-                        <p>This is the second page of the wizard, out of three.</p>
                     </div>
                     
                     <div class="wizard-page" id="page3" style="display: none;">
-                        <p>This is the third page of the wizard.</p>
                     </div>
                     <div class="modal-footer">
                         <div class="wizard-buttons">
-                            <button type="button" class="btn btn-danger" id="cancelButton">Cancel</button>
-                            <button type="button" class="btn btn-secondary" id="prevButton" style="display: none;">Previous</button>
-                            <button type="button" class="btn btn-primary" id="nextButton">Next</button>
+                            <!-- <button type="button" class="btn btn-danger" id="cancelButton">Cancel</button> -->
+                            <button type="button" class="btn btn-secondary" id="prev-button">Previous</button>
+                            <button type="button" class="btn btn-primary" id="next-button">Next</button>
+                            <button type="button" class="btn btn-primary" id="done-button">Done</button>
                         </div>
                     </div>
                 </div>
@@ -124,9 +131,34 @@
 </template>
 
 <script>
+
+    const template_page1 = `
+        {{ serial_nos }}
+                {% for sn in serial_nos %}
+                hello
+                {% endfor %}
+        <table class="table">
+            <thead>
+                <th>Serial No</th>
+                <th>Variant</th>
+            </thead>
+            <tbody>
+                {% for sn in serial_nos %}
+                <tr>
+                    <td>{{ sn.serial_no }}</td>
+                    <td>ICC</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    `
     customElements.define('wizard-modal', class extends HTMLElement {
         constructor() {
             super();
+
+            // Data used to build the refill request doc:
+            this.serial_nos = [];
+            this.doc = {};
             
             // Initialize the wizard
             this.currentPage = 1;
@@ -136,16 +168,24 @@
             const template = document.getElementById("wizard-modal-template").content;
             this.attachShadow({ mode: "open" });
             this.shadowRoot.appendChild(template.cloneNode(true));
-            
+
             this.modal = this.shadowRoot.getElementById("myModal");
-            this.next = this.shadowRoot.getElementById("nextButton");
-            this.prev = this.shadowRoot.getElementById("prevButton");
-            this.cancel = this.shadowRoot.getElementById("cancelButton");
+            this.next = this.shadowRoot.getElementById("next-button");
+            this.prev = this.shadowRoot.getElementById("prev-button");
+            this.done = this.shadowRoot.getElementById("done-button");
             
             $(this.modal).on('show.bs.modal', (e) => {
                 this.currentPage = 1;
                 this.showPage(this.currentPage);
-                e.target.querySelector('.modal-body #page1').innerHTML = '<p>Contents go here</p>';
+
+                console.log(this.serial_nos);
+                console.log(frappe.render_template(template_page1, {
+                    serial_nos: this.serial_nos,
+                }))
+
+                e.target.querySelector('.modal-body #page1').innerHTML = frappe.render_template(template_page1, {
+                    serial_nos: [{serial_no: "1234"}, {serial_no: "456"}],
+                });
             })
             
             $(this.modal).on('hide.bs.modal', (e) => {
@@ -174,22 +214,26 @@
             });
         }
         
-        show() {
-            $(this.modal).modal('show');
+        show(serial_nos) {
+            this.serial_nos = serial_nos;
+            $(this.modal).modal({backdrop: 'static', keyboard: false});
+            console.log(this.serial_nos);
         }
         
         // Show or hide the navigation buttons based on the current page
         updateButtons() {
             if (this.currentPage == 1) {
-                $("#prevButton").hide();
+                this.prev.disabled = true;
             } else {
-                $("#prevButton").show();
+                this.prev.disabled = false;
             }
             
             if (this.currentPage == this.numPages) {
-                $("#nextButton").hide();
+                this.next.hidden = true;
+                this.done.hidden = false;
             } else {
-                $("#nextButton").show();
+                this.next.hidden = false;
+                this.done.hidden = true;
             }
             
             $(".wizard-step").removeClass("current");

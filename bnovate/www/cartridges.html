@@ -50,15 +50,14 @@
 
 {% block script %}
 
-{% include "templates/components/wizard-modal.html" %}
-
 <script>
     frappe.require("/assets/bnovate/js/web_includes/helpers.js")
+    frappe.require("/assets/bnovate/js/web_includes/wizard_modal.js")
     
     function get_selected() {
         let serial_nos = [...document.querySelectorAll(".serial-check")]
         .filter(c => c.checked)
-        .map(c => c.dataset.serial);
+        .map(c => ({serial_no: c.dataset.serial}));
         
         return serial_nos;
     }
@@ -82,7 +81,7 @@
     }
     
     document.querySelector("#request-refill").addEventListener("click", async () => {
-        document.getElementById('build-fill-request').show();
+        document.getElementById('build-fill-request').show(get_selected());
         // <!-- await post_request(build_request(get_selected())); -->
     });
     

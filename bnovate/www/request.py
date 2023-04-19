@@ -11,8 +11,6 @@ no_cache = 1
 
 auth()
 
-print("--------------------\n\n\n\nRequest called")
-
 def get_context(context):
     context.doc = get_request(frappe.form_dict.name)
     context.form_dict = frappe.form_dict
