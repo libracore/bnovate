@@ -86,13 +86,17 @@ ol.wizard-ribbon {
     background-color: var(--completed-background-color);
 }
 
-.wizard-page {
-    text-align: center;
+.wizard-page textarea {
+    width: 100%;
 }
 
 .wizard-page label:hover,
 .wizard-page label:focus-within {
   background-color: #e9ecef;
+}
+
+.wizard-page .card-group > .card {
+    flex: 0 0 33%;
 }
 
 .wizard-page .card-body {
@@ -102,8 +106,9 @@ ol.wizard-ribbon {
 
 .wizard-page .card-body label {
     margin: 0;
-    padding: 10px;
+    padding: 10px 20px;
     height: 100%;
+    width: 100%;
 }
 
 .wizard-page input[type="radio"] {
@@ -115,12 +120,24 @@ ol.wizard-ribbon {
   background-color: var(--completed-background-color);
 }
 
+.wizard-summary .row {
+    padding: 20px;
+}
+
+.wizard-summary h5 {
+    margin-bottom: 15px;
+}
+
+.wizard-summary .card-body {
+    padding: 10px 20px;
+}
+
 </style >
 `
 
 const modal_template = `
 <div class="modal" tabindex="-1" role="dialog" id="myModal" style="display:none">
-    <div class="modal-dialog" role="document">
+    <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Request Refill</h5>
@@ -134,17 +151,16 @@ const modal_template = `
                     <li class="wizard-step current" data-step="1">Cartridges</li>
                     <li class="wizard-step" data-step="2">Shipping</li>
                     <li class="wizard-step" data-step="3">Billing</li>
+                    <li class="wizard-step" data-step="4">Summary</li>
                 </ol>
                 
-                <div class="wizard-page" id="page1">
+                <div class="wizard-page" id="page1"> 
                     <i class="fa fa-cog fa-spin" style="font-size: 20px"></i>
                 </div>
-                
-                <div class="wizard-page" id="page2" style="display: none;">
-                </div>
-                
-                <div class="wizard-page" id="page3" style="display: none;">
-                </div>
+                <div class="wizard-page" id="page2" style="display: none;"></div>
+                <div class="wizard-page" id="page3" style="display: none;"></div>
+                <div class="wizard-page wizard-summary" id="page4" style="display: none;"></div>
+
                 <div class="modal-footer">
                     <div class="wizard-buttons">
                         <!-- <button type="button" class="btn btn-danger" id="cancelButton">Cancel</button> -->
@@ -157,7 +173,7 @@ const modal_template = `
         </div>
     </div>
 </div>
-`
+`;
 
 const template_page1 = `
 <table class="table">
@@ -198,7 +214,7 @@ const template_page2 = `
     <div class="card">
         <div class="card-body">
             <input type="radio" name="shipping_address" id="ship-{{addr.name}}" value="{{addr.name}}"></option>
-            <label for="ship-{{addr.name}}">{{addr.address_line1}}</label>
+            <label for="ship-{{addr.name}}">{{addr.display}}</label>
         </div>
     </div>
     {% endfor %}
@@ -211,10 +227,52 @@ const template_page3 = `
     <div class="card">
         <div class="card-body">
             <input type="radio" name="billing_address" id="bill-{{addr.name}}" value="{{addr.name}}"></option>
-            <label for="bill-{{addr.name}}">{{addr.address_line1}}</label>
+            <label for="bill-{{addr.name}}">{{addr.display}}</label>
         </div>
     </div>
     {% endfor %}
+</div>
+`
+
+const template_page4 = `
+<div class="row">
+    <div class="col-sm">
+        <h5>Shipping Address</h5>
+        {{doc.shipping_address_display}}
+    </div>
+    <div class="col-sm">
+        <h5>Billing Address</h5>
+        {{doc.billing_address_display}}
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-sm">
+        <h5>Cartridges</h5>
+        <table class="table">
+            <thead>
+                <th>Serial No</th>
+                <th>Variant</th>
+            </thead>
+            <tbody>
+                {% for it in doc.items %}
+                <tr>
+                    <td>{{ it.serial_no }}</td>
+                    <td>{{ it.type }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+<div class="row">
+    <div class="col-sm">
+        <h5>Remarks</h5>
+        <label for="remarks" style="display: none">Remarks</label>
+        <textarea type="text" name="remarks"></textarea>
+    </div>
 </div>
 `
 
@@ -231,7 +289,7 @@ customElements.define('wizard-modal', class extends HTMLElement {
 
         // Initialize the wizard
         this.currentPage = 1;
-        this.numPages = 3; // $(".wizard-page").length;
+        this.numPages = 4; // $(".wizard-page").length;
 
         // Attach template.
         // const template = document.getElementById("wizard-modal-template").content;
@@ -327,8 +385,16 @@ customElements.define('wizard-modal', class extends HTMLElement {
 
     // Show the specified page and update the navigation buttons
     show_page(page) {
+        if (page == this.numPages) {
+            this.modal.querySelector('#page' + page).innerHTML = frappe.render_template(
+                template_page4,
+                { doc: this.build_doc() }
+            );
+        }
+
         $(".wizard-page").hide();
         $("#page" + page).show();
+
         this.update_buttons();
     }
 
@@ -340,21 +406,31 @@ customElements.define('wizard-modal', class extends HTMLElement {
         })
     }
 
-    confirm() {
+    build_doc() {
         const items = [...this.modal.querySelectorAll(".variant-select")].map(el => ({
             serial_no: el.dataset.sn,
             type: el.value,
         }));
-        const shipping_address = this.modal.querySelector("input[name='shipping_address'").value;
-        const billing_address = this.modal.querySelector("input[name='billing_address'").value;
+        const shipping_address = this.modal.querySelector("input[name='shipping_address']:checked").value;
+        const billing_address = this.modal.querySelector("input[name='billing_address']:checked").value;
+        const remarks = this.modal.querySelector("textarea[name='remarks']")?.value;
+
+        const shipping_address_display = this.addresses.find(addr => addr.name == shipping_address)?.display;
+        const billing_address_display = this.addresses.find(addr => addr.name == billing_address)?.display;
 
         const doc = {
             items,
             shipping_address,
+            shipping_address_display,
             billing_address,
+            billing_address_display,
+            remarks,
         };
+        return doc;
+    }
 
-        this.callback(doc);
+    confirm() {
+        this.callback(this.build_doc());
         this.hide();
     }
 })

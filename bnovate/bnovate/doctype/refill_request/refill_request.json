@@ -8,13 +8,17 @@
  "field_order": [
   "customer",
   "customer_name",
-  "contact",
+  "contact_person",
+  "contact_email",
   "column_break_3",
   "required_date",
   "amended_from",
   "section_break_6",
   "shipping_address",
+  "shipping_address_display",
+  "column_break_10",
   "billing_address",
+  "billing_address_display",
   "section_break_9",
   "items",
   "section_break_11",
@@ -26,12 +30,6 @@
    "fieldtype": "Link",
    "label": "Customer",
    "options": "Customer"
-  },
-  {
-   "fieldname": "contact",
-   "fieldtype": "Link",
-   "label": "Contact",
-   "options": "Contact"
   },
   {
    "fieldname": "shipping_address",
@@ -92,10 +90,40 @@
    "fieldtype": "Data",
    "label": "Customer Name",
    "read_only": 1
+  },
+  {
+   "fieldname": "shipping_address_display",
+   "fieldtype": "Small Text",
+   "label": "Shipping Address Display",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_10",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "billing_address_display",
+   "fieldtype": "Small Text",
+   "label": "Billing Address Display",
+   "read_only": 1
+  },
+  {
+   "fieldname": "contact_person",
+   "fieldtype": "Link",
+   "label": "Contact Person",
+   "options": "Contact"
+  },
+  {
+   "fetch_from": "contact_person.email_id",
+   "fieldname": "contact_email",
+   "fieldtype": "Data",
+   "label": "Contact Email",
+   "options": "Email",
+   "read_only": 1
   }
  ],
  "is_submittable": 1,
- "modified": "2023-04-14 14:37:59.904552",
+ "modified": "2023-04-20 17:45:54.106040",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Refill Request",
