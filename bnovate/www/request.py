@@ -32,19 +32,22 @@ def get_request(name):
 
 
 @frappe.whitelist()
-def make_request(data):
+def make_request(doc):
     """ Create a refill request """
 
     # TODO: Check that items have a serial number and type
-    data = frappe._dict(json.loads(data))
+    # TODO: Check that user owns those addresses.
+    doc = frappe._dict(json.loads(doc))
 
-    print("--------------\n\n", type(data), data, frappe.session)
+    print("--------------\n\n", type(doc), doc, frappe.session)
 
     new_request = frappe.get_doc({
         'doctype': 'Refill Request',
         'customer': get_session_primary_customer(),
         'contact': get_session_contact(),
-        'items': data['items'],  # using data.items calls the built-in dict function...
+        'shipping_address': doc['shipping_address'],
+        'billing_address': doc['billing_address'],
+        'items': doc['items'],  # using data.items calls the built-in dict function...
     })
 
     print(new_request)

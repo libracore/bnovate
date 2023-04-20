@@ -62,27 +62,19 @@
         return serial_nos;
     }
     
-    function build_request(serial_nos) {
-        data = {
-            shipping_address: null,
-            billing_address: null,
-            items: [],
-        }
-        
-        data.items = serial_nos.map( no => ({serial_no: no, type: "ICC"}));
-        return data
-    }
-    
-    async function post_request(data) {
+    async function post_request(doc) {
         const resp = await frappe.call("bnovate.www.request.make_request", {
-            data
+            doc
         })
         return resp.message
     }
     
     document.querySelector("#request-refill").addEventListener("click", async () => {
-        document.getElementById('build-fill-request').show(get_selected());
-        // <!-- await post_request(build_request(get_selected())); -->
+        document.getElementById('build-fill-request').show(
+            get_selected(), 
+            await get_addresses(),
+            post_request,
+        );
     });
     
 </script>

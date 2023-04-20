@@ -11,6 +11,8 @@ if (parseInt(Math.random() * 100) == 42 || frappe.datetime.get_today().endsWith(
   document.querySelector("body").classList.add('party-time');
 }
 
+frappe.provide("bnovate.utils")
+
 
 /*  ***********************
  * This file contains common global functions 
@@ -29,17 +31,9 @@ function get_label(doctype, docname, print_format, label_reference) {
   );
 }
 
-async function get_highest_item_code(prefix) {
-  let resp = await frappe.call({
-    method: 'bnovate.bnovate.utils.items.get_highest_item_code',
-    args: {
-      prefix
-    }
-  })
-  return resp.message;
-}
+bnovate.utils.get_label = get_label; // already used in many custom scripts, keep in global namespace.
 
-async function get_next_item_code(prefix) {
+bnovate.utils.get_next_item_code = async function (prefix) {
   let resp = await frappe.call({
     method: 'bnovate.bnovate.utils.items.get_next_item_code',
     args: {
@@ -52,6 +46,8 @@ async function get_next_item_code(prefix) {
 /*********************************
  * Code to set enclosure owners
  *********************************/
+
+// TODO: migrate to own namespace.
 
 async function get_history_report() {
   let resp = await frappe.call({

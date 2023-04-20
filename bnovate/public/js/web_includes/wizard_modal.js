@@ -1,5 +1,4 @@
-const modal_template = `
-<style>
+const modal_style = `
 /* Style needs to be defined outside of shadow DOM. */
 :root {
     --number-of-steps: 4;
@@ -35,6 +34,9 @@ ol.wizard-ribbon {
     /* color: var(--active-background-color); */
 }
 
+.wizard-ribbon .current {
+    font-weight: bold;
+}
 .wizard-ribbon .current ~ li {
     color: var(--label-color);
 }
@@ -87,8 +89,36 @@ ol.wizard-ribbon {
 .wizard-page {
     text-align: center;
 }
+
+.wizard-page label:hover,
+.wizard-page label:focus-within {
+  background-color: #e9ecef;
+}
+
+.wizard-page .card-body {
+  position: relative;
+  padding: 0px;
+}
+
+.wizard-page .card-body label {
+    margin: 0;
+    padding: 10px;
+    height: 100%;
+}
+
+.wizard-page input[type="radio"] {
+  position: absolute;
+  appearance: none;
+}
+
+.wizard-page input[type="radio"]:checked ~ label {
+  background-color: var(--completed-background-color);
+}
+
 </style >
-    
+`
+
+const modal_template = `
 <div class="modal" tabindex="-1" role="dialog" id="myModal" style="display:none">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -130,31 +160,73 @@ ol.wizard-ribbon {
 `
 
 const template_page1 = `
-        {{ serial_nos }}
-                {% for sn in serial_nos %}
-                hello
-                {% endfor %}
-        <table class="table">
-            <thead>
-                <th>Serial No</th>
-                <th>Variant</th>
-            </thead>
-            <tbody>
-                {% for sn in serial_nos %}
-                <tr>
-                    <td>{{ sn.serial_no }}</td>
-                    <td>ICC</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    `
+<table class="table">
+    <thead>
+        <th>Serial No</th>
+        <th>Variant</th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>{{ [__("All")] }}</td>
+            <td>
+                <select id="variant-default">
+                    <option value=""></option>
+                    <option>TCC</option>
+                    <option>ICC</option>
+                </select>
+            </td>
+        </tr>
+        {% for sn in serial_nos %}
+        <tr>
+            <td>{{ sn.serial_no }}</td>
+            <td>
+                <select class="variant-select" name="variant-{{sn.serial_no}}" data-sn="{{sn.serial_no}}">
+                    <option value=""></option>
+                    <option>TCC</option>
+                    <option>ICC</option>
+                </select>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+`;
+
+const template_page2 = `
+<div class="card-group">
+    {% for addr in addresses %}
+    <div class="card">
+        <div class="card-body">
+            <input type="radio" name="shipping_address" id="ship-{{addr.name}}" value="{{addr.name}}"></option>
+            <label for="ship-{{addr.name}}">{{addr.address_line1}}</label>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+`
+
+const template_page3 = `
+<div class="card-group">
+    {% for addr in addresses %}
+    <div class="card">
+        <div class="card-body">
+            <input type="radio" name="billing_address" id="bill-{{addr.name}}" value="{{addr.name}}"></option>
+            <label for="bill-{{addr.name}}">{{addr.address_line1}}</label>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+`
+
 customElements.define('wizard-modal', class extends HTMLElement {
     constructor() {
         super();
 
+        window.theModal = this;
+
         // Data used to build the refill request doc:
         this.serial_nos = [];
+        this.addresses = [];
         this.doc = {};
 
         // Initialize the wizard
@@ -167,6 +239,10 @@ customElements.define('wizard-modal', class extends HTMLElement {
         this.attachShadow({ mode: "open" });
         this.shadowRoot.innerHTML = modal_template;
 
+        const style = document.createElement("style");
+        style.textContent = modal_style;
+        document.head.appendChild(style);
+
         this.modal = this.shadowRoot.getElementById("myModal");
         this.next = this.shadowRoot.getElementById("next-button");
         this.prev = this.shadowRoot.getElementById("prev-button");
@@ -174,16 +250,19 @@ customElements.define('wizard-modal', class extends HTMLElement {
 
         $(this.modal).on('show.bs.modal', (e) => {
             this.currentPage = 1;
-            this.showPage(this.currentPage);
-
-            console.log(this.serial_nos);
-            console.log(frappe.render_template(template_page1, {
-                serial_nos: this.serial_nos,
-            }))
+            this.show_page(this.currentPage);
 
             e.target.querySelector('.modal-body #page1').innerHTML = frappe.render_template(template_page1, {
-                serial_nos: [{ serial_no: "1234" }, { serial_no: "456" }],
+                serial_nos: this.serial_nos,
             });
+            e.target.querySelector('.modal-body #page2').innerHTML = frappe.render_template(template_page2, {
+                addresses: this.addresses,
+            });
+            e.target.querySelector('.modal-body #page3').innerHTML = frappe.render_template(template_page3, {
+                addresses: this.addresses,
+            });
+
+            this.bind_listeners(e.target);
         })
 
         $(this.modal).on('hide.bs.modal', (e) => {
@@ -194,15 +273,14 @@ customElements.define('wizard-modal', class extends HTMLElement {
         $(this.prev).click(() => {
             if (this.currentPage > 1) {
                 this.currentPage--;
-                this.showPage(this.currentPage);
+                this.show_page(this.currentPage);
             }
         });
 
         $(this.next).click(() => {
-            console.log("next", this.currentPage, this.numPages)
             if (this.currentPage < this.numPages) {
                 this.currentPage++;
-                this.showPage(this.currentPage);
+                this.show_page(this.currentPage);
             }
         });
 
@@ -210,16 +288,25 @@ customElements.define('wizard-modal', class extends HTMLElement {
             // Close the modal or redirect to another page
             $(this.modal).modal("hide");
         });
+
+        $(this.done).click(() => {
+            this.confirm();
+        });
     }
 
-    show(serial_nos) {
+    show(serial_nos, addresses, callback) {
         this.serial_nos = serial_nos;
+        this.addresses = addresses;
+        this.callback = callback;
         $(this.modal).modal({ backdrop: 'static', keyboard: false });
-        console.log(this.serial_nos);
+    }
+
+    hide() {
+        $(this.modal).modal('hide');
     }
 
     // Show or hide the navigation buttons based on the current page
-    updateButtons() {
+    update_buttons() {
         if (this.currentPage == 1) {
             this.prev.disabled = true;
         } else {
@@ -239,9 +326,35 @@ customElements.define('wizard-modal', class extends HTMLElement {
     }
 
     // Show the specified page and update the navigation buttons
-    showPage(page) {
+    show_page(page) {
         $(".wizard-page").hide();
         $("#page" + page).show();
-        this.updateButtons();
+        this.update_buttons();
+    }
+
+    // Set all blank variant selects when the first one is modified
+    bind_listeners(el) {
+        const selects = [...el.querySelectorAll(".variant-select")];
+        el.querySelector("#variant-default").addEventListener("change", (e) => {
+            selects.map(s => { s.value = e.target.value });
+        })
+    }
+
+    confirm() {
+        const items = [...this.modal.querySelectorAll(".variant-select")].map(el => ({
+            serial_no: el.dataset.sn,
+            type: el.value,
+        }));
+        const shipping_address = this.modal.querySelector("input[name='shipping_address'").value;
+        const billing_address = this.modal.querySelector("input[name='billing_address'").value;
+
+        const doc = {
+            items,
+            shipping_address,
+            billing_address,
+        };
+
+        this.callback(doc);
+        this.hide();
     }
 })
