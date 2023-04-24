@@ -56,7 +56,12 @@ def get_data(filters):
             sn.owned_by,
             cr.customer_name,
             dn.carrier,
-            dn.tracking_no
+            dn.tracking_no,
+            (SELECT parent 
+                FROM `tabRefill Request Item` rri WHERE rri.serial_no = sn.serial_no 
+                ORDER BY creation DESC 
+                LIMIT 1) 
+                as refill_request
         FROM `tabSerial No` sn
         LEFT JOIN `tabStock Entry` ste ON sn.purchase_document_no = ste.name
         LEFT JOIN `tabCustomer` cr ON sn.owned_by = cr.name
@@ -70,18 +75,17 @@ def get_data(filters):
     data = frappe.db.sql(sql_query, as_dict=True)
 
     for row in data:
-        if row.warehouse == "Customer Locations - bN":
+        if row.location == "bNovate":
+            if not row.refill_request:
+                row.sort_index = 1
+                row.status = "Ready for Refill"
+            else:
+                row.status = "Refill Pending"
+                row.sort_index = 2
+
+        else:
             row.status = "Shipped"
-            row.status_index = 4
-        elif row.warehouse == "Repairs - bN":
-            row.status = "Refurbishing"
-            row.status_index = 1
-        elif row.warehouse == "To Refill - bN":
-            row.status = "Ready for Refill"
-            row.status_index = 2
-        elif row.warehouse == "Finished Goods - bN":
-            row.status = "Ready to Ship"
-            row.status_index = 3
+            row.sort_index = 3
 
         if row.carrier == "DHL":
             row.tracking_link = '''<a href="https://www.dhl.com/ch-en/home/tracking/tracking-express.html?submit=1&tracking-id={0}" target="_blank">{0}</a>'''.format(row.tracking_no)
@@ -91,6 +95,6 @@ def get_data(filters):
             row['customer_name'] = '<span style="color: orangered">{}</span>'.format(row['customer_name'])
 
     
-    data.sort(key=attrgetter('status_index'))
+    data.sort(key=attrgetter('sort_index'))
     
     return data

@@ -5,6 +5,88 @@
 div .row {
 	padding: 20px;
 }
+
+:root {
+    --number-of-steps: 4;
+    --line-width: 2px;
+    --bullet-size: 2em;
+    
+    --line-color: #ffa632;
+    --label-color: #575757;
+    --completed-background-color: #ffecd4;
+    --uncompleted-background-color: #ffffffff;
+    
+}
+
+.request-ribbon {
+    display: flex;
+    /* justify-content: space-between; */
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+ol.request-ribbon {
+    position: relative;
+    overflow: hidden;
+    counter-reset: request 0;
+    list-style-type: none;
+}
+
+.request-ribbon li {
+    position: relative;
+    float: left;
+    width: calc(100% / var(--number-of-steps));
+    text-align: center;
+    /* color: var(--active-background-color); */
+}
+
+.request-ribbon .current {
+    font-weight: bold;
+}
+.request-ribbon .current ~ li {
+    color: var(--label-color);
+}
+
+.request-ribbon li:before {
+    counter-increment: request;
+    content: ""; /* counter(request); */
+    display: block;
+    color: var(--line-color);
+    background-color: var(--completed-background-color);
+    border: var(--line-width) solid var(--line-color);
+    text-align: center;
+    width: var(--bullet-size);
+    height: var(--bullet-size);
+    line-height: var(--bullet-size);
+    border-radius: var(--bullet-size);
+    position: relative;
+    left: 50%;
+    margin-bottom: calc(var(--bullet-size) / 2);
+    margin-left: calc(var(--bullet-size) * -0.5);
+    z-index: 1;
+}
+
+.request-ribbon .current ~ li:before {
+    background-color: var(--uncompleted-background-color);
+    color: var(--line-color);
+    border-color: var(--line-color);
+}
+
+.request-ribbon li + li:after {
+    content: "";
+    display: block;
+    width: 100%;
+    background-color: var(--line-color);
+    height: var(--line-width);
+    position: absolute;
+    left: -50%;
+    top: calc(var(--bullet-size) / 2);
+    z-index: 0;
+}
+
+.request-ribbon .current ~ li:after {
+    background-color: var(--line-color);
+}
 </style>
 {% endblock %}
 
@@ -17,7 +99,6 @@ div .row {
 {% block header %}
 	<h1 class="m-0">{{ doc.name }}</h1>
 {% endblock %}
-
 
 
 {% block page_content %}
@@ -37,6 +118,13 @@ div .row {
 		{% endif %}
 	</div>
 </div>
+
+<ol class="request-ribbon">
+	<li class="request-step current" data-step="1">Requested</li>
+	<li class="request-step" data-step="2">Confirmed</li>
+	<li class="request-step" data-step="3">Shipped</li>
+</ol>
+
 
 <div class="row">
 	<div class="col-6">

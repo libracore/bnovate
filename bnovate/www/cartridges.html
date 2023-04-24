@@ -14,19 +14,27 @@
     <div class="col">
         <table class="table table-condensed" style="border-bottom: 1px solid #d1d8dd; width:100%">
             <thead>
-                <th style="padding-left: 40px;">Serial No</th>
+                <th></th>
+                <th>Serial No</th>
                 <th>Location</th>
                 <th>Status</th>
                 <th>Since</th>
                 <th>Tracking No</th>
+                <th>Pending Request</th>
             </thead>
             <tbody>
                 {% for row in data %}
                 <tr>
                     <td style="padding: 0px">
                         <label for="check-{{ row.serial_no }}" style="padding: 12px; margin-bottom: 0px;">
+                            {% if row.location == "bNovate" and not row.refill_request %}
                             <input name="select" id="check-{{ row.serial_no }}"class="serial-check" type="checkbox" data-serial="{{ row.serial_no }}"
-                                style="margin-right: 12px">
+                                style="margin-right: 12px" >
+                            {% endif %}
+                        </label>
+                    </td>
+                    <td>
+                        <label for="check-{{ row.serial_no }}" style="margin-bottom: 0px;">
                             {{ row.serial_no }}
                         </label>
                     </td>
@@ -36,6 +44,11 @@
                     <td>
                         {% if row.tracking_link %}
                         {{ row.tracking_link }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if row.refill_request %}
+                        <a href="/requests/{{row.refill_request}}">{{ row.refill_request }}</a>
                         {% endif %}
                     </td>
                 </tr>
@@ -68,7 +81,9 @@
         const resp = await frappe.call("bnovate.www.request.make_request", {
             doc
         })
-        return resp.message
+
+        const new_doc = resp.message
+        location.pathname = `/requests/${new_doc.name}`;
     }
     
     document.querySelector("#request-refill").addEventListener("click", async () => {
