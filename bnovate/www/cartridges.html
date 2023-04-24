@@ -14,8 +14,7 @@
     <div class="col">
         <table class="table table-condensed" style="border-bottom: 1px solid #d1d8dd; width:100%">
             <thead>
-                <th></th>
-                <th>Serial No</th>
+                <th style="padding-left: 37px;">Serial No</th>
                 <th>Location</th>
                 <th>Status</th>
                 <th>Since</th>
@@ -23,11 +22,14 @@
             </thead>
             <tbody>
                 {% for row in data %}
-                <tr>
-                    <td>
-                        <input class="serial-check" type="checkbox" data-serial="{{ row.serial_no }}">
+                <tr style="margin-bottom: 0px">
+                    <td style="padding: 0px">
+                        <label for="check-{{ row.serial_no }}" style="padding: 12px; margin-bottom: 0px;">
+                            <input name="select" id="check-{{ row.serial_no }}"class="serial-check" type="checkbox" data-serial="{{ row.serial_no }}"
+                                style="margin-right: 12px">
+                            {{ row.serial_no }}
+                        </label>
                     </td>
-                    <td>{{ row.serial_no }}</td>
                     <td>{{ row.location }}</td>
                     <td>{{ row.status }}</td>
                     <td>{{ row.posting_date }}</td>

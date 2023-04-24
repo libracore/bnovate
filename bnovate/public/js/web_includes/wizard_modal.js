@@ -165,7 +165,7 @@ const modal_template = `
                     <div class="wizard-buttons">
                         <!-- <button type="button" class="btn btn-danger" id="cancelButton">Cancel</button> -->
                         <button type="button" class="btn btn-secondary" id="prev-button">Previous</button>
-                        <button type="button" class="btn btn-primary" id="next-button">Next</button>
+                        <button type="button" class="btn btn-primary" id="next-button" disabled>Next</button>
                         <button type="button" class="btn btn-primary" id="done-button">Done</button>
                     </div>
                 </div>
@@ -383,6 +383,34 @@ customElements.define('wizard-modal', class extends HTMLElement {
         $(`.wizard-step[data-step='${this.currentPage}']`).addClass("current");
     }
 
+    // Enable or disable buttons based on form completion
+    enable_buttons() {
+        console.log("enable buttons")
+
+        const doc = this.build_doc()
+        console.log(doc);
+
+        if (this.currentPage == 1) {
+            if (doc.items.length && doc.items.findIndex(el => el.type == '') < 0) {
+                this.next.disabled = false;
+            } else {
+                this.next.disabled = true;
+            }
+        } else if (this.currentPage == 2) {
+            if (doc.shipping_address) {
+                this.next.disabled = false;
+            } else {
+                this.next.disabled = true;
+            }
+        } else if (this.currentPage == 3) {
+            if (doc.billing_address) {
+                this.next.disabled = false;
+            } else {
+                this.next.disabled = true;
+            }
+        }
+    }
+
     // Show the specified page and update the navigation buttons
     show_page(page) {
         if (page == this.numPages) {
@@ -396,6 +424,7 @@ customElements.define('wizard-modal', class extends HTMLElement {
         $("#page" + page).show();
 
         this.update_buttons();
+        this.enable_buttons();
     }
 
     // Set all blank variant selects when the first one is modified
@@ -403,7 +432,13 @@ customElements.define('wizard-modal', class extends HTMLElement {
         const selects = [...el.querySelectorAll(".variant-select")];
         el.querySelector("#variant-default").addEventListener("change", (e) => {
             selects.map(s => { s.value = e.target.value });
+            this.enable_buttons();
         })
+
+        console.log(selects);
+
+        selects.map(s => s.addEventListener('change', () => this.enable_buttons()));
+        [...el.querySelectorAll("input")].map(i => i.addEventListener("change", () => this.enable_buttons()));
     }
 
     build_doc() {
@@ -411,8 +446,8 @@ customElements.define('wizard-modal', class extends HTMLElement {
             serial_no: el.dataset.sn,
             type: el.value,
         }));
-        const shipping_address = this.modal.querySelector("input[name='shipping_address']:checked").value;
-        const billing_address = this.modal.querySelector("input[name='billing_address']:checked").value;
+        const shipping_address = this.modal.querySelector("input[name='shipping_address']:checked")?.value;
+        const billing_address = this.modal.querySelector("input[name='billing_address']:checked")?.value;
         const remarks = this.modal.querySelector("textarea[name='remarks']")?.value;
 
         const shipping_address_display = this.addresses.find(addr => addr.name == shipping_address)?.display;
