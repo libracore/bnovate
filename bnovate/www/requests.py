@@ -21,8 +21,7 @@ def get_context(context):
 def get_requests():
     primary_customer = get_session_primary_customer()
 
-    return frappe.get_all("Refill Request", 
-        filters={
+    return frappe.get_all("Refill Request", filters={
             "customer": ["=", primary_customer],
         },
         fields="*"

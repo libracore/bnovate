@@ -1,5 +1,13 @@
 {% extends "templates/web.html" %}
 
+{% block style %}
+<style>
+div .row {
+	padding: 20px;
+}
+</style>
+{% endblock %}
+
 {% block breadcrumbs %}
 	{% include "templates/includes/breadcrumbs.html" %}
 {% endblock %}
@@ -14,16 +22,14 @@
 
 {% block page_content %}
 
-{{ doc }}
-
 <div class="row transaction-subheading">
 	<div class="col-6">
-		<span class="indicator {{ doc.indicator_color or ("blue" if doc.docstatus==1 else "darkgrey") }}">
+		<span class="indicator {{ doc.indicator_color or ('blue' if doc.docstatus==1 else 'darkgrey') }}">
 			{{ _(doc.get('indicator_title')) or _(doc.status) or _("Submitted") }}
 		</span>
 	</div>
 	<div class="col-6 text-muted text-right small">
-		{{ frappe.utils.formatdate(doc.required_date, 'medium') }}
+		{{ frappe.utils.formatdate(doc.creation, 'medium') }}
 		{% if doc.valid_till %}
 		<p>
 		{{ _("Valid Till") }}: {{ frappe.utils.formatdate(doc.valid_till, 'medium') }}
@@ -32,48 +38,34 @@
 	</div>
 </div>
 
-<p class="small my-3">
-	{%- set party_name = doc.supplier_name if doc.doctype == 'Supplier Quotation' else doc.customer_name %}
-	<b>{{ party_name }}</b>
-
-	{% if doc.contact_display and doc.contact_display != party_name %}
-		<br>
-		{{ doc.contact_display }}
-	{% endif %}
-</p>
-
-{% if doc._header %}
-{{ doc._header }}
-{% endif %}
-
-
-<div class="order-container">
-
-	<!-- items -->
-	<div class="order-item-table">
-		<div class="row order-items order-item-header text-muted">
-			<div class="col-sm-6 col-6 h6 text-uppercase">
-				{{ _("Serial No") }}
-			</div>
-			<div class="col-sm-6 col-xs-6 text-right h6 text-uppercase">
-				{{ _("Variant") }}
-			</div>
-		</div>
-		{% for d in doc.items %}
-		<div class="row order-items">
-			<div class="col-sm-6 col-6">
-				{{ d.serial_no }}
-			</div>
-			<div class="col-sm-6 col-xs-6 text-right">
-				{{ d.type }}
-			</div>
-		</div>
-		{% endfor %}
+<div class="row">
+	<div class="col-6">
+		<h5>{{ _("Shipping Address") }}</h5>
+		{{ doc.shipping_address_display }}
+	</div>
+	<div class="col-6">
+		<h5>{{ _("Billing Address") }}</h5>
+		{{ doc.billing_address_display }}
 	</div>
 </div>
 
-
-
-
+<div class="row">
+    <div class="col">
+        <table class="table table-condensed" style="border-bottom: 1px solid #d1d8dd; width:100%">
+            <thead>
+                <th>{{ _("Serial No") }}</th>
+                <th>{{ _("Variant") }}</th>
+            </thead>
+            <tbody>
+                {% for d in doc.items %}
+                <tr>
+                    <td>{{ d.serial_no }}</td>
+                    <td>{{ d.type }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 
 {% endblock %}

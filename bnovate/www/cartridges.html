@@ -2,7 +2,7 @@
 
 {% block page_content %}
 
-<h1>Your cartridges</h1>
+<h1>{{ _("Your cartridges") }}</h1>
 
 <div class="row">
     <div class="col">
@@ -22,7 +22,7 @@
             </thead>
             <tbody>
                 {% for row in data %}
-                <tr style="margin-bottom: 0px">
+                <tr>
                     <td style="padding: 0px">
                         <label for="check-{{ row.serial_no }}" style="padding: 12px; margin-bottom: 0px;">
                             <input name="select" id="check-{{ row.serial_no }}"class="serial-check" type="checkbox" data-serial="{{ row.serial_no }}"
@@ -32,7 +32,7 @@
                     </td>
                     <td>{{ row.location }}</td>
                     <td>{{ row.status }}</td>
-                    <td>{{ row.posting_date }}</td>
+                    <td>{{ frappe.format(row.posting_date, {'fieldtype': 'Date'}) }}</td>
                     <td>
                         {% if row.tracking_link %}
                         {{ row.tracking_link }}

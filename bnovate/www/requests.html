@@ -2,17 +2,17 @@
 
 <table class="table table-condensed" style="border-bottom: 1px solid #d1d8dd; width:100%">
     <thead>
-        <th>Required by date</th>
-        <th>Shipping Address</th>
-        <th>Billing Address</th>
+        <th>{{ _("Request date") }}</th>
+        <th>{{ _("Shipping Address") }}</th>
+        <th>{{ _("Billing Address") }}</th>
     </thead>
     <tbody>
         {% for row in data %}
         
         <tr>
-            <td><a href="/requests/{{ row.name }}">{{ row.required_date }}</a></td>
-            <td><a href="/requests/{{ row.name }}">{{ row.shipping_address }}</a></td>
-            <td><a href="/requests/{{ row.name }}">{{ row.billing_address }}</a></td>
+            <td><a href="/requests/{{ row.name }}">{{ frappe.format(row.creation, {'fieldtype': 'Date'}) }}</a></td>
+            <td><a href="/requests/{{ row.name }}">{{ row.shipping_address_display | replace("<br>", ", ") | truncate(50) | striptags }}</a></td>
+            <td><a href="/requests/{{ row.name }}">{{ row.billing_address_display | replace("<br>", ", ") | truncate(50) | striptags }}</a></td>
         </tr>
         {% endfor %}
     </tbody>
