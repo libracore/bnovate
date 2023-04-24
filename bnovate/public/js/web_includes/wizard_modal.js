@@ -385,10 +385,7 @@ customElements.define('wizard-modal', class extends HTMLElement {
 
     // Enable or disable buttons based on form completion
     enable_buttons() {
-        console.log("enable buttons")
-
         const doc = this.build_doc()
-        console.log(doc);
 
         if (this.currentPage == 1) {
             if (doc.items.length && doc.items.findIndex(el => el.type == '') < 0) {
@@ -434,8 +431,6 @@ customElements.define('wizard-modal', class extends HTMLElement {
             selects.map(s => { s.value = e.target.value });
             this.enable_buttons();
         })
-
-        console.log(selects);
 
         selects.map(s => s.addEventListener('change', () => this.enable_buttons()));
         [...el.querySelectorAll("input")].map(i => i.addEventListener("change", () => this.enable_buttons()));
