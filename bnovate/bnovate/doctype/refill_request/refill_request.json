@@ -6,6 +6,7 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "status",
   "customer",
   "customer_name",
   "contact_person",
@@ -120,10 +121,19 @@
    "label": "Contact Email",
    "options": "Email",
    "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "\nSubmitted\nConfirmed\nShipped\nCancelled",
+   "read_only": 1
   }
  ],
  "is_submittable": 1,
- "modified": "2023-04-20 17:45:54.106040",
+ "modified": "2023-04-25 11:39:48.264930",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Refill Request",

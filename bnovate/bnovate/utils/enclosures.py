@@ -16,8 +16,6 @@ def set_owner_from_dn(dn, method=None):
     Called by hooks.py
     """
 
-    print("---------------------\nSet owner from DN\n\n\n", dn, method, dn.packed_items)
-
     if not method in ('on_submit', 'on_cancel'):
         return
 

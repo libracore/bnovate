@@ -25,21 +25,25 @@ fixtures = [
     {
         "dt": "Custom Field",
         "filters": [["name", "in", [
-            "Customer Group-taxes_and_charges_template",  # Used to invoice subscriptions
+            # Subscription invoicing
+            "Customer Group-taxes_and_charges_template",
             "Sales Invoice Item-subscription",
             "Sales Invoice Item-sc_detail",
             # Used to match invoice to SO payment terms through DN
             "Delivery Note-payment_terms_template",
-            "Work Order-time_per_unit",  # Used for time tracking from Work Order Execution page
+            # Time tracking and workstation assignment on work orders
+            "Work Order-time_per_unit", 
             "Work Order-total_time",
             "Work Order-time_log",
-            "BOM-workstation",  # Used to assign work order to a workstation
+            "BOM-workstation",
             "Work Order-workstation",
             # Used to track owners of enclosures
             "Serial No-ownership_details",
             "Serial No-owned_by",
             "Serial No-owned_by_name",
             "Serial No-owner_set_by",
+            # Refill requests
+            "Sales Order Item-refill_request",
         ]]]
     }
 ]
@@ -159,6 +163,10 @@ doc_events = {
     "Stock Entry": {
         "on_submit": "bnovate.bnovate.page.work_order_execution.work_order_execution.update_work_order_unit_time",
         "on_cancel": "bnovate.bnovate.page.work_order_execution.work_order_execution.update_work_order_unit_time",
+    },
+    "Sales Order": {
+        "on_submit": "bnovate.bnovate.doctype.refill_request.refill_request.update_status_from_sales_order",
+        "on_cancel": "bnovate.bnovate.doctype.refill_request.refill_request.update_status_from_sales_order",
     },
     "Delivery Note": {
         "on_submit": "bnovate.bnovate.utils.enclosures.set_owner_from_dn",

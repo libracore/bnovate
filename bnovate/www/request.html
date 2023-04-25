@@ -120,9 +120,9 @@ ol.request-ribbon {
 </div>
 
 <ol class="request-ribbon">
-	<li class="request-step current" data-step="1">Requested</li>
-	<li class="request-step" data-step="2">Confirmed</li>
-	<li class="request-step" data-step="3">Shipped</li>
+	<li class="request-step {% if doc.status == 'Submitted' %}current{% endif %}" data-step="1">Requested</li>
+	<li class="request-step {% if doc.status == 'Confirmed' %}current{% endif %}" data-step="2">Confirmed</li>
+	<li class="request-step {% if doc.status == 'Shipped' %}current{% endif %}" data-step="3">Shipped</li>
 </ol>
 
 
