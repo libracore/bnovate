@@ -6,6 +6,8 @@ import frappe
 
 from frappe import _
 
+from bnovate.bnovate.doctype.refill_request.refill_request import RefillRequest
+
 from .helpers import get_session_primary_customer, auth
 
 no_cache = 1
@@ -14,16 +16,20 @@ auth()
 
 def get_context(context):
     context.data = get_requests()
-    print("---------------------\n\n\n", context.data)
     context.show_sidebar = True
     return context
 
 def get_requests():
     primary_customer = get_session_primary_customer()
 
-    return frappe.get_all("Refill Request", filters={
+    docs = frappe.get_all("Refill Request", filters={
             "customer": ["=", primary_customer],
         },
         fields="*"
     )
+
+    for doc in docs:
+        RefillRequest.set_indicator(doc)
+
+    return docs
 

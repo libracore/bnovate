@@ -12,6 +12,7 @@
   "contact_person",
   "contact_email",
   "column_break_3",
+  "transaction_date",
   "required_date",
   "amended_from",
   "section_break_6",
@@ -29,6 +30,7 @@
   {
    "fieldname": "customer",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Customer",
    "options": "Customer"
   },
@@ -89,6 +91,7 @@
    "fetch_from": "customer.customer_name",
    "fieldname": "customer_name",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Customer Name",
    "read_only": 1
   },
@@ -130,10 +133,16 @@
    "label": "Status",
    "options": "\nSubmitted\nConfirmed\nShipped\nCancelled",
    "read_only": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "transaction_date",
+   "fieldtype": "Data",
+   "label": "Date"
   }
  ],
  "is_submittable": 1,
- "modified": "2023-04-25 11:39:48.264930",
+ "modified": "2023-04-25 16:28:36.578374",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Refill Request",

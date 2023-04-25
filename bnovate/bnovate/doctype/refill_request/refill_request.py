@@ -29,6 +29,18 @@ class RefillRequest(Document):
 
         self.db_set("status", self.status)
 
+    def set_indicator(self):
+        # Like status but for the portal
+        status_color = {
+            "Draft": "red",
+            "Submitted": "orange",
+            "Confirmed": "green",
+            "Shipped": "green",
+            "Cancelled": "darkgrey",
+        }
+        self.indicator_title = self.status
+        self.indicator_color = status_color[self.status]
+
     def has_sales_order(self):
         return frappe.db.get_value("Sales Order Item", {"refill_request": self.name, "docstatus": 1})
 

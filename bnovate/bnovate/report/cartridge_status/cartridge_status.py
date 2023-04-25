@@ -58,7 +58,8 @@ def get_data(filters):
             dn.carrier,
             dn.tracking_no,
             (SELECT parent 
-                FROM `tabRefill Request Item` rri WHERE rri.serial_no = sn.serial_no 
+                FROM `tabRefill Request Item` rri 
+                WHERE rri.serial_no = sn.serial_no AND rri.docstatus = 1
                 ORDER BY creation DESC 
                 LIMIT 1) 
                 as refill_request

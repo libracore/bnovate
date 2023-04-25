@@ -28,6 +28,7 @@ def get_request(name):
     doc = frappe.get_doc("Refill Request", name)
     if doc.customer != primary_customer:
         return None
+    doc.set_indicator()
     return doc
 
 
@@ -40,8 +41,6 @@ def make_request(doc):
     # TODO: check that no open requests exist for those cartridges?
 
     doc = frappe._dict(json.loads(doc))
-
-    print("--------------\n\n", type(doc), doc, frappe.session)
 
     new_request = frappe.get_doc({
         'doctype': 'Refill Request',
