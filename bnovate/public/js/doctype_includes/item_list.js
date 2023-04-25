@@ -22,7 +22,7 @@ function prompt_new_item() {
                 options: ['', '1xxxxx', '2xxxxx', '3xxxxx', '4xxxxx'],
                 async change(e) {
                     const series = e.currentTarget.value;
-                    const prev_code = await get_next_item_code(series.substring(0, 1));
+                    const prev_code = await bnovate.utils.get_next_item_code(series.substring(0, 1));
                     d.set_value('item_code', prev_code);
                 }
             }, {

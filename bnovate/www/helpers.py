@@ -5,6 +5,8 @@ import frappe
 
 from frappe import _
 
+from frappe.contacts.doctype.address.address import get_address_display
+
 def auth():
     # check login
     if frappe.session.user=='Guest':
@@ -51,6 +53,7 @@ def get_addresses():
     addresses = frappe.db.sql("""
         SELECT 
             `tabAddress`.`name`,
+            `tabAddress`.`company_name`,
             `tabAddress`.`address_type`,
             `tabAddress`.`address_line1`,
             `tabAddress`.`address_line2`,
@@ -70,4 +73,9 @@ def get_addresses():
         LEFT JOIN `tabAddress` ON `tabAddress`.`name` = `tA1`.`parent`
         WHERE `tabContact`.`user` = "{user}";
     """.format(user=frappe.session.user), as_dict=True)
+
+    for addr in addresses:
+        addr.display = get_address_display(addr)
+
+    
     return addresses

@@ -32,26 +32,31 @@ def get_request(name):
 
 
 @frappe.whitelist()
-def make_request(data):
+def make_request(doc):
     """ Create a refill request """
 
     # TODO: Check that items have a serial number and type
-    data = frappe._dict(json.loads(data))
+    # TODO: Check that user owns those addresses.
+    # TODO: check that no open requests exist for those cartridges?
 
-    print("--------------\n\n", type(data), data, frappe.session)
+    doc = frappe._dict(json.loads(doc))
+
+    print("--------------\n\n", type(doc), doc, frappe.session)
 
     new_request = frappe.get_doc({
         'doctype': 'Refill Request',
         'customer': get_session_primary_customer(),
-        'contact': get_session_contact(),
-        'items': data['items'],  # using data.items calls the built-in dict function...
+        'contact_person': get_session_contact(),
+        'shipping_address': doc['shipping_address'],
+        'billing_address': doc['billing_address'],
+        'shipping_address_display': doc['shipping_address_display'],
+        'billing_address_display': doc['billing_address_display'],
+        'items': doc['items'],  # using data.items calls the built-in dict function...
+        'remarks': doc['remarks'],
+        'docstatus': 1,
     })
-
-    print(new_request)
-    print(new_request.meta.get_table_fields())
-    fieldname = new_request.meta.get_table_fields()[0].fieldname
-    print(fieldname)
-    print(new_request.get(fieldname))
 
     new_request.insert(ignore_permissions=True)
     frappe.db.commit()
+
+    return new_request
