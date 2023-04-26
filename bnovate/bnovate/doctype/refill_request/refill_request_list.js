@@ -3,7 +3,7 @@ frappe.listview_settings['Refill Request'] = {
         var status_color = {
             "Draft": "red",
             "Submitted": "orange",
-            "Confirmed": "green",
+            "Confirmed": "blue",
             "Shipped": "green",
             "Cancelled": "darkgrey",
         };

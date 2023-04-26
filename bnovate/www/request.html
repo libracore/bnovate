@@ -110,7 +110,7 @@ ol.request-ribbon {
 		</span>
 	</div>
 	<div class="col-6 text-muted text-right small">
-		{{ frappe.utils.formatdate(doc.creation, 'medium') }}
+		{{ frappe.utils.formatdate(doc.transaction_date, 'medium') }}
 		{% if doc.valid_till %}
 		<p>
 		{{ _("Valid Till") }}: {{ frappe.utils.formatdate(doc.valid_till, 'medium') }}
@@ -125,6 +125,14 @@ ol.request-ribbon {
 	<li class="request-step {% if doc.status == 'Confirmed' %}current{% endif %}" data-step="2">Confirmed</li>
 	<li class="request-step {% if doc.status == 'Shipped' %}current{% endif %}" data-step="3">Shipped</li>
 </ol>
+{% endif %}
+
+{% if doc.expected_ship_date %}
+<div class="row">
+    <div class="col-6">
+        <b>{{ _("Expected shipping date") }}:</b> {{ frappe.utils.formatdate(doc.expected_ship_date, 'medium') }}
+    </div>
+</div>
 {% endif %}
 
 

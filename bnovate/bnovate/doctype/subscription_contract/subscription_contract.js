@@ -50,7 +50,6 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 			if (!this.frm.doc.stopped && this.frm.has_perm(WRITE)) {
 				const label = __('Modify / Upgrade');
 				this.frm.add_custom_button(label, async () => {
-					// TODO: restrict permissions to Sales Managers (or whoever can modify SINVs)
 					try {
 						this.frm.doc.tentative_end_date = await prompt_end_date();
 					} catch {

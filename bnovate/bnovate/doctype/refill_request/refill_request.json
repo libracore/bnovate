@@ -14,6 +14,7 @@
   "column_break_3",
   "transaction_date",
   "required_date",
+  "expected_ship_date",
   "amended_from",
   "section_break_6",
   "shipping_address",
@@ -32,19 +33,22 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Customer",
-   "options": "Customer"
+   "options": "Customer",
+   "reqd": 1
   },
   {
    "fieldname": "shipping_address",
    "fieldtype": "Link",
    "label": "Shipping Address",
-   "options": "Address"
+   "options": "Address",
+   "reqd": 1
   },
   {
    "fieldname": "billing_address",
    "fieldtype": "Link",
    "label": "Billing Address",
-   "options": "Address"
+   "options": "Address",
+   "reqd": 1
   },
   {
    "fieldname": "required_date",
@@ -76,7 +80,8 @@
    "fieldname": "items",
    "fieldtype": "Table",
    "label": "Items",
-   "options": "Refill Request Item"
+   "options": "Refill Request Item",
+   "reqd": 1
   },
   {
    "fieldname": "section_break_11",
@@ -115,7 +120,8 @@
    "fieldname": "contact_person",
    "fieldtype": "Link",
    "label": "Contact Person",
-   "options": "Contact"
+   "options": "Contact",
+   "reqd": 1
   },
   {
    "fetch_from": "contact_person.email_id",
@@ -138,11 +144,18 @@
    "default": "Today",
    "fieldname": "transaction_date",
    "fieldtype": "Data",
-   "label": "Date"
+   "label": "Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "expected_ship_date",
+   "fieldtype": "Date",
+   "label": "Expected Ship Date",
+   "read_only": 1
   }
  ],
  "is_submittable": 1,
- "modified": "2023-04-25 16:28:36.578374",
+ "modified": "2023-04-26 11:40:20.091811",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Refill Request",

@@ -15,12 +15,12 @@
         <table class="table table-condensed" style="border-bottom: 1px solid #d1d8dd; width:100%">
             <thead>
                 <th></th>
-                <th>Serial No</th>
-                <th>Location</th>
-                <th>Status</th>
-                <th>Since</th>
-                <th>Tracking No</th>
-                <th>Pending Request</th>
+                <th>{{ _("Serial No") }}</th>
+                <th>{{ _("Location") }}</th>
+                <th>{{ _("Status") }}</th>
+                <th>{{ _("Since") }}</th>
+                <th>{{ _("Tracking No") }}</th>
+                <th>{{ _("Pending Request") }}</th>
             </thead>
             <tbody>
                 {% for row in data %}
@@ -39,7 +39,7 @@
                         </label>
                     </td>
                     <td>{{ row.location }}</td>
-                    <td>{{ row.status }}</td>
+                    <td>{{ _(row.status) }}</td>
                     <td>{{ frappe.format(row.posting_date, {'fieldtype': 'Date'}) }}</td>
                     <td>
                         {% if row.tracking_link %}

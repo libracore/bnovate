@@ -22,7 +22,9 @@ class RefillRequest(Document):
             self.status = "Cancelled"
         elif self.docstatus == 1:
             self.status = "Submitted"
-            if self.has_sales_order():
+            if self.has_shipped():
+                self.status = "Shipped"
+            elif self.has_sales_order():
                 self.status = "Confirmed"
         else:
             self.status = "Draft"
@@ -34,7 +36,7 @@ class RefillRequest(Document):
         status_color = {
             "Draft": "red",
             "Submitted": "orange",
-            "Confirmed": "green",
+            "Confirmed": "blue",
             "Shipped": "green",
             "Cancelled": "darkgrey",
         }
@@ -44,6 +46,11 @@ class RefillRequest(Document):
     def has_sales_order(self):
         return frappe.db.get_value("Sales Order Item", {"refill_request": self.name, "docstatus": 1})
 
+    def has_shipped(self):
+        so_detail = frappe.db.get_value("Sales Order Item", {"refill_request": self.name, "docstatus": 1}) 
+        dn = frappe.db.get_value("Delivery Note Item", {"so_detail": so_detail, "docstatus": 1}, 'parent') 
+        return dn
+
 
 def get_context(context):
     context.title = "My title"
@@ -52,8 +59,6 @@ def get_context(context):
 
 @frappe.whitelist()
 def make_sales_order(source_name, target_doc=None):
-
-    # TODO: how to set Refill request as confirmed?
 
     def set_missing_values(source, target):
         # Map request items to sales order items.
@@ -87,7 +92,7 @@ def make_sales_order(source_name, target_doc=None):
                 "billing_address": "customer_address",
                 "shipping_address": "shipping_address_name",
                 "name": "po_no",
-                "creation": "po_date",
+                "transaction_date": "po_date",
                 "remarks": "order_level_requests",
             },
         },
@@ -95,11 +100,25 @@ def make_sales_order(source_name, target_doc=None):
     return doclist
 
 def update_status_from_sales_order(sales_order, method=None):
-    # Called by hooks.py when an SO changes.
-    if not method in ('on_submit', 'on_cancel'):
+    # Called by hooks.py when an SO changes or by DN below...
+    if not method in ('on_submit', 'on_cancel', 'dn_update'):
         return
 
     for rr in list(set([it.refill_request for it in sales_order.get("items")])):
         if rr:
             doc = frappe.get_doc("Refill Request", rr)
             doc.set_status()
+
+            if method == 'on_submit':
+                doc.db_set("expected_ship_date", sales_order.delivery_date)
+            elif method == 'on_cancel':
+                doc.db_set("expected_ship_date", None)
+
+def update_status_from_delivery_note(delivery_note, method=None):
+    # Called by hooks.py when a DN changes
+    if not method in ('on_submit', 'on_cancel'):
+        return
+
+    for so_name in list(set([it.against_sales_order for it in delivery_note.get("items")])):
+        so = frappe.get_doc("Sales Order", so_name)
+        update_status_from_sales_order(so, method='dn_update')

@@ -169,8 +169,14 @@ doc_events = {
         "on_cancel": "bnovate.bnovate.doctype.refill_request.refill_request.update_status_from_sales_order",
     },
     "Delivery Note": {
-        "on_submit": "bnovate.bnovate.utils.enclosures.set_owner_from_dn",
-        "on_cancel": "bnovate.bnovate.utils.enclosures.set_owner_from_dn",
+        "on_submit": [
+            "bnovate.bnovate.utils.enclosures.set_owner_from_dn",
+            "bnovate.bnovate.doctype.refill_request.refill_request.update_status_from_delivery_note",
+        ],
+        "on_cancel": [
+            "bnovate.bnovate.utils.enclosures.set_owner_from_dn",
+            "bnovate.bnovate.doctype.refill_request.refill_request.update_status_from_delivery_note",
+        ],
     }
 }
 
