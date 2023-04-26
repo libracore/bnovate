@@ -57,10 +57,11 @@ def get_data(filters):
             cr.customer_name,
             dn.carrier,
             dn.tracking_no,
-            (SELECT parent 
+            (SELECT rri.parent 
                 FROM `tabRefill Request Item` rri 
-                WHERE rri.serial_no = sn.serial_no AND rri.docstatus = 1
-                ORDER BY creation DESC 
+                JOIN `tabRefill Request` rr ON rri.parent = rr.name
+                WHERE rri.serial_no = sn.serial_no AND rri.docstatus = 1 AND rr.status IN ("Submitted", "Confirmed")
+                ORDER BY rr.transaction_date DESC 
                 LIMIT 1) 
                 as refill_request
         FROM `tabSerial No` sn

@@ -127,13 +127,23 @@ ol.request-ribbon {
 </ol>
 {% endif %}
 
-{% if doc.expected_ship_date %}
 <div class="row">
+{% if doc.expected_ship_date %}
     <div class="col-6">
         <b>{{ _("Expected shipping date") }}:</b> {{ frappe.utils.formatdate(doc.expected_ship_date, 'medium') }}
     </div>
-</div>
 {% endif %}
+{% if doc.tracking_no and doc.status == "Shipped" %}
+    <div class="col-6">
+        <b>{{ _("Tracking no") }}:</b> 
+        {% if doc.carrier == "DHL" %}
+            <a href="https://www.dhl.com/ch-en/home/tracking/tracking-express.html?submit=1&tracking-id={{ doc.tracking_no }}">{{ doc.tracking_no }}</a>
+        {% else %}
+            {{ doc.tracking_no }} {{ doc.carrier }}
+        {% endif %}
+    </div>
+{% endif %}
+</div>
 
 
 <div class="row">

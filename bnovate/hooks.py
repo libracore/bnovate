@@ -173,6 +173,9 @@ doc_events = {
             "bnovate.bnovate.utils.enclosures.set_owner_from_dn",
             "bnovate.bnovate.doctype.refill_request.refill_request.update_status_from_delivery_note",
         ],
+        "on_update_after_submit": [
+            "bnovate.bnovate.doctype.refill_request.refill_request.update_status_from_delivery_note",
+        ],
         "on_cancel": [
             "bnovate.bnovate.utils.enclosures.set_owner_from_dn",
             "bnovate.bnovate.doctype.refill_request.refill_request.update_status_from_delivery_note",

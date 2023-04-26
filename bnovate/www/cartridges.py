@@ -16,4 +16,5 @@ def get_context(context):
     context.data = cartridge_status.get_data(frappe._dict({"customer": managed_customers}))
     context.addresses = get_addresses()
     context.show_sidebar = True
+    context.title = _("My Cartridges")
     return context

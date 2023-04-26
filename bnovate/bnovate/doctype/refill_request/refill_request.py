@@ -30,6 +30,7 @@ class RefillRequest(Document):
             self.status = "Draft"
 
         self.db_set("status", self.status)
+        self.set_tracking(self.has_shipped())
 
     def set_indicator(self):
         # Like status but for the portal
@@ -50,6 +51,15 @@ class RefillRequest(Document):
         so_detail = frappe.db.get_value("Sales Order Item", {"refill_request": self.name, "docstatus": 1}) 
         dn = frappe.db.get_value("Delivery Note Item", {"so_detail": so_detail, "docstatus": 1}, 'parent') 
         return dn
+
+    def set_tracking(self, dn=None):
+        if dn is None:
+            self.db_set("tracking_no", None)
+            self.db_set("carrier", None)
+            return
+        dn_doc = frappe.get_doc("Delivery Note", dn)
+        self.db_set("tracking_no", dn_doc.tracking_no)
+        self.db_set("carrier", dn_doc.carrier)
 
 
 def get_context(context):
@@ -116,7 +126,7 @@ def update_status_from_sales_order(sales_order, method=None):
 
 def update_status_from_delivery_note(delivery_note, method=None):
     # Called by hooks.py when a DN changes
-    if not method in ('on_submit', 'on_cancel'):
+    if not method in ('on_submit', 'on_cancel', 'on_update_after_submit'):
         return
 
     for so_name in list(set([it.against_sales_order for it in delivery_note.get("items")])):
