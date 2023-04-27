@@ -1,0 +1,119 @@
+{% extends "templates/web.html" %}
+
+{% block page_content %}
+
+{% block style %}
+<style>
+    .card-group .card {
+    flex: 0 0 33%;
+    border: 1px solid rgba(0, 0, 0, 0.125);
+    border-radius: 0rem;
+    margin: 0.1%;
+    }
+
+    .card-group .card + .card {
+    flex: 0 0 33%;
+    border: 1px solid rgba(0, 0, 0, 0.125);
+    border-radius: 0rem;
+    margin: 0.1%;
+    }
+    .card-group .card:hover {
+        background-color: var(--completed-background-color);
+    }
+</style>
+{% endblock %}
+
+<div class="row">
+    <div class="col">
+        <button id="new-address" class="btn btn-primary" style="margin-bottom: 10px">{{ _("New Address") }}</button>
+    </div>
+</div>
+
+<div class="card-group">
+    {% for addr in addresses %}
+    <div class="card">
+        <div class="card-body">
+            <div class="btn-group float-right">
+              <button type="button" class="btn btn-sm btn-primary"><i class="fa fa-pencil"></i></button>
+              <button type="button" class="btn btn-sm btn-danger"><i class="fa fa-trash"></i></button>
+            </div>
+            {{addr.display}}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Easier to define contents here, for translation and list of addresses -->
+<template id="modal-body">
+    <div class="modal" tabindex="-1" role="dialog" id="myModal" style="display:none">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ _("Edit Address") }}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="form-container">
+                        <form name="address" id="address-form" action="">
+                            <div class="form-group">
+                                <label for="company_name" class="control-label">Company Name</label>
+                                <input type="text" class="form-control" name="company_name" access="false" id="company_name">
+                            </div>
+                            <div class="form-group">
+                                <label for="address_line1" class="control-label">Address Line 1</label>
+                                <input type="text" class="form-control" name="address_line1" access="false" id="address_line1">
+                            </div>
+                            <div class="form-group">
+                                <label for="address_line2" class="control-label">Address Line 2</label>
+                                <input type="text" class="form-control" name="address_line2" access="false" id="address_line2">
+                            </div>
+                            <div class="form-group">
+                                <label for="postal-code" class="control-label">Postal Code</label>
+                                <input type="text" class="form-control" name="postal-code" access="false" id="postal-code">
+                            </div>
+                            <div class="form-group">
+                                <label for="city" class="control-label">City</label>
+                                <input type="text" class="form-control" name="city" access="false" id="city">
+                            </div>
+                            <div class="form-group">
+                                <label for="country" class="formbuilder-select-label">Country</label>
+                                <select class="form-control" name="country" id="country">
+                                    {% for country in countries %}
+                                    <option value="{{ country }}">{{ _(country) }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <div class="wizard-buttons">
+                            <button type="button" class="btn btn-danger" id="cancel-button">{{ _("Cancel") }}</button>
+                            <button type="button" class="btn btn-primary" id="save-button">{{ _("Save") }}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<address-modal id="edit-address-modal"></address-modal>
+
+{% endblock %}
+
+{% block script %}
+<script>
+    frappe.require("/assets/bnovate/js/web_includes/translations.js")
+    frappe.require("/assets/bnovate/js/web_includes/helpers.js")
+    frappe.require("/assets/bnovate/js/web_includes/address_modal.js")
+
+    // Bind all buttons
+    document.querySelector("#new-address").addEventListener("click", () => {
+        let contents = document.querySelector("#modal-body").content.cloneNode(true)
+        document.getElementById("edit-address-modal").show(contents);
+    })
+</script>
+{% endblock %}

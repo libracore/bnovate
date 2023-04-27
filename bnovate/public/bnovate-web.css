@@ -1,0 +1,10 @@
+:root {
+  --line-color: #ffa632;
+  --label-color: #575757;
+  --completed-background-color: #ffecd4;
+  --uncompleted-background-color: #ffffffff;
+}
+
+.modal-header {
+    background-color: var(--completed-background-color);
+}

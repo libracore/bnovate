@@ -5,6 +5,5 @@ frappe.call("frappe.desk.page.setup_wizard.setup_wizard.load_languages")
         return frappe.call("frappe.desk.page.setup_wizard.setup_wizard.load_messages", { language: default_language })
     })
     .then((res) => {
-        console.log("Got the messages", res.__messages)
         Object.assign(frappe._messages, res.__messages);
     });

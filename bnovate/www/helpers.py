@@ -79,3 +79,92 @@ def get_addresses():
 
     
     return addresses
+
+
+@frappe.whitelist()
+def create_address(address_line1, pincode, city, address_type="Shipping", address_line2=None, country="Switzerland"):
+    error = None
+    # fetch customers for this user
+    customers = get_session_customers()
+    customer_links = []
+    for c in customers:
+        customer_links.append({'link_doctype': 'Customer', 'link_name': c['customer']})
+    # create new address
+    pure_name = "{0}-{1}-{2}".format(customers[0]['customer'], address_line1, city).replace(" ", "_").replace("&", "and").replace("+", "and").replace("?", "-").replace("=", "-")
+    new_address = frappe.get_doc({
+        'doctype': 'Address',
+        'address_title': pure_name,
+        'address_type': address_type,
+        'address_line1': address_line1,
+        'address_line2': address_line2,
+        'pincode': pincode,
+        'city': city,
+        'country': country,
+        'links': customer_links
+    })
+    
+    try:
+        new_address.insert(ignore_permissions=True)
+        frappe.db.commit()
+    except Exception as err:
+        error = err
+    return {'error': error, 'name': new_address.name or None}
+
+@frappe.whitelist()
+def update_address(name, address_line1, pincode, city, address_line2=None, country="Switzerland", is_primary=0):
+    error = None
+    # fetch customers for this user
+    customers = get_session_customers()
+    address = frappe.get_doc("Address", name)
+    permitted = False
+    for l in address.links:
+        for c in customers:
+            if l.link_name == c['customer']:
+                permitted = True
+    if permitted:
+        # update address
+        address.address_line1 = address_line1
+        address.address_line2 = address_line2
+        address.pincode = pincode
+        address.city = city
+        address.country = country
+        if is_primary:
+            address.is_primary_address = 1
+        else:
+            address.is_primary_address = 0
+        try:
+            address.save(ignore_permissions=True)
+            frappe.db.commit()
+        except Exception as err:
+            error = err
+    else:
+        error = "Permission error"
+    return {'error': error, 'name': address.name or None}
+
+@frappe.whitelist()
+def delete_address(name):
+    error = None
+    # fetch customers for this user
+    customers = get_session_customers()
+    address = frappe.get_doc("Address", name)
+    permitted = False
+    for l in address.links:
+        for c in customers:
+            if l.link_name == c['customer']:
+                permitted = True
+    if permitted:
+        # delete address: drop links
+        address.links = []
+        try:
+            address.save(ignore_permissions=True)
+            frappe.db.commit()
+        except Exception as err:
+            error = err
+    else:
+        error = "Permission error"
+    return {'error': error}
+
+
+@frappe.whitelist()
+def get_countries():
+    return [c.name for c in frappe.get_all("Country")]

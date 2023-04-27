@@ -1,15 +1,9 @@
 const modal_style = `
 /* Style needs to be defined outside of shadow DOM. */
-:root {
+.wizard-ribbon {
     --number-of-steps: 4;
     --line-width: 2px;
     --bullet-size: 2em;
-    
-    --line-color: #ffa632;
-    --label-color: #575757;
-    --completed-background-color: #ffecd4;
-    --uncompleted-background-color: #ffffffff;
-    
 }
 
 .wizard-ribbon {
@@ -82,10 +76,6 @@ ol.wizard-ribbon {
     background-color: var(--line-color);
 }
 
-.modal-header {
-    background-color: var(--completed-background-color);
-}
-
 .wizard-page textarea {
     width: 100%;
 }
@@ -140,7 +130,7 @@ const modal_template = `
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Request Refill</h5>
+                <h5 class="modal-title">{{ __("Request Refill") }}</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -213,7 +203,7 @@ const template_page2 = `
     {% for addr in addresses %}
     <div class="card">
         <div class="card-body">
-            <input type="radio" name="shipping_address" id="ship-{{addr.name}}" value="{{addr.name}}"></option>
+            <input type="radio" name="shipping_address" id="ship-{{addr.name}}" value="{{addr.name}}" />
             <label for="ship-{{addr.name}}">{{addr.display}}</label>
         </div>
     </div>
@@ -226,7 +216,7 @@ const template_page3 = `
     {% for addr in addresses %}
     <div class="card">
         <div class="card-body">
-            <input type="radio" name="billing_address" id="bill-{{addr.name}}" value="{{addr.name}}"></option>
+            <input type="radio" name="billing_address" id="bill-{{addr.name}}" value="{{addr.name}}" />
             <label for="bill-{{addr.name}}">{{addr.display}}</label>
         </div>
     </div>
@@ -302,7 +292,6 @@ customElements.define('wizard-modal', class extends HTMLElement {
         // Attach template. Only draw when modal is summoned, makes it more likely that translations are loaded.
         this.attachShadow({ mode: "open" });
         this.shadowRoot.innerHTML = frappe.render_template(modal_template, {});
-        console.log("Next", __("Next"), frappe._messages)
 
         const style = document.createElement("style");
         style.textContent = modal_style;
@@ -360,7 +349,9 @@ customElements.define('wizard-modal', class extends HTMLElement {
     }
 
     show(serial_nos, addresses, callback) {
-        this.draw();
+        if (!this.shadowRoot) {
+            this.draw();
+        }
         this.serial_nos = serial_nos;
         this.addresses = addresses;
         this.callback = callback;
