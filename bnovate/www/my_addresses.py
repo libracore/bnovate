@@ -12,8 +12,6 @@ auth()
 
 def get_context(context):
     # User can see cartridges from all the customers he manages
-    print(context)
-    print(frappe.session)
     context.addresses = get_addresses()
     context.countries = get_countries()
     context.show_sidebar = True

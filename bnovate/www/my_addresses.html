@@ -110,10 +110,14 @@
     frappe.require("/assets/bnovate/js/web_includes/helpers.js")
     frappe.require("/assets/bnovate/js/web_includes/address_modal.js")
 
+    function save(doc) {
+        console.log(doc)
+    }
+
     // Bind all buttons
     document.querySelector("#new-address").addEventListener("click", () => {
         let contents = document.querySelector("#modal-body").content.cloneNode(true)
-        document.getElementById("edit-address-modal").show(contents);
+        document.getElementById("edit-address-modal").show(contents, save);
     })
 </script>
 {% endblock %}

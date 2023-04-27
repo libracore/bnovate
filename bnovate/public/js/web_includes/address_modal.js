@@ -44,15 +44,16 @@ customElements.define('address-modal', class extends HTMLElement {
             $(this.modal).modal("hide");
         });
 
-        $(this.done).click(() => {
+        $(this.save).click(() => {
             this.confirm();
         });
     }
 
-    async show(contents) {
+    async show(contents, callback) {
         if (!this.shadowRoot) {
             this.draw(contents);
         }
+        this.callback = callback;
         $(this.modal).modal({ backdrop: 'static', keyboard: false });
     }
 
@@ -71,7 +72,7 @@ customElements.define('address-modal', class extends HTMLElement {
     }
 
     build_doc() {
-        const frm = this.shadowRoot.querySelector("form");
+        const frm = document.querySelector("#address-form");
         const data = new FormData(frm);
         return Object.fromEntries(data);
     }
