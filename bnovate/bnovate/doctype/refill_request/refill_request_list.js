@@ -2,7 +2,7 @@ frappe.listview_settings['Refill Request'] = {
     get_indicator: function (doc) {
         var status_color = {
             "Draft": "red",
-            "Submitted": "orange",
+            "Requested": "orange",
             "Confirmed": "blue",
             "Shipped": "green",
             "Cancelled": "darkgrey",

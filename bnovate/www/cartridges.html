@@ -6,7 +6,7 @@
 
 <div class="row">
     <div class="col">
-        <button id="request-refill" class="btn btn-primary" style="margin-bottom: 10px" disabled>{{ _("Request Refill") }}</button>
+        <button id="request-refill" class="btn btn-primary" style="margin-bottom: 10px" title="{{ _('Select cartridges') }}" disabled>{{ _("Request Refill") }}</button>
     </div>
 </div>
 
@@ -66,8 +66,10 @@
 {% block script %}
 
 <script>
+    frappe.require("/assets/bnovate/js/web_includes/translations.js")
     frappe.require("/assets/bnovate/js/web_includes/helpers.js")
     frappe.require("/assets/bnovate/js/web_includes/wizard_modal.js")
+
     
     function get_selected() {
         let serial_nos = [...document.querySelectorAll(".serial-check")]

@@ -148,10 +148,10 @@ const modal_template = `
             <div class="modal-body">
                 
                 <ol class="wizard-ribbon">
-                    <li class="wizard-step current" data-step="1">Cartridges</li>
-                    <li class="wizard-step" data-step="2">Shipping</li>
-                    <li class="wizard-step" data-step="3">Billing</li>
-                    <li class="wizard-step" data-step="4">Summary</li>
+                    <li class="wizard-step current" data-step="1">{{ __("Cartridges") }}</li>
+                    <li class="wizard-step" data-step="2">{{ __("Shipping") }}</li>
+                    <li class="wizard-step" data-step="3">{{ __("Billing") }}</li>
+                    <li class="wizard-step" data-step="4">{{ __("Summary") }}</li>
                 </ol>
                 
                 <div class="wizard-page" id="page1"> 
@@ -163,10 +163,10 @@ const modal_template = `
 
                 <div class="modal-footer">
                     <div class="wizard-buttons">
-                        <!-- <button type="button" class="btn btn-danger" id="cancelButton">Cancel</button> -->
-                        <button type="button" class="btn btn-secondary" id="prev-button">Previous</button>
-                        <button type="button" class="btn btn-primary" id="next-button" disabled>Next</button>
-                        <button type="button" class="btn btn-primary" id="done-button">Done</button>
+                        <!-- <button type="button" class="btn btn-danger" id="cancelButton">{{ __("Cancel") }}</button> -->
+                        <button type="button" class="btn btn-secondary" id="prev-button">{{ __("Previous") }}</button>
+                        <button type="button" class="btn btn-primary" id="next-button" disabled>{{ __("Next") }}</button>
+                        <button type="button" class="btn btn-primary" id="done-button">{{ __("Confirm Order") }}</button>
                     </div>
                 </div>
             </div>
@@ -274,6 +274,12 @@ const template_page4 = `
         <textarea type="text" name="remarks"></textarea>
     </div>
 </div>
+
+<div class="row">
+    <div class="col-sm">
+    <p>After confirming this order, the cartridges will be filled, shipped, and charged to your account.</p>
+    </div>
+</div>
 `
 
 customElements.define('wizard-modal', class extends HTMLElement {
@@ -290,12 +296,13 @@ customElements.define('wizard-modal', class extends HTMLElement {
         // Initialize the wizard
         this.currentPage = 1;
         this.numPages = 4; // $(".wizard-page").length;
+    }
 
-        // Attach template.
-        // const template = document.getElementById("wizard-modal-template").content;
-        // this.shadowRoot.appendChild(template.cloneNode(true));
+    draw() {
+        // Attach template. Only draw when modal is summoned, makes it more likely that translations are loaded.
         this.attachShadow({ mode: "open" });
-        this.shadowRoot.innerHTML = modal_template;
+        this.shadowRoot.innerHTML = frappe.render_template(modal_template, {});
+        console.log("Next", __("Next"), frappe._messages)
 
         const style = document.createElement("style");
         style.textContent = modal_style;
@@ -353,6 +360,7 @@ customElements.define('wizard-modal', class extends HTMLElement {
     }
 
     show(serial_nos, addresses, callback) {
+        this.draw();
         this.serial_nos = serial_nos;
         this.addresses = addresses;
         this.callback = callback;

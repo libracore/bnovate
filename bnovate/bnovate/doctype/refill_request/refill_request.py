@@ -21,7 +21,7 @@ class RefillRequest(Document):
         if self.docstatus == 2:
             self.status = "Cancelled"
         elif self.docstatus == 1:
-            self.status = "Submitted"
+            self.status = "Requested"
             if self.has_shipped():
                 self.status = "Shipped"
             elif self.has_sales_order():
@@ -36,7 +36,7 @@ class RefillRequest(Document):
         # Like status but for the portal
         status_color = {
             "Draft": "red",
-            "Submitted": "orange",
+            "Requested": "orange",
             "Confirmed": "blue",
             "Shipped": "green",
             "Cancelled": "darkgrey",

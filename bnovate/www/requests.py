@@ -17,6 +17,7 @@ auth()
 def get_context(context):
     context.data = get_requests()
     context.show_sidebar = True
+    context.title = _("Refill Requests")
     return context
 
 def get_requests():

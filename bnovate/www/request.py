@@ -16,7 +16,7 @@ def get_context(context):
     context.form_dict = frappe.form_dict
     context.name = frappe.form_dict.name
     context.show_sidebar = True
-    context.add_breadcrumbs = True
+    context.add_breadcrumbs = False
     return context
 
 
