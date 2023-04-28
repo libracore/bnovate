@@ -16,14 +16,34 @@ frappe.query_reports["Subscription Timeline"] = {
             "fieldname": "reminders_only",
             "label": __("Show only reminders"),
             "fieldtype": "Check",
+        }, {
+            "fieldname": "include_drafts",
+            "label": __("Include Drafts"),
+            "fieldtype": "Check",
+            "default": 0
         }
-
     ],
     onload(report) {
         this.report = report;
+
+        // Copied from listview get_indicator
+        this.status_color = {
+            "Draft": "red",
+            "Active": "green",
+            "Finished": "darkgrey",
+            "Stopped": "darkgrey",
+            "Cancelled": "darkgrey",
+        };
     },
     after_datatable_render(datatable) {
         bnovate.charts.draw_timeline_chart(this.report, build_subscription_dt);
+    },
+    formatter(value, row, col, data, default_formatter) {
+        if (col.fieldname === "status") {
+            let color = this.status_color[data.status] ? this.status_color[data.status] : "grey";
+            return `<span class="indicator ${color}">${default_formatter(value, row, col, data)}</span>`
+        }
+        return default_formatter(value, row, col, data);
     },
 };
 
@@ -33,17 +53,28 @@ function build_subscription_dt(report) {
     dataTable.addColumn({ type: 'string', id: 'Customer Name' });
     dataTable.addColumn({ type: 'string', id: 'Subscription' });
     dataTable.addColumn({ type: 'string', id: 'tooltip', role: 'tooltip' });
-    // dataTable.addColumn({ type: 'string', id: 'style', role: 'style' });
+    dataTable.addColumn({ type: 'string', id: 'style', role: 'style' });
     dataTable.addColumn({ type: 'date', id: 'Start' });
     dataTable.addColumn({ type: 'date', id: 'End' });
+
+    const colorMap = {
+        "Draft": "#ff5858",
+        "Active": "#98d85b",
+        "Finished": "#b8c2cc",
+        "Stopped": "#b8c2cc",
+        "Cancelled": "#b8c2cc",
+    }
 
     let rows = report.data.map(row => [
         row.customer_name,
         `${row.subscription}: ${row.title}`,
         frappe.render_template(popover_template, row),
+        `color: ${colorMap[row.status]}`,
         frappe.datetime.str_to_obj(row.start_date),
         frappe.datetime.str_to_obj(row.computed_end_date),
     ]);
+
+    console.log(rows)
 
     dataTable.addRows(rows);
 

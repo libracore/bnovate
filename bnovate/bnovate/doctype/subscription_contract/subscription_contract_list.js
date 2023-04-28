@@ -6,6 +6,7 @@ frappe.listview_settings['Subscription Contract'] = {
             "Active": "green",
             "Finished": "darkgrey",
             "Stopped": "darkgrey",
+            "Cancelled": "darkgrey",
         };
         return [__(doc.status), status_color[doc.status], "status,=," + doc.status];
     },

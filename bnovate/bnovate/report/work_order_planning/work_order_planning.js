@@ -116,7 +116,7 @@ function build_wo_dt(report) {
     dataTable.addColumn({ type: 'date', id: 'Start' });
     dataTable.addColumn({ type: 'date', id: 'End' });
 
-    frappeColors = {
+    const frappeColors = {
         red: "#ff5858",
         orange: "#ffb65c",
         green: "#98d85b",
