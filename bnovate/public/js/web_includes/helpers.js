@@ -15,6 +15,13 @@ bnovate.web.create_address = async function create_address(doc) {
     return resp.message;
 }
 
+bnovate.web.delete_address = async function delete_address(name) {
+    const resp = await frappe.call("bnovate.www.helpers.delete_address", {
+        name
+    })
+    return resp.message;
+}
+
 bnovate.web.get_countries = async function get_countries() {
     const resp = await frappe.call("bnovate.www.helpers.get_countries")
     return resp.message;

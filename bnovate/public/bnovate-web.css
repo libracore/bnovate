@@ -5,6 +5,7 @@
   --uncompleted-background-color: #ffffffff;
 
   --error-color: #ff5858;
+  --danger: #f38926;
 }
 
 .modal-header {
@@ -19,4 +20,11 @@
 
 .has-error .form-control {
   border-color: var(--error-color);
+}
+
+/* Buttons */
+
+.btn-danger {
+  background-color: var(--danger);
+  border-color: var(--danger);
 }

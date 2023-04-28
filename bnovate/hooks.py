@@ -223,5 +223,6 @@ scheduler_events = {
 # generated from the base implementation of the doctype dashboard,
 # along with any modifications made in other Frappe apps
 override_doctype_dashboards = {
-    "Serial No": "bnovate.bnovate.utils.dashboards.get_serial_no_dashboard_data"
+    "Serial No": "bnovate.bnovate.utils.dashboards.get_serial_no_dashboard_data",
+    "Sales Order": "bnovate.bnovate.utils.dashboards.get_sales_order_dashboard_data",
 }

@@ -34,8 +34,8 @@
     <div class="card">
         <div class="card-body">
             <div class="btn-group float-right">
-              <button type="button" class="btn btn-sm btn-primary"><i class="fa fa-pencil"></i></button>
-              <button type="button" class="btn btn-sm btn-danger"><i class="fa fa-trash"></i></button>
+              <!-- <button type="button" class="btn btn-sm btn-primary"><i class="fa fa-pencil"></i></button> -->
+              <button type="button" class="btn btn-sm btn-danger delete-address" data-name="{{ addr.name }}"><i class="fa fa-trash"></i></button>
             </div>
             {{addr.display}}
         </div>
@@ -136,6 +136,13 @@
     document.querySelector("#new-address").addEventListener("click", () => {
         let contents = document.querySelector("#modal-body").content.cloneNode(true)
         document.getElementById("edit-address-modal").show(contents, validate, save);
-    })
+    });
+
+    [...document.querySelectorAll(".delete-address")].map(el => el.addEventListener("click", async (e) => {
+        if (window.confirm(__("Delete this address?"))) {
+            await bnovate.web.delete_address(el.dataset.name);
+            location.reload();
+        }
+    }));
 </script>
 {% endblock %}

@@ -17,3 +17,9 @@ def get_serial_no_dashboard_data(data):
             }
         ],
     })
+
+
+def get_sales_order_dashboard_data(data):
+    print("------------------\n\n\n", data)
+    data.internal_links['Refill Request'] = ['items', 'refill_request']
+    return data

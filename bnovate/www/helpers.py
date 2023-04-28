@@ -71,7 +71,8 @@ def get_addresses():
                                        AND `tA1`.`link_doctype` = "Customer" 
                                        AND `tA1`.`link_name` = `tC1`.`link_name`
         LEFT JOIN `tabAddress` ON `tabAddress`.`name` = `tA1`.`parent`
-        WHERE `tabContact`.`user` = "{user}";
+        WHERE `tabContact`.`user` = "{user}"
+        ORDER BY `tabAddress`.`company_name`, `tabAddress`.`address_line1`
     """.format(user=frappe.session.user), as_dict=True)
 
     for addr in addresses:
@@ -83,12 +84,12 @@ def get_addresses():
 
 @frappe.whitelist()
 def create_address(address_line1, pincode, city, address_type="Shipping", company_name=None, address_line2=None, country="Switzerland"):
-    error = None
+    """ Add address on primary customer associated to this user """
     # fetch customers for this user
     customer = get_session_primary_customer()
     customer_links = [{'link_doctype': 'Customer', 'link_name': customer}]
     # create new address
-    pure_name = "{0}-{1}-{2}".format(customer, address_line1, city).replace(" ", "_").replace("&", "and").replace("+", "and").replace("?", "-").replace("=", "-")
+    pure_name = "{0}-{1}-{2}-{3}".format(customer, company_name, address_line1, city).replace(" ", "_").replace("&", "and").replace("+", "and").replace("?", "-").replace("=", "-")
     new_address = frappe.get_doc({
         'doctype': 'Address',
         'address_title': pure_name,
@@ -105,59 +106,28 @@ def create_address(address_line1, pincode, city, address_type="Shipping", compan
     new_address.insert(ignore_permissions=True)
     frappe.db.commit()
 
-@frappe.whitelist()
-def update_address(name, address_line1, pincode, city, address_line2=None, country="Switzerland", is_primary=0):
-    error = None
-    # fetch customers for this user
-    customers = get_session_customers()
-    address = frappe.get_doc("Address", name)
-    permitted = False
-    for l in address.links:
-        for c in customers:
-            if l.link_name == c['customer']:
-                permitted = True
-    if permitted:
-        # update address
-        address.address_line1 = address_line1
-        address.address_line2 = address_line2
-        address.pincode = pincode
-        address.city = city
-        address.country = country
-        if is_primary:
-            address.is_primary_address = 1
-        else:
-            address.is_primary_address = 0
-        try:
-            address.save(ignore_permissions=True)
-            frappe.db.commit()
-        except Exception as err:
-            error = err
-    else:
-        error = "Permission error"
-    return {'error': error, 'name': address.name or None}
 
 @frappe.whitelist()
 def delete_address(name):
-    error = None
+    """ Unlink all customers from this address """
     # fetch customers for this user
     customers = get_session_customers()
     address = frappe.get_doc("Address", name)
     permitted = False
     for l in address.links:
         for c in customers:
-            if l.link_name == c['customer']:
+            if l.link_name == c:
                 permitted = True
     if permitted:
         # delete address: drop links
-        address.links = []
-        try:
-            address.save(ignore_permissions=True)
-            frappe.db.commit()
-        except Exception as err:
-            error = err
+        for l in address.links:
+            address.remove(l)
+        # FIXME: current hack is to associate to a dummy customer to override a validation which automatically re-links
+        address.append('links', {'link_doctype': 'Customer', 'link_name': frappe.get_single('bNovate Settings').dummy_customer})
+        address.save(ignore_permissions=True)
+        frappe.db.commit()
     else:
-        error = "Permission error"
-    return {'error': error}
+        raise frappe.PermissionError
 
 
 @frappe.whitelist()
