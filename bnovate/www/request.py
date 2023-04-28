@@ -5,7 +5,7 @@ import frappe
 
 from frappe import _
 
-from .helpers import auth, get_session_primary_customer, get_session_contact
+from .helpers import auth, get_session_primary_customer, get_session_contact, get_addresses
 
 no_cache = 1
 
@@ -36,11 +36,15 @@ def get_request(name):
 def make_request(doc):
     """ Create a refill request """
 
-    # TODO: Check that items have a serial number and type
-    # TODO: Check that user owns those addresses.
-    # TODO: check that no open requests exist for those cartridges?
-
     doc = frappe._dict(json.loads(doc))
+
+    # Check that user does own the addresses
+    valid_names = [a.name for a in get_addresses()]
+    if not doc['shipping_address'] in valid_names:
+        frappe.throw(_("You cannot order to this shipping address"), frappe.PermissionError)
+    if not doc['billing_address'] in valid_names:
+        frappe.throw(_("You cannot order to this billing address"), frappe.PermissionError)
+
 
     new_request = frappe.get_doc({
         'doctype': 'Refill Request',
