@@ -60,7 +60,9 @@
   "terms",
   "sales_invoice",
   "amended_from",
-  "company"
+  "company",
+  "printing_details_section",
+  "language"
  ],
  "fields": [
   {
@@ -425,6 +427,7 @@
    "print_hide": 1
   },
   {
+   "collapsible": 1,
    "depends_on": "customer",
    "fieldname": "contact_section",
    "fieldtype": "Section Break",
@@ -448,10 +451,24 @@
    "fieldtype": "Small Text",
    "label": "Contact Display",
    "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "printing_details_section",
+   "fieldtype": "Section Break",
+   "label": "Printing Details"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "language",
+   "fieldtype": "Data",
+   "label": "Print Language",
+   "options": "Language",
+   "print_hide": 1
   }
  ],
  "is_submittable": 1,
- "modified": "2023-04-28 14:08:34.518682",
+ "modified": "2023-04-28 14:42:06.887145",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Subscription Contract",
