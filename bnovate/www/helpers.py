@@ -36,7 +36,7 @@ def get_session_primary_customer():
 def get_session_contact():
     """ Return names of contacts associated to this user id """
 
-    # TODO: prevent a user from owning several contacts.
+    # Note: I prevent a user from owning several contacts by setting User ID to unique in Contact doctype
 
     users = frappe.db.sql("""
     SELECT
