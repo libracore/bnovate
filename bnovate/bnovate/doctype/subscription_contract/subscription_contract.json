@@ -297,7 +297,7 @@
    "fieldtype": "Select",
    "hidden": 1,
    "label": "Renewal Reminder Hidden",
-   "options": "\n2\n3\n4\n8\n12\n16",
+   "options": "\n1\n2\n3\n4\n8\n12\n16",
    "read_only": 1
   },
   {
@@ -468,7 +468,7 @@
   }
  ],
  "is_submittable": 1,
- "modified": "2023-04-28 14:42:06.887145",
+ "modified": "2023-04-28 15:58:28.457686",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Subscription Contract",

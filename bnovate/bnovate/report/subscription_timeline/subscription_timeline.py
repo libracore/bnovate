@@ -5,6 +5,8 @@ from __future__ import unicode_literals
 import frappe
 from frappe import _
 
+import datetime
+
 def execute(filters=None):
     columns = get_columns()
     data = get_data(filters)
@@ -64,6 +66,6 @@ WHERE sc.docstatus = 1
     data = frappe.db.sql(sql_query, as_dict=True)
 
     if filters.reminders_only:
-        return [d for d in data if d.renewal_reminder_from is not None]
+        return [d for d in data if d.renewal_reminder_from and d.renewal_reminder_from <= datetime.date.today()]
 
     return data

@@ -29,7 +29,7 @@ frappe.ui.form.on('Subscription Contract', {
 
 // Subclass SellingController to use their price rate mechanisms
 bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.SellingController.extend({
-	onload: function (doc, dt, dn) {
+	onload(doc, dt, dn) {
 		this._super();
 
 		this.frm.set_query('contact_person', erpnext.queries.contact_query);
