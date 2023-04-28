@@ -32,6 +32,7 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 	onload: function (doc, dt, dn) {
 		this._super();
 
+		this.frm.set_query('contact_person', erpnext.queries.contact_query);
 		// Override item filters set by SellingController
 		this.frm.set_query("item_code", "items", function () {
 			return { filters: { enable_deferred_revenue: true } }

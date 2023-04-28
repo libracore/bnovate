@@ -23,6 +23,10 @@
   "po_date",
   "stopped",
   "credit_confirmed",
+  "contact_section",
+  "contact_person",
+  "contact_display",
+  "contact_email",
   "currency_and_price_list",
   "currency",
   "conversion_rate",
@@ -419,10 +423,35 @@
    "label": "Terms",
    "options": "Terms and Conditions",
    "print_hide": 1
+  },
+  {
+   "depends_on": "customer",
+   "fieldname": "contact_section",
+   "fieldtype": "Section Break",
+   "label": "Contact"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "contact_person",
+   "fieldtype": "Link",
+   "label": "Contact Person",
+   "options": "Contact"
+  },
+  {
+   "fieldname": "contact_email",
+   "fieldtype": "Data",
+   "label": "Contact Email",
+   "read_only": 1
+  },
+  {
+   "fieldname": "contact_display",
+   "fieldtype": "Small Text",
+   "label": "Contact Display",
+   "read_only": 1
   }
  ],
  "is_submittable": 1,
- "modified": "2023-03-31 14:52:26.258624",
+ "modified": "2023-04-28 14:08:34.518682",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Subscription Contract",
