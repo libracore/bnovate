@@ -44,6 +44,8 @@ fixtures = [
             "Serial No-owner_set_by",
             # Refill requests
             "Sales Order Item-refill_request",
+            # Addresses
+            "Address-company_name",
         ]]]
     }
 ]

@@ -1,12 +1,3 @@
-const modal_style = `
-/* Style needs to be defined outside of shadow DOM. */
-
-
-.wizard-page textarea {
-}
-</style >
-`
-
 customElements.define('address-modal', class extends HTMLElement {
     constructor() {
         super();
@@ -23,16 +14,13 @@ customElements.define('address-modal', class extends HTMLElement {
         // this.shadowRoot.innerHTML = frappe.render_template(modal_template, {});
         this.shadowRoot.appendChild(contents)
 
-        const style = document.createElement("style");
-        style.textContent = modal_style;
-        document.head.appendChild(style);
-
         this.modal = this.shadowRoot.getElementById("myModal");
         this.cancel = this.shadowRoot.getElementById("cancel-button");
         this.save = this.shadowRoot.getElementById("save-button");
 
+
         $(this.modal).on('show.bs.modal', (e) => {
-            this.bind_listeners(e.target);
+            // this.bind_listeners(e.target);
         })
 
         $(this.modal).on('hide.bs.modal', (e) => {
@@ -49,12 +37,14 @@ customElements.define('address-modal', class extends HTMLElement {
         });
     }
 
-    async show(contents, callback) {
+    async show(contents, validate, confirm_callback) {
         if (!this.shadowRoot) {
             this.draw(contents);
         }
-        this.callback = callback;
+        this.confirm_callback = confirm_callback;
+        this.validate = validate;
         $(this.modal).modal({ backdrop: 'static', keyboard: false });
+        this.bind_listeners();
     }
 
     hide() {
@@ -63,22 +53,23 @@ customElements.define('address-modal', class extends HTMLElement {
 
 
     // Enable or disable buttons based on form completion
-    enable_buttons() {
-        const doc = this.build_doc()
+    enable_buttons(valid) {
+        if (valid) {
+            this.save.disabled = false;
+        } else {
+            this.save.disabled = true;
+        }
     }
 
     // Set all blank variant selects when the first one is modified
-    bind_listeners(el) {
-    }
-
-    build_doc() {
-        const frm = document.querySelector("#address-form");
-        const data = new FormData(frm);
-        return Object.fromEntries(data);
+    bind_listeners() {
+        [...document.querySelectorAll("input")].map(el => el.addEventListener("change", () => {
+            this.enable_buttons(this.validate());
+        }))
     }
 
     confirm() {
-        this.callback(this.build_doc());
+        this.confirm_callback();
         this.hide();
     }
 })

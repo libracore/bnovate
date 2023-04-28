@@ -82,18 +82,17 @@ def get_addresses():
 
 
 @frappe.whitelist()
-def create_address(address_line1, pincode, city, address_type="Shipping", address_line2=None, country="Switzerland"):
+def create_address(address_line1, pincode, city, address_type="Shipping", company_name=None, address_line2=None, country="Switzerland"):
     error = None
     # fetch customers for this user
-    customers = get_session_customers()
-    customer_links = []
-    for c in customers:
-        customer_links.append({'link_doctype': 'Customer', 'link_name': c['customer']})
+    customer = get_session_primary_customer()
+    customer_links = [{'link_doctype': 'Customer', 'link_name': customer}]
     # create new address
-    pure_name = "{0}-{1}-{2}".format(customers[0]['customer'], address_line1, city).replace(" ", "_").replace("&", "and").replace("+", "and").replace("?", "-").replace("=", "-")
+    pure_name = "{0}-{1}-{2}".format(customer, address_line1, city).replace(" ", "_").replace("&", "and").replace("+", "and").replace("?", "-").replace("=", "-")
     new_address = frappe.get_doc({
         'doctype': 'Address',
         'address_title': pure_name,
+        'company_name': company_name,
         'address_type': address_type,
         'address_line1': address_line1,
         'address_line2': address_line2,
@@ -103,12 +102,8 @@ def create_address(address_line1, pincode, city, address_type="Shipping", addres
         'links': customer_links
     })
     
-    try:
-        new_address.insert(ignore_permissions=True)
-        frappe.db.commit()
-    except Exception as err:
-        error = err
-    return {'error': error, 'name': new_address.name or None}
+    new_address.insert(ignore_permissions=True)
+    frappe.db.commit()
 
 @frappe.whitelist()
 def update_address(name, address_line1, pincode, city, address_line2=None, country="Switzerland", is_primary=0):
