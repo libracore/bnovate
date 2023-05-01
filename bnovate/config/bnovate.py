@@ -8,6 +8,12 @@ def get_data():
             "icon": "octicon octicon-git-compare",
             "items": [
                    {
+                       "type": "doctype",
+                       "name": "Refill Request",
+                       "label": _("Refill Request"),
+                       "description": _("Customers requesting refills through Portal")
+                   },
+                   {
                         "type": "report",
                         "name": "Orders to Fulfill",
                         "label": _("Orders to Fulfill"),
