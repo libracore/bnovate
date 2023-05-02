@@ -62,8 +62,8 @@ def get_data():
                    },    
                    {
                         "type": "report",
-                        "name": "Stored Cartridges",
-                        "label": _("Stored Cartridges"),
+                        "name": "Cartridge Status",
+                        "label": _("Cartridge Status"),
                         "doctype": "Serial No",
                         "is_query_report": True    
                    },    

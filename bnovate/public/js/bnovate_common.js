@@ -30,7 +30,6 @@ function get_label(doctype, docname, print_format, label_reference) {
     "_blank"
   );
 }
-
 bnovate.utils.get_label = get_label; // already used in many custom scripts, keep in global namespace.
 
 bnovate.utils.get_next_item_code = async function (prefix) {

@@ -28,8 +28,35 @@
 
         {% if doc.production_item_entry.has_serial_no %}
             {% if not doc.production_item_entry.needs_serial_input %}
-                <div class="bn-col info">
-                    <i class="fa fa-info-circle"></i> Serial no is automatically generated.
+                <div class="bn-col">
+                    <h3>Serial No produced</h3>
+                    <table class="table table-condensed no-margin" style="border-bottom: 1px solid #d1d8dd">
+                        <tbody>
+                            <tr>
+                                <td>
+                                    {{ doc.production_item_entry.item_code }}
+                                </td>
+                                <td class="info">
+                                    <i class="fa fa-info-circle"></i> Serial no is automatically generated.
+                                </td>
+                            </tr>
+                            <!-- Special case for new cartridges -->
+                            {% for scrap_item in doc.exclusively_scrap_items %} 
+                            {% if scrap_item.needs_serial_input %}
+                            <tr>
+                                <td>
+                                    {{ scrap_item.item_code }}
+                                </td>
+                                <td>
+                                    <input class="serial form-control required" id="serial-scrap-{{ scrap_item.idx }}"
+                                    name="serial-scrap-{{ scrap_item.idx }}" data-idx="{{ scrap_item.idx }}"
+                                    data-item="{{ scrap_item.item_code }}" data-required tabindex="2">
+                                </td>  
+                            </tr>
+                            {% endif %} 
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             {% endif %}
         {% endif %}
@@ -52,6 +79,7 @@
                     </tr>
 
 
+                    <!-- Special case for new cartridges -->
                     {% for scrap_item in doc.exclusively_scrap_items %} 
                     {% if scrap_item.has_serial_no %}
                     <tr>

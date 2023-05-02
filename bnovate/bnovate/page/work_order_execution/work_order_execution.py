@@ -71,3 +71,18 @@ def update_work_order_unit_time(stock_entry, method=None):
 
     wo = frappe.get_doc("Work Order", stock_entry.work_order)
     calculate_total_time(wo)
+
+
+#######################################
+# Autonumbering
+#######################################
+
+@frappe.whitelist()
+def make_auto_serial_no(item_code):
+    from erpnext.stock.doctype.serial_no import serial_no as sn
+    item_master = frappe.get_doc("Item", item_code)
+    if not (item_master.has_serial_no and item_master.serial_no_series):
+        frappe.throw("Item {} needs to be serialized and needs serial no series".format(item_code))
+
+    serial_no = sn.get_auto_serial_nos(item_master.serial_no_series, 1)
+    return serial_no
