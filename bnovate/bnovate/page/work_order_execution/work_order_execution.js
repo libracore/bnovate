@@ -32,7 +32,7 @@ Also, STEs are saved in draft state, to allow scanning serial numbers before clo
 // 		one with existing SNs & Batches. Would allow scanning components in several stages, and
 // 		SNs wouldn't be lost when redrawing the table after adding additional items.
 
-frappe.provide("frappe.bnovate.work_order_execution")
+frappe.provide("bnovate.work_order_execution")
 
 frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 	var page = frappe.ui.make_app_page({
@@ -40,7 +40,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		title: 'Work Order Execution',
 		single_column: true,
 	});
-	frappe.bnovate.work_order_execution.page = page; // for easier debugging
+	bnovate.work_order_execution.page = page; // for easier debugging
 	window.page = page;
 
 	const read = Symbol("read");
@@ -61,7 +61,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		expiry_date_control: null,	// contains expiry date control if it exists...
 		default_shelf_life: 9,		// [months] used to calculate expiry date
 	}
-	frappe.bnovate.work_order_execution.state = state;
+	bnovate.work_order_execution.state = state;
 	window.state = state;
 
 	let form = new frappe.ui.FieldGroup({
@@ -430,6 +430,20 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			}
 		}
 
+		if (state.ste_doc.production_item_entry.has_auto_serial_no) {
+			// Create SN for production item and fill field (assumes we are only creating one SN at a time.)
+			let new_sn = await create_serial_number(state.ste_doc.production_item_entry.item_code);
+			state.ste_doc.production_item_entry.serial_no = new_sn;
+		}
+
+		// Create SNs for new enclosures if relevant
+		for (let scrap_item of state.ste_doc.exclusively_scrap_items) {
+			if (scrap_item.has_auto_serial_no) {
+				let new_sn = await create_serial_number(scrap_item.item_code);
+				scrap_item.serial_no = new_sn
+			}
+		}
+
 		// Copy over additional items:
 		while (state.ste_doc.additional_items.length) {
 			let item = state.ste_doc.additional_items.pop();
@@ -591,7 +605,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			}
 		}
 	}
-	frappe.bnovate.work_order_execution.set_scrap_item_value = set_scrap_item_value;
+	bnovate.work_order_execution.set_scrap_item_value = set_scrap_item_value;
 
 
 	function calculate_product_valuation(doc, bom_item) {
@@ -622,7 +636,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			it.basic_amount = flt(flt(it.transfer_qty) * flt(it.basic_rate), precision("basic_amount", it))
 		}
 	};
-	frappe.bnovate.work_order_execution.calculate_product_valuation = calculate_product_valuation;
+	bnovate.work_order_execution.calculate_product_valuation = calculate_product_valuation;
 
 
 
@@ -663,7 +677,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		});
 		return resp.docs[0];
 	}
-	frappe.bnovate.work_order_execution.save_doc = save_doc;
+	bnovate.work_order_execution.save_doc = save_doc;
 
 
 	async function submit_doc(doc) {
@@ -675,7 +689,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		});
 		return resp.message;
 	}
-	frappe.bnovate.work_order_execution.submit_doc = submit_doc;
+	bnovate.work_order_execution.submit_doc = submit_doc;
 
 
 	async function start_time_log(work_order_id) {
@@ -687,7 +701,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		});
 		return resp.message;
 	}
-	frappe.bnovate.work_order_execution.start_time_log = start_time_log;
+	bnovate.work_order_execution.start_time_log = start_time_log;
 
 
 	async function stop_time_log(work_order_id) {
@@ -699,7 +713,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		});
 		return resp.message;
 	}
-	frappe.bnovate.work_order_execution.stop_time_log = stop_time_log;
+	bnovate.work_order_execution.stop_time_log = stop_time_log;
 
 
 	async function fetch_item_details(item_codes) {
@@ -744,6 +758,19 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			item: item_code,
 		})
 	}
+
+	async function create_serial_number(item_code) {
+		// Creates a new serial number for the given item code. Returns name of SN.
+		// Requires a naming series to be set.
+		const resp = await frappe.call({
+			method: "bnovate.bnovate.page.work_order_execution.work_order_execution.make_auto_serial_no",
+			args: {
+				item_code
+			},
+		});
+		return resp.message;
+	};
+	bnovate.work_order_execution.create_serial_number = create_serial_number;
 
 	// LISTENERS
 	////////////////////////////
@@ -790,6 +817,11 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 	}
 
 	function attach_print_labels() {
+		[...document.querySelectorAll('.print-rating-plate')]
+			.map(el => el.addEventListener('click', event => {
+				bnovate.utils.get_label("Stock Entry", el.dataset.docname, "Rating Plate from Stock Entry", "Rating Plate 42x42mm")
+			}));
+
 		[...document.querySelectorAll('.print-wo-label')]
 			.map(el => el.addEventListener('click', event => {
 				window.open(
@@ -810,7 +842,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 					),
 					"_blank"
 				); // _blank opens in new tab.
-			}))
+			}));
 	}
 
 	function attach_additional_item_buttons() {

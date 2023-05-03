@@ -115,7 +115,6 @@ frappe.pages['file_uploader'].on_page_load = function (wrapper) {
 			formData.append('is_private', 1);
 			formData.append('folder', 'Home/Attachments');
 			formData.append('doctype', 'Purchase Invoice');
-			// TODO: make sure the file has a name that exists. Maybe fetch available PINV, match closest one.
 			formData.append('docname', closest_match); // strip extension
 			formData.append('file', file.fileObj, file.name);
 

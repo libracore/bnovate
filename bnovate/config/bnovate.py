@@ -8,6 +8,12 @@ def get_data():
             "icon": "octicon octicon-git-compare",
             "items": [
                    {
+                       "type": "doctype",
+                       "name": "Refill Request",
+                       "label": _("Refill Request"),
+                       "description": _("Customers requesting refills through Portal")
+                   },
+                   {
                         "type": "report",
                         "name": "Orders to Fulfill",
                         "label": _("Orders to Fulfill"),
@@ -56,8 +62,8 @@ def get_data():
                    },    
                    {
                         "type": "report",
-                        "name": "Stored Cartridges",
-                        "label": _("Stored Cartridges"),
+                        "name": "Cartridge Status",
+                        "label": _("Cartridge Status"),
                         "doctype": "Serial No",
                         "is_query_report": True    
                    },    

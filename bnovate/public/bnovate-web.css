@@ -1,0 +1,30 @@
+:root {
+  --line-color: #ffa632;
+  --label-color: #575757;
+  --completed-background-color: #ffecd4;
+  --uncompleted-background-color: #ffffffff;
+
+  --error-color: #ff5858;
+  --danger: #f38926;
+}
+
+.modal-header {
+    background-color: var(--completed-background-color);
+}
+
+
+/* Forms */
+.has-error .control-label {
+  color: var(--error-color);
+}
+
+.has-error .form-control {
+  border-color: var(--error-color);
+}
+
+/* Buttons */
+
+.btn-danger {
+  background-color: var(--danger);
+  border-color: var(--danger);
+}

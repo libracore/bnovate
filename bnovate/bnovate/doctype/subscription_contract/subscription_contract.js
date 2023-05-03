@@ -29,9 +29,10 @@ frappe.ui.form.on('Subscription Contract', {
 
 // Subclass SellingController to use their price rate mechanisms
 bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.SellingController.extend({
-	onload: function (doc, dt, dn) {
+	onload(doc, dt, dn) {
 		this._super();
 
+		this.frm.set_query('contact_person', erpnext.queries.contact_query);
 		// Override item filters set by SellingController
 		this.frm.set_query("item_code", "items", function () {
 			return { filters: { enable_deferred_revenue: true } }
@@ -50,7 +51,6 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 			if (!this.frm.doc.stopped && this.frm.has_perm(WRITE)) {
 				const label = __('Modify / Upgrade');
 				this.frm.add_custom_button(label, async () => {
-					// TODO: restrict permissions to Sales Managers (or whoever can modify SINVs)
 					try {
 						this.frm.doc.tentative_end_date = await prompt_end_date();
 					} catch {

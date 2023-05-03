@@ -11,10 +11,11 @@ if (parseInt(Math.random() * 100) == 42 || frappe.datetime.get_today().endsWith(
   document.querySelector("body").classList.add('party-time');
 }
 
+frappe.provide("bnovate.utils")
+
 
 /*  ***********************
  * This file contains common global functions 
- * 
  *  *********************** */
 
 function get_label(doctype, docname, print_format, label_reference) {
@@ -29,18 +30,9 @@ function get_label(doctype, docname, print_format, label_reference) {
     "_blank"
   );
 }
+bnovate.utils.get_label = get_label; // already used in many custom scripts, keep in global namespace.
 
-async function get_highest_item_code(prefix) {
-  let resp = await frappe.call({
-    method: 'bnovate.bnovate.utils.items.get_highest_item_code',
-    args: {
-      prefix
-    }
-  })
-  return resp.message;
-}
-
-async function get_next_item_code(prefix) {
+bnovate.utils.get_next_item_code = async function (prefix) {
   let resp = await frappe.call({
     method: 'bnovate.bnovate.utils.items.get_next_item_code',
     args: {
@@ -48,6 +40,68 @@ async function get_next_item_code(prefix) {
     }
   })
   return resp.message;
+}
+
+/*********************************
+ * Code to set enclosure owners
+ *********************************/
+
+// TODO: migrate to own namespace.
+
+async function get_history_report() {
+  let resp = await frappe.call({
+    method: "frappe.desk.query_report.run",
+    args: {
+      report_name: "Shipping and Billing History",
+      filters: {
+      }
+    }
+  })
+  return resp.message;
+}
+
+async function get_cartridge_owners() {
+  const message = await get_history_report();
+  const data = message.result.filter(row => row.customer != "CR-00110");
+
+  let out = [];
+  let known_sns = new Set();
+  for (let row of data) {
+
+    sns = row.serial_no.trim().toUpperCase().split("\n").map(s => s.trim());
+
+    for (let sn of sns) {
+      if (known_sns.has(sn) || sn.startsWith("BNO")) {
+        continue;
+      }
+      if (!(row.shipped_item_code.startsWith("ENC-") || row.shipped_item_code == "100146")) {
+        continue;
+      }
+      known_sns.add(sn);
+      out.push({
+        serial_no: sn,
+        customer: row.customer,
+        customer_name: row.customer_name,
+        doc: row.delivery_note,
+        data: row.ship_date
+      })
+    }
+
+  }
+  return out;
+}
+
+async function set_cartridge_owners(owners) {
+  // owners as returned by get_cartridge_owners
+  let i = 0;
+  for (let row of owners) {
+    console.log(row.serial_no, i++, owners.length)
+    await frappe.db.set_value('Serial No', row.serial_no, {
+      owned_by: row.customer,
+      owned_by_name: row.customer_name,
+      owner_set_by: row.doc,
+    })
+  }
 }
 
 

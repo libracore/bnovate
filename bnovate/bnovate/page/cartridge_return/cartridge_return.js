@@ -98,8 +98,6 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 	// DATA STRUCTURE
 	////////////////////////
 
-	// TODO: re-write with ENCS as an array so we can iterate easier.
-
 	state.add_serial_no = async function (serial_no) {
 		// Ignore if the serial_no already exists
 		if (state.encs.findIndex(enc => enc.serial_no == serial_no) < 0) {

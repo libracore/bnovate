@@ -10,7 +10,8 @@
   "combase_api_key",
   "rms_api_token",
   "shipping_income_account",
-  "shipping_income_item"
+  "shipping_income_item",
+  "dummy_customer"
  ],
  "fields": [
   {
@@ -51,10 +52,17 @@
    "fieldtype": "Link",
    "label": "Shipping Invoice Item",
    "options": "Item"
+  },
+  {
+   "description": "Used for examples.",
+   "fieldname": "dummy_customer",
+   "fieldtype": "Link",
+   "label": "Dummy Customer",
+   "options": "Customer"
   }
  ],
  "issingle": 1,
- "modified": "2023-02-23 13:19:11.912631",
+ "modified": "2023-04-28 12:48:46.776463",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "bNovate Settings",

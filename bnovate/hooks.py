@@ -2,6 +2,8 @@
 from __future__ import unicode_literals
 from . import __version__ as app_version
 
+from frappe import _
+
 app_name = "bnovate"
 app_title = "bNovate"
 app_publisher = "libracore"
@@ -23,15 +25,27 @@ fixtures = [
     {
         "dt": "Custom Field",
         "filters": [["name", "in", [
-            "Customer Group-taxes_and_charges_template", # Used to invoice subscriptions
+            # Subscription invoicing
+            "Customer Group-taxes_and_charges_template",
             "Sales Invoice Item-subscription",
             "Sales Invoice Item-sc_detail",
-            "Delivery Note-payment_terms_template", # Used to match invoice to SO payment terms through DN
-            "Work Order-time_per_unit", # Used for time tracking from Work Order Execution page
+            # Used to match invoice to SO payment terms through DN
+            "Delivery Note-payment_terms_template",
+            # Time tracking and workstation assignment on work orders
+            "Work Order-time_per_unit", 
             "Work Order-total_time",
             "Work Order-time_log",
-            "BOM-workstation", # Used to assign work order to a workstation
+            "BOM-workstation",
             "Work Order-workstation",
+            # Used to track owners of enclosures
+            "Serial No-ownership_details",
+            "Serial No-owned_by",
+            "Serial No-owned_by_name",
+            "Serial No-owner_set_by",
+            # Refill requests
+            "Sales Order Item-refill_request",
+            # Addresses
+            "Address-company_name",
         ]]]
     }
 ]
@@ -43,32 +57,32 @@ fixtures = [
 app_include_css = [
     "/assets/css/bnovate.min.css",
 ]
-app_include_js = [ # Note to self: in case of changes, may need to run bench build --app bnovate
+app_include_js = [  # Note to self: in case of changes, may need to run bench build --app bnovate
     "/assets/bnovate/js/bnovate_common.js",
     "/assets/js/bnovate_libs.min.js",
     # "/assets/js/bnovate.js",   # Empty probably because it wasn't coded as a module.
 ]
 
 # include js, css files in header of web template
-# web_include_css = "/assets/bnovate/css/bnovate.css"
-# web_include_js = "/assets/bnovate/js/bnovate.js"
+web_include_css = "/assets/bnovate/bnovate-web.css"
+# web_include_js = "/assets/bnovate/js/web_includes/bnovate.js"
 
 # include js in page
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
 doctype_js = {
-    "Item" : ["public/js/doctype_includes/item.js"],
-    "Customer" : ["public/js/doctype_includes/customer.js"],
-    "Quotation" : ["public/js/doctype_includes/quotation.js"],
-    "Sales Order" : ["public/js/doctype_includes/sales_order.js"],
-    "Delivery Note" : ["public/js/doctype_includes/delivery_note.js"],
-    "Sales Invoice" : ["public/js/doctype_includes/sales_invoice.js"],
+    "Item": ["public/js/doctype_includes/item.js"],
+    "Customer": ["public/js/doctype_includes/customer.js"],
+    "Contact": ["public/js/doctype_includes/contact.js"],
+    "Quotation": ["public/js/doctype_includes/quotation.js"],
+    "Sales Order": ["public/js/doctype_includes/sales_order.js"],
+    "Delivery Note": ["public/js/doctype_includes/delivery_note.js"],
+    "Sales Invoice": ["public/js/doctype_includes/sales_invoice.js"],
 }
 doctype_list_js = {
-    "Item" : ["public/js/doctype_includes/item_list.js"],
+    "Item": ["public/js/doctype_includes/item_list.js"],
 }
-# doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 
@@ -80,7 +94,7 @@ doctype_list_js = {
 
 # website user home page (by Role)
 # role_home_page = {
-#	"Role": "home_page"
+# "Role": "home_page"
 # }
 
 # Website user home page (by function)
@@ -89,6 +103,21 @@ doctype_list_js = {
 has_website_permission = {
     # 'Blanket Order': ['TBD']
 }
+
+website_route_rules = [
+    {
+        "from_route": "/requests/<name>", 
+        "to_route": "request",
+        "defaults": {
+            "parents": [{"label": _("Refill Requests"), "route": "requests"}]
+        }}
+]
+
+standard_portal_menu_items = [
+    {"title": _("My Cartridges"), "route": "/cartridges", "reference_doctype": "", "role": "Customer"},
+    {"title": _("Refill Requests"), "route": "/requests", "reference_doctype": "Refill Request", "role": "Customer"},
+    {"title": _("My Addresses"), "route": "/my_addresses", "reference_doctype": "Address", "role": "Customer"},
+]
 
 # Generators
 # ----------
@@ -125,11 +154,11 @@ has_website_permission = {
 # Hook on document methods and events
 
 doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-#	}
+    # 	"*": {
+    # 		"on_update": "method",
+    # 		"on_cancel": "method",
+    # 		"on_trash": "method"
+    # }
     "Work Order": {
         "before_save": "bnovate.bnovate.page.work_order_execution.work_order_execution.calculate_total_time",
         "on_update_after_submit": "bnovate.bnovate.page.work_order_execution.work_order_execution.calculate_total_time",
@@ -137,6 +166,23 @@ doc_events = {
     "Stock Entry": {
         "on_submit": "bnovate.bnovate.page.work_order_execution.work_order_execution.update_work_order_unit_time",
         "on_cancel": "bnovate.bnovate.page.work_order_execution.work_order_execution.update_work_order_unit_time",
+    },
+    "Sales Order": {
+        "on_submit": "bnovate.bnovate.doctype.refill_request.refill_request.update_status_from_sales_order",
+        "on_cancel": "bnovate.bnovate.doctype.refill_request.refill_request.update_status_from_sales_order",
+    },
+    "Delivery Note": {
+        "on_submit": [
+            "bnovate.bnovate.utils.enclosures.set_owner_from_dn",
+            "bnovate.bnovate.doctype.refill_request.refill_request.update_status_from_delivery_note",
+        ],
+        "on_update_after_submit": [
+            "bnovate.bnovate.doctype.refill_request.refill_request.update_status_from_delivery_note",
+        ],
+        "on_cancel": [
+            "bnovate.bnovate.utils.enclosures.set_owner_from_dn",
+            "bnovate.bnovate.doctype.refill_request.refill_request.update_status_from_delivery_note",
+        ],
     }
 }
 
@@ -144,21 +190,21 @@ doc_events = {
 # ---------------
 
 scheduler_events = {
-# 	"all": [
-# 		"bnovate.tasks.all"
-# 	],
-	"daily": [
+    # 	"all": [
+    # 		"bnovate.tasks.all"
+    # 	],
+    "daily": [
         "bnovate.bnovate.doctype.subscription_contract.subscription_contract.update_subscription_status",
-	],
-# 	"hourly": [
-# 		"bnovate.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"bnovate.tasks.weekly"
-# 	]
-# 	"monthly": [
-# 		"bnovate.tasks.monthly"
-# 	]
+    ],
+    # 	"hourly": [
+    # 		"bnovate.tasks.hourly"
+    # 	],
+    # 	"weekly": [
+    # 		"bnovate.tasks.weekly"
+    # 	]
+    # 	"monthly": [
+    # 		"bnovate.tasks.monthly"
+    # 	]
 }
 
 # Testing
@@ -177,6 +223,6 @@ scheduler_events = {
 # generated from the base implementation of the doctype dashboard,
 # along with any modifications made in other Frappe apps
 override_doctype_dashboards = {
-	"Serial No": "bnovate.bnovate.utils.dashboards.get_serial_no_dashboard_data"
+    "Serial No": "bnovate.bnovate.utils.dashboards.get_serial_no_dashboard_data",
+    "Sales Order": "bnovate.bnovate.utils.dashboards.get_sales_order_dashboard_data",
 }
-

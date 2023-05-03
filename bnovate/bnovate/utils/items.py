@@ -4,7 +4,6 @@
 
 import frappe
 
-@frappe.whitelist()
 def get_highest_item_code(prefix=1):
     """ Return highest item code in a naming series """
 

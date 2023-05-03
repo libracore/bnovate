@@ -1,0 +1,33 @@
+<h1>{{ _("Refill Requests") }}</h1>
+
+<div class="row">
+    <div class="col">
+        <a href="/cartridges">
+            <button id="request-refill" class="btn btn-primary" style="margin-bottom: 10px">{{ _("New Request") }}</button>
+        </a>
+    </div>
+</div>
+
+<table class="table table-condensed" style="border-bottom: 1px solid #d1d8dd; width:100%">
+    <thead>
+        <th>{{ _("Status") }}</th>
+        <th>{{ _("Request date") }}</th>
+        <th>{{ _("Shipping Address") }}</th>
+        <th>{{ _("Billing Address") }}</th>
+    </thead>
+    <tbody>
+        {% for row in data %}
+        <tr>
+            <td>
+                <span class="indicator {{ row.indicator_color or ('blue' if row.docstatus==1 else 'darkgrey') }}">
+                    {{ _(row.get('indicator_title')) or _(row.status) or _("Submitted") }}
+                </span>
+            </td>
+            <td><a href="/requests/{{ row.name }}">{{ frappe.format(row.creation, {'fieldtype': 'Date'}) }}</a></td>
+            <td><a href="/requests/{{ row.name }}">{{ row.shipping_address_display | replace("<br>", ", ") | truncate(50) | striptags }}</a></td>
+            <td><a href="/requests/{{ row.name }}">{{ row.billing_address_display | replace("<br>", ", ") | truncate(50) | striptags }}</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+

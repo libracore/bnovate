@@ -1,0 +1,112 @@
+{% extends "templates/web.html" %}
+
+{% block page_content %}
+
+<h1>{{ _("My Cartridges") }}</h1>
+
+<div class="row">
+    <div class="col">
+        <button id="request-refill" class="btn btn-primary" style="margin-bottom: 10px" title="{{ _('Select cartridges') }}" disabled>{{ _("Request Refill") }}</button>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col">
+        <table class="table table-condensed" style="border-bottom: 1px solid #d1d8dd; width:100%">
+            <thead>
+                <th></th>
+                <th>{{ _("Serial No") }}</th>
+                <th>{{ _("Location") }}</th>
+                <th>{{ _("Status") }}</th>
+                <th>{{ _("Since") }}</th>
+                <th>{{ _("Tracking No") }}</th>
+                <th>{{ _("Pending Request") }}</th>
+            </thead>
+            <tbody>
+                {% for row in data %}
+                <tr>
+                    <td style="padding: 0px">
+                        <label for="check-{{ row.serial_no }}" style="padding: 12px; margin-bottom: 0px;">
+                            {% if row.location == "bNovate" and not row.refill_request %}
+                            <input name="select" id="check-{{ row.serial_no }}"class="serial-check" type="checkbox" data-serial="{{ row.serial_no }}"
+                                style="margin-right: 12px" >
+                            {% endif %}
+                        </label>
+                    </td>
+                    <td>
+                        <label for="check-{{ row.serial_no }}" style="margin-bottom: 0px;">
+                            {{ row.serial_no }}
+                        </label>
+                    </td>
+                    <td>{{ row.location }}</td>
+                    <td>{{ _(row.status) }}</td>
+                    <td>{{ frappe.format(row.posting_date, {'fieldtype': 'Date'}) }}</td>
+                    <td>
+                        {% if row.tracking_link %}
+                        {{ row.tracking_link }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if row.refill_request %}
+                        <a href="/requests/{{row.refill_request}}">{{ row.refill_request }}</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<wizard-modal id="build-fill-request"></wizard-modal>
+
+
+{% endblock %}
+
+{% block script %}
+
+<script>
+    frappe.require("/assets/bnovate/js/web_includes/translations.js")
+    frappe.require("/assets/bnovate/js/web_includes/helpers.js")
+    frappe.require("/assets/bnovate/js/web_includes/wizard_modal.js")
+
+    
+    function get_selected() {
+        let serial_nos = [...document.querySelectorAll(".serial-check")]
+        .filter(c => c.checked)
+        .map(c => ({serial_no: c.dataset.serial}));
+        
+        return serial_nos;
+    }
+    
+    async function post_request(doc) {
+        const resp = await frappe.call("bnovate.www.request.make_request", {
+            doc
+        })
+
+        const new_doc = resp.message
+        location.pathname = `/requests/${new_doc.name}`;
+    }
+    
+    document.querySelector("#request-refill").addEventListener("click", async () => {
+        document.getElementById('build-fill-request').show(
+            get_selected(), 
+            await bnovate.web.get_addresses(),
+            post_request,
+        );
+    });
+
+    // Enable button if any SNs are clicked.
+    [...document.querySelectorAll(".serial-check")].map( c => c.addEventListener("change", () => {
+        const refill_btn = document.querySelector("#request-refill");
+
+        if ( get_selected().length > 0 ) {
+            refill_btn.disabled = false;
+        } else {
+            refill_btn.disabled = true;
+        }
+    }))
+    
+</script>
+
+{% endblock %}
