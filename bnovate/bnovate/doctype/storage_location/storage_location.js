@@ -5,10 +5,20 @@ frappe.provide("bnovate.storage");
 
 frappe.ui.form.on('Storage Location', {
 	refresh(frm) {
-
 		frm.add_custom_button("Find", () => frm.events.find(frm));
 		frm.add_custom_button("Store", () => frm.events.store(frm));
 		frm.add_custom_button("Remove", () => frm.events.remove(frm));
+
+		if (frm.doc.key) {
+			const url = `/storage/${frm.doc.key}`
+			frm.fields_dict.url.wrapper.innerHTML = `<a href="${url}">${url}</a>`
+		}
+	},
+
+	async set_key(frm) {
+		const key = await bnovate.utils.get_random_id();
+		frm.set_value("key", key);
+		frm.save();
 	},
 
 	async find(frm) {

@@ -6,6 +6,11 @@
  "engine": "InnoDB",
  "field_order": [
   "title",
+  "column_break_2",
+  "key",
+  "url",
+  "set_key",
+  "section_break_4",
   "slots"
  ],
  "fields": [
@@ -22,9 +27,34 @@
    "label": "Slots",
    "options": "Storage Slot",
    "reqd": 1
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "key",
+   "fieldtype": "Data",
+   "label": "Key",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_4",
+   "fieldtype": "Section Break"
+  },
+  {
+   "depends_on": "eval:!doc.key",
+   "fieldname": "set_key",
+   "fieldtype": "Button",
+   "label": "Set Key"
+  },
+  {
+   "fieldname": "url",
+   "fieldtype": "HTML",
+   "label": "URL"
   }
  ],
- "modified": "2023-05-03 17:35:53.893993",
+ "modified": "2023-05-03 21:46:49.342825",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Storage Location",

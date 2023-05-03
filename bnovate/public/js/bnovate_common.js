@@ -42,6 +42,15 @@ bnovate.utils.get_next_item_code = async function (prefix) {
   return resp.message;
 }
 
+bnovate.utils.get_random_id = async function get_random_id() {
+  let resp = await frappe.call({
+    method: 'bnovate.bnovate.utils.get_random_id',
+    args: {
+    }
+  })
+  return resp.message;
+}
+
 /*********************************
  * Code to set enclosure owners
  *********************************/

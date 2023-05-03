@@ -1,0 +1,40 @@
+{% extends "templates/web.html" %}
+
+{%- block navbar -%}
+{%- endblock -%}
+
+{% block page_content %}
+
+<h1>{{ contents.title }}</h1>
+
+<div class="row">
+    <button id="store" class="btn btn-primary">Store</button>
+</div>
+<div class="row">
+    <table class="table table-condensed" style="border-bottom: 1px solid #d1d8dd; width:100%">
+        <thead>
+            <th>{{ _("Slot") }}</th>
+            <th>{{ _("Serial No") }}</th>
+        </thead>
+        <tbody>
+            {% for slot in contents.slots %}
+            <tr>
+                <td>{{ slot.label }}</td>
+                <td>{{ slot.serial_no }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+
+    {% include "bnovate/bnovate/doctype/storage_location/storage_location.js" %} // Provides bnovate.storage
+
+    document.querySelector("#store").addEventListener("click", () => {
+        console.log("Store")
+    });
+</script>
+{% endblock %}

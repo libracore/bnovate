@@ -40,6 +40,12 @@ def get_data():
             "icon": "octicon octicon-git-compare",
             "items": [
                    {
+                       "type": "doctype",
+                       "name": "Storage Location",
+                       "label": _("Storage Location"),
+                       "description": _("Storage Locations")
+                   },
+                   {
                         "type": "report",
                         "name": "Enclosure Movement History",
                         "label": _("Enclosure Movement History"),
