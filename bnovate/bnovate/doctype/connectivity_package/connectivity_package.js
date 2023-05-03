@@ -1,6 +1,8 @@
 // Copyright (c) 2023, libracore and contributors
 // For license information, please see license.txt
 
+frappe.require("/assets/bnovate/js/iot.js")  // provides bnovate.iot
+
 frappe.ui.form.on('Connectivity Package', {
 	onload(frm) {
 		frm.set_query("subscription", function () {
