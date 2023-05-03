@@ -14,12 +14,14 @@ def get_serial_no_dashboard_data(data):
             {
                 'label': _('Add-ons'),
                 'items': ['License Key'],
+            }, {
+                'label': _('Storage'),
+                'items': ['Storage Location'],
             }
         ],
     })
 
 
 def get_sales_order_dashboard_data(data):
-    print("------------------\n\n\n", data)
     data.internal_links['Refill Request'] = ['items', 'refill_request']
     return data
