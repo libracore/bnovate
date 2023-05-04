@@ -98,3 +98,15 @@ bnovate.storage.msgprint = function msgprint(message, title) {
         return dialog;
     })
 }
+
+
+bnovate.storage.decode_qr = function decode_qr(qr_string) {
+    if (qr_string.trim().startsWith("{")) {
+        const qrdata = JSON.parse(qr_string);
+        console.log(qrdata);
+
+        return qrdata.enclosure_serial;
+    }
+
+    return qr_string;
+}
