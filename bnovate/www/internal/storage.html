@@ -8,8 +8,18 @@
 <h1>{{ contents.title }}</h1>
 
 <div class="row">
-    <button id="store" class="btn btn-primary">Store</button>
+    <div class="col">
+        <label for="serial_no">
+            {{ _("Serial No") }}<br>
+        <input name="serial_no">
+        </label>
+        <br>
+        <button id="find" class="btn btn-primary" style="margin-bottom: 10px">Find</button>
+        <button id="store" class="btn btn-primary" style="margin-bottom: 10px">Store</button>
+        <button id="remove" class="btn btn-primary" style="margin-bottom: 10px">Remove</button>
+    </div>
 </div>
+
 <div class="row">
     <table class="table table-condensed" style="border-bottom: 1px solid #d1d8dd; width:100%">
         <thead>
@@ -20,7 +30,7 @@
             {% for slot in contents.slots %}
             <tr>
                 <td>{{ slot.label }}</td>
-                <td>{{ slot.serial_no }}</td>
+                <td>{% if slot.serial_no %}{{ slot.serial_no }}{% endif %}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -31,10 +41,26 @@
 {% block script %}
 <script>
 
-    {% include "bnovate/bnovate/doctype/storage_location/storage_location.js" %} // Provides bnovate.storage
+    frappe.require("/assets/bnovate/js/storage.js") // provides bnovate.storage
 
-    document.querySelector("#store").addEventListener("click", () => {
-        console.log("Store")
+    function get_sn() {
+        return document.querySelector("[name=serial_no]")?.value;
+    }
+
+    document.querySelector("#find").addEventListener("click", async () => {
+        await bnovate.storage.find_serial_no(get_sn(), "{{ contents.key }}");
     });
+
+    document.querySelector("#store").addEventListener("click", async () => {
+        await bnovate.storage.store_serial_no("{{ contents.name }}", get_sn(), "{{ contents.key }}");
+        location.reload();
+    });
+
+    document.querySelector("#remove").addEventListener("click", async () => {
+        await bnovate.storage.remove_serial_no(get_sn(), "{{ contents.key }}");
+        location.reload();
+    });
+
+
 </script>
 {% endblock %}

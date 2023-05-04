@@ -4,7 +4,9 @@ from bnovate.bnovate.doctype.storage_location.storage_location import find_seria
 
 def get_context(context):
     # secret key
+    context.key = frappe.form_dict.key
     context.contents = get_contents(frappe.form_dict.key)
+    context.title = "Storage"
 
     context.no_header = 1
     context.show_sidebar = 0

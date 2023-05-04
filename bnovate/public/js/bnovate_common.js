@@ -51,6 +51,24 @@ bnovate.utils.get_random_id = async function get_random_id() {
   return resp.message;
 }
 
+bnovate.utils.get_naming_series = async function get_naming_series() {
+  let resp = await frappe.call({
+    method: 'bnovate.bnovate.utils.items.get_naming_series',
+  })
+  return resp.message;
+}
+
+bnovate.utils.set_naming_series = async function set_naming_series(prefix, number) {
+  let resp = await frappe.call({
+    method: 'bnovate.bnovate.utils.items.set_naming_series',
+    args: {
+      prefix,
+      number
+    }
+  })
+  return resp.message;
+}
+
 /*********************************
  * Code to set enclosure owners
  *********************************/
