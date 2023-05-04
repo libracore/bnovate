@@ -267,7 +267,7 @@ const template_page4 = `
 
 <div class="row">
     <div class="col-sm">
-    <p>After confirming this order, the cartridges will be filled, shipped, and charged to your account.</p>
+    <p>{{ __("After confirming this order, the cartridges will be filled, shipped, and charged to your account.") }}</p>
     </div>
 </div>
 `
