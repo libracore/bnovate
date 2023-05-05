@@ -58,7 +58,7 @@
                         {% endif %}
 
                         <!-- Else if seems not to be supported by frappe microtemplating -->
-                        {% if ste.docstatus == 1 %}
+                        {% if ste.docstatus <= 1 %}
                         <button class="btn btn-xs btn-primary print-wo-label" data-docname="{{ ste.name }}"><i class="fa fa-print"></i> Big Label</button>
                         <button class="btn btn-xs btn-primary print-pouch-label" data-docname="{{ ste.name }}"><i class="fa fa-print"></i> Small Label</button>
                         <button class="btn btn-xs btn-primary print-rating-plate" data-docname="{{ ste.name }}"><i class="fa fa-print"></i> Rating Plate</button>
