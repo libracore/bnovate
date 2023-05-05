@@ -1,0 +1,103 @@
+{% extends "templates/web.html" %}
+
+{%- block navbar -%}
+{%- endblock -%}
+
+{% block page_content %}
+
+<h1>{{ contents.title }}</h1>
+
+<div id="output"></div>
+
+<div class="row">
+    <div class="col">
+        <label for="serial_no">
+            {{ _("Serial No") }}:
+        </label>
+        <div class="input-group">
+            <input name="serial_no">
+            <span class="input-group-btn" style="vertical-align: top">
+                <button id="scan" class="btn btn-default border" type="button">
+                    <i class="fa fa-camera text-muted"></i>
+                </button>
+            </span>
+        </div>
+        <div id="reader" width="600px" style="margin: 10px 0px" hidden></div>
+        <br>
+        <button id="find" class="btn btn-primary" style="margin-bottom: 10px">Find</button>
+        <button id="store" class="btn btn-primary" style="margin-bottom: 10px">Store</button>
+        <button id="remove" class="btn btn-primary" style="margin-bottom: 10px">Remove</button>
+    </div>
+</div>
+
+<div class="row">
+    <table class="table table-condensed" style="border-bottom: 1px solid #d1d8dd; width:100%">
+        <thead>
+            <th>{{ _("Slot") }}</th>
+            <th>{{ _("Serial No") }}</th>
+        </thead>
+        <tbody>
+            {% for slot in contents.slots %}
+            <tr>
+                <td>{{ slot.label }}</td>
+                <td>{% if slot.serial_no %}{{ slot.serial_no }}{% endif %}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block script %}
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+<script>
+
+    frappe.require("/assets/bnovate/js/storage.js") // provides bnovate.storage
+
+    function get_sn() {
+        return document.querySelector("[name=serial_no]")?.value;
+    }
+
+    document.querySelector("#find").addEventListener("click", async () => {
+        await bnovate.storage.find_serial_no(get_sn(), "{{ contents.key }}");
+    });
+
+    document.querySelector("#store").addEventListener("click", async () => {
+        await bnovate.storage.store_serial_no("{{ contents.name }}", get_sn(), "{{ contents.key }}");
+        location.reload();
+    });
+
+    document.querySelector("#remove").addEventListener("click", async () => {
+        await bnovate.storage.remove_serial_no(get_sn(), "{{ contents.key }}");
+        location.reload();
+    });
+
+    document.querySelector("#scan").addEventListener("click", async () => {
+        document.querySelector("#reader").hidden = false;
+
+        function onScanSuccess(decodedText, decodedResult) {
+            if ( html5QrcodeScanner.html5Qrcode.isScanning ) {
+                html5QrcodeScanner.html5Qrcode.stop();
+            }
+
+            const serial = bnovate.storage.decode_qr(decodedText);
+            document.querySelector("[name=serial_no]").value = serial;
+        };
+
+        function onScanFailure(error) {
+        }
+
+        let html5QrcodeScanner = new Html5QrcodeScanner(
+            "reader",
+            { fps: 10, qrbox: { width: 600, height: 600 } },
+        /* verbose= */ false);
+        html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+        window.scanner = html5QrcodeScanner;
+    });
+
+
+
+
+</script>
+{% endblock %}

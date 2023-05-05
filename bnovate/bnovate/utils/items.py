@@ -35,3 +35,18 @@ def get_next_item_code(prefix):
     
     return "{}.01".format(last_code + 1)
 
+
+@frappe.whitelist()
+def set_naming_series(prefix, number=0):
+    """ Reset / modify naming series """
+    res = frappe.db.sql("""
+        UPDATE `tabSeries`
+        SET current = {number}
+        WHERE name LIKE "{prefix}"
+    """.format(number=number, prefix=prefix))
+    frappe.db.commit()
+    return res
+
+@frappe.whitelist()
+def get_naming_series():
+    return frappe.db.sql("SELECT * FROM `tabSeries`", as_dict=True)

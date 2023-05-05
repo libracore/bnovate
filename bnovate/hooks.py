@@ -110,7 +110,11 @@ website_route_rules = [
         "to_route": "request",
         "defaults": {
             "parents": [{"label": _("Refill Requests"), "route": "requests"}]
-        }}
+        }
+    }, {
+        "from_route": "/internal/storage/<key>", 
+        "to_route": "internal/storage",
+    }
 ]
 
 standard_portal_menu_items = [
