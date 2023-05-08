@@ -49,6 +49,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 	const state = {
 		work_order_id: null, 		// docname of the current workorder
 		work_order_doc: null,  		// contents of the current workorder
+		sales_order_doc: null,		// contents of the associated sales order, if any.
 		docinfo: null, 				// docinfo[doctype][docname] -> {attachments: []}
 		view: read,					// state of the items display: read or write
 		ste_doc: null, 				// will contain content of stock entry before submitting.
@@ -107,6 +108,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 	function draw() {
 		main_content.innerHTML = frappe.render_template('work_order_execution', {
 			doc: state.work_order_doc,
+			so: state.sales_order_doc,
 			docinfo: state.docinfo,
 			attachments: state.attachments,
 		});
@@ -197,6 +199,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 	state.load_work_order = async (wo_id) => {
 		state.view = read; 				// reset view
 		state.work_order_id = wo_id;
+		state.sales_order_doc = null;
 		state.ste_doc = null;
 		state.produce_serial_no = false;
 		state.produce_batch = false;
@@ -212,6 +215,9 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		state.work_order_doc = await frappe.model.with_doc('Work Order', wo_id);
 		state.docinfo = frappe.model.docinfo;
 		state.remaining_qty = state.work_order_doc.qty - state.work_order_doc.produced_qty;
+		if (state.work_order_doc.sales_order) {
+			state.sales_order_doc = await frappe.model.with_doc('Sales Order', state.work_order_doc.sales_order)
+		}
 
 		// should we switch to serialized behaviour? (produce one item at a time)
 		await fetch_item_details([state.work_order_doc.production_item]);

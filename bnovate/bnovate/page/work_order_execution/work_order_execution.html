@@ -115,12 +115,14 @@
                     </tr>
                     <tr>
                         <th>BOM no</th>
-                        <td>{{ doc.bom_no }}</td>
+                        <td>{{ doc.bom_no }} {% if doc.bom_description %} ({{ doc.bom_description }}) {% endif %} </td>
                     </tr>
-                    <!-- <tr>
-                        <th>Planned start date</th>
-                        <td>{{ doc.planned_start_date }}</td>
-                    </tr> -->
+                    {% if doc.sales_order %}
+                    <tr>
+                        <th>Sales Order</th>
+                        <td>{{ doc.sales_order }} - {{ so.customer_name }}</td>
+                    </tr>
+                    {% endif %}
                     <tr>
                         <th>Expected delivery date</th>
                         <td>{{ frappe.format(doc.expected_delivery_date, {fieldtype: "Date"}) }}</td>

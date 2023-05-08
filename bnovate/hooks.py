@@ -37,6 +37,8 @@ fixtures = [
             "Work Order-time_log",
             "BOM-workstation",
             "Work Order-workstation",
+            "BOM-bom_description",
+            "Work Order-bom_description",
             # Used to track owners of enclosures
             "Serial No-ownership_details",
             "Serial No-owned_by",
