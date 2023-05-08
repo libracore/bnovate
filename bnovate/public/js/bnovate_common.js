@@ -73,8 +73,6 @@ bnovate.utils.set_naming_series = async function set_naming_series(prefix, numbe
  * Code to set enclosure owners
  *********************************/
 
-// TODO: migrate to own namespace.
-
 bnovate.utils.get_history_report = async function get_history_report() {
   let resp = await frappe.call({
     method: "frappe.desk.query_report.run",

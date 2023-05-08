@@ -10,6 +10,9 @@
   "teltonika_serial",
   "column_break_4",
   "info",
+  "rms_id",
+  "mac_address",
+  "imei",
   "remote_connections_section",
   "refresh_connections",
   "connection_table"
@@ -63,10 +66,28 @@
   {
    "fieldname": "column_break_4",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "rms_id",
+   "fieldtype": "Data",
+   "label": "RMS ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "mac_address",
+   "fieldtype": "Data",
+   "label": "MAC Address",
+   "read_only": 1
+  },
+  {
+   "fieldname": "imei",
+   "fieldtype": "Data",
+   "label": "IMEI",
+   "read_only": 1
   }
  ],
- "modified": "2023-03-13 18:33:37.969231",
- "modified_by": "douglas.watson@bnovate.com",
+ "modified": "2023-05-08 14:54:46.846385",
+ "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Connectivity Package",
  "owner": "Administrator",

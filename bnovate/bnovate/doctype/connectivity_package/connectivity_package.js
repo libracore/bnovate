@@ -76,17 +76,17 @@ async function get_device_id(frm, refresh = false) {
 		return locals.rms_device_id[frm.doc.teltonika_serial];
 	}
 
-	locals.rms_device_id[frm.doc.teltonika_serial] = await rms_get_id(frm.doc.teltonika_serial);
+	locals.rms_device_id[frm.doc.teltonika_serial] = await bnovate.iot.rms_get_id(frm.doc.teltonika_serial);
 	return locals.rms_device_id[frm.doc.teltonika_serial];
 }
 
 function clear_info(frm) {
 	$(frm.fields_dict.info.wrapper).html(``);
-	set_message(frm)
+	set_message(frm);
 }
 
 async function get_device_info(frm) {
-	const device = await rms_get_device(await get_device_id(frm));
+	const device = await bnovate.iot.rms_get_device(await get_device_id(frm));
 	$(frm.fields_dict.info.wrapper).html(`
 		<span class="indicator whitespace-nowrap ${device.status ? 'green' : 'red'}"></span><b>${device.name}</b><br />
 		${device.operator}, ${device.connection_type} [${device.signal} dBm] <br />
@@ -109,7 +109,7 @@ async function get_connections(frm) {
 	set_message(frm, "Loading...");
 	const device_id = await get_device_id(frm)
 	if (device_id) {
-		const access_configs = await rms_get_sessions(device_id);
+		const access_configs = await bnovate.iot.rms_get_sessions(device_id);
 		if (access_configs.length) {
 			draw_table(frm, access_configs);
 		} else {
@@ -121,7 +121,7 @@ async function get_connections(frm) {
 }
 
 async function start_session(frm, config_id, device_id) {
-	const link = await rms_start_session(config_id, device_id);
+	const link = await bnovate.iot.rms_start_session(config_id, device_id);
 	if (link) {
 		window.open("https://" + link, "_blank");
 	}
@@ -204,7 +204,7 @@ async function configure_device(frm) {
 	}
 
 	set_message(frm, "Loading...");
-	await rms_initialize_device(device_id, values.device_name);
+	await bnovate.iot.rms_initialize_device(device_id, values.device_name);
 	await get_device_info(frm);
 	return get_connections(frm);
 }

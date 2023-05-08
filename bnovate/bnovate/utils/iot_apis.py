@@ -9,6 +9,7 @@
 
 from distutils.command.config import config
 from http.client import responses
+from json import JSONDecodeError
 import time
 import frappe
 import concurrent.futures
@@ -52,9 +53,14 @@ def rms_get_status(channel):
     )
 
     if resp.status_code != 200:
-        detail = resp.json()
-        if detail['code'] == 'CHANNEL_NOT_FOUND':
-            raise ChannelNotFound("Channel doesn't exist or expired:", channel)
+
+        detail = resp.text
+        try:
+            detail = resp.json()
+            if detail['code'] == 'CHANNEL_NOT_FOUND':
+                raise ChannelNotFound("Channel doesn't exist or expired:", channel)
+        except JSONDecodeError:
+            pass
         raise ApiException("Error fetching RMS Status: " + str(detail))
     return resp.json()['data']
 
@@ -192,7 +198,11 @@ def rms_initialize_device(device_id, device_name):
     # 1) Port scan
     # 2) Create HTTPS and VNC remotes for first available end-device
     # 3) Rename teltonika device
+    print("\n\n\n------------------------------------------\n\n\n")
+    print(device_id)
     end_devices = rms_port_scan(device_id)
+    print(end_devices)
+
     ip, ports = end_devices['ip'], end_devices['port']
     data = []
     if 443 in ports:
@@ -219,11 +229,14 @@ def rms_initialize_device(device_id, device_name):
         "name": device_name,
     })
 
+    print("Name set")
+
     if not data:
         raise ApiException("Neither HTTPS or VNC available on this device")
 
     # Delete existing remotes, only if we can create new ones
     configs = rms_get_access_configs(device_id)
+    print(configs)
     if configs:
         rms_delete_access(device_id, 
             [c['id'] for c in configs if c['protocol'] in ("https", "vnc")])
