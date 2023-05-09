@@ -168,12 +168,12 @@ const modal_template = `
 const template_page1 = `
 <table class="table">
     <thead>
-        <th>Serial No</th>
-        <th>Variant</th>
+        <th>{{ __("Serial No") }}</th>
+        <th>{{ __("Variant") }}</th>
     </thead>
     <tbody>
         <tr>
-            <td>{{ [__("All")] }}</td>
+            <td>[{{ __("All") }}]</td>
             <td>
                 <select id="variant-default">
                     <option value=""></option>
@@ -203,7 +203,7 @@ const template_page2 = `
     {% for addr in addresses %}
     <div class="card">
         <div class="card-body">
-            <input type="radio" name="shipping_address" id="ship-{{addr.name}}" value="{{addr.name}}" />
+            <input type="radio" name="shipping_address" id="ship-{{addr.name}}" value="{{addr.name}}" {% if addresses.length == 1 %}checked{% endif %}/>
             <label for="ship-{{addr.name}}">{{addr.display}}</label>
         </div>
     </div>
@@ -216,7 +216,7 @@ const template_page3 = `
     {% for addr in addresses %}
     <div class="card">
         <div class="card-body">
-            <input type="radio" name="billing_address" id="bill-{{addr.name}}" value="{{addr.name}}" />
+            <input type="radio" name="billing_address" id="bill-{{addr.name}}" value="{{addr.name}}" {% if addresses.length == 1 %}checked{% endif %}/>
             <label for="bill-{{addr.name}}">{{addr.display}}</label>
         </div>
     </div>
@@ -227,11 +227,11 @@ const template_page3 = `
 const template_page4 = `
 <div class="row">
     <div class="col-sm">
-        <h5>Shipping Address</h5>
+        <h5>{{ __("Shipping Address") }}</h5>
         {{doc.shipping_address_display}}
     </div>
     <div class="col-sm">
-        <h5>Billing Address</h5>
+        <h5>{{ __("Billing Address") }}</h5>
         {{doc.billing_address_display}}
     </div>
 </div>
@@ -241,8 +241,8 @@ const template_page4 = `
         <h5>Cartridges</h5>
         <table class="table">
             <thead>
-                <th>Serial No</th>
-                <th>Variant</th>
+                <th>{{ __("Serial No") }}</th>
+                <th>{{ __("Variant") }}</th>
             </thead>
             <tbody>
                 {% for it in doc.items %}
@@ -259,7 +259,7 @@ const template_page4 = `
 
 <div class="row">
     <div class="col-sm">
-        <h5>Remarks</h5>
+        <h5>{{ __("Remarks") }}</h5>
         <label for="remarks" style="display: none">Remarks</label>
         <textarea type="text" name="remarks"></textarea>
     </div>

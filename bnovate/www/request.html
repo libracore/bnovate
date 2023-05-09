@@ -129,7 +129,7 @@ ol.request-ribbon {
 {% endif %}
 {% if doc.tracking_no and doc.status == "Shipped" %}
     <div class="col-6">
-        <b>{{ _("Tracking no") }}:</b> 
+        <b>{{ _("Tracking No") }}:</b> 
         {% if doc.carrier == "DHL" %}
             <a href="https://www.dhl.com/ch-en/home/tracking/tracking-express.html?submit=1&tracking-id={{ doc.tracking_no }}">{{ doc.tracking_no }}</a>
         {% else %}
