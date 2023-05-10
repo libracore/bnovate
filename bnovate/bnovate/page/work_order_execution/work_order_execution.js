@@ -117,7 +117,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		page.clear_primary_action();
 		page.clear_secondary_action();
 		if (state.view == read) {
-			page.set_secondary_action('Reload', () => state.load_work_order(state.work_order_id));
+			page.set_secondary_action(__('Reload'), () => state.load_work_order(state.work_order_id));
 			item_content.innerHTML = frappe.render_template('items_read', {
 				doc: state.work_order_doc,
 				ste_docs: state.ste_docs,
@@ -125,7 +125,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 				produce_batch: state.produce_batch
 			});
 			if (state.remaining_qty > 0 && state.work_order_doc.docstatus == 1 && state.work_order_doc.status != "Stopped") {
-				page.set_primary_action(state.draft_mode ? 'Start' : 'Finish', finish);
+				page.set_primary_action(state.draft_mode ? __('Start') : __('Finish'), finish);
 				time_tracking.innerHTML = frappe.render_template('time_tracking', {
 					doc: state.work_order_doc,
 					timing_started: state.timing_started,
@@ -141,7 +141,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			if (state.serial_no_remaining > 0) {
 				page.set_primary_action(`Next (${state.serial_no_remaining})`, validate);
 			} else {
-				page.set_primary_action(state.draft_mode ? 'Done' : 'Submit', validate);
+				page.set_primary_action(state.draft_mode ? __('Done') : __('Submit'), validate);
 			}
 
 			if (state.needs_expiry_date) {
@@ -253,6 +253,10 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			doc.link = frappe.utils.get_form_link('Stock Entry', doc.name);
 			doc.produced_serial_nos = doc.items.find(it => it.item_code == state.work_order_doc.production_item)?.serial_no?.trim().replaceAll("\n", ", ");
 			doc.produced_batch = doc.items.find(it => it.item_code == state.work_order_doc.production_item)?.batch_no?.trim().replaceAll("\n", ", ");
+			doc.scrap_items = doc.items.filter(it => !it.s_warehouse && it.item_code !== doc.bom_item);
+			doc.scrap_serial_nos = doc.items.filter(it => !it.s_warehouse && it.item_code !== doc.bom_item)
+				.filter(it => it.serial_no)
+				.map(it => it.serial_no.trim().replaceAll("\n", ", "));
 		}
 
 		// Load attachments / linked docs

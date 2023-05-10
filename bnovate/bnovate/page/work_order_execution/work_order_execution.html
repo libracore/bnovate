@@ -102,29 +102,29 @@
             <table class="table no-margin">
                 <tbody>
                     <tr>
-                        <th style="width: 180px;">Item to Manufacture</th>
+                        <th style="width: 180px;">{{ __("Item to Manufacture") }}</th>
                         <td>{{ doc.production_item }}</td>
                     </tr>
                     <tr>
-                        <th>Item Name</th>
+                        <th>{{ __("Item Name") }}</th>
                         <td>{{ doc.item_name }}</td>
                     </tr>
                     <tr>
-                        <th>Quantity Produced</th>
+                        <th>{{ __("Quantity Produced") }}</th>
                         <td id="produced-qty">{{ doc.produced_qty}} / {{ doc.qty }} {{ doc.stock_uom }}</td>
                     </tr>
                     <tr>
-                        <th>BOM no</th>
+                        <th>{{ __("BOM no") }}</th>
                         <td>{{ doc.bom_no }} {% if doc.bom_description %} ({{ doc.bom_description }}) {% endif %} </td>
                     </tr>
                     {% if doc.sales_order %}
                     <tr>
-                        <th>Sales Order</th>
+                        <th>{{ __("Sales Order") }}</th>
                         <td>{{ doc.sales_order }} - {{ so.customer_name }}</td>
                     </tr>
                     {% endif %}
                     <tr>
-                        <th>Expected delivery date</th>
+                        <th>{{ __("Expected delivery date") }}</th>
                         <td>{{ frappe.format(doc.expected_delivery_date, {fieldtype: "Date"}) }}</td>
                     </tr>
                 </tbody>
