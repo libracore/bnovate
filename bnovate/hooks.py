@@ -170,8 +170,13 @@ doc_events = {
         "on_update_after_submit": "bnovate.bnovate.page.work_order_execution.work_order_execution.calculate_total_time",
     },
     "Stock Entry": {
+        "before_save": "bnovate.bnovate.page.work_order_execution.work_order_execution.update_work_order_status",
         "on_submit": "bnovate.bnovate.page.work_order_execution.work_order_execution.update_work_order_unit_time",
-        "on_cancel": "bnovate.bnovate.page.work_order_execution.work_order_execution.update_work_order_unit_time",
+        "on_cancel": [
+            "bnovate.bnovate.page.work_order_execution.work_order_execution.update_work_order_unit_time",
+            "bnovate.bnovate.page.work_order_execution.work_order_execution.update_work_order_status",
+        ],
+        "after_delete": "bnovate.bnovate.page.work_order_execution.work_order_execution.update_work_order_status",
     },
     "Sales Order": {
         "on_submit": "bnovate.bnovate.doctype.refill_request.refill_request.update_status_from_sales_order",

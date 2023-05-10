@@ -72,6 +72,27 @@ def update_work_order_unit_time(stock_entry, method=None):
     wo = frappe.get_doc("Work Order", stock_entry.work_order)
     calculate_total_time(wo)
 
+def update_work_order_status(stock_entry, method=None):
+    """ Set work order status to In Process if draft STEs exist.
+     
+     Called by hooks.py
+    """
+
+    if stock_entry.purpose != "Manufacture":
+        return
+
+    wo = frappe.get_doc("Work Order", stock_entry.work_order)
+    status = wo.get_status()
+    if status == "Not Started":
+        # Override this: if draft exist the WO is In Process. If not, keep Not Started
+        draft_stock_entries = frappe._dict(frappe.db.sql("""select purpose, sum(fg_completed_qty)
+            from `tabStock Entry` where work_order=%s and docstatus=0
+            group by purpose""", wo.name))
+        if draft_stock_entries:
+            wo.db_set("status", "In Process")
+        else: 
+            wo.db_set("status", status)
+
 
 #######################################
 # Autonumbering
