@@ -108,8 +108,7 @@ SELECT
     wo.qty as planned_qty,
     wo.produced_qty,
     (wo.qty - wo.produced_qty) AS required_qty,
-    -- Monkey-patch status to "In Process" if a draft STE exists
-    IF(wo.status = "Not Started" AND (SELECT COUNT(*) FROM `tabStock Entry` ste WHERE ste.work_order = wo.name AND ste.docstatus = 0), "In Process", wo.status) as status,
+    wo.status,
     wo.comment,
     wo.workstation,
 

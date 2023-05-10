@@ -2,26 +2,26 @@
 
     {% if ste_docs.length %}
     <div class="bn-row">
-        <h3>Existing Stock Entries</h3>
+        <h3>{{ __("Existing Stock Entries") }}</h3>
         <table class="table table-condensed no-margin" style="border-bottom: 1px solid #d1d8dd">
             <thead>
                 <tr>
                     <th style="width: 15%;" class="" >
-                        Status
+                        {{ __("Status") }}
                     </th>
                     <th style="width: 20%;" class="" >
-                        Stock Entry
+                        {{ __("Stock Entry") }}
                     </th>
                     <th style="width: 10%;" class="text-right" >
-                        Qty
+                        {{ __("Qty") }}
                     </th>
                     {% if produce_serial_no %}
-                    <th style="width: 35%;" class="" >
-                        Serial No
+                    <th style="width: 30%;" class="" >
+                        {{ __("Serial No") }}
                     </th>
                     {% endif %}
                     {% if produce_batch %}
-                    <th style="width: 35%;" class="" >
+                    <th style="width: 30%;" class="" >
                         Batch
                     </th>
                     {% endif %}
@@ -44,7 +44,7 @@
                     </td>
                     {% if produce_serial_no %}
                     <td>
-                        {{ ste.produced_serial_nos }}
+                        {{ ste.produced_serial_nos }} {% if ste.scrap_serial_nos %} | {{ ste.scrap_serial_nos }} {% endif %}
                     </td>
                     {% endif %}
                     {% if produce_batch %}
@@ -54,14 +54,14 @@
                     {% endif %}
                     <td>
                         {% if ste.docstatus == 0 %}
-                        <button class="btn btn-xs btn-danger submit-ste" data-docname="{{ ste.name }}">Submit</button> 
+                        <button class="btn btn-xs btn-danger submit-ste" data-docname="{{ ste.name }}">{{ __("Submit") }}</button> 
                         {% endif %}
 
                         <!-- Else if seems not to be supported by frappe microtemplating -->
-                        {% if ste.docstatus == 1 %}
-                        <button class="btn btn-xs btn-primary print-wo-label" data-docname="{{ ste.name }}"><i class="fa fa-print"></i> Big Label</button>
-                        <button class="btn btn-xs btn-primary print-pouch-label" data-docname="{{ ste.name }}"><i class="fa fa-print"></i> Small Label</button>
-                        <button class="btn btn-xs btn-primary print-rating-plate" data-docname="{{ ste.name }}"><i class="fa fa-print"></i> Rating Plate</button>
+                        {% if ste.docstatus <= 1 %}
+                        <button class="btn btn-xs btn-primary print-wo-label" data-docname="{{ ste.name }}"><i class="fa fa-print"></i> {{ __("Big Label") }}</button>
+                        <button class="btn btn-xs btn-primary print-pouch-label" data-docname="{{ ste.name }}"><i class="fa fa-print"></i> {{ __("Small Label") }}</button>
+                        <button class="btn btn-xs btn-primary print-rating-plate" data-docname="{{ ste.name }}"><i class="fa fa-print"></i> {{ __("Rating Plate") }}</button>
                         {% endif %}
                     </td>
                 </tr>
@@ -72,20 +72,20 @@
     {% endif %}
 
     <div class="bn-row">
-        <h3>Required Items</h3>
+        <h3>{{ __("Required Items") }}</h3>
         <table class="table table-condensed no-margin" style="border-bottom: 1px solid #d1d8dd">
             <thead>
                 <tr>
-                    <th style="width: 5%" class="table-sr">Sr</th>
+                    <th style="width: 5%" class="table-sr">{{ __("Sr") }}</th>
 
                     <th style="width: 20%;" class="" >
-                        Item Code
+                        {{ __("Item Code") }}
                     </th>
                     <th style="width: 35%;" class="" >
-                        Item Name
+                        {{ __("Item Name") }}
                     </th>
                     <th style="width: 20%;" class="text-right" >
-                        Required Qty
+                        {{ __("Required Qty") }}
                     </th>
                 </tr>
             </thead>

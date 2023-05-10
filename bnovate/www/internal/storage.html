@@ -93,6 +93,7 @@
             { fps: 10, qrbox: { width: 600, height: 600 } },
         /* verbose= */ false);
         html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+        window.scanner = html5QrcodeScanner;
     });
 
 

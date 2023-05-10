@@ -13,7 +13,7 @@ def get_serial_no_dashboard_data(data):
         'transactions': [
             {
                 'label': _('Add-ons'),
-                'items': ['License Key'],
+                'items': ['License Key', 'Subscription Contract'],
             }, {
                 'label': _('Storage'),
                 'items': ['Storage Location'],
