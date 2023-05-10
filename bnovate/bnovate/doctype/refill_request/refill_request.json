@@ -141,7 +141,7 @@
    "hidden": 1,
    "in_standard_filter": 1,
    "label": "Status",
-   "options": "\nRequested\nConfirmed\nShipped\nCancelled",
+   "options": "\nDraft\nRequested\nConfirmed\nShipped\nCancelled",
    "read_only": 1
   },
   {
@@ -184,7 +184,7 @@
   }
  ],
  "is_submittable": 1,
- "modified": "2023-05-10 17:42:01.435692",
+ "modified": "2023-05-10 18:11:48.724854",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Refill Request",

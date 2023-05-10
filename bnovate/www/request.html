@@ -124,7 +124,7 @@ ol.request-ribbon {
 <div class="row">
 {% if doc.expected_ship_date %}
     <div class="col-6">
-        <b>{{ _("Expected shipping date") }}:</b> {{ frappe.utils.formatdate(doc.expected_ship_date, 'medium') }}
+        <b>{{ _("Expected Shipping Date") }}:</b> {{ frappe.utils.formatdate(doc.expected_ship_date, 'medium') }}
     </div>
 {% endif %}
 {% if doc.tracking_no and doc.status == "Shipped" %}
