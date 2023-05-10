@@ -56,6 +56,7 @@ def make_request(doc):
         'billing_address_display': doc['billing_address_display'],
         'items': doc['items'],  # using data.items calls the built-in dict function...
         'remarks': doc['remarks'],
+        'language': frappe.session.data.lang,
         'docstatus': 1,
     })
 

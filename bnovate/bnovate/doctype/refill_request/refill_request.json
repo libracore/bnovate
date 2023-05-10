@@ -27,7 +27,9 @@
   "section_break_9",
   "items",
   "section_break_11",
-  "remarks"
+  "remarks",
+  "printing_details",
+  "language"
  ],
  "fields": [
   {
@@ -139,7 +141,7 @@
    "hidden": 1,
    "in_standard_filter": 1,
    "label": "Status",
-   "options": "\nDraft\nRequested\nConfirmed\nShipped\nCancelled",
+   "options": "\nRequested\nConfirmed\nShipped\nCancelled",
    "read_only": 1
   },
   {
@@ -166,10 +168,23 @@
    "fieldtype": "Data",
    "label": "Carrier",
    "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "printing_details",
+   "fieldtype": "Section Break",
+   "label": "Printing Details"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "language",
+   "fieldtype": "Data",
+   "label": "Print Language",
+   "print_hide": 1
   }
  ],
  "is_submittable": 1,
- "modified": "2023-05-08 14:11:26.807089",
+ "modified": "2023-05-10 17:42:01.435692",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Refill Request",

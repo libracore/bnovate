@@ -32,9 +32,9 @@ def get_session_customers():
 def get_session_primary_customer():
     customers = get_session_customers()
     if customers:
-        customers[0]
+        return customers[0]
     else:
-        None
+        return None
 
 def get_session_contact():
     """ Return names of contacts associated to this user id """
