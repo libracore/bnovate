@@ -4,6 +4,7 @@ import json
 import frappe
 
 from frappe import _
+from frappe.utils import today
 
 from .helpers import auth, get_session_primary_customer, get_session_contact, get_addresses
 
@@ -50,12 +51,14 @@ def make_request(doc):
         'doctype': 'Refill Request',
         'customer': get_session_primary_customer(),
         'contact_person': get_session_contact(),
+        'transaction_date': today(),
         'shipping_address': doc['shipping_address'],
         'billing_address': doc['billing_address'],
         'shipping_address_display': doc['shipping_address_display'],
         'billing_address_display': doc['billing_address_display'],
         'items': doc['items'],  # using data.items calls the built-in dict function...
         'remarks': doc['remarks'],
+        'language': frappe.session.data.lang,
         'docstatus': 1,
     })
 

@@ -30,8 +30,11 @@ def get_session_customers():
     return [ c['customer'] for c in customers]
 
 def get_session_primary_customer():
-    return get_session_customers()[0]
-
+    customers = get_session_customers()
+    if customers:
+        return customers[0]
+    else:
+        return None
 
 def get_session_contact():
     """ Return names of contacts associated to this user id """

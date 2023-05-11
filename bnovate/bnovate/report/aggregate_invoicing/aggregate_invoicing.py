@@ -379,14 +379,14 @@ def create_invoice(from_date, to_date, customer, doctype):
     shipping_remarks = []
     last_dn = None
     for e in entries:
-        #Format Remarks 
-
         item = {
             'item_code': e.item_code,
             'qty': e.qty,
             'rate': e.rate,
             'description': e.description,
         }
+        if e.rate == 0:
+            item['discount_percentage'] = 100
         if e.dt == "Delivery Note":
             item['delivery_note'] = e.reference
             item['dn_detail'] = e.detail

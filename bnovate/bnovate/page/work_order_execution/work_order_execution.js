@@ -49,6 +49,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 	const state = {
 		work_order_id: null, 		// docname of the current workorder
 		work_order_doc: null,  		// contents of the current workorder
+		sales_order_doc: null,		// contents of the associated sales order, if any.
 		docinfo: null, 				// docinfo[doctype][docname] -> {attachments: []}
 		view: read,					// state of the items display: read or write
 		ste_doc: null, 				// will contain content of stock entry before submitting.
@@ -107,6 +108,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 	function draw() {
 		main_content.innerHTML = frappe.render_template('work_order_execution', {
 			doc: state.work_order_doc,
+			so: state.sales_order_doc,
 			docinfo: state.docinfo,
 			attachments: state.attachments,
 		});
@@ -115,7 +117,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		page.clear_primary_action();
 		page.clear_secondary_action();
 		if (state.view == read) {
-			page.set_secondary_action('Reload', () => state.load_work_order(state.work_order_id));
+			page.set_secondary_action(__('Reload'), () => state.load_work_order(state.work_order_id));
 			item_content.innerHTML = frappe.render_template('items_read', {
 				doc: state.work_order_doc,
 				ste_docs: state.ste_docs,
@@ -123,7 +125,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 				produce_batch: state.produce_batch
 			});
 			if (state.remaining_qty > 0 && state.work_order_doc.docstatus == 1 && state.work_order_doc.status != "Stopped") {
-				page.set_primary_action(state.draft_mode ? 'Start' : 'Finish', finish);
+				page.set_primary_action(state.draft_mode ? __('Start') : __('Finish'), finish);
 				time_tracking.innerHTML = frappe.render_template('time_tracking', {
 					doc: state.work_order_doc,
 					timing_started: state.timing_started,
@@ -139,7 +141,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			if (state.serial_no_remaining > 0) {
 				page.set_primary_action(`Next (${state.serial_no_remaining})`, validate);
 			} else {
-				page.set_primary_action(state.draft_mode ? 'Done' : 'Submit', validate);
+				page.set_primary_action(state.draft_mode ? __('Done') : __('Submit'), validate);
 			}
 
 			if (state.needs_expiry_date) {
@@ -197,6 +199,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 	state.load_work_order = async (wo_id) => {
 		state.view = read; 				// reset view
 		state.work_order_id = wo_id;
+		state.sales_order_doc = null;
 		state.ste_doc = null;
 		state.produce_serial_no = false;
 		state.produce_batch = false;
@@ -212,6 +215,9 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		state.work_order_doc = await frappe.model.with_doc('Work Order', wo_id);
 		state.docinfo = frappe.model.docinfo;
 		state.remaining_qty = state.work_order_doc.qty - state.work_order_doc.produced_qty;
+		if (state.work_order_doc.sales_order) {
+			state.sales_order_doc = await frappe.model.with_doc('Sales Order', state.work_order_doc.sales_order)
+		}
 
 		// should we switch to serialized behaviour? (produce one item at a time)
 		await fetch_item_details([state.work_order_doc.production_item]);
@@ -247,6 +253,10 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			doc.link = frappe.utils.get_form_link('Stock Entry', doc.name);
 			doc.produced_serial_nos = doc.items.find(it => it.item_code == state.work_order_doc.production_item)?.serial_no?.trim().replaceAll("\n", ", ");
 			doc.produced_batch = doc.items.find(it => it.item_code == state.work_order_doc.production_item)?.batch_no?.trim().replaceAll("\n", ", ");
+			doc.scrap_items = doc.items.filter(it => !it.s_warehouse && it.item_code !== doc.bom_item);
+			doc.scrap_serial_nos = doc.items.filter(it => !it.s_warehouse && it.item_code !== doc.bom_item)
+				.filter(it => it.serial_no)
+				.map(it => it.serial_no.trim().replaceAll("\n", ", "));
 		}
 
 		// Load attachments / linked docs
