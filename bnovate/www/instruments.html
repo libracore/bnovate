@@ -1,0 +1,87 @@
+{% extends "templates/web.html" %}
+
+
+{% block style %}
+<style>
+    .card-group .card {
+    flex: 0 0 33%;
+    border: 1px solid rgba(0, 0, 0, 0.125);
+    border-radius: 0rem;
+    margin: 0.1%;
+    }
+
+    .card-group .card + .card {
+    flex: 0 0 33%;
+    border: 1px solid rgba(0, 0, 0, 0.125);
+    border-radius: 0rem;
+    margin: 0.1%;
+    }
+</style>
+{% endblock %}
+
+{% block page_content %}
+
+<!-- {% block title %}{{ _("My Addresses") }}{% endblock %} -->
+<h1>{{ _("My Instruments") }}</h1>
+
+<div class="card-group">
+    {% for instrument in instruments %}
+    <div class="card">
+        <div class="card-body">
+            <img class="card-img-top" src="/assets/bnovate/img/bactosense.jpeg" alt="BactoSense image">
+
+            <h5 class="card-title">
+                {% if instrument.cp %}
+                    {{ instrument.cp.device_name }}
+                {% else %}
+                    {{ instrument.serial_no}}
+                {% endif %}
+            </h5>
+
+            <dl class="card-text">
+                <dt>Serial No</dt>
+                <dd>{{ instrument.serial_no }}</dd>
+
+                <dt>Warranty Until</dt>
+                {% if instrument.warranty_expiry_date %}
+                <dd>{{ frappe.utils.formatdate(instrument.warranty_expiry_date, 'medium') }}</dd>
+                {% else  %}
+                <dd>TBC</dd>
+                {% endif %}
+
+                <dt>Service Agreement</dt>
+                {% if instrument.sa %}
+                <dd>★☆☆ Essential</dd>
+                {% else  %}
+                <dd>☆☆☆ None</dd>
+                {% endif %}
+            </dl>
+
+            {% if instrument.cp.web %}
+                <a href="#" class="btn btn-primary open-remote" data-config-id="{{ instrument.cp.web.id }}" data-device-id="{{ instrument.cp.web.device_id}}">Web UI</a>
+            {% endif %}
+            {% if instrument.cp.vnc %}
+                <a href="#" class="btn btn-primary open-remote" data-config-id="{{ instrument.cp.vnc.id }}" data-device-id="{{ instrument.cp.vnc.device_id}}">Remote Desktop</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+    frappe.require("/assets/bnovate/js/iot.js");
+
+    // TODO: allow connection if customer, user, instrument all match.
+    [...document.querySelectorAll(".open-remote")].map(el => el.addEventListener("click", async (e) => {
+        const link = await bnovate.iot.rms_start_session(el.dataset.configId, el.dataset.deviceId);
+        if (link) {
+            window.open("https://" + link, "_blank");
+        }
+    }));
+
+</script>
+{% endblock %}
+

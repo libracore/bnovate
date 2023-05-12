@@ -237,7 +237,7 @@ def rms_initialize_device(device_id, device_name):
 
     return rms_create_access(device_id, {"data": data})
 
-def rms_get_access_configs(device_id=None, settings=None):
+def rms_get_access_configs(device_id=None, settings=None, auth=True):
     """ Return list of access configs based on RMS ID (not SN). """
     params = None
     if device_id:
@@ -246,6 +246,7 @@ def rms_get_access_configs(device_id=None, settings=None):
         "/api/devices/remote-access", 
         params=params,
         settings=settings,
+        auth=auth,
     )
     return [c for c in configs if c['protocol']]
 

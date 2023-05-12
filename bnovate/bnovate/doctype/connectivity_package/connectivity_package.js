@@ -65,8 +65,9 @@ frappe.ui.form.on('Connectivity Package', {
 	}
 });
 
+/////////////////
 // General info
-///////////////
+/////////////////
 
 // Cache device ID
 function get_device_id(frm) {
@@ -118,9 +119,9 @@ async function get_connection_status(frm) {
 	`)
 }
 
-
+///////////////////////
 // Remote connections
-///////////////////
+///////////////////////
 
 function set_connections_message(frm, message = "Loading...") {
 	$(frm.fields_dict.connection_table.wrapper).html(message)
