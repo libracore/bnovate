@@ -238,7 +238,7 @@ const template_page4 = `
 
 <div class="row">
     <div class="col-sm">
-        <h5>Cartridges</h5>
+        <h5>{{ __("Cartridges") }}</h5>
         <table class="table">
             <thead>
                 <th>{{ __("Serial No") }}</th>

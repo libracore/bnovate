@@ -9,6 +9,7 @@
 
 from distutils.command.config import config
 from http.client import responses
+from json import JSONDecodeError
 import time
 import frappe
 import concurrent.futures
@@ -52,9 +53,14 @@ def rms_get_status(channel):
     )
 
     if resp.status_code != 200:
-        detail = resp.json()
-        if detail['code'] == 'CHANNEL_NOT_FOUND':
-            raise ChannelNotFound("Channel doesn't exist or expired:", channel)
+
+        detail = resp.text
+        try:
+            detail = resp.json()
+            if detail['code'] == 'CHANNEL_NOT_FOUND':
+                raise ChannelNotFound("Channel doesn't exist or expired:", channel)
+        except JSONDecodeError:
+            pass
         raise ApiException("Error fetching RMS Status: " + str(detail))
     return resp.json()['data']
 
@@ -193,12 +199,13 @@ def rms_initialize_device(device_id, device_name):
     # 2) Create HTTPS and VNC remotes for first available end-device
     # 3) Rename teltonika device
     end_devices = rms_port_scan(device_id)
+
     ip, ports = end_devices['ip'], end_devices['port']
     data = []
     if 443 in ports:
         data.append({
             "device_id": device_id,
-            "name": "{} HTTPS".format(device_name),
+            "name": "{} Web Interface".format(device_name),
             "destination_ip": ip,
             "destination_port": 443,
             "protocol": "https",
@@ -208,7 +215,7 @@ def rms_initialize_device(device_id, device_name):
     if 5900 in ports:
         data.append({
             "device_id": device_id,
-            "name": "{} VNC".format(device_name),
+            "name": "{} Remote Desktop".format(device_name),
             "destination_ip": ip,
             "destination_port": 5900,
             "protocol": "vnc",
@@ -230,7 +237,7 @@ def rms_initialize_device(device_id, device_name):
 
     return rms_create_access(device_id, {"data": data})
 
-def rms_get_access_configs(device_id=None, settings=None):
+def rms_get_access_configs(device_id=None, settings=None, auth=True):
     """ Return list of access configs based on RMS ID (not SN). """
     params = None
     if device_id:
@@ -239,6 +246,7 @@ def rms_get_access_configs(device_id=None, settings=None):
         "/api/devices/remote-access", 
         params=params,
         settings=settings,
+        auth=auth,
     )
     return [c for c in configs if c['protocol']]
 
