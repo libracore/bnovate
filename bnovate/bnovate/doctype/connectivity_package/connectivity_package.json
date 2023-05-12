@@ -9,13 +9,21 @@
   "customer_name",
   "teltonika_serial",
   "column_break_4",
-  "info",
+  "instrument_serial_no",
+  "connection_status",
+  "gateway_info_section",
+  "device_name",
   "rms_id",
-  "mac_address",
+  "column_break_9",
   "imei",
+  "mac_address",
+  "iccid",
   "remote_connections_section",
   "refresh_connections",
-  "connection_table"
+  "connection_table",
+  "instrument_status_section",
+  "get_status",
+  "instrument_status"
  ],
  "fields": [
   {
@@ -59,18 +67,26 @@
    "label": "Refresh"
   },
   {
-   "fieldname": "info",
-   "fieldtype": "HTML",
-   "label": "Info"
-  },
-  {
    "fieldname": "column_break_4",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "device_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Device Name",
+   "read_only": 1
   },
   {
    "fieldname": "rms_id",
    "fieldtype": "Data",
    "label": "RMS ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "imei",
+   "fieldtype": "Data",
+   "label": "IMEI",
    "read_only": 1
   },
   {
@@ -80,13 +96,49 @@
    "read_only": 1
   },
   {
-   "fieldname": "imei",
+   "fieldname": "iccid",
    "fieldtype": "Data",
-   "label": "IMEI",
+   "label": "ICCID",
    "read_only": 1
+  },
+  {
+   "fieldname": "column_break_9",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "instrument_serial_no",
+   "fieldtype": "Link",
+   "label": "Instrument Serial No",
+   "options": "Serial No"
+  },
+  {
+   "fieldname": "get_status",
+   "fieldtype": "Button",
+   "label": "Get Status"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "gateway_info_section",
+   "fieldtype": "Section Break",
+   "label": "Gateway info"
+  },
+  {
+   "fieldname": "connection_status",
+   "fieldtype": "HTML",
+   "label": "Connection Status"
+  },
+  {
+   "fieldname": "instrument_status_section",
+   "fieldtype": "Section Break",
+   "label": "Instrument Status"
+  },
+  {
+   "fieldname": "instrument_status",
+   "fieldtype": "HTML",
+   "label": "Instrument Status"
   }
  ],
- "modified": "2023-05-08 14:54:46.846385",
+ "modified": "2023-05-12 15:43:16.585148",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Connectivity Package",

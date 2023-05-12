@@ -170,4 +170,15 @@ ol.request-ribbon {
     </div>
 </div>
 
+<div class="row">
+    <div class="col">
+		<h5>{{ _("Remarks") }}</h5>
+        {% if doc.remarks %}
+        <p>{{ doc.remarks }}</p>
+        {% else %}
+        <p>-</p>
+        {% endif %}
+    </div>
+</div>
+
 {% endblock %}

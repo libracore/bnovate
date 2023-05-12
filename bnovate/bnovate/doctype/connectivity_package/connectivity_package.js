@@ -18,28 +18,33 @@ frappe.ui.form.on('Connectivity Package', {
 		frm.rms_modal = rms_modal;
 		frm.start_session = (config_id, device_id) => start_session(frm, config_id, device_id);
 
-		clear_info(frm);
+		clear_connection_status(frm);
+		clear_instrument_status(frm);
 
 		// Wait for first Save before fetching any data from API...
 		if (!frm.doc.creation) {
 			return;
 		}
 
-		let device_id = await get_device_id(frm, true);
-		if (!device_id) {
-			return;
+		if (frm.doc.teltonika_serial) {
+			frm.add_custom_button(__("Get RMS Info"), () => get_rms_info(frm), "Get Info");
 		}
+		if (frm.doc.rms_id) {
+			frm.add_custom_button(__("Auto-configure"), () => configure_device(frm));
+			frm.add_custom_button(__("Get Instrument SN"), () => get_instrument_sn(frm), "Get Info");
 
-		frm.add_custom_button(__("Auto-configure"), () => configure_device(frm))
-
-		get_device_info(frm)
-		get_connections(frm);
-
+			get_connection_status(frm);
+			get_connections(frm);
+		}
 	},
 
 	async refresh_connections(frm) {
-		get_device_info(frm);
+		get_connection_status(frm);
 		get_connections(frm);
+	},
+
+	async get_status(frm) {
+		get_instrument_status(frm);
 	},
 
 	async validate(frm) {
@@ -47,10 +52,8 @@ frappe.ui.form.on('Connectivity Package', {
 		const results = await frappe.db.get_list("Connectivity Package", {
 			filters: { teltonika_serial: frm.doc.teltonika_serial }
 		});
-		console.log(results)
 
 		const duplicates = results.filter(doc => doc.name != frm.doc.name);
-		console.log(duplicates)
 		if (duplicates.length) {
 			frappe.validated = false;
 			const link = frappe.utils.get_form_link("Connectivity Package", results[0].name, true, results[0].name)
@@ -60,44 +63,66 @@ frappe.ui.form.on('Connectivity Package', {
 			});
 		}
 	}
-
 });
 
 // General info
 ///////////////
 
 // Cache device ID
-async function get_device_id(frm, refresh = false) {
-	if (!locals.rms_device_id) {
-		locals.rms_device_id = {};
+function get_device_id(frm) {
+	if (!frm.doc.rms_id) {
+		frappe.msgprint("Missing RMS ID. Please get RMS info first.")
+		throw ("Missing RMS ID");
 	}
-
-	if (!refresh && locals.rms_device_id[frm.doc.teltonika_serial]) {
-		return locals.rms_device_id[frm.doc.teltonika_serial];
-	}
-
-	locals.rms_device_id[frm.doc.teltonika_serial] = await bnovate.iot.rms_get_id(frm.doc.teltonika_serial);
-	return locals.rms_device_id[frm.doc.teltonika_serial];
+	return frm.doc.rms_id;
 }
 
-function clear_info(frm) {
-	$(frm.fields_dict.info.wrapper).html(``);
-	set_message(frm);
+async function get_rms_info(frm) {
+	const resp = await frappe.call({
+		method: "bnovate.bnovate.doctype.connectivity_package.connectivity_package.set_info_from_rms",
+		args: {
+			docname: frm.doc.name,
+		}
+	});
+	frm.reload_doc();
+	return resp.message;
+};
+
+async function get_instrument_sn(frm) {
+	console.log("ID", get_device_id(frm))
+	const status = await bnovate.iot.get_status(get_device_id(frm), "");
+	if (status) {
+		frm.set_value("instrument_serial_no", status.serialNumber);
+		frm.save();
+		console.log(status)
+	}
+	return status
 }
 
-async function get_device_info(frm) {
-	const device = await bnovate.iot.rms_get_device(await get_device_id(frm));
-	$(frm.fields_dict.info.wrapper).html(`
+function clear_connection_status(frm) {
+	$(frm.fields_dict.connection_status.wrapper).html(``);
+	let message = null;
+	if (!frm.doc.rms_id) {
+		message = "Please get RMS info."
+	}
+	set_connections_message(frm, message);
+}
+
+
+async function get_connection_status(frm) {
+	const device = await bnovate.iot.rms_get_device(get_device_id(frm));
+	$(frm.fields_dict.connection_status.wrapper).html(`
 		<span class="indicator whitespace-nowrap ${device.status ? 'green' : 'red'}"></span><b>${device.name}</b><br />
 		${device.operator}, ${device.connection_type} [${device.signal} dBm] <br />
 		<a href="https://rms.teltonika-networks.com/devices/${device.id}" target="_blank">Manage on RMS<i class="fa fa-external-link"></i></a>
 	`)
 }
 
+
 // Remote connections
 ///////////////////
 
-function set_message(frm, message = "Loading...") {
+function set_connections_message(frm, message = "Loading...") {
 	$(frm.fields_dict.connection_table.wrapper).html(message)
 }
 
@@ -106,17 +131,17 @@ async function get_connections(frm) {
 	if (!frm.has_perm(WRITE)) {
 		return
 	}
-	set_message(frm, "Loading...");
-	const device_id = await get_device_id(frm)
+	set_connections_message(frm, "Loading...");
+	const device_id = get_device_id(frm)
 	if (device_id) {
 		const access_configs = await bnovate.iot.rms_get_sessions(device_id);
 		if (access_configs.length) {
 			draw_table(frm, access_configs);
 		} else {
-			set_message(frm, "No remote access configurations for this device.")
+			set_connections_message(frm, "No remote access configurations for this device.")
 		}
 	} else {
-		set_message(frm, "Device not found on RMS.")
+		set_connections_message(frm, "Device not found on RMS.")
 	}
 }
 
@@ -151,7 +176,7 @@ function draw_table(frm, access_configs) {
 						<td></td>
 						<td></td>
 						<td>
-							<a><i onclick="cur_frm.rms_modal('https://{{ session.url }}')" class="fa fa-desktop"></i></a>
+							<!-- <a><i onclick="cur_frm.rms_modal('https://{{ session.url }}')" class="fa fa-desktop"></i></a> -->
 							<a href="https://{{ session.url }}" target="_blank"><i class="fa fa-external-link"></i></a>
 						</td>
 						<td>{{ frappe.datetime.get_time(session.end_time * 1000) }}</td>
@@ -181,12 +206,12 @@ function rms_modal(url) {
 
 
 ///////////////////////////////////////
-// Device Info
+// Device Configuration
 //////////////////////////////////////
 
 // Rename device and add HTTP and VNC remotes for first available ports.
 async function configure_device(frm) {
-	const device_id = await get_device_id(frm)
+	const device_id = get_device_id(frm)
 	let values = await prompt(
 		"Enter device details",
 		[{
@@ -203,9 +228,9 @@ async function configure_device(frm) {
 		return;
 	}
 
-	set_message(frm, "Loading...");
+	set_connections_message(frm, "Loading...");
 	await bnovate.iot.rms_initialize_device(device_id, values.device_name);
-	await get_device_info(frm);
+	await get_connection_status(frm);
 	return get_connections(frm);
 }
 
@@ -225,4 +250,93 @@ function prompt(title, fields, primary_action_label, secondary_action_label) {
 		})
 		d.show();
 	})
+}
+
+
+
+///////////////////////////////////////
+// Instrument Status
+//////////////////////////////////////
+
+
+function clear_instrument_status(frm) {
+	$(frm.fields_dict.instrument_status.wrapper).html(``);
+}
+
+async function get_instrument_status(frm) {
+
+	function format_date(unix_ts) {
+		const date = moment.unix(unix_ts);
+		if (date.isBefore()) {
+			return `<div class="alert alert-warning" style="margin: 0px">${frappe.datetime.obj_to_user(date)}</div>`;
+		} else {
+			return frappe.datetime.obj_to_user(date);
+		}
+	}
+
+	$(frm.fields_dict.instrument_status.wrapper).html(`<i class="fa fa-cog fa-spin" style="font-size: 20px"></i>`);
+	const status = await bnovate.iot.get_status(get_device_id(frm), "");
+	$(frm.fields_dict.instrument_status.wrapper).html(frappe.render_template(
+		`
+		<table class="table table-condensed no-margin" style="border-bottom: 1px solid #d1d8dd">
+		<tbody>
+			<tr>
+				<th>Serial No</th>
+				<td>{{ status.serialNumber }}</td>
+			</tr>
+			<tr>
+				<th>Status</th>
+				<td>{{ status.status }}</td>
+			</tr>
+			<tr>
+				<th>Error</th>
+				<td>{{ status.lastError || "-" }}</td>
+			</tr>
+			<tr>
+				<th>Software Version</th>
+				<td>{{ status.version }}</td>
+			</tr>
+			<tr>
+				<th>Fill Type</th>
+				<td>{{ status.cartridgeType }}</td>
+			</tr>
+			<tr>
+				<th>Fill Serial No</th>
+				<td>{{ status.fillSerial }}</td>
+			</tr>
+			<tr>
+				<th>Cartridge Level</th>
+				<td>{{ Math.round(status.cartridgeLevel / ( status.cartridgeCapacity || 1000 ) * 100) }} %</td>
+			</tr>
+			<tr>
+				<th>Cartridge Expiry</th>
+				<td>{{ format_date(status.cartridgeExpiry) }}</div></td>
+			</tr>
+			<tr>
+				<th>Cartridge Serial No</th>
+				<td>{{ status.cartridgeSerial }}</td>
+			</tr>
+			<tr>
+				<th>Temperature, Humidity</th>
+				<td>{{ Math.round(status.temperature) }}° C, {{ Math.round(status.humidity) }} %RH</td>
+			</tr>
+			<tr>
+				<th>Service: Due Date</th>
+				<td>{{ format_date(status.nextServiceDue) }}</td>
+			</tr>
+			<tr>
+				<th>Service: Valve Lifetime Remaining</th>
+				<td>{{ Math.round(100 - status.valveMotions / ( status.valveLifetime || 1000 ) * 100) }} %</td>
+			</tr>
+			<tr>
+				<th>Service: Plunger Lifetime Remaining </th>
+				<td>{{ Math.round(100 - status.plungerMotions / ( status.plungerLifetime || 1000 ) * 100) }} %</td>
+			</tr>
+		</tbody>
+		</table>
+		`,
+		{
+			status,
+			format_date,
+		}));
 }

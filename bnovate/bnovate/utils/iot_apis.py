@@ -198,17 +198,14 @@ def rms_initialize_device(device_id, device_name):
     # 1) Port scan
     # 2) Create HTTPS and VNC remotes for first available end-device
     # 3) Rename teltonika device
-    print("\n\n\n------------------------------------------\n\n\n")
-    print(device_id)
     end_devices = rms_port_scan(device_id)
-    print(end_devices)
 
     ip, ports = end_devices['ip'], end_devices['port']
     data = []
     if 443 in ports:
         data.append({
             "device_id": device_id,
-            "name": "{} HTTPS".format(device_name),
+            "name": "{} Web Interface".format(device_name),
             "destination_ip": ip,
             "destination_port": 443,
             "protocol": "https",
@@ -218,7 +215,7 @@ def rms_initialize_device(device_id, device_name):
     if 5900 in ports:
         data.append({
             "device_id": device_id,
-            "name": "{} VNC".format(device_name),
+            "name": "{} Remote Desktop".format(device_name),
             "destination_ip": ip,
             "destination_port": 5900,
             "protocol": "vnc",
@@ -229,14 +226,11 @@ def rms_initialize_device(device_id, device_name):
         "name": device_name,
     })
 
-    print("Name set")
-
     if not data:
         raise ApiException("Neither HTTPS or VNC available on this device")
 
     # Delete existing remotes, only if we can create new ones
     configs = rms_get_access_configs(device_id)
-    print(configs)
     if configs:
         rms_delete_access(device_id, 
             [c['id'] for c in configs if c['protocol'] in ("https", "vnc")])
