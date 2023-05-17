@@ -111,6 +111,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			so: state.sales_order_doc,
 			docinfo: state.docinfo,
 			attachments: state.attachments,
+			bom: state.bom_doc,
 		});
 		time_tracking.innerHTML = "";
 

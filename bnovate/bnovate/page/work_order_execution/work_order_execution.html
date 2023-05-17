@@ -57,6 +57,17 @@
         text-align: center;
     }
 
+    .warning-symbols {
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    .warning-symbol {
+        height: 100px;
+        width: 100px;
+        margin: 5px;
+    }
+
     .add-items { 
         margin-top: 5px;
     }
@@ -134,6 +145,33 @@
         {% if doc.comment %}
         <div class="bn-col comment">
             {{ doc.comment }}
+        </div>
+        {% endif %}
+
+        {% if bom.eye_protection || bom.protective_gloves || bom.lab_coat || bom.esd_protection || bom.no_windsurfing %}
+        <div class="bn-col">
+            <div class="warning-symbols">
+
+                {% if bom.eye_protection %}
+                    <img class="warning-symbol" src="/assets/bnovate/img/warnings/eye_protection.svg">
+                {% endif %}
+
+                {% if bom.protective_gloves %}
+                    <img class="warning-symbol" src="/assets/bnovate/img/warnings/protective_gloves.svg">
+                {% endif %}
+
+                {% if bom.lab_coat %}
+                    <img class="warning-symbol" src="/assets/bnovate/img/warnings/lab_coat.svg">
+                {% endif %}
+
+                {% if bom.esd_protection %}
+                    <img class="warning-symbol" src="/assets/bnovate/img/warnings/esd_protection.svg">
+                {% endif %}
+
+                {% if bom.no_windsurfing %}
+                    <img class="warning-symbol" src="/assets/bnovate/img/warnings/no_windsurfing.svg">
+                {% endif %}
+            </div>
         </div>
         {% endif %}
 
