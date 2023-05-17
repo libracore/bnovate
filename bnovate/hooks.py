@@ -40,6 +40,14 @@ fixtures = [
             "BOM-bom_description",
             "Work Order-bom_description",
             "Stock Entry-bom_item",
+            # Safety symbols on WOE:
+            "BOM-safety_measures",
+            "BOM-esd_protection",
+            "BOM-protective_gloves",
+            "BOM-lab_coat",
+            "BOM-column_break_31",
+            "BOM-eye_protection",
+            "BOM-no_windsurfing",
             # Used to track owners of enclosures
             "Serial No-ownership_details",
             "Serial No-owned_by",

@@ -111,6 +111,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			so: state.sales_order_doc,
 			docinfo: state.docinfo,
 			attachments: state.attachments,
+			bom: state.bom_doc,
 		});
 		time_tracking.innerHTML = "";
 
@@ -256,7 +257,8 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			doc.scrap_items = doc.items.filter(it => !it.s_warehouse && it.item_code !== doc.bom_item);
 			doc.scrap_serial_nos = doc.items.filter(it => !it.s_warehouse && it.item_code !== doc.bom_item)
 				.filter(it => it.serial_no)
-				.map(it => it.serial_no.trim().replaceAll("\n", ", "));
+				.map(it => it.serial_no.trim().replaceAll("\n", ", ")).
+				join(", ");
 		}
 
 		// Load attachments / linked docs
