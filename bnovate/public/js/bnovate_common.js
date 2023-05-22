@@ -19,16 +19,30 @@ frappe.provide("bnovate.utils")
  *  *********************** */
 
 function get_label(doctype, docname, print_format, label_reference) {
-  window.open(
-    frappe.urllib.get_full_url(
-      "/api/method/bnovate.bnovate.utils.labels.download_label_for_doc"
-      + "?doctype=" + encodeURIComponent(doctype)
-      + "&docname=" + encodeURIComponent(docname)
-      + "&print_format=" + encodeURIComponent(print_format)
-      + "&label_reference=" + encodeURIComponent(label_reference)
-    ),
-    "_blank"
-  );
+  // To print directly, we place content in an iframe and trigger print from there:
+  frappe.show_progress("Printing", 10, 100);
+  setTimeout(() => frappe.show_progress("Printing", 60, 100), 500);
+
+  let iframe = document.createElement('iframe');
+  iframe.style.display = 'none';
+  document.body.append(iframe);
+
+  iframe.addEventListener('load', () => {
+    setTimeout(() => {
+      iframe.focus();
+      iframe.contentWindow.print();
+      frappe.hide_progress();
+      // I cannot find a way get afterprint event working in order to destroy the iframe...
+    }, 1);
+  });
+
+  iframe.src = frappe.urllib.get_full_url(
+    "/api/method/bnovate.bnovate.utils.labels.download_label_for_doc"
+    + "?doctype=" + encodeURIComponent(doctype)
+    + "&docname=" + encodeURIComponent(docname)
+    + "&print_format=" + encodeURIComponent(print_format)
+    + "&label_reference=" + encodeURIComponent(label_reference)
+  )
 }
 bnovate.utils.get_label = get_label; // already used in many custom scripts, keep in global namespace.
 
