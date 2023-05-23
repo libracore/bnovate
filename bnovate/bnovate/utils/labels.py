@@ -26,26 +26,6 @@ def download_label_for_doc(doctype, docname, print_format, label_reference):
     content = frappe.render_template(template, {"doc": doc})
     return download_label(label_reference, content)
 
-@frappe.whitelist()
-def download_wo_label(ste_name):
-    """ Download PDF labels for stock entries that finished work orders."""
-    ste = frappe.get_doc("Stock Entry", ste_name)
-    pf = frappe.get_doc("Print Format", "Work Order Label")
-
-    template = """<style>{css}</style>{html}""".format(css=pf.css, html=pf.html)
-    content = frappe.render_template(template, {"doc": ste})
-    return download_label("Labels 100x30mm", content)
-
-@frappe.whitelist()
-def download_pouch_label(ste_name):
-    """ Download PDF labels for stock entries that finished work orders."""
-    ste = frappe.get_doc("Stock Entry", ste_name)
-    pf = frappe.get_doc("Print Format", "Pouch Label")
-
-    template = """<style>{css}</style>{html}""".format(css=pf.css, html=pf.html)
-    content = frappe.render_template(template, {"doc": ste})
-    return download_label("Labels 30x49mm (4 per row)", content)
-
 
 # Example of how to use this from Javascript:
 #
