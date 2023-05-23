@@ -836,24 +836,12 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 
 		[...document.querySelectorAll('.print-wo-label')]
 			.map(el => el.addEventListener('click', event => {
-				window.open(
-					frappe.urllib.get_full_url(
-						"/api/method/bnovate.bnovate.utils.labels.download_wo_label"
-						+ "?ste_name=" + encodeURIComponent(el.dataset.docname)
-					),
-					"_blank"
-				); // _blank opens in new tab.
+				bnovate.utils.get_label("Stock Entry", el.dataset.docname, "Work Order Label", "Labels 100x30mm")
 			}));
 
 		[...document.querySelectorAll('.print-pouch-label')]
 			.map(el => el.addEventListener('click', event => {
-				window.open(
-					frappe.urllib.get_full_url(
-						"/api/method/bnovate.bnovate.utils.labels.download_pouch_label"
-						+ "?ste_name=" + encodeURIComponent(el.dataset.docname)
-					),
-					"_blank"
-				); // _blank opens in new tab.
+				bnovate.utils.get_label("Stock Entry", el.dataset.docname, "Pouch Label", "Labels 30x49mm (4 per row)")
 			}));
 	}
 
