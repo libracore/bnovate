@@ -3,6 +3,7 @@
 # General utility functions for enclosures
 
 import frappe
+from frappe.utils import getdate, get_link_to_form
 from frappe.exceptions import DoesNotExistError
 from erpnext.stock.doctype.serial_no.serial_no import get_serial_nos
 
@@ -11,7 +12,7 @@ def is_enclosure(item_code):
 
 def check_so_serial_no(so, method=None):
     """ Check that SNs are specified for refills. Called through hooks.py """
-    if method != 'before_submit':
+    if method not in ('before_submit', 'on_update_after_submit'):
         return
 
     refills = [it for it in so.items if it.item_group == 'Cartridge Refills']
@@ -44,6 +45,48 @@ def check_so_serial_no(so, method=None):
                         serial_no=serial_no,
                         **deets
                 ))
+
+def associate_so_serial_no(so, method=None):
+    """ Set 'open_sales_order' field on Serial No. Called through hooks.py.
+    
+    We need this because db lookups in text field are super slow.
+    """
+
+    # The state of the doc displayed here is the 'target' state intented if all checks 
+    # go through.
+
+    refills = [it for it in so.items if it.item_group == 'Cartridge Refills']
+    for it in refills:
+        serial_nos = get_serial_nos(it.serial_nos)
+        for serial_no in serial_nos:
+            try:
+                sn_doc = frappe.get_doc("Serial No", serial_no)
+            except DoesNotExistError:
+                continue
+            
+            if so.docstatus == 2 or it.delivered_qty >= it.qty:
+                # Trying to cancel the document OR to fully deliver line item
+                # Remove association on SN
+                if sn_doc.open_sales_order == so.name:
+                    sn_doc.db_set("open_sales_order", None)
+                    sn_doc.db_set("open_sales_order_item", None)
+                    # print("Removed association")
+
+            else:
+                # Creating or saving the SO. 
+                # check that there is no conflict:
+                if not sn_doc.open_sales_order:
+                    sn_doc.db_set("open_sales_order", so.name)
+                    sn_doc.db_set("open_sales_order_item", it.name)
+                    # print("Set", serial_no, "to SO", so.name)
+                else:
+                    if sn_doc.open_sales_order != so.name:
+                        frappe.throw("{so} already exists for {sn}".format(
+                            so=frappe.utils.get_link_to_form("Sales Order", sn_doc.open_sales_order), 
+                            sn=frappe.utils.get_link_to_form("Serial No", serial_no)
+                        ))
+                    # else:
+                    #     print("Nothing to change")
 
 
 def set_wo_serial_no(wo, method=None):

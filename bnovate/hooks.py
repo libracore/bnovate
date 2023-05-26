@@ -200,7 +200,9 @@ doc_events = {
     "Sales Order": {
         "before_submit": "bnovate.bnovate.utils.enclosures.check_so_serial_no",
         "on_submit": "bnovate.bnovate.doctype.refill_request.refill_request.update_status_from_sales_order",
+        "on_update_after_submit": "bnovate.bnovate.utils.enclosures.check_so_serial_no",
         "on_cancel": "bnovate.bnovate.doctype.refill_request.refill_request.update_status_from_sales_order",
+        "on_change": "bnovate.bnovate.utils.enclosures.associate_so_serial_no",
     },
     "Delivery Note": {
         "on_submit": [

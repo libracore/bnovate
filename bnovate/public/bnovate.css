@@ -10,6 +10,12 @@ body.party-time {
     "Segoe UI", "Helvetica Neue", sans-serif;
 }
 
+.party-time .navbar-default {
+  background-color: #fd85d9;
+  border-color: #fd85d9;
+}
+
+
 /* Remove border below report table headers - spans too wide when embedded in Form */
 .dt-scrollable {
   border-top: 0px;
