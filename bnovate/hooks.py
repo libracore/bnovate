@@ -58,6 +58,8 @@ fixtures = [
             "Sales Order Item-serial_nos",  # pluralized to avoid automations from selling controller
             "Work Order-serial_no",
             "Work Order-comment",
+            "Serial No-open_sales_order",
+            "Serial No-open_sales_order_item",
             # Addresses
             "Address-company_name",
         ]]]
