@@ -55,6 +55,9 @@ fixtures = [
             "Serial No-owner_set_by",
             # Refill requests
             "Sales Order Item-refill_request",
+            "Sales Order Item-serial_nos",  # pluralized to avoid automations from selling controller
+            "Work Order-serial_no",
+            "Work Order-comment",
             # Addresses
             "Address-company_name",
         ]]]
@@ -176,8 +179,14 @@ doc_events = {
     # 		"on_trash": "method"
     # }
     "Work Order": {
-        "before_save": "bnovate.bnovate.page.work_order_execution.work_order_execution.calculate_total_time",
-        "on_update_after_submit": "bnovate.bnovate.page.work_order_execution.work_order_execution.calculate_total_time",
+        "before_save": [
+            "bnovate.bnovate.page.work_order_execution.work_order_execution.calculate_total_time",
+            "bnovate.bnovate.utils.enclosures.set_wo_serial_no",
+        ],
+        "on_update_after_submit": [
+            "bnovate.bnovate.page.work_order_execution.work_order_execution.calculate_total_time",
+            "bnovate.bnovate.utils.enclosures.set_wo_serial_no",
+        ]
     },
     "Stock Entry": {
         "before_save": "bnovate.bnovate.page.work_order_execution.work_order_execution.update_work_order_status",
@@ -189,6 +198,7 @@ doc_events = {
         "after_delete": "bnovate.bnovate.page.work_order_execution.work_order_execution.update_work_order_status",
     },
     "Sales Order": {
+        "before_submit": "bnovate.bnovate.utils.enclosures.check_so_serial_no",
         "on_submit": "bnovate.bnovate.doctype.refill_request.refill_request.update_status_from_sales_order",
         "on_cancel": "bnovate.bnovate.doctype.refill_request.refill_request.update_status_from_sales_order",
     },

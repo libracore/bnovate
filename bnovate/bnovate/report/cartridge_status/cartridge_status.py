@@ -60,7 +60,7 @@ def get_data(filters):
             (SELECT rri.parent 
                 FROM `tabRefill Request Item` rri 
                 JOIN `tabRefill Request` rr ON rri.parent = rr.name
-                WHERE rri.serial_no = sn.serial_no AND rri.docstatus = 1 AND rr.status IN ("Submitted", "Confirmed")
+                WHERE rri.serial_no = sn.serial_no AND rri.docstatus = 1 AND rr.status IN ("Requested", "Confirmed")
                 ORDER BY rr.transaction_date DESC 
                 LIMIT 1) 
                 as refill_request
