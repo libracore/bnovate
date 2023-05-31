@@ -25,10 +25,11 @@ def get_columns():
         {'fieldname': 'posting_date', 'fieldtype': 'Date', 'label': _('Since date'), 'width': 80},
         {'fieldname': 'owned_by', 'fieldtype': 'Link', 'label': _('Owned by Customer'), 'options': 'Customer', 'width': 120},
         {'fieldname': 'customer_name', 'fieldtype': 'Data', 'label': _('Customer Name'), 'width': 300, 'align': 'left'}, 
-        {'fieldname': 'tracking_link', 'fieldtype': 'Data', 'label': _('Tracking No'), 'width': 300, 'align': 'left'}, 
-        {'fieldname': 'refill_request', 'fieldtype': 'Link', 'label': _('Refill Request'), 'options': 'Refill Request', 'width': 300, 'align': 'left'}, 
-        {'fieldname': 'open_sales_order', 'fieldtype': 'Link', 'label': _('Sales Order'), 'options': 'Sales Order', 'width': 300, 'align': 'left'}, 
-        {'fieldname': 'work_order', 'fieldtype': 'Link', 'label': _('Work Order'), 'options': 'Work Order', 'width': 300, 'align': 'left'}, 
+        {'fieldname': 'tracking_link', 'fieldtype': 'Data', 'label': _('Tracking No'), 'width': 100, 'align': 'left'}, 
+        {'fieldname': 'refill_request', 'fieldtype': 'Link', 'label': _('Refill Request'), 'options': 'Refill Request', 'width': 100, 'align': 'left'}, 
+        {'fieldname': 'open_sales_order', 'fieldtype': 'Link', 'label': _('Sales Order'), 'options': 'Sales Order', 'width': 100, 'align': 'left'}, 
+        {'fieldname': 'work_order', 'fieldtype': 'Link', 'label': _('Work Order'), 'options': 'Work Order', 'width': 200, 'align': 'left'}, 
+        {'fieldname': 'woe', 'fieldtype': 'Link', 'label': _('Manufacturing Stock Entry'), 'options': 'Work Order', 'width': 200, 'align': 'left'}, 
     ]
 
 def get_data(filters):
@@ -71,7 +72,9 @@ def get_data(filters):
             so.docstatus AS so_docstatus,
             so.status AS so_status,
             wo.name AS work_order,
-            wo.status AS work_order_status
+            wo.status AS wo_status,
+            woe.woe_name AS woe, -- Work Order Entry, i.e. stock entry associated with that cartridge 
+            woe.woe_docstatus AS woe_docstatus
 
         FROM `tabSerial No` sn
         LEFT JOIN `tabStock Entry` ste ON sn.purchase_document_no = ste.name
@@ -83,6 +86,13 @@ def get_data(filters):
                     FROM `tabPacked Item` spi
                     JOIN `tabWork Order` swo ON spi.name = swo.sales_order_item ) AS pi ON pi.parent_detail_docname = sn.open_sales_order_item
         LEFT JOIN `tabWork Order` wo on pi.wo_name = wo.name
+
+        -- Production status: 'Work Order Entries' make subtable of stock entries that match the work order, then filter to keep only matching serial no
+        LEFT JOIN ( SELECT ste2.name AS woe_name, ste2.docstatus as woe_docstatus, ste2.work_order, fai.enclosure_serial_data
+                    FROM `tabFill Association Item` fai
+                    JOIN `tabStock Entry` ste2 on fai.parent = ste2.name) AS woe 
+                    ON woe.work_order = wo.name AND woe.enclosure_serial_data = sn.serial_no
+
         WHERE sn.item_code = "100146"
             AND sn.warehouse IS NOT NULL
             {extra_filters}

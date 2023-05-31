@@ -468,13 +468,14 @@
   }
  ],
  "is_submittable": 1,
- "modified": "2023-04-28 15:58:28.457686",
+ "modified": "2023-05-30 15:35:03.795541",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Subscription Contract",
  "owner": "Administrator",
  "permissions": [
   {
+   "amend": 1,
    "cancel": 1,
    "create": 1,
    "delete": 1,
@@ -489,6 +490,7 @@
    "write": 1
   },
   {
+   "amend": 1,
    "cancel": 1,
    "create": 1,
    "delete": 1,
