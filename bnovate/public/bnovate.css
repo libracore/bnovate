@@ -107,3 +107,17 @@ span.coloured.dark {
   margin-right: 8px;
   color: #6ad63f;
 }
+
+/* Cartridge status flowchart */
+.cartridge-flowchart {
+  --selected-fill: #f0a23a;
+  --deselected-fill: #ffffff;
+}
+
+.cartridge-flowchart .node {
+  fill: var(--deselected-fill)
+}
+
+.cartridge-flowchart .active {
+  fill: var(--selected-fill)
+}

@@ -43,6 +43,7 @@ frappe.query_reports["Cartridge Status"] = {
 // colours borrowed from sales_order_list.js on ERPNext app
 function sales_order_indicator(doc) {
     colormap = {
+        'Draft': 'darkgrey',
         'Closed': 'green',
         'On Hold': 'orange',
         'Overdue': 'red',

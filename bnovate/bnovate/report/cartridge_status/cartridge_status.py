@@ -17,6 +17,7 @@ def get_columns():
     return [
         {'fieldname': 'serial_no', 'fieldtype': 'Link', 'label': _('Serial No'), 'options': 'Serial No', 'width': 100},
         {'fieldname': 'type', 'fieldtype': 'Data', 'label': _('Type'), 'width': 150}, 
+        {'fieldname': 'order_status', 'fieldtype': 'Data', 'label': _('Order Status'), 'width': 150}, 
         {'fieldname': 'status', 'fieldtype': 'Data', 'label': _('Status'), 'width': 150}, 
         {'fieldname': 'location', 'fieldtype': 'Data', 'label': _('Location'), 'width': 150}, 
         # {'fieldname': 'item_code', 'fieldtype': 'Link', 'label': _('Item'), 'options': 'Item', 'width': 100},
@@ -102,17 +103,33 @@ def get_data(filters):
     data = frappe.db.sql(sql_query, as_dict=True)
 
     for row in data:
+
+        row.order_status = None
+        if row.so_docstatus == 1:
+            # SO is submitted. Note, open SO disappears when cartridge is shipped
+            row.order_status = "Confirmed"
+        elif row.refill_request or row.so_docstatus == 0:
+            # Refill Request or Draft SO exist
+            row.order_status = "Requested"
+
         if row.location == "bNovate":
-            if not row.refill_request:
-                row.sort_index = 1
-                row.status = "Ready for Refill"
+            if row.refill_request or row.sales_order:
+                if row.woe_docstatus == 0:
+                    row.status = "Filling"
+                    row.sort_index = 3
+                elif row.woe_docstatus == 1:
+                    row.status = "Ready to Ship"
+                    row.sort_index = 4
+                else:
+                    row.status = "Refill Pending"
+                    row.sort_index = 2
             else:
-                row.status = "Refill Pending"
-                row.sort_index = 2
+                row.status = "Ready for Refill"  # Includes 'cartridges scheduled for repair'
+                row.sort_index = 1
 
         else:
             row.status = "Shipped"
-            row.sort_index = 3
+            row.sort_index = 5
 
         if row.carrier == "DHL":
             row.tracking_link = '''<a href="https://www.dhl.com/ch-en/home/tracking/tracking-express.html?submit=1&tracking-id={0}" target="_blank">{0}</a>'''.format(row.tracking_no)
