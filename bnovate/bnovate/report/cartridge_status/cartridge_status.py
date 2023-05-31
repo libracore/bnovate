@@ -27,7 +27,7 @@ def get_columns():
         {'fieldname': 'customer_name', 'fieldtype': 'Data', 'label': _('Customer Name'), 'width': 300, 'align': 'left'}, 
         {'fieldname': 'tracking_link', 'fieldtype': 'Data', 'label': _('Tracking No'), 'width': 100, 'align': 'left'}, 
         {'fieldname': 'refill_request', 'fieldtype': 'Link', 'label': _('Refill Request'), 'options': 'Refill Request', 'width': 100, 'align': 'left'}, 
-        {'fieldname': 'open_sales_order', 'fieldtype': 'Link', 'label': _('Sales Order'), 'options': 'Sales Order', 'width': 100, 'align': 'left'}, 
+        {'fieldname': 'open_sales_order', 'fieldtype': 'Link', 'label': _('Sales Order'), 'options': 'Sales Order', 'width': 220, 'align': 'left'}, 
         {'fieldname': 'work_order', 'fieldtype': 'Link', 'label': _('Work Order'), 'options': 'Work Order', 'width': 200, 'align': 'left'}, 
         {'fieldname': 'woe', 'fieldtype': 'Link', 'label': _('Manufacturing Stock Entry'), 'options': 'Work Order', 'width': 200, 'align': 'left'}, 
     ]

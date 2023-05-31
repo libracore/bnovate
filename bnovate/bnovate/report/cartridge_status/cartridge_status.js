@@ -25,7 +25,10 @@ frappe.query_reports["Cartridge Status"] = {
     ],
     formatter(value, row, col, data, default_formatter) {
 
-        if (value && col.fieldname === 'work_order') {
+        if (value && col.fieldname === 'open_sales_order') {
+            let [legend, colour] = sales_order_indicator(data);
+            return `<span class="indicator ${colour}">${frappe.utils.get_form_link("Sales Order", value, true, value)} [${legend}]</span>`;
+        } else if (value && col.fieldname === 'work_order') {
             let [legend, colour] = work_order_indicator(data);
             return `<span class="indicator ${colour}">${frappe.utils.get_form_link("Work Order", value, true, value)} [${legend}]</span>`;
         } else if (value && col.fieldname === 'woe') {
@@ -36,6 +39,21 @@ frappe.query_reports["Cartridge Status"] = {
         return default_formatter(value, row, col, data);
     }
 };
+
+// colours borrowed from sales_order_list.js on ERPNext app
+function sales_order_indicator(doc) {
+    colormap = {
+        'Closed': 'green',
+        'On Hold': 'orange',
+        'Overdue': 'red',
+        'To Deliver': 'orange',
+        'To Deliver and Bill': 'orange',
+        'To Bill': 'orange',
+        'Completed': 'green',
+    }
+
+    return [__(doc.so_status), colormap[doc.so_status]]
+}
 
 
 // Stolen from work_order_list.js on ERPNext 
@@ -54,6 +72,7 @@ function work_order_indicator(doc) {
     }
 }
 
+// Stolen from stock_entry_list.js on ERPNext 
 function work_order_entry_indicator(doc) {
     if (doc.woe_docstatus === 0) {
         return [__("Draft"), "red", "docstatus,=,0"];
