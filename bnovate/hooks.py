@@ -60,6 +60,8 @@ fixtures = [
             "Work Order-comment",
             "Serial No-open_sales_order",
             "Serial No-open_sales_order_item",
+            "Serial No-cartridge_flowchart",
+            "Serial No-cartridge_status",
             # Addresses
             "Address-company_name",
         ]]]

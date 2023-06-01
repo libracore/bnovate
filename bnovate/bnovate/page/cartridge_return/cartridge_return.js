@@ -45,6 +45,7 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 			<th>Serial No</th>
 			<th>Warehouse</th>
 			<th>Customer</th>
+			<th>Open Order</th>
 			<th>Repair?</th>
 			<th></th>
 		</tr>
@@ -55,6 +56,11 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 			<td><a href="/desk#Form/Serial No/{{ enc.serial_no }}" target="_blank">{{ enc.serial_no }}</a></td>
 			<td>{{ enc.warehouse }}</td>
 			<td>{{ enc.customer_name }}</td>
+			<td>
+				{% if enc.open_sales_order %}
+					<a href="{{ frappe.utils.get_form_link("Sales Order", enc.open_sales_order) }}" target="_blank">{{ enc.open_sales_order }}</a>
+				{% endif %}
+			</td>
 			<td>
 				{% if not enc.transferred %}
 					<input type="checkbox" class="repair-needed" id="repair-{{ enc.serial_no }}">
@@ -104,10 +110,7 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 			let location = await lookup_location(serial_no);
 			state.encs.push({
 				serial_no,
-				warehouse: location.warehouse,
-				customer: location.customer,
-				customer_name: location.customer_name,
-				error: location.error
+				...location,
 			})
 		}
 		draw_table();
@@ -163,6 +166,7 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 				warehouse: sn_doc.warehouse,
 				customer: customer,
 				customer_name: customer_name,
+				open_sales_order: sn_doc.open_sales_order,
 				error: error,
 			}
 		} catch (err) {
