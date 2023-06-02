@@ -11,7 +11,6 @@ frappe.require("/assets/bnovate/js/flowchart.js")
 frappe.ui.form.on("Serial No", {
     async refresh(frm) {
         const report_data = await get_status(frm.doc.serial_no);
-        console.log(report_data)
         if (report_data.result && report_data.result.length) {
             bnovate.flowchart.attach(
                 frm.fields_dict.cartridge_flowchart.wrapper,
@@ -19,7 +18,12 @@ frappe.ui.form.on("Serial No", {
                 report_data.result[0].status,
             );
         }
-    }
+    },
+
+    status_details(frm) {
+        frappe.route_options = { serial_no: frm.doc.serial_no };
+        frappe.set_route("query-report", "Cartridge Status");
+    },
 })
 
 async function get_status(serial_no) {

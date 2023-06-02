@@ -19,8 +19,8 @@ def get_columns():
     return [
         {'fieldtype': 'Data', 'label': '', 'width': 20},
         {'fieldname': 'weeknum', 'fieldtype': 'Data', 'label': _('Week'), 'width': 80},
-        {'fieldname': 'sales_order', 'fieldtype': 'Link', 'label': _('Sales Order'), 'options': 'Sales Order', 'width': 90},
         {'fieldname': 'indicator', 'fieldtype': 'Data', 'label': _('Status'), 'width': 90},
+        {'fieldname': 'sales_order', 'fieldtype': 'Link', 'label': _('Sales Order'), 'options': 'Sales Order', 'width': 90},
         {'fieldname': 'customer', 'fieldtype': 'Link', 'label': _('Customer'), 'options': 'Customer', 'width': 80, 'align': 'left'},
         {'fieldname': 'customer_name', 'fieldtype': 'Data', 'label': _('Customer Name'), 'width': 150, 'align': 'left'},
         {'fieldname': 'ship_date', 'fieldtype': 'Data', 'label': _('Ship date'), 'width': 80},
@@ -112,8 +112,10 @@ ORDER BY
     data = frappe.db.sql(sql_query, as_dict=True)
     last_week_num = ''
     last_day = ''
+    last_so = ''
     week_index = 0
     day_index = 0
+    so_index = 0
 
     # import pprint
     # pp = pprint.PrettyPrinter(indent=4)
@@ -127,8 +129,13 @@ ORDER BY
         if row['delivery_date'] != last_day:
             day_index += 1
             last_day = row['delivery_date']
+
+        if row['sales_order'] != last_so:
+            so_index += 1
+            last_so = row['sales_order']
         row['week_index'] = week_index
         row['day_index'] = day_index
+        row['so_index'] = so_index
 
         row['ship_date'] = row['delivery_date']
 

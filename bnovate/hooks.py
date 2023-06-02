@@ -62,6 +62,9 @@ fixtures = [
             "Serial No-open_sales_order_item",
             "Serial No-cartridge_flowchart",
             "Serial No-cartridge_status",
+            "Serial No-status_details",
+            "Stock Entry-from_customer",
+            "Stock Entry-from_customer_name",
             # Addresses
             "Address-company_name",
         ]]]

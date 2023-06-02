@@ -32,6 +32,9 @@ frappe.query_reports["Orders to Fulfill"] = {
 		if (col.fieldname === "weeknum") {
 			return `<span class="coloured ${this.colours[data.week_index % this.colours.length]}">${default_formatter(value, row, col, data)}</span>`;
 		}
+		if (col.fieldname === "sales_order" || col.fieldname === "customer" || col.fieldname === "customer_name") {
+			return `<span class="coloured ${this.colours[data.so_index % this.colours.length]}">${default_formatter(value, row, col, data)}</span>`;
+		}
 		if (col.fieldname === "ship_date") {
 			return `<span class="coloured ${this.colours[data.day_index % this.colours.length]}">${default_formatter(value, row, col, data)}</span>`;
 		}
