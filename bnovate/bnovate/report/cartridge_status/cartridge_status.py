@@ -5,6 +5,8 @@ from __future__ import unicode_literals
 import frappe
 from frappe import _
 
+from erpnext.stock.doctype.serial_no.serial_no import get_serial_nos
+
 from operator import attrgetter
 
 def execute(filters=None):
@@ -17,7 +19,7 @@ def get_columns():
     return [
         {'fieldname': 'serial_no', 'fieldtype': 'Link', 'label': _('Serial No'), 'options': 'Serial No', 'width': 100},
         {'fieldname': 'type', 'fieldtype': 'Data', 'label': _('Type'), 'width': 150}, 
-        {'fieldname': 'order_status', 'fieldtype': 'Data', 'label': _('Order Status'), 'width': 150}, 
+        {'fieldname': 'order_status', 'fieldtype': 'Data', 'label': _('Order Status'), 'width': 150, 'align': 'left'}, 
         {'fieldname': 'status', 'fieldtype': 'Data', 'label': _('Status'), 'width': 150}, 
         {'fieldname': 'location', 'fieldtype': 'Data', 'label': _('Location'), 'width': 150}, 
         # {'fieldname': 'item_code', 'fieldtype': 'Link', 'label': _('Item'), 'options': 'Item', 'width': 100},
@@ -45,7 +47,13 @@ def get_data(filters):
         extra_filters += '\nAND sn.warehouse IN ("Repairs - bN", "To Refill - bN", "Finished Goods - bN")'
 
     if filters.serial_no:
-        extra_filters += '\nAND sn.serial_no LIKE "{0}"'.format(filters.serial_no)
+        if type(filters.serial_no) == str:
+            if "," in filters.serial_no or "\n" in filters.serial_no:  # Then it came from a data- tag.
+                filters.serial_no = get_serial_nos(filters.serial_no)
+            else:
+                filters.serial_no = [filters.serial_no.strip()]
+        serial_nos = '("' + '", "'.join(filters.serial_no) + '")'
+        extra_filters += '\nAND sn.serial_no IN {0}'.format(serial_nos)
 
     sql_query = """
         SELECT 
@@ -113,7 +121,7 @@ def get_data(filters):
             row.order_status = "Requested"
 
         if row.location == "bNovate":
-            if row.refill_request or row.sales_order:
+            if row.refill_request or row.open_sales_order:
                 if row.woe_docstatus == 0:
                     row.status = "Filling"
                     row.sort_index = 3

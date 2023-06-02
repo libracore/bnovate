@@ -91,7 +91,9 @@ async function _draw_report(target, report_name, title, filters) {
 
     setTimeout(() => {
         report.render_datatable();
-        report.render_chart(report_data.chart);
+        if (report_data.chart) {
+            report.render_chart(report_data.chart);
+        }
     }, 500)
 }
 

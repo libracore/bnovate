@@ -248,7 +248,7 @@ ORDER BY wo2.planned_start_date, p.docname, p.detail_doctype -- Put 'Work Order 
     data = frappe.db.sql(sql_query, as_dict=True)
 
     # Check stock levels. 0 = no go, 1 = projected, 2 = guaranted
-    idx = 0
+    idx = 0  # For alternating colours
     wo_go = 2
     for row in data[::-1]: 
         if row.detail_doctype == "Work Order":
