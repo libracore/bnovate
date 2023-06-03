@@ -55,6 +55,16 @@ fixtures = [
             "Serial No-owner_set_by",
             # Refill requests
             "Sales Order Item-refill_request",
+            "Sales Order Item-serial_nos",  # pluralized to avoid automations from selling controller
+            "Work Order-serial_no",
+            "Work Order-comment",
+            "Serial No-open_sales_order",
+            "Serial No-open_sales_order_item",
+            "Serial No-cartridge_flowchart",
+            "Serial No-cartridge_status",
+            "Serial No-status_details",
+            "Stock Entry-from_customer",
+            "Stock Entry-from_customer_name",
             # Addresses
             "Address-company_name",
         ]]]
@@ -91,6 +101,7 @@ doctype_js = {
     "Sales Order": ["public/js/doctype_includes/sales_order.js"],
     "Delivery Note": ["public/js/doctype_includes/delivery_note.js"],
     "Sales Invoice": ["public/js/doctype_includes/sales_invoice.js"],
+    "Serial No": ["public/js/doctype_includes/serial_no.js"],
 }
 doctype_list_js = {
     "Item": ["public/js/doctype_includes/item_list.js"],
@@ -176,8 +187,14 @@ doc_events = {
     # 		"on_trash": "method"
     # }
     "Work Order": {
-        "before_save": "bnovate.bnovate.page.work_order_execution.work_order_execution.calculate_total_time",
-        "on_update_after_submit": "bnovate.bnovate.page.work_order_execution.work_order_execution.calculate_total_time",
+        "before_save": [
+            "bnovate.bnovate.page.work_order_execution.work_order_execution.calculate_total_time",
+            "bnovate.bnovate.utils.enclosures.set_wo_serial_no",
+        ],
+        "on_update_after_submit": [
+            "bnovate.bnovate.page.work_order_execution.work_order_execution.calculate_total_time",
+            "bnovate.bnovate.utils.enclosures.set_wo_serial_no",
+        ]
     },
     "Stock Entry": {
         "before_save": "bnovate.bnovate.page.work_order_execution.work_order_execution.update_work_order_status",
@@ -189,8 +206,11 @@ doc_events = {
         "after_delete": "bnovate.bnovate.page.work_order_execution.work_order_execution.update_work_order_status",
     },
     "Sales Order": {
+        "before_submit": "bnovate.bnovate.utils.enclosures.check_so_serial_no",
         "on_submit": "bnovate.bnovate.doctype.refill_request.refill_request.update_status_from_sales_order",
+        "on_update_after_submit": "bnovate.bnovate.utils.enclosures.check_so_serial_no",
         "on_cancel": "bnovate.bnovate.doctype.refill_request.refill_request.update_status_from_sales_order",
+        "on_change": "bnovate.bnovate.utils.enclosures.associate_so_serial_no",
     },
     "Delivery Note": {
         "on_submit": [

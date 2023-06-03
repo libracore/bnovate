@@ -5,6 +5,8 @@ from __future__ import unicode_literals
 import frappe
 from frappe import _
 
+from erpnext.stock.doctype.serial_no.serial_no import get_serial_nos
+
 from operator import attrgetter
 
 def execute(filters=None):
@@ -17,6 +19,7 @@ def get_columns():
     return [
         {'fieldname': 'serial_no', 'fieldtype': 'Link', 'label': _('Serial No'), 'options': 'Serial No', 'width': 100},
         {'fieldname': 'type', 'fieldtype': 'Data', 'label': _('Type'), 'width': 150}, 
+        {'fieldname': 'order_status', 'fieldtype': 'Data', 'label': _('Order Status'), 'width': 150, 'align': 'left'}, 
         {'fieldname': 'status', 'fieldtype': 'Data', 'label': _('Status'), 'width': 150}, 
         {'fieldname': 'location', 'fieldtype': 'Data', 'label': _('Location'), 'width': 150}, 
         # {'fieldname': 'item_code', 'fieldtype': 'Link', 'label': _('Item'), 'options': 'Item', 'width': 100},
@@ -25,7 +28,11 @@ def get_columns():
         {'fieldname': 'posting_date', 'fieldtype': 'Date', 'label': _('Since date'), 'width': 80},
         {'fieldname': 'owned_by', 'fieldtype': 'Link', 'label': _('Owned by Customer'), 'options': 'Customer', 'width': 120},
         {'fieldname': 'customer_name', 'fieldtype': 'Data', 'label': _('Customer Name'), 'width': 300, 'align': 'left'}, 
-        {'fieldname': 'tracking_link', 'fieldtype': 'Data', 'label': _('Tracking No'), 'width': 300, 'align': 'left'}, 
+        {'fieldname': 'tracking_link', 'fieldtype': 'Data', 'label': _('Tracking No'), 'width': 100, 'align': 'left'}, 
+        {'fieldname': 'refill_request', 'fieldtype': 'Link', 'label': _('Refill Request'), 'options': 'Refill Request', 'width': 100, 'align': 'left'}, 
+        {'fieldname': 'open_sales_order', 'fieldtype': 'Link', 'label': _('Sales Order'), 'options': 'Sales Order', 'width': 220, 'align': 'left'}, 
+        {'fieldname': 'work_order', 'fieldtype': 'Link', 'label': _('Work Order'), 'options': 'Work Order', 'width': 200, 'align': 'left'}, 
+        {'fieldname': 'woe', 'fieldtype': 'Link', 'label': _('Manufacturing Stock Entry'), 'options': 'Work Order', 'width': 200, 'align': 'left'}, 
     ]
 
 def get_data(filters):
@@ -40,7 +47,13 @@ def get_data(filters):
         extra_filters += '\nAND sn.warehouse IN ("Repairs - bN", "To Refill - bN", "Finished Goods - bN")'
 
     if filters.serial_no:
-        extra_filters += '\nAND sn.serial_no LIKE "{0}"'.format(filters.serial_no)
+        if type(filters.serial_no) == str:
+            if "," in filters.serial_no or "\n" in filters.serial_no:  # Then it came from a data- tag.
+                filters.serial_no = get_serial_nos(filters.serial_no)
+            else:
+                filters.serial_no = [filters.serial_no.strip()]
+        serial_nos = '("' + '", "'.join(filters.serial_no) + '")'
+        extra_filters += '\nAND sn.serial_no IN {0}'.format(serial_nos)
 
     sql_query = """
         SELECT 
@@ -60,14 +73,35 @@ def get_data(filters):
             (SELECT rri.parent 
                 FROM `tabRefill Request Item` rri 
                 JOIN `tabRefill Request` rr ON rri.parent = rr.name
-                WHERE rri.serial_no = sn.serial_no AND rri.docstatus = 1 AND rr.status IN ("Submitted", "Confirmed")
+                WHERE rri.serial_no = sn.serial_no AND rri.docstatus = 1 AND rr.status IN ("Requested", "Confirmed")
                 ORDER BY rr.transaction_date DESC 
-                LIMIT 1) 
-                as refill_request
+                LIMIT 1
+            ) as refill_request,
+            sn.open_sales_order,
+            so.docstatus AS so_docstatus,
+            so.status AS so_status,
+            wo.name AS work_order,
+            wo.status AS wo_status,
+            woe.woe_name AS woe, -- Work Order Entry, i.e. stock entry associated with that cartridge 
+            woe.woe_docstatus AS woe_docstatus
+
         FROM `tabSerial No` sn
         LEFT JOIN `tabStock Entry` ste ON sn.purchase_document_no = ste.name
         LEFT JOIN `tabCustomer` cr ON sn.owned_by = cr.name
         LEFT JOIN `tabDelivery Note` dn ON sn.purchase_document_no = dn.name
+        LEFT JOIN `tabSales Order` so ON sn.open_sales_order = so.name
+        -- Join on a subquery that lists only packed items with matching work orders
+        LEFT JOIN ( SELECT spi.name as name, spi.parent_detail_docname, spi.parent, swo.name AS wo_name
+                    FROM `tabPacked Item` spi
+                    JOIN `tabWork Order` swo ON spi.name = swo.sales_order_item ) AS pi ON pi.parent_detail_docname = sn.open_sales_order_item
+        LEFT JOIN `tabWork Order` wo on pi.wo_name = wo.name
+
+        -- Production status: 'Work Order Entries' make subtable of stock entries that match the work order, then filter to keep only matching serial no
+        LEFT JOIN ( SELECT ste2.name AS woe_name, ste2.docstatus as woe_docstatus, ste2.work_order, fai.enclosure_serial_data
+                    FROM `tabFill Association Item` fai
+                    JOIN `tabStock Entry` ste2 on fai.parent = ste2.name) AS woe 
+                    ON woe.work_order = wo.name AND woe.enclosure_serial_data = sn.serial_no
+
         WHERE sn.item_code = "100146"
             AND sn.warehouse IS NOT NULL
             {extra_filters}
@@ -77,17 +111,33 @@ def get_data(filters):
     data = frappe.db.sql(sql_query, as_dict=True)
 
     for row in data:
+
+        row.order_status = None
+        if row.so_docstatus == 1:
+            # SO is submitted. Note, open SO disappears when cartridge is shipped
+            row.order_status = "Confirmed"
+        elif row.refill_request or row.so_docstatus == 0:
+            # Refill Request or Draft SO exist
+            row.order_status = "Requested"
+
         if row.location == "bNovate":
-            if not row.refill_request:
-                row.sort_index = 1
-                row.status = "Ready for Refill"
+            if row.refill_request or row.open_sales_order:
+                if row.woe_docstatus == 0:
+                    row.status = "Filling"
+                    row.sort_index = 3
+                elif row.woe_docstatus == 1:
+                    row.status = "Ready to Ship"
+                    row.sort_index = 4
+                else:
+                    row.status = "Refill Pending"
+                    row.sort_index = 2
             else:
-                row.status = "Refill Pending"
-                row.sort_index = 2
+                row.status = "Ready for Refill"  # Includes 'cartridges scheduled for repair'
+                row.sort_index = 1
 
         else:
             row.status = "Shipped"
-            row.sort_index = 3
+            row.sort_index = 5
 
         if row.carrier == "DHL":
             row.tracking_link = '''<a href="https://www.dhl.com/ch-en/home/tracking/tracking-express.html?submit=1&tracking-id={0}" target="_blank">{0}</a>'''.format(row.tracking_no)

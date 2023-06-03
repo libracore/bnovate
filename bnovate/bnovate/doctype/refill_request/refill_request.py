@@ -78,14 +78,14 @@ def make_sales_order(source_name, target_doc=None):
         if tcc_sns:
             target.append("items", {
                 "item_code": '200019',
-                "description": "<br>".join(tcc_sns),
+                "serial_nos": "\n".join(tcc_sns),
                 "qty": len(tcc_sns),
                 "refill_request": source.name,
             })
         if icc_sns:
             target.append("items", {
                 "item_code": '200054',
-                "description": "<br>".join(icc_sns),
+                "serial_nos": "\n".join(icc_sns),
                 "qty": len(icc_sns),
                 "refill_request": source.name,
             })

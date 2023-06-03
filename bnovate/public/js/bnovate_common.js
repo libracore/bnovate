@@ -6,7 +6,7 @@ if (window.location.host.indexOf("localhost") >= 0) {
   link.href = '/assets/bnovate/bnovate-dev.css';
   document.querySelector('head').appendChild(link);
 }
-if (parseInt(Math.random() * 100) == 42 || frappe.datetime.get_today().endsWith('04-01')) {
+if (frappe.datetime.get_today().endsWith('04-01')) {
   console.log("Party time!")
   document.querySelector("body").classList.add('party-time');
 }

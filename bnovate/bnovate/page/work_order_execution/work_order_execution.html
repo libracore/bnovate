@@ -142,9 +142,18 @@
             </table>
         </div>
 
-        {% if doc.comment %}
+        {% if doc.comment || doc.serial_no %}
         <div class="bn-col comment">
-            {{ doc.comment }}
+            {% if doc.serial_no %}
+            <p>
+                <b>{{ __("Serial No") }}:</b> {{ doc.serial_no }}
+            </p>
+            {% endif %}
+            {% if doc.comment %}
+            <p>
+                <b>{{ __("Comment") }}:</b> {{ doc.comment }}
+            </p>
+            {% endif %}
         </div>
         {% endif %}
 

@@ -4,7 +4,7 @@
 
 frappe.require("/assets/bnovate/js/lib/gcharts/loader.js")
 frappe.require("/assets/bnovate/js/modals.js")  // provides bnovate.modals
-frappe.require("/assets/bnovate/js/charts.js")  // provides bnovate.modals
+frappe.require("/assets/bnovate/js/charts.js")  // provides bnovate.charts
 
 frappe.query_reports["Work Order Planning"] = {
     filters: [
