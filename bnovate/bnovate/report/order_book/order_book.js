@@ -8,14 +8,14 @@ frappe.query_reports["Order Book"] = {
             "fieldname": "from_date",
             "label": __("From Date"),
             "fieldtype": "Date",
-            "default" : new Date((new Date()).getFullYear() - 1, 0, 1),
+            "default": new Date((new Date()).getFullYear(), 0, 1),
             "reqd": 1
         },
         {
             "fieldname": "to_date",
             "label": __("To Date"),
             "fieldtype": "Date",
-            "default" : new Date((new Date()).getFullYear(), 11, 31),
+            "default": new Date((new Date()).getFullYear(), 11, 31),
             "reqd": 1
         },
         {
@@ -45,7 +45,7 @@ frappe.query_reports["Order Book"] = {
             "fieldname": "item_group",
             "label": __("Item Group"),
             "fieldtype": "Link",
-            "options" : "Item Group"
+            "options": "Item Group"
         }
     ]
 };
