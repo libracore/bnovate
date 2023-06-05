@@ -80,7 +80,7 @@ async function _draw_report(target, report_name, title, filters) {
 
     const report = new frappe.views.QueryReport({
         parent: target,
-        report_name: "Projected Stock",
+        report_name: report_name,
         $report: target.find('.report-wrapper'),
         $chart: target.find('.chart-wrapper'),
         $message: target.find('.message-wrapper'),

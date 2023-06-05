@@ -33,6 +33,15 @@ frappe.query_reports["Orders to Fulfill"] = {
 		this.date_index = 1;
 		this.colours = ["light", "dark"];
 
+
+		report.page.add_inner_button(__('Toggle Chart'), () => {
+			if (this.report.$chart.is(':visible')) {
+				this.report.$chart.hide();
+			} else {
+				this.report.$chart.show();
+			}
+		})
+
 		bnovate.modals.attach_report_modal("cartStatusModal");
 	},
 	after_datatable_render(datatable) {
