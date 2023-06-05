@@ -4,6 +4,13 @@
 
 frappe.query_reports["Recently Returned Cartridges"] = {
     filters: [
+        {
+            "fieldname": "from_date",
+            "label": __("From Date"),
+            "fieldtype": "Date",
+            "default": new Date(new Date().setDate(new Date().getDate() - 30)),
+            "reqd": 1
+        },
 
     ],
     formatter(value, row, col, data, default_formatter) {

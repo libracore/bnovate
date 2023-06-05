@@ -57,6 +57,7 @@ def get_columns():
         {'fieldname': 'qty', 'fieldtype': 'Float', 'label': _('Qty'), 'width': 100},
         {'fieldname': 'item_code', 'fieldtype': 'Data', 'label':_('Item'), 'options': 'Item', 'width': 300, 'align': 'left'},
         {'fieldname': 'sales_order', 'fieldtype': 'Link', 'label': _('Sales Order'), 'options': 'Sales Order', 'width': 100},
+        {'fieldname': 'serial_no', 'fieldtype': 'Data', 'label': _('Serial No'), 'width': 200, 'align': 'left'},
         {'fieldname': 'comment', 'fieldtype': 'Data', 'label': _('Comment'), 'width': 200, 'align': 'left'},
         {'fieldname': 'item_group', 'fieldtype': 'Data', 'label': _('Item Group'), 'width': 100},
         {'fieldname': 'projected_stock', 'fieldtype': 'Int', 
@@ -110,6 +111,7 @@ SELECT
     wo.produced_qty,
     (wo.qty - wo.produced_qty) AS required_qty,
     wo.status,
+    wo.serial_no,
     wo.comment,
     wo.sales_order,
 

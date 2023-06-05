@@ -3,6 +3,7 @@
 
 import frappe
 from frappe import _
+from frappe.utils.data import add_days, getdate
 
 
 def execute(filters=None):
@@ -22,6 +23,9 @@ def get_columns():
     ]
 
 def get_data(filters):
+    from_date = filters.from_date
+    if not from_date:
+        from_date = getdate(add_days(None, -30))
     data = frappe.db.sql('''
         SELECT
             ste.name,
@@ -37,7 +41,9 @@ def get_data(filters):
         LEFT JOIN `tabSales Order` so ON so.name = sn.open_sales_order
         WHERE std.s_warehouse = "Customer Locations - bN"
             AND std.item_code = "100146"
+            AND ste.posting_date >= '{from_date}'
         ORDER BY ste.posting_date DESC
-    ''', as_dict=True)
+    '''.format(from_date=from_date),
+    as_dict=True)
 
     return data

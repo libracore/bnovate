@@ -27,8 +27,8 @@ frappe.query_reports["Work Order Planning"] = {
             }
         })
 
-        // bind_modal(report);
-        bnovate.modals.attach_report_modal("reportModal");
+        bnovate.modals.attach_report_modal("stockModal");
+        bnovate.modals.attach_report_modal("cartStatusModal");
     },
     after_datatable_render(datatable) {
         bnovate.charts.draw_timeline_chart(this.report, build_wo_dt);
@@ -53,6 +53,8 @@ frappe.query_reports["Work Order Planning"] = {
         } else {
             if (col.fieldname === 'comment' && value) {
                 value = `<span title="${value}">${value}</span>`
+            } else if (col.fieldname === 'serial_no' && data.serial_no) {
+                value = `${cartridge_status_link(data.serial_no)}`;
             } else if (col.fieldname === 'status') {
                 let [legend, colour] = work_order_indicator(data);
                 return `<span class="coloured ${this.colours[data.idx % this.colours.length]}">
@@ -93,11 +95,21 @@ function work_order_indicator(doc) {
     }
 }
 
+function cartridge_status_link(serial_nos) {
+    return bnovate.modals.report_link(
+        serial_nos,
+        'cartStatusModal',
+        'Cartridge Status',
+        `Cartridge Status for this SO item`,
+        {
+            serial_no: serial_nos,  // Note that this is encoded in a data- tag, so it'll be a comma-separated string
+        });
+}
 
 function projected_stock_link(item_code, warehouse, item_name) {
     return bnovate.modals.report_link(
         `${item_code}${item_name ? ': ' + item_name : ''}`,
-        'reportModal',
+        'stockModal',
         'Projected Stock',
         `Projected stock for ${item_code} in ${warehouse}`,
         {
