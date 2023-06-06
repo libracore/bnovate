@@ -52,7 +52,7 @@ frappe.query_reports["Orders to Fulfill"] = {
 	},
 	formatter(value, row, col, data, default_formatter) {
 		if (col.fieldname === "sufficient_stock" && typeof value !== 'undefined') {
-			let color = ['red', 'orange', 'green'][value];
+			let color = ['red', 'orange', 'yellow', 'green'][value];
 			return `<span class="indicator ${color}"></span>`;
 		}
 		// Keep only a few columns for packed items.

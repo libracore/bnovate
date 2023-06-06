@@ -76,13 +76,17 @@ def get_data(filters):
     if filters.include_drafts:
         status_filter = "so.docstatus <= 1 AND" # include drafts and submitted.
 
+    status_filter = " = 1 "
+    if filters.include_drafts:
+        status_filter = " <= 1" # include drafts and submitted.
+
     extra_filters = ""
     if filters.only_manufacturing:
         extra_filters += "AND it.include_item_in_manufacturing = 1"
 
     so_filter = ""
     if filters.sales_order:
-        so_filter = "WHERE o.sales_order LIKE '{}'".format(filters.sales_order)
+        so_filter = "WHERE o.sales_order = '{}'".format(filters.sales_order)
     
     # Join projected stock with sales order items:
     sql_query = """
@@ -125,7 +129,7 @@ def get_data(filters):
       FROM `tabSales Order Item` as soi
       JOIN `tabSales Order` as so ON so.name = soi.parent
       WHERE soi.delivered_qty < soi.qty
-        AND soi.docstatus = 1
+        AND soi.docstatus {status_filter}
         AND so.status != 'Closed'
     ) UNION ALL (
     -- Packed items: items to sell inside bundles
@@ -144,7 +148,7 @@ def get_data(filters):
       JOIN `tabSales Order` as so ON so.name = pi.parent
       JOIN `tabSales Order Item` as soi on soi.name = pi.parent_detail_docname
       WHERE soi.delivered_qty < soi.qty
-        AND soi.docstatus = 1
+        AND soi.docstatus {status_filter}
         AND so.status != 'Closed'
     ) UNION ALL (
     -- Purchase Order: items to receive
@@ -227,7 +231,7 @@ def get_data(filters):
     JOIN `tabSales Order` as so ON soi.parent = so.name
     JOIN `tabItem` as it ON soi.item_code = it.name
     WHERE
-        {status_filter}
+        so.docstatus {status_filter} AND
         so.per_delivered < 100 AND
         soi.qty > soi.delivered_qty AND
         so.status != 'Closed' AND
@@ -258,7 +262,7 @@ def get_data(filters):
     JOIN `tabItem` as it on soi.item_code = it.name
     JOIN `tabPacked Item` as pi ON soi.name = pi.parent_detail_docname
     WHERE
-        {status_filter}
+        so.docstatus {status_filter} AND
         so.per_delivered < 100 AND
         soi.qty > soi.delivered_qty AND
         so.status != 'Closed' AND
@@ -297,7 +301,7 @@ def get_data(filters):
     # print(sql_query)
     data = frappe.db.sql(sql_query, as_dict=True)
 
-    # Check stock levels. 0 = no go, 1 = projected, 2 = guaranteed
+    # Check stock levels. 0 = no go, 1 = projected/not started, 2 = projected/wo started, 3 = guaranteed/wo finished
     for row in data:
 
         # Just ignore enclosures. Looking at fills is enough:
@@ -314,6 +318,8 @@ def get_data(filters):
             if not row.work_order:
                 row.sufficient_stock = 0
             elif row.wo_status == "Completed":
+                row.sufficient_stock = 3
+            elif row.wo_status == "In Process":
                 row.sufficient_stock = 2
             else:
                 row.sufficient_stock = 1
@@ -322,7 +328,7 @@ def get_data(filters):
         # All other stock items, check projected qty (i.e. qty after SO would be filled)
         if row.is_stock_item:
             if row.guaranteed_qty >= 0:
-                row.sufficient_stock = 2
+                row.sufficient_stock = 3
             elif row.projected_qty >= 0:
                 row.sufficient_stock = 1
             else:
@@ -332,11 +338,11 @@ def get_data(filters):
 
     # Work out deliverability of bundles:
     bundle_name = ''
-    bundle_stock = 2
+    bundle_stock = 3
     for row in data[::-1]:
         if not row.is_packed_item and row.name == bundle_name:
             row.sufficient_stock = bundle_stock
-            bundle_stock = 2
+            bundle_stock = 3
             continue
 
         bundle_name = row.name  # docname of the line item

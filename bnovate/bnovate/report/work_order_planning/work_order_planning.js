@@ -41,7 +41,7 @@ frappe.query_reports["Work Order Planning"] = {
     formatter(value, row, col, data, default_formatter) {
         skip_default = false;
         if (col.fieldname === "sufficient_stock") {
-            color = ['red', 'orange', 'green'][value];
+            const color = ['red', 'orange', 'green'][value];
             return `<span class="indicator ${color}"></span>`;
         }
         if (data.indent === 1) {
