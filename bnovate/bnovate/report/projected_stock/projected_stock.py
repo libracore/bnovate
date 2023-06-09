@@ -32,12 +32,12 @@ def get_columns():
     ]
     
 def get_data(filters):
-    sql_query = build_query(filters.item_code, filters.warehouse, filters.so_drafts, filters.wo_drafts)
+    sql_query = build_query(filters.so_drafts, filters.wo_drafts, filters.item_code, filters.warehouse)
     data = frappe.db.sql(sql_query, as_dict=True)
 
     return data
 
-def build_query(item_code=None, warehouse=None, so_drafts=False, wo_drafts=False):
+def build_query(so_drafts=False, wo_drafts=False, item_code=None, warehouse=None):
     item_filter = "true"
     warehouse_filter = "true"
     if item_code:
