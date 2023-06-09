@@ -163,7 +163,13 @@ def get_data():
                         "label": _("Aggregate Invoicing"),
                         "doctype": "Subscription Contract",
                         "is_query_report": True    
-                   }                   
+                   }, {
+                        "type": "report",
+                        "name": "General Ledger for Export (FRe)",
+                        "label": _("General Ledger for Export (FRe)"),
+                        "doctype": "GL Entry",
+                        "is_query_report": True   
+                   }  
             ]
         },
         #  {

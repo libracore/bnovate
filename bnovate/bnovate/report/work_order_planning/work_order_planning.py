@@ -85,8 +85,8 @@ def get_data(filters):
 
     projected_stock_query = projected_stock.build_query(so_drafts=False, wo_drafts=True, item_code=None, warehouse=None)
     sql_query = """
-    -- End goal: a table where each row is either a work order production item or required item, with projected stock once WO is completed.
-    SELECT 
+-- End goal: a table where each row is either a work order production item or required item, with projected stock once WO is completed.
+SELECT 
 
     -- Common fields
     IF(p.detail_doctype = "Work Order", 0, 1) AS indent,
