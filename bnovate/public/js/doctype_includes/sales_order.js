@@ -14,19 +14,8 @@ frappe.ui.form.on("Sales Order", {
             'label': 'Reference',
         });
 
-        // Disable built-in indicator formatter, will be replaced lower by report data
-        const deliverability = await get_deliverability(frm);
-        console.log(deliverability);
-        frm.set_indicator_formatter('item_code', (doc) => {
-            console.log("formatter called", doc)
-            if (doc.stock_qty <= doc.delivered_qty) {
-                return "light-blue";
-            } else if (typeof deliverability[doc.name] !== undefined) {
-                return ["red", "orange", "yellow", "green"][deliverability[doc.name]];
-            } else {
-                return "darkgrey"
-            }
-        });
+        // Hijack formatter, we'll set colours according to deliverability later.
+        frm.set_indicator_formatter('item_code', (doc) => "");
     },
 
     async refresh(frm) {
@@ -70,14 +59,42 @@ frappe.ui.form.on("Sales Order", {
             }
 
         );
+
+        setTimeout(() => show_deliverability(frm), 500);
     },
+
 })
 
 async function get_deliverability(frm) {
     const report_data = await bnovate.utils.run_report('Orders to Fulfill', { sales_order: frm.doc.name, include_drafts: 1 });
     let d = {}
     for (let row of report_data.result) {
-        d[row.detail_docname] = row.sufficient_stock;
+        d[row.detail_docname] = row;
     }
     return d;
+}
+
+async function show_deliverability(frm) {
+    const deliverability = await get_deliverability(frm);
+    console.log(deliverability);
+    for (let item of cur_frm.doc.items) {
+        const indicator = document.querySelector(`[data-name="${item.name}"] .indicator`)
+        let colour = "darkgrey";
+        let planned_stock = "";
+        let status = deliverability[item.name];
+        console.log(status);
+        if (item.stock_qty <= item.delivered_qty) {
+            colour = "light-blue";
+        } else if (typeof status !== undefined) {
+            colour = ["red", "orange", "yellow", "green"][status.sufficient_stock];
+            if (status.guaranteed_stock !== null && status.projected_stock !== null) {
+                planned_stock = `${status.guaranteed_stock} | ${status.projected_stock}`;
+            }
+        }
+        indicator.classList.add(colour);
+        const stock_field = document.querySelector(`[data-name="${item.name}"] [data-fieldname="planned_stock"]`)
+        if (stock_field) {
+            stock_field.innerHTML = `<div style="text-align: center">${planned_stock}</div>`
+        }
+    }
 }
