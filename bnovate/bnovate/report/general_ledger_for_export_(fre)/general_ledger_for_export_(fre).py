@@ -144,9 +144,12 @@ SELECT
     gl.cost_center,
     gl.against_voucher_type,
     gl.against_voucher,
+	pinv.bill_no,
     gl.remarks
 FROM `tabGL Entry` gl
+LEFT JOIN `tabPurchase Invoice` pinv ON gl.against_voucher = pinv.name
 WHERE gl.posting_date BETWEEN "{from_date}" AND "{to_date}"
+	AND pinv.docstatus = 1
     {conditions}
 ORDER BY gl.posting_date
     """.format(from_date=filters.from_date, to_date=filters.to_date, conditions=conditions)
@@ -154,4 +157,4 @@ ORDER BY gl.posting_date
     print("\n\n\n----------------\n\n\n")
     print(sql)
     
-    return frappe.db.sql(sql)
+    return frappe.db.sql(sql, as_dict=True)
