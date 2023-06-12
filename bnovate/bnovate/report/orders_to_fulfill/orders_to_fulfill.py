@@ -74,7 +74,6 @@ def get_columns(filters):
     
 def get_data(filters):
     
-
     status_filter = " = 1 " # Only submitted
     if filters.include_drafts:
         status_filter = " <= 1" # include drafts and submitted.
@@ -223,20 +222,26 @@ def get_data(filters):
             else:
                 row.sufficient_stock = 0
 
-            # row.stock_indicator = ["red", "orange", "green"][row.sufficient_stock]
-
     # Work out deliverability of bundles:
     bundle_name = ''
     bundle_stock = 3
     for row in data[::-1]:
         if not row.is_packed_item and row.name == bundle_name:
+            # Reached the top of a bundle
             row.sufficient_stock = bundle_stock
             bundle_stock = 3
             continue
 
-        bundle_name = row.name  # docname of the line item
-        pi_stock = row.sufficient_stock is None and 2 or row.sufficient_stock
-        bundle_stock = min(pi_stock, bundle_stock)
+        if row.name != bundle_name:
+            # We have changed SO item. Could be a bundle or not.
+            bundle_name = ''
+            bundle_stock = 3
+
+        bundle_name = row.name  # docname of the sales order item, i.e. parent of the packed item
+        if row.sufficient_stock is not None:
+            # If this value isn't defined, then ignore
+            bundle_stock = min(row.sufficient_stock, bundle_stock)
+
 
     # Formatting for alternating colours:
     last_week_num = ''
