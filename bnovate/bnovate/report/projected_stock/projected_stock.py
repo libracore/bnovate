@@ -28,7 +28,6 @@ def get_columns():
         {'fieldname': 'projected_qty', 'fieldtype': 'Number', 'label': _('Projected Quantity'), 'width': 80}, 
         {'fieldname': 'guaranteed_qty', 'fieldtype': 'Number', 'label': _('Guaranteed Quantity'), 'width': 80}, 
         {'fieldname': 'stock_uom', 'fieldtype': 'Data', 'label': _('Unit'), 'width': 100}, 
-
     ]
     
 def get_data(filters):

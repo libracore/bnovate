@@ -28,6 +28,7 @@ def get_columns():
         {'fieldname': 'posting_date', 'fieldtype': 'Date', 'label': _('Since date'), 'width': 80},
         {'fieldname': 'owned_by', 'fieldtype': 'Link', 'label': _('Owned by Customer'), 'options': 'Customer', 'width': 120},
         {'fieldname': 'customer_name', 'fieldtype': 'Data', 'label': _('Customer Name'), 'width': 300, 'align': 'left'}, 
+        {'fieldname': 'shipping_address', 'fieldtype': 'Text', 'label': _('Shipping Address'), 'width': 150, 'align': 'left'}, 
         {'fieldname': 'tracking_link', 'fieldtype': 'Data', 'label': _('Tracking No'), 'width': 100, 'align': 'left'}, 
         {'fieldname': 'refill_request', 'fieldtype': 'Link', 'label': _('Refill Request'), 'options': 'Refill Request', 'width': 100, 'align': 'left'}, 
         {'fieldname': 'open_sales_order', 'fieldtype': 'Link', 'label': _('Sales Order'), 'options': 'Sales Order', 'width': 220, 'align': 'left'}, 
@@ -70,6 +71,7 @@ def get_data(filters):
             cr.customer_name,
             dn.carrier,
             dn.tracking_no,
+            dn.shipping_address,
             (SELECT rri.parent 
                 FROM `tabRefill Request Item` rri 
                 JOIN `tabRefill Request` rr ON rri.parent = rr.name
@@ -139,8 +141,10 @@ def get_data(filters):
             row.status = "Shipped"
             row.sort_index = 5
 
-        if row.carrier == "DHL":
+        if row.carrier and row.carrier.strip() == "DHL":
             row.tracking_link = '''<a href="https://www.dhl.com/ch-en/home/tracking/tracking-express.html?submit=1&tracking-id={0}" target="_blank">{0}</a>'''.format(row.tracking_no)
+        else:
+            row.tracking_link = row.tracking_no
 
         if row['type'] == 'Rental' and row['customer_name']:
             row['type'] = '<span style="color: orangered">{}</span>'.format(row['type'])
