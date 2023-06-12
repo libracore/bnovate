@@ -134,12 +134,16 @@ def get_data(filters):
                     row.status = "Refill Pending"
                     row.sort_index = 2
             else:
-                row.status = "Ready for Refill"  # Includes 'cartridges scheduled for repair'
+                row.status = "In Storage"  # Includes 'cartridges scheduled for repair'
                 row.sort_index = 1
 
         else:
-            row.status = "Shipped"
-            row.sort_index = 5
+            if row.refill_request or row.open_sales_order:
+                row.status = "Awaiting Return"
+                row.sort_index = 5
+            else:
+                row.status = "Shipped"
+                row.sort_index = 6
 
         if row.carrier and row.carrier.strip() == "DHL":
             row.tracking_link = '''<a href="https://www.dhl.com/ch-en/home/tracking/tracking-express.html?submit=1&tracking-id={0}" target="_blank">{0}</a>'''.format(row.tracking_no)
