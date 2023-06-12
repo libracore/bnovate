@@ -1,0 +1,191 @@
+{
+ "autoname": "SR-.#####",
+ "beta": 1,
+ "creation": "2023-06-12 17:18:43.131748",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "amended_from",
+  "intervention_date",
+  "customer",
+  "customer_name",
+  "contact_person",
+  "contact_display",
+  "column_break_7",
+  "bnovate_technician",
+  "bnovate_technician_name",
+  "instrument_information_section",
+  "serial_no",
+  "item_name",
+  "issue_description_section",
+  "reason_for_visit",
+  "work_description",
+  "validation_performed",
+  "final_service_checks",
+  "parts_section",
+  "labor_section"
+ ],
+ "fields": [
+  {
+   "fieldname": "intervention_date",
+   "fieldtype": "Date",
+   "label": "Intervention Date"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Service Report",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "bnovate_technician",
+   "fieldtype": "Link",
+   "label": "bNovate Technician",
+   "options": "User"
+  },
+  {
+   "fetch_from": "bnovate_technician.full_name",
+   "fieldname": "bnovate_technician_name",
+   "fieldtype": "Data",
+   "label": "bNovate Technician Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer"
+  },
+  {
+   "fetch_from": "customer.customer_name",
+   "fieldname": "customer_name",
+   "fieldtype": "Data",
+   "label": "Customer Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "serial_no",
+   "fieldtype": "Link",
+   "label": "Asset Serial No",
+   "options": "Serial No"
+  },
+  {
+   "fetch_from": "serial_no.item_name",
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "label": "Asset Item Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "contact_person",
+   "fieldtype": "Link",
+   "label": "Contact Person",
+   "options": "Contact"
+  },
+  {
+   "fieldname": "contact_display",
+   "fieldtype": "Data",
+   "label": "Contact",
+   "read_only": 1
+  },
+  {
+   "fieldname": "issue_description_section",
+   "fieldtype": "Section Break",
+   "label": "Issue Description"
+  },
+  {
+   "fieldname": "reason_for_visit",
+   "fieldtype": "Select",
+   "label": "Reason for Visit",
+   "options": "Maintenance\nService\nOther"
+  },
+  {
+   "fieldname": "work_description",
+   "fieldtype": "Text Editor",
+   "label": "Work Description"
+  },
+  {
+   "fieldname": "validation_performed",
+   "fieldtype": "Text Editor",
+   "label": "Validation Performed"
+  },
+  {
+   "fieldname": "column_break_7",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "instrument_information_section",
+   "fieldtype": "Section Break",
+   "label": "Instrument information"
+  },
+  {
+   "fieldname": "parts_section",
+   "fieldtype": "Section Break",
+   "label": "Parts"
+  },
+  {
+   "fieldname": "labor_section",
+   "fieldtype": "Section Break",
+   "label": "Labour and Travel"
+  },
+  {
+   "fieldname": "final_service_checks",
+   "fieldtype": "Table",
+   "label": "Final Service Checks",
+   "options": "Service Report Checks"
+  }
+ ],
+ "is_submittable": 1,
+ "modified": "2023-06-12 18:23:36.414391",
+ "modified_by": "Administrator",
+ "module": "bNovate",
+ "name": "Service Report",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Service Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "if_owner": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Service Technician",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "show_name_in_global_search": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

@@ -20,7 +20,13 @@ app_license = "AGPL"
 fixtures = [
     {
         "dt": "Role",
-        "filters": [["role_name", "like", "IoT%"]],
+        "filters": [["role_name", "in", [
+            "IoT Manager",
+            "IoT User",
+            "Item User",
+            "Service Manager",
+            "Service Technician",
+            ]]],
     },
     {
         "dt": "Custom Field",
