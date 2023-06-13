@@ -56,6 +56,9 @@ fixtures = [
             # Refill requests
             "Sales Order Item-refill_request",
             "Sales Order Item-serial_nos",  # pluralized to avoid automations from selling controller
+            "Sales Order-indicator_key",
+            "Sales Order Item-planned_stock",
+            "Sales Order-view_stored_cartridges",
             "Work Order-serial_no",
             "Work Order-comment",
             "Serial No-open_sales_order",

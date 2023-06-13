@@ -50,7 +50,6 @@ bnovate.modals.attach_report_modal = function (modal_id, element) {
         e.target.querySelector('.report-wrapper').innerHTML = '<i class="fa fa-cog fa-spin" style="font-size: 20px"></i>';
     });
     $('#' + modal_id).on('show.bs.modal', (e) => {
-        console.log(e);
         // relatedTarget is the link that was clicked, should be created by
         // report_link() below.
         let report_name = e.relatedTarget.dataset.report_name;
@@ -61,7 +60,6 @@ bnovate.modals.attach_report_modal = function (modal_id, element) {
             Object.entries(e.relatedTarget.dataset)
                 .filter(([k, v]) => ["report_name", "title", "target", "toggle"].indexOf(k) < 0)
         )
-        console.log(filters);
         _draw_report($(e.target), report_name, title, filters);
     });
 };

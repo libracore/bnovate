@@ -88,6 +88,17 @@ bnovate.utils.set_naming_series = async function set_naming_series(prefix, numbe
   return resp.message;
 }
 
+bnovate.utils.run_report = async function run_report(report_name, filters) {
+  let resp = await frappe.call({
+    method: "frappe.desk.query_report.run",
+    args: {
+      report_name,
+      filters,
+    }
+  })
+  return resp.message;
+}
+
 /*********************************
  * Code to set enclosure owners
  *********************************/

@@ -121,3 +121,8 @@ span.coloured.dark {
 .cartridge-flowchart .active {
   fill: var(--selected-fill)
 }
+
+.cartridge-flowchart {
+  scale: 1.1;
+  width: 700px;
+}

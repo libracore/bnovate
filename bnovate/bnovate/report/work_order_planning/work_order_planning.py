@@ -12,15 +12,16 @@ from __future__ import unicode_literals
 import frappe
 from frappe import _
 from collections import OrderedDict
-
 from urllib.parse import quote
 
+from bnovate.bnovate.report.projected_stock import projected_stock
+
 def execute(filters=None):
-    columns = get_columns()
+    columns = get_columns(filters)
     data = get_data(filters)
     return columns, data
 
-def get_columns():
+def get_columns(filters):
     guaranteed_info = """
 <p>Guaranteed stock before WO is executed.</p>
 
@@ -47,9 +48,9 @@ def get_columns():
 </p>
 """
 
-    return [
+    cols = [
         {'fieldname': 'sufficient_stock', 'fieldtype': 'Data', 'label': _('Go?'), 'width': 50},
-        {'fieldname': 'work_order', 'fieldtype': 'Link', 'label': _('Work Order'), 'options': 'Work Order', 'width': 100},
+        {'fieldname': 'work_order', 'fieldtype': 'Data', 'label': _('Work Order'), 'options': 'Work Order', 'width': 100},
         {'fieldname': 'workstation', 'fieldtype': 'Data', 'label': _('Workstation'), 'width': 100, 'align': 'left'},
         {'fieldname': 'status', 'fieldtype': 'Data', 'label': _('Status'), 'width': 100},
         {'fieldname': 'planned_start_date', 'fieldtype': 'Date', 'label': _('Start date'), 'width': 80},
@@ -59,18 +60,24 @@ def get_columns():
         {'fieldname': 'sales_order', 'fieldtype': 'Link', 'label': _('Sales Order'), 'options': 'Sales Order', 'width': 100},
         {'fieldname': 'serial_no', 'fieldtype': 'Data', 'label': _('Serial No'), 'width': 200, 'align': 'left'},
         {'fieldname': 'comment', 'fieldtype': 'Data', 'label': _('Comment'), 'width': 200, 'align': 'left'},
-        {'fieldname': 'item_group', 'fieldtype': 'Data', 'label': _('Item Group'), 'width': 100},
-        {'fieldname': 'projected_stock', 'fieldtype': 'Int', 
-            'label': '<span data-html="true" data-toggle="tooltip" data-placement="bottom" data-container="body" title="{}">Proj. Stock <i class="fa fa-info-circle"></i></span>'.format(projected_info), 
-            'width': 110},
-        {'fieldname': 'guaranteed_stock', 'fieldtype': 'Int', 
-            'label': '<span data-html="true" data-toggle="tooltip" data-placement="bottom" data-container="body" title="{}">Guar. Stock <i class="fa fa-info-circle"></i></span>'.format(guaranteed_info), 
-            'width': 110},
-        # {'fieldname': 'projected_qty', 'fieldtype': 'Int', 'label': 'Proj. AFTER WO', 'width': 110},
-        # {'fieldname': 'guaranteed_qty', 'fieldtype': 'Int', 'label': 'Guar. AFTER WO', 'width': 110},
-        {'fieldname': 'stock_uom', 'fieldtype': 'Data', 'label': _('Unit'), 'width': 100},
-        {'fieldname': 'warehouse', 'fieldtype': 'Data', 'label': _('Warehouse'), 'width': 100},
     ]
+
+    if not filters.simple_view:
+        cols.extend([
+            {'fieldname': 'item_group', 'fieldtype': 'Data', 'label': _('Item Group'), 'width': 100},
+            {'fieldname': 'projected_stock', 'fieldtype': 'Int', 
+                'label': '<span data-html="true" data-toggle="tooltip" data-placement="bottom" data-container="body" title="{}">Proj. Stock <i class="fa fa-info-circle"></i></span>'.format(projected_info), 
+                'width': 110},
+            {'fieldname': 'guaranteed_stock', 'fieldtype': 'Int', 
+                'label': '<span data-html="true" data-toggle="tooltip" data-placement="bottom" data-container="body" title="{}">Guar. Stock <i class="fa fa-info-circle"></i></span>'.format(guaranteed_info), 
+                'width': 110},
+            # {'fieldname': 'projected_qty', 'fieldtype': 'Int', 'label': 'Proj. AFTER WO', 'width': 110},
+            # {'fieldname': 'guaranteed_qty', 'fieldtype': 'Int', 'label': 'Guar. AFTER WO', 'width': 110},
+            {'fieldname': 'stock_uom', 'fieldtype': 'Data', 'label': _('Unit'), 'width': 100},
+            {'fieldname': 'warehouse', 'fieldtype': 'Data', 'label': _('Warehouse'), 'width': 100},
+        ])
+
+    return cols
 
 def get_data(filters):
 
@@ -82,9 +89,11 @@ def get_data(filters):
     if filters.workstation:
         workstation_filter = "AND wo2.workstation = '{}'".format(filters.workstation)
 
+    projected_stock_query = projected_stock.build_query(so_drafts=False, wo_drafts=True, item_code=None, warehouse=None)
     sql_query = """
 -- End goal: a table where each row is either a work order production item or required item, with projected stock once WO is completed.
 SELECT 
+
     -- Common fields
     IF(p.detail_doctype = "Work Order", 0, 1) AS indent,
     p.docname AS work_order,
@@ -123,118 +132,7 @@ SELECT
 
 FROM (
   -- This monster is the "projected stock" query: projected stock after each upcoming stock transaction (WO, SO, PO)
-  SELECT 
-      *,
-      ROUND(SUM(e.qty) 
-        OVER ( PARTITION BY e.item_code, e.warehouse ORDER BY e.order_prio, e.date ASC, e.docname )
-      , 3) AS projected_qty,
-      ROUND(SUM(IF(e.detail_doctype in ("Purchase Order Item", "Work Order"), 0, e.qty)) 
-        OVER ( PARTITION BY e.item_code, e.warehouse ORDER BY e.order_prio, e.date ASC, e.docname )
-      , 3) AS guaranteed_qty
-  FROM (
-    (SELECT
-      0 as order_prio, -- to keep stock balance as first item in list
-      CURDATE() as date,
-      'Stock Balance' as `doctype`,
-      null as `docname`,
-      null as `detail_docname`,
-      null as `detail_doctype`,
-      b.item_code,
-      b.warehouse,
-      b.actual_qty as qty,
-      b.stock_uom
-    FROM `tabBin` as b
-  ) UNION ALL (
-  -- Sales Order: items to sell
-    SELECT
-      1 as order_prio,
-      soi.delivery_date as `date`,
-      'Sales Order' as `doctype`,
-      soi.parent as `docname`,
-      soi.name as `detail_docname`,
-      'Sales Order Item' as `detail_doctype`,
-      soi.item_code,
-      soi.warehouse,
-      -(soi.qty - soi.delivered_qty) * soi.conversion_factor as qty,
-        soi.stock_uom
-    FROM `tabSales Order Item` as soi
-    JOIN `tabSales Order` as so ON so.name = soi.parent
-    WHERE soi.delivered_qty < soi.qty
-      AND soi.docstatus = 1
-      AND so.status != 'Closed'
-  ) UNION ALL (
-  -- Packed items: items to sell inside bundles
-    SELECT
-      1 as order_prio,
-      soi.delivery_date as `date`,
-      'Sales Order' as `doctype`,
-      soi.parent as `docname`,
-      pi.name as `detail_docname`,
-      'Packed Item' as `detail_doctype`,
-      pi.item_code,
-      pi.warehouse,
-      ROUND(-(soi.qty - soi.delivered_qty) / soi.qty * pi.qty, 3) as qty, -- soi conversion factor already calculated in packed item qty!
-        pi.uom as stock_uom
-    FROM `tabPacked Item` as pi
-    JOIN `tabSales Order` as so ON so.name = pi.parent
-    JOIN `tabSales Order Item` as soi on soi.name = pi.parent_detail_docname
-    WHERE soi.delivered_qty < soi.qty
-      AND soi.docstatus = 1
-      AND so.status != 'Closed'
-  ) UNION ALL (
-  -- Purchase Order: items to receive
-    SELECT    
-      1 as order_prio,
-      IFNULL(poi.expected_delivery_date, poi.schedule_date) as `date`,
-      'Purchase Order' as `doctype`,
-      poi.parent as `docname`,
-      poi.name as `detail_docname`,
-      'Purchase Order Item' as `detail_doctype`,
-      poi.item_code,
-      poi.warehouse,
-      (poi.qty - poi.received_qty) * poi.conversion_factor as qty,
-        poi.stock_uom
-    FROM `tabPurchase Order Item` as poi
-    JOIN `tabPurchase Order` as po ON po.name = poi.parent
-    WHERE poi.received_qty < poi.qty
-      AND poi.docstatus = 1
-      AND po.status != 'Closed'
-  ) UNION ALL (
-  -- Work Orders: produced items
-  SELECT
-      1 as order_prio,
-      IFNULL(wo.expected_delivery_date, CAST(wo.planned_start_date AS date)) as `date`,
-      "Work Order" as `doctype`,
-      wo.name as `docname`,
-      wo.name as `detail_docname`,
-      'Work Order' as `detail_doctype`,
-      wo.production_item as `item_code`,
-      wo.fg_warehouse,
-      wo.qty - wo.produced_qty as `qty`,
-        wo.stock_uom
-  FROM `tabWork Order` as wo
-  WHERE wo.docstatus < 2 -- Allow drafts on work orders
-      AND wo.qty > wo.produced_qty
-      AND wo.status != 'Stopped'
-  ) UNION ALL (
-  -- Work Order Items: consumed items
-  SELECT
-      1 as order_prio,
-      CAST(wo.planned_start_date AS date) as `date`,
-      "Work Order" as `doctype`,
-      wo.name as `docname`,
-      woi.name as `detail_docname`,
-      'Work Order Item' as `detail_doctype`,
-      woi.item_code as `item_code`,
-      woi.source_warehouse as `warehouse`,
-      -(woi.required_qty - woi.consumed_qty) as `qty`,
-        "" as stock_uom
-  FROM `tabWork Order Item` as woi
-  JOIN `tabWork Order` as wo ON woi.parent = wo.name
-  WHERE wo.docstatus < 2  -- Allow drafts on work orders
-      AND wo.qty > wo.produced_qty
-      AND wo.status != 'Stopped'
-  )) as e -- "entries"
+  {projected_stock_query}
 ) as p -- "projected"
 
 LEFT JOIN `tabWork Order Item` woi on woi.name = p.detail_docname
@@ -245,7 +143,7 @@ JOIN `tabWork Order` wo2 on p.docname = wo2.name -- To filter all rows on WO pro
 WHERE p.doctype = "Work Order"
   {workstation_filter}
 ORDER BY wo2.planned_start_date, p.docname, p.detail_doctype -- Put 'Work Order Item's below 'Work Order's
-    """.format(workstation_filter=workstation_filter)
+    """.format(projected_stock_query=projected_stock_query, workstation_filter=workstation_filter)
 
     data = frappe.db.sql(sql_query, as_dict=True)
 

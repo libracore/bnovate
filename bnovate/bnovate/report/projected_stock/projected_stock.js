@@ -8,12 +8,24 @@ frappe.query_reports["Projected Stock"] = {
             "fieldname": "item_code",
             "label": __("Item Code"),
             "fieldtype": "Link",
-            "options" : "Item"
+            "options": "Item"
         }, {
             "fieldname": "warehouse",
             "label": __("Warehouse"),
             "fieldtype": "Link",
-            "options" : "Warehouse"
-        }
+            "options": "Warehouse"
+        },
+        {
+            "fieldname": "so_drafts",
+            "label": __("Include SO Drafts"),
+            "fieldtype": "Check",
+            "default": 0
+        },
+        {
+            "fieldname": "wo_drafts",
+            "label": __("Include WO Drafts"),
+            "fieldtype": "Check",
+            "default": 0
+        },
     ]
 };

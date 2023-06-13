@@ -7,6 +7,8 @@ import textwrap
 import itertools
 from frappe import _
 
+from bnovate.bnovate.report.projected_stock import projected_stock
+
 from bnovate.bnovate.utils.enclosures import is_enclosure
 
 def execute(filters=None):
@@ -72,9 +74,9 @@ def get_columns(filters):
     
 def get_data(filters):
     
-    status_filter = "so.docstatus = 1 AND"
+    status_filter = " = 1 " # Only submitted
     if filters.include_drafts:
-        status_filter = "so.docstatus <= 1 AND" # include drafts and submitted.
+        status_filter = " <= 1" # include drafts and submitted.
 
     extra_filters = ""
     if filters.only_manufacturing:
@@ -82,126 +84,15 @@ def get_data(filters):
 
     so_filter = ""
     if filters.sales_order:
-        so_filter = "WHERE o.sales_order LIKE '{}'".format(filters.sales_order)
+        so_filter = "WHERE o.sales_order = '{}'".format(filters.sales_order)
     
     # Join projected stock with sales order items:
+    projected_stock_query = projected_stock.build_query(filters.include_drafts, filters.include_drafts, None, None)
     sql_query = """
-  WITH 
-	p AS ( -- projected stock, copied from Work Order Planning
-    SELECT 
-        *,
-        ROUND(SUM(e.qty) 
-          OVER ( PARTITION BY e.item_code, e.warehouse ORDER BY e.order_prio, e.date ASC, e.docname )
-        , 3) AS projected_qty,
-        ROUND(SUM(IF(e.detail_doctype in ("Purchase Order Item", "Work Order"), 0, e.qty)) 
-          OVER ( PARTITION BY e.item_code, e.warehouse ORDER BY e.order_prio, e.date ASC, e.docname )
-        , 3) AS guaranteed_qty
-    FROM (
-      (SELECT
-        0 as order_prio, -- to keep stock balance as first item in list
-        CURDATE() as date,
-        'Stock Balance' as `doctype`,
-        null as `docname`,
-        null as `detail_docname`,
-        null as `detail_doctype`,
-        b.item_code,
-        b.warehouse,
-        b.actual_qty as qty,
-        b.stock_uom
-      FROM `tabBin` as b
-    ) UNION ALL (
-    -- Sales Order: items to sell
-      SELECT
-        1 as order_prio,
-        soi.delivery_date as `date`,
-        'Sales Order' as `doctype`,
-        soi.parent as `docname`,
-        soi.name as `detail_docname`,
-        'Sales Order Item' as `detail_doctype`,
-        soi.item_code,
-        soi.warehouse,
-        -(soi.qty - soi.delivered_qty) * soi.conversion_factor as qty,
-        soi.stock_uom
-      FROM `tabSales Order Item` as soi
-      JOIN `tabSales Order` as so ON so.name = soi.parent
-      WHERE soi.delivered_qty < soi.qty
-        AND soi.docstatus = 1
-        AND so.status != 'Closed'
-    ) UNION ALL (
-    -- Packed items: items to sell inside bundles
-      SELECT
-        1 as order_prio,
-        soi.delivery_date as `date`,
-        'Sales Order' as `doctype`,
-        soi.parent as `docname`,
-        pi.name as `detail_docname`,
-        'Packed Item' as `detail_doctype`,
-        pi.item_code,
-        pi.warehouse,
-        ROUND(-(soi.qty - soi.delivered_qty) / soi.qty * pi.qty, 3) as qty, -- soi conversion factor already calculated in packed item qty!
-        pi.uom as stock_uom
-      FROM `tabPacked Item` as pi
-      JOIN `tabSales Order` as so ON so.name = pi.parent
-      JOIN `tabSales Order Item` as soi on soi.name = pi.parent_detail_docname
-      WHERE soi.delivered_qty < soi.qty
-        AND soi.docstatus = 1
-        AND so.status != 'Closed'
-    ) UNION ALL (
-    -- Purchase Order: items to receive
-      SELECT    
-        1 as order_prio,
-        IFNULL(poi.expected_delivery_date, poi.schedule_date) as `date`,
-        'Purchase Order' as `doctype`,
-        poi.parent as `docname`,
-        poi.name as `detail_docname`,
-        'Purchase Order Item' as `detail_doctype`,
-        poi.item_code,
-        poi.warehouse,
-        (poi.qty - poi.received_qty) * poi.conversion_factor as qty,
-          poi.stock_uom
-      FROM `tabPurchase Order Item` as poi
-      JOIN `tabPurchase Order` as po ON po.name = poi.parent
-      WHERE poi.received_qty < poi.qty
-        AND poi.docstatus = 1
-        AND po.status != 'Closed'
-    ) UNION ALL (
-    -- Work Orders: produced items
-    SELECT
-        1 as order_prio,
-        IFNULL(wo.expected_delivery_date, CAST(wo.planned_start_date AS date)) as `date`,
-        "Work Order" as `doctype`,
-        wo.name as `docname`,
-        wo.name as `detail_docname`,
-        'Work Order' as `detail_doctype`,
-        wo.production_item as `item_code`,
-        wo.fg_warehouse,
-        wo.qty - wo.produced_qty as `qty`,
-          wo.stock_uom
-    FROM `tabWork Order` as wo
-    WHERE wo.docstatus < 2 -- Allow drafts on work orders
-        AND wo.qty > wo.produced_qty
-        AND wo.status != 'Stopped'
-    ) UNION ALL (
-    -- Work Order Items: consumed items
-    SELECT
-        1 as order_prio,
-        CAST(wo.planned_start_date AS date) as `date`,
-        "Work Order" as `doctype`,
-        wo.name as `docname`,
-        woi.name as `detail_docname`,
-        'Work Order Item' as `detail_doctype`,
-        woi.item_code as `item_code`,
-        woi.source_warehouse as `warehouse`,
-        -(woi.required_qty - woi.consumed_qty) as `qty`,
-          "" as stock_uom
-    FROM `tabWork Order Item` as woi
-    JOIN `tabWork Order` as wo ON woi.parent = wo.name
-    WHERE wo.docstatus < 2  -- Allow drafts on work orders
-        AND wo.qty > wo.produced_qty
-        AND wo.status != 'Stopped'
-    )) as e -- "entries"
-),
-
+    WITH 
+    p AS ( -- projected stock
+        {projected_stock_query}
+    ),
 
 	o AS (( -- orders, union of SO items and SO packed items. The original "Orders to fulfill"
     SELECT
@@ -227,7 +118,7 @@ def get_data(filters):
     JOIN `tabSales Order` as so ON soi.parent = so.name
     JOIN `tabItem` as it ON soi.item_code = it.name
     WHERE
-        {status_filter}
+        so.docstatus {status_filter} AND
         so.per_delivered < 100 AND
         soi.qty > soi.delivered_qty AND
         so.status != 'Closed' AND
@@ -258,7 +149,7 @@ def get_data(filters):
     JOIN `tabItem` as it on soi.item_code = it.name
     JOIN `tabPacked Item` as pi ON soi.name = pi.parent_detail_docname
     WHERE
-        {status_filter}
+        so.docstatus {status_filter} AND
         so.per_delivered < 100 AND
         soi.qty > soi.delivered_qty AND
         so.status != 'Closed' AND
@@ -292,12 +183,13 @@ def get_data(filters):
     sales_order,
     idx,
     pidx;
-    """.format(status_filter=status_filter, extra_filters=extra_filters, so_filter=so_filter)
+    """.format(projected_stock_query=projected_stock_query, status_filter=status_filter, 
+               extra_filters=extra_filters, so_filter=so_filter)
 
     # print(sql_query)
     data = frappe.db.sql(sql_query, as_dict=True)
 
-    # Check stock levels. 0 = no go, 1 = projected, 2 = guaranteed
+    # Check stock levels. 0 = no go, 1 = projected/not started, 2 = projected/wo started, 3 = guaranteed/wo finished
     for row in data:
 
         # Just ignore enclosures. Looking at fills is enough:
@@ -314,6 +206,8 @@ def get_data(filters):
             if not row.work_order:
                 row.sufficient_stock = 0
             elif row.wo_status == "Completed":
+                row.sufficient_stock = 3
+            elif row.wo_status == "In Process":
                 row.sufficient_stock = 2
             else:
                 row.sufficient_stock = 1
@@ -322,26 +216,32 @@ def get_data(filters):
         # All other stock items, check projected qty (i.e. qty after SO would be filled)
         if row.is_stock_item:
             if row.guaranteed_qty >= 0:
-                row.sufficient_stock = 2
+                row.sufficient_stock = 3
             elif row.projected_qty >= 0:
                 row.sufficient_stock = 1
             else:
                 row.sufficient_stock = 0
 
-            # row.stock_indicator = ["red", "orange", "green"][row.sufficient_stock]
-
     # Work out deliverability of bundles:
     bundle_name = ''
-    bundle_stock = 2
+    bundle_stock = 3
     for row in data[::-1]:
         if not row.is_packed_item and row.name == bundle_name:
+            # Reached the top of a bundle
             row.sufficient_stock = bundle_stock
-            bundle_stock = 2
+            bundle_stock = 3
             continue
 
-        bundle_name = row.name  # docname of the line item
-        pi_stock = row.sufficient_stock is None and 2 or row.sufficient_stock
-        bundle_stock = min(pi_stock, bundle_stock)
+        if row.name != bundle_name:
+            # We have changed SO item. Could be a bundle or not.
+            bundle_name = ''
+            bundle_stock = 3
+
+        bundle_name = row.name  # docname of the sales order item, i.e. parent of the packed item
+        if row.sufficient_stock is not None:
+            # If this value isn't defined, then ignore
+            bundle_stock = min(row.sufficient_stock, bundle_stock)
+
 
     # Formatting for alternating colours:
     last_week_num = ''
