@@ -88,7 +88,7 @@ async function show_deliverability(frm) {
         } else if (typeof status !== undefined) {
             colour = ["red", "orange", "yellow", "green"][status.sufficient_stock];
             if (status.guaranteed_stock !== null && status.projected_stock !== null) {
-                planned_stock = `${status.guaranteed_stock} | ${status.projected_stock}`;
+                planned_stock = `${status.projected_stock} | ${status.guaranteed_stock}`;
             }
         }
         indicator.classList.add(colour);

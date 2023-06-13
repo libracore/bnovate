@@ -14,6 +14,11 @@ frappe.query_reports["Work Order Planning"] = {
             "fieldtype": "Link",
             "options": "Workstation"
         },
+        {
+            "fieldname": "simple_view",
+            "label": __("Simple View"),
+            "fieldtype": "Check",
+        },
     ],
     onload(report) {
         this.report = report;
@@ -27,11 +32,15 @@ frappe.query_reports["Work Order Planning"] = {
             }
         })
 
+
         bnovate.modals.attach_report_modal("stockModal");
         bnovate.modals.attach_report_modal("cartStatusModal");
     },
     after_datatable_render(datatable) {
-        bnovate.charts.draw_timeline_chart(this.report, build_wo_dt);
+
+        if (!this.report.get_filter_value('simple_view')) {
+            bnovate.charts.draw_timeline_chart(this.report, build_wo_dt);
+        }
 
         // Activate tooltips on columns
         $(function () {
@@ -53,6 +62,12 @@ frappe.query_reports["Work Order Planning"] = {
         } else {
             if (col.fieldname === 'comment' && value) {
                 value = `<span title="${value}">${value}</span>`
+            } else if (col.fieldname === 'work_order') {
+                if (this.report.get_filter_value('simple_view')) {
+                    value = `<a href="/desk#work-order-execution?work_order=${value}">${value}</a>`;
+                } else {
+                    value = frappe.utils.get_form_link("Work Order", value, true);
+                }
             } else if (col.fieldname === 'serial_no' && data.serial_no) {
                 value = `${cartridge_status_link(data.serial_no)}`;
             } else if (col.fieldname === 'status') {
