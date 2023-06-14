@@ -200,13 +200,13 @@ doc_events = {
         ]
     },
     "Stock Entry": {
-        "before_save": "bnovate.bnovate.page.work_order_execution.work_order_execution.update_work_order_status",
+        "before_save": "bnovate.bnovate.page.work_order_execution.work_order_execution.update_work_order_status_from_ste",
         "on_submit": "bnovate.bnovate.page.work_order_execution.work_order_execution.update_work_order_unit_time",
         "on_cancel": [
             "bnovate.bnovate.page.work_order_execution.work_order_execution.update_work_order_unit_time",
-            "bnovate.bnovate.page.work_order_execution.work_order_execution.update_work_order_status",
+            "bnovate.bnovate.page.work_order_execution.work_order_execution.update_work_order_status_from_ste",
         ],
-        "after_delete": "bnovate.bnovate.page.work_order_execution.work_order_execution.update_work_order_status",
+        "after_delete": "bnovate.bnovate.page.work_order_execution.work_order_execution.update_work_order_status_from_ste",
     },
     "Sales Order": {
         "before_submit": "bnovate.bnovate.utils.enclosures.check_so_serial_no",
