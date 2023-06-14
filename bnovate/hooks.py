@@ -40,6 +40,7 @@ fixtures = [
             "BOM-bom_description",
             "Work Order-bom_description",
             "Stock Entry-bom_item",
+            "Stock Entry Detail-delta",
             # Safety symbols on WOE:
             "BOM-safety_measures",
             "BOM-esd_protection",

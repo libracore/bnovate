@@ -461,6 +461,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			.map(el => [el.dataset.idx, parseFloat(el.value) || 0])
 			.map(([idx, delta]) => {
 				state.ste_doc.items.find(i => i.idx == idx).qty += delta;
+				state.ste_doc.items.find(i => i.idx == idx).delta = delta;
 			});
 		// Same for batches, only on select items.
 		[...document.querySelectorAll("input.batch")]
