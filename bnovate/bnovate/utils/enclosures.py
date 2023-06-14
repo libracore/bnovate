@@ -54,15 +54,16 @@ def associate_so_serial_no(so, method=None):
 
     # The state of the doc displayed here is the 'target' state intented if all checks 
     # go through.
+    # I haven't found how to access the "old" version of the document for comparisons.
+
+    new_serials = set()
 
     refills = [it for it in so.items if it.item_group == 'Cartridge Refills']
     for it in refills:
         serial_nos = get_serial_nos(it.serial_nos)
         for serial_no in serial_nos:
-            try:
-                sn_doc = frappe.get_doc("Serial No", serial_no)
-            except DoesNotExistError:
-                continue
+            new_serials.add(serial_no)
+            sn_doc = frappe.get_doc("Serial No", serial_no) # raises an error with helpful message if SN doesn't exist.
             
             if so.docstatus == 2 or it.delivered_qty >= it.qty:
                 # Trying to cancel the document OR to fully deliver line item
@@ -87,6 +88,17 @@ def associate_so_serial_no(so, method=None):
                         ))
                     # else:
                     #     print("Nothing to change")
+    
+    # Find dangling references: Serial No that point to this SO because they were
+    # previously included, but are no longer included in this SO.
+    docs = frappe.db.get_list("Serial No", filters={"open_sales_order": ["=", so.name]})
+    all_serials = set(d['name'] for d in docs)
+    dangling = all_serials.difference(new_serials)
+    for serial_no in dangling:
+        print("Removing dangling associationg from", serial_no, "to", so.name)
+        sn_doc = frappe.get_doc("Serial No", serial_no)
+        sn_doc.db_set("open_sales_order", None)
+        sn_doc.db_set("open_sales_order_item", None)
 
 
 def set_wo_serial_no(wo, method=None):
