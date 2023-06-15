@@ -99,6 +99,26 @@ bnovate.utils.run_report = async function run_report(report_name, filters) {
   return resp.message;
 }
 
+
+// Promise-ified frappe prompt:
+bnovate.utils.prompt = function prompt(title, fields, primary_action_label, secondary_action_label) {
+  return new Promise((resolve, reject) => {
+    const d = new frappe.ui.Dialog({
+      title,
+      fields,
+      primary_action_label,
+      secondary_action_label,
+      primary_action(values) {
+        resolve(values);
+        this.hide();
+      },
+      secondary_action() { resolve(null); },
+    })
+    d.show();
+  })
+}
+
+
 /*********************************
  * Code to set enclosure owners
  *********************************/

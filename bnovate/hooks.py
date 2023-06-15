@@ -71,6 +71,13 @@ fixtures = [
             "Stock Entry-from_customer_name",
             # Addresses
             "Address-company_name",
+            # DN workflow
+            "Delivery Note-shipment",
+            "Delivery Note-carrier"
+            "Delivery Note-carrier_account_no"
+            "Delivery Note-tracking_no"
+            "Delivery Note-column_break_25",
+            "Delivery Note-packing_stage",
         ]]]
     }
 ]
