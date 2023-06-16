@@ -70,6 +70,8 @@ def get_columns(filters):
             'width': 110},
 
         {'fieldname': 'work_order', 'fieldtype': 'Link', 'label': _('Work Order'), 'options': 'Work Order', 'width': 250, 'align': 'left'},
+
+        {'fieldname': 'open_delivery_notes', 'fieldtype': 'Data', 'label': _('Delivery Notes'), 'options': 'Work Order', 'width': 250, 'align': 'left'},
     ]
     
 def get_data(filters):
@@ -169,15 +171,22 @@ def get_data(filters):
     IF(it.is_stock_item, p.projected_qty - p.qty, NULL) as projected_stock,
     IF(it.is_stock_item, p.guaranteed_qty - p.qty, NULL) as guaranteed_stock,
 
+    -- Production Status
     wo.name AS work_order,
     wo.status AS wo_status,
     wo.qty AS wo_qty,
-    wo.produced_qty AS wo_produced_qty
+    wo.produced_qty AS wo_produced_qty,
+
+    -- Delivery status
+    GROUP_CONCAT(dni.parent SEPARATOR " ") as open_delivery_notes,
+    SUM(dni.qty) as open_delivery_qty
   FROM o
   JOIN p ON p.detail_docname = o.detail_docname
   JOIN `tabItem` it ON o.item_code = it.item_code  
   LEFT JOIN `tabWork Order` wo ON wo.sales_order_item = o.detail_docname AND wo.docstatus <= 1
+  LEFT JOIN (SELECT * FROM `tabDelivery Note Item` _dni WHERE _dni.docstatus = 0) as dni ON dni.so_detail = o.name
   {so_filter}
+  GROUP BY o.detail_docname  -- to avoid one line per DN item
   ORDER BY 
     delivery_date ASC,
     sales_order,
@@ -280,7 +289,10 @@ def get_data(filters):
         if row['docstatus'] == 0:
             row['indicator'] = '<span class="indicator whitespace-nowrap red"><span>Draft</span></span>'
         else:
-            row['indicator'] = '<span class="indicator whitespace-nowrap orange"><span>To Deliver</span></span>'
+            if row['open_delivery_qty']:
+                row['indicator'] = '<span class="indicator whitespace-nowrap yellow"><span>Packing</span></span>'
+            else:
+                row['indicator'] = '<span class="indicator whitespace-nowrap orange"><span>Confirmed</span></span>'
     
     return data
 
