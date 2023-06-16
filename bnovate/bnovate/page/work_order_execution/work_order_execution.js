@@ -385,18 +385,18 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 				error = 'Required Field'
 			} else {
 
-				if (input.classList.contains("serial")) {
+				if (input.classList.contains("check-serial")) {
 					// Check that serial number exists and belongs to correct item
 					let serial = await frappe.model.with_doc("Serial No", value);
 					if (!serial) {
 						error = "Serial No does not exist";
 					} else if (serial.item_code !== input.dataset.for_item_code) {
 						error = `Serial No is for item code ${serial.item_code}!`
-					} else if (state.work_order_doc.serial_no.indexOf(value) <= 0) {
+					} else if (state.work_order_doc.serial_no && state.work_order_doc.serial_no.indexOf(value) <= 0) {
 						warning = "Does not match work order instructions";
 					}
 
-				} else if (input.classList.contains("batch")) {
+				} else if (input.classList.contains("check-batch")) {
 					// Check that batch exists and belongs to correct item
 					let batch = await frappe.model.with_doc("Batch", value);
 					if (!batch) {
