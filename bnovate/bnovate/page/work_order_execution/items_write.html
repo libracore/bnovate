@@ -182,8 +182,9 @@
                         <td class="text-right">
                             {% if item.has_batch_no %}
                             <div class="value">
-                                <input class="batch form-control required" id="batch-{{ item.idx }}"
-                                    name="batch-{{ item.idx }}" data-idx="{{ item.idx }}" data-required tabindex="{{ item.idx + 2 }}">
+                                <input class="batch form-control required check-batch" id="batch-{{ item.idx }}"
+                                    name="batch-{{ item.idx }}" data-idx="{{ item.idx }}" data-required tabindex="{{ item.idx + 2 }}"
+                                    data-for_item_code="{{ item.item_code }}">
                             </div>
                             {% endif %}
                         </td>
@@ -192,8 +193,9 @@
                         <td class="text-right">
                             {% if item.has_serial_no %}
                             <div class="value">
-                                <input class="serial form-control required" id="serial-{{ item.idx }}"
-                                    name="serial-{{ item.idx }}" data-idx="{{ item.idx }}" data-item="{{ item.item_code }}" data-required tabindex="{{ item.idx + 2 }}">
+                                <input class="serial form-control required check-serial" id="serial-{{ item.idx }}"
+                                    name="serial-{{ item.idx }}" data-idx="{{ item.idx }}" data-item="{{ item.item_code }}" data-required tabindex="{{ item.idx + 2 }}"
+                                    data-for_item_code="{{ item.item_code }}">
                             </div>
                             {% endif %}
                         </td>

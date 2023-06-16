@@ -5,6 +5,7 @@
  * 
  * - Removes legacy Create Subscription action
  */
+
 frappe.require("/assets/bnovate/js/modals.js")  // provides bnovate.modals
 
 frappe.ui.form.on("Sales Order", {
@@ -60,6 +61,7 @@ frappe.ui.form.on("Sales Order", {
 
         );
 
+        bnovate.modals.attach_report_modal("projStockModal");
         setTimeout(() => show_deliverability(frm), 500);
     },
 
@@ -88,13 +90,25 @@ async function show_deliverability(frm) {
         } else if (typeof status !== undefined) {
             colour = ["red", "orange", "yellow", "green"][status.sufficient_stock];
             if (status.guaranteed_stock !== null && status.projected_stock !== null) {
-                planned_stock = `${status.guaranteed_stock} | ${status.projected_stock}`;
+                const stock_field = document.querySelector(`[data-name="${item.name}"] [data-fieldname="planned_stock"]`)
+                if (stock_field) {
+                    stock_field.innerHTML = `<span class="coloured" style="text-align: center; padding-top: 10px"><a>${status.projected_stock} | ${status.guaranteed_stock}</a></span>`;
+                    stock_field.firstChild.addEventListener('click', (event) => {
+                        event.stopImmediatePropagation();
+                        event.preventDefault();
+                        bnovate.modals.show('projStockModal',
+                            'Projected Stock',
+                            `Projected Stock for Item ${item.item_code}: ${item.item_name}`,
+                            {
+                                'item_code': item.item_code,
+                                'so_drafts': true,
+                                // 'warehouse': item.warehouse,
+                            }
+                        );
+                    });
+                }
             }
         }
         indicator.classList.add(colour);
-        const stock_field = document.querySelector(`[data-name="${item.name}"] [data-fieldname="planned_stock"]`)
-        if (stock_field) {
-            stock_field.innerHTML = `<div style="text-align: center">${planned_stock}</div>`
-        }
     }
 }

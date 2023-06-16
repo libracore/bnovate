@@ -46,6 +46,7 @@ fixtures = [
             "BOM-bom_description",
             "Work Order-bom_description",
             "Stock Entry-bom_item",
+            "Stock Entry Detail-delta",
             # Safety symbols on WOE:
             "BOM-safety_measures",
             "BOM-esd_protection",
@@ -76,6 +77,13 @@ fixtures = [
             "Stock Entry-from_customer_name",
             # Addresses
             "Address-company_name",
+            # DN workflow
+            "Delivery Note-shipment",
+            "Delivery Note-carrier"
+            "Delivery Note-carrier_account_no"
+            "Delivery Note-tracking_no"
+            "Delivery Note-column_break_25",
+            "Delivery Note-packing_stage",
         ]]]
     }
 ]
@@ -206,13 +214,13 @@ doc_events = {
         ]
     },
     "Stock Entry": {
-        "before_save": "bnovate.bnovate.page.work_order_execution.work_order_execution.update_work_order_status",
+        "before_save": "bnovate.bnovate.page.work_order_execution.work_order_execution.update_work_order_status_from_ste",
         "on_submit": "bnovate.bnovate.page.work_order_execution.work_order_execution.update_work_order_unit_time",
         "on_cancel": [
             "bnovate.bnovate.page.work_order_execution.work_order_execution.update_work_order_unit_time",
-            "bnovate.bnovate.page.work_order_execution.work_order_execution.update_work_order_status",
+            "bnovate.bnovate.page.work_order_execution.work_order_execution.update_work_order_status_from_ste",
         ],
-        "after_delete": "bnovate.bnovate.page.work_order_execution.work_order_execution.update_work_order_status",
+        "after_delete": "bnovate.bnovate.page.work_order_execution.work_order_execution.update_work_order_status_from_ste",
     },
     "Sales Order": {
         "before_submit": "bnovate.bnovate.utils.enclosures.check_so_serial_no",

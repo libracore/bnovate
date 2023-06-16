@@ -17,11 +17,11 @@ from urllib.parse import quote
 from bnovate.bnovate.report.projected_stock import projected_stock
 
 def execute(filters=None):
-    columns = get_columns()
+    columns = get_columns(filters)
     data = get_data(filters)
     return columns, data
 
-def get_columns():
+def get_columns(filters):
     guaranteed_info = """
 <p>Guaranteed stock before WO is executed.</p>
 
@@ -48,9 +48,9 @@ def get_columns():
 </p>
 """
 
-    return [
+    cols = [
         {'fieldname': 'sufficient_stock', 'fieldtype': 'Data', 'label': _('Go?'), 'width': 50},
-        {'fieldname': 'work_order', 'fieldtype': 'Link', 'label': _('Work Order'), 'options': 'Work Order', 'width': 100},
+        {'fieldname': 'work_order', 'fieldtype': 'Data', 'label': _('Work Order'), 'options': 'Work Order', 'width': 100},
         {'fieldname': 'workstation', 'fieldtype': 'Data', 'label': _('Workstation'), 'width': 100, 'align': 'left'},
         {'fieldname': 'status', 'fieldtype': 'Data', 'label': _('Status'), 'width': 100},
         {'fieldname': 'planned_start_date', 'fieldtype': 'Date', 'label': _('Start date'), 'width': 80},
@@ -60,18 +60,24 @@ def get_columns():
         {'fieldname': 'sales_order', 'fieldtype': 'Link', 'label': _('Sales Order'), 'options': 'Sales Order', 'width': 100},
         {'fieldname': 'serial_no', 'fieldtype': 'Data', 'label': _('Serial No'), 'width': 200, 'align': 'left'},
         {'fieldname': 'comment', 'fieldtype': 'Data', 'label': _('Comment'), 'width': 200, 'align': 'left'},
-        {'fieldname': 'item_group', 'fieldtype': 'Data', 'label': _('Item Group'), 'width': 100},
-        {'fieldname': 'projected_stock', 'fieldtype': 'Int', 
-            'label': '<span data-html="true" data-toggle="tooltip" data-placement="bottom" data-container="body" title="{}">Proj. Stock <i class="fa fa-info-circle"></i></span>'.format(projected_info), 
-            'width': 110},
-        {'fieldname': 'guaranteed_stock', 'fieldtype': 'Int', 
-            'label': '<span data-html="true" data-toggle="tooltip" data-placement="bottom" data-container="body" title="{}">Guar. Stock <i class="fa fa-info-circle"></i></span>'.format(guaranteed_info), 
-            'width': 110},
-        # {'fieldname': 'projected_qty', 'fieldtype': 'Int', 'label': 'Proj. AFTER WO', 'width': 110},
-        # {'fieldname': 'guaranteed_qty', 'fieldtype': 'Int', 'label': 'Guar. AFTER WO', 'width': 110},
-        {'fieldname': 'stock_uom', 'fieldtype': 'Data', 'label': _('Unit'), 'width': 100},
-        {'fieldname': 'warehouse', 'fieldtype': 'Data', 'label': _('Warehouse'), 'width': 100},
     ]
+
+    if not filters.simple_view:
+        cols.extend([
+            {'fieldname': 'item_group', 'fieldtype': 'Data', 'label': _('Item Group'), 'width': 100},
+            {'fieldname': 'projected_stock', 'fieldtype': 'Int', 
+                'label': '<span data-html="true" data-toggle="tooltip" data-placement="bottom" data-container="body" title="{}">Proj. Stock <i class="fa fa-info-circle"></i></span>'.format(projected_info), 
+                'width': 110},
+            {'fieldname': 'guaranteed_stock', 'fieldtype': 'Int', 
+                'label': '<span data-html="true" data-toggle="tooltip" data-placement="bottom" data-container="body" title="{}">Guar. Stock <i class="fa fa-info-circle"></i></span>'.format(guaranteed_info), 
+                'width': 110},
+            # {'fieldname': 'projected_qty', 'fieldtype': 'Int', 'label': 'Proj. AFTER WO', 'width': 110},
+            # {'fieldname': 'guaranteed_qty', 'fieldtype': 'Int', 'label': 'Guar. AFTER WO', 'width': 110},
+            {'fieldname': 'stock_uom', 'fieldtype': 'Data', 'label': _('Unit'), 'width': 100},
+            {'fieldname': 'warehouse', 'fieldtype': 'Data', 'label': _('Warehouse'), 'width': 100},
+        ])
+
+    return cols
 
 def get_data(filters):
 

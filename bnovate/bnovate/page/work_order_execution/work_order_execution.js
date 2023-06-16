@@ -372,31 +372,79 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		draw();
 	}
 
-	function validate_inputs() {
+	async function validate_inputs() {
 		// Enable Submit button only if all required fields have values.
 		const required_inputs = [...document.querySelectorAll("[data-required]")];
 		let valid = true;
 		for (let input of required_inputs) {
-			if (!input.value) {
-				input.classList.add('required')
-				valid = false;
+			let input_valid = true;
+			let error = null;
+			let warning = null;
+			const value = input.value.trim();
+			if (!value) {
+				error = 'Required Field'
 			} else {
-				input.classList.remove('required')
+
+				if (input.classList.contains("check-serial")) {
+					// Check that serial number exists and belongs to correct item
+					let serial = await frappe.model.with_doc("Serial No", value);
+					if (!serial) {
+						error = "Serial No does not exist";
+					} else if (serial.item_code !== input.dataset.for_item_code) {
+						error = `Serial No is for item code ${serial.item_code}!`
+					} else if (state.work_order_doc.serial_no && state.work_order_doc.serial_no.indexOf(value) <= 0) {
+						warning = "Does not match work order instructions";
+					}
+
+				} else if (input.classList.contains("check-batch")) {
+					// Check that batch exists and belongs to correct item
+					let batch = await frappe.model.with_doc("Batch", value);
+					if (!batch) {
+						error = "Batch does not exist";
+					} else if (batch.item !== input.dataset.for_item_code) {
+						error = `Batch is for item code ${batch.item}!`
+					}
+				}
+			}
+
+			if (error) {
+				if (value) {
+					// don't show popover for empty field to avoid visual clutter.
+					$(input).popover({
+						content: `<span class="text-danger">${error}</span>`,
+						html: true,
+						container: '#page-work-order-execution',
+					}).popover('show');
+
+				}
+				valid = false;
+				input.classList.add('required');
+			} else if (warning) {
+				$(input).popover({
+					content: `<span class="text-warning">${warning}</span>`,
+					html: true,
+					container: '#page-work-order-execution',
+				}).popover('show');
+				input.classList.remove('required');
+			} else {
+				input.classList.remove('required');
+				$(input).popover('destroy');
 			}
 		}
+
 		return valid;
 	}
 
-	function validate() {
+	async function validate() {
 		// Calls submit() if form is valid. Else shows alert.
 		page.btn_primary.prop("disabled", true);
 
-		if (!validate_inputs()) {
+		if (! await validate_inputs()) {
 			page.btn_primary.prop("disabled", false);
 			frappe.msgprint({
-				title: 'Missing Fields',
+				title: 'Missing or Incorrect Fields',
 				indicator: 'red',
-				message: 'Please complete required fields',
+				message: 'Please check required fields',
 			});
 			return;
 		}
@@ -413,6 +461,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			.map(el => [el.dataset.idx, parseFloat(el.value) || 0])
 			.map(([idx, delta]) => {
 				state.ste_doc.items.find(i => i.idx == idx).qty += delta;
+				state.ste_doc.items.find(i => i.idx == idx).delta = delta;
 			});
 		// Same for batches, only on select items.
 		[...document.querySelectorAll("input.batch")]
