@@ -6,28 +6,40 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "title",
   "amended_from",
-  "intervention_date",
   "customer",
   "customer_name",
   "contact_person",
   "contact_display",
   "column_break_7",
+  "intervention_date",
   "bnovate_technician",
   "bnovate_technician_name",
   "instrument_information_section",
   "serial_no",
   "item_name",
+  "warranty_expiry_date",
+  "column_break_15",
+  "data",
+  "billing_section",
+  "billing_basis",
+  "subscription_contract",
+  "quotation",
   "issue_description_section",
   "reason_for_visit",
   "work_description",
   "validation_performed",
   "final_service_checks",
   "parts_section",
-  "labor_section"
+  "set_warehouse",
+  "items",
+  "labor_section",
+  "labour_travel"
  ],
  "fields": [
   {
+   "default": "Today",
    "fieldname": "intervention_date",
    "fieldtype": "Date",
    "label": "Intervention Date"
@@ -64,6 +76,7 @@
    "fetch_from": "customer.customer_name",
    "fieldname": "customer_name",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Customer Name",
    "read_only": 1
   },
@@ -100,6 +113,7 @@
   {
    "fieldname": "reason_for_visit",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Reason for Visit",
    "options": "Maintenance\nService\nOther"
   },
@@ -137,10 +151,80 @@
    "fieldtype": "Table",
    "label": "Final Service Checks",
    "options": "Service Report Checks"
+  },
+  {
+   "default": "{customer_name}",
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Title"
+  },
+  {
+   "fieldname": "billing_section",
+   "fieldtype": "Section Break",
+   "label": "Billing"
+  },
+  {
+   "depends_on": "eval:doc.billing_basis == \"According to Quotation\"",
+   "fieldname": "quotation",
+   "fieldtype": "Link",
+   "label": "Quotation",
+   "options": "Quotation"
+  },
+  {
+   "fetch_from": "serial_no.warranty_expiry_date",
+   "fieldname": "warranty_expiry_date",
+   "fieldtype": "Date",
+   "label": "Warranty End Date",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.billing_basis == \"Under Service Agreement\"",
+   "fieldname": "subscription_contract",
+   "fieldtype": "Link",
+   "label": "Service Agreement",
+   "options": "Subscription Contract"
+  },
+  {
+   "fieldname": "billing_basis",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Billing Basis",
+   "options": "Under Service Agreement\nUnder Warranty\nAccording to Quotation\nStandard Price List"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "Service Report Item"
+  },
+  {
+   "fetch_from": "bnovate_technician.default_warehouse",
+   "fieldname": "labour_travel",
+   "fieldtype": "Table",
+   "label": "Labour and Travel",
+   "options": "Service Report Item"
+  },
+  {
+   "default": "{bnovate_technician_name} - bN",
+   "fieldname": "set_warehouse",
+   "fieldtype": "Link",
+   "label": "Warehouse",
+   "options": "Warehouse"
+  },
+  {
+   "fieldname": "column_break_15",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "data",
+   "fieldtype": "Table",
+   "label": "Data",
+   "options": "Service Report Data Record"
   }
  ],
  "is_submittable": 1,
- "modified": "2023-06-12 18:23:36.414391",
+ "modified": "2023-06-16 17:22:00.049437",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Service Report",
@@ -187,5 +271,6 @@
  "show_name_in_global_search": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
+ "title_field": "title",
  "track_changes": 1
 }

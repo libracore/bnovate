@@ -84,6 +84,8 @@ fixtures = [
             "Delivery Note-tracking_no"
             "Delivery Note-column_break_25",
             "Delivery Note-packing_stage",
+            # Service report
+            "Warehouse-for_user",
         ]]]
     }
 ]
