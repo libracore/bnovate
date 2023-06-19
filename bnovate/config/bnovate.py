@@ -108,7 +108,7 @@ def get_data():
             ]
         },
         {
-            "label": _("Production Tracking"),
+            "label": _("Supply Tracking"),
             "icon": "octicon octicon-git-compare",
             "items": [
                    {
@@ -125,6 +125,18 @@ def get_data():
                         "doctype": "Purchase Order",
                         "is_query_report": True               
                    }         
+            ]
+        },
+        {
+            "label": _("Service & Support"),
+            "icon": "octicon octicon-git-compare",
+            "items": [
+                   {
+                       "type": "doctype",
+                       "name": "Service Report",
+                       "label": _("Service Report"),
+                       "description": _("Service Report")
+                   },
             ]
         },
         {

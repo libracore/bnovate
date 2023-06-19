@@ -40,4 +40,17 @@ frappe.ui.form.on('Service Report', {
 		});
 	},
 
+	refresh(frm) {
+		if (frm.doc.docstatus == 1) {
+
+			frm.add_custom_button(__("Sales Order"), () => {
+				frappe.model.open_mapped_doc({
+					method: "bnovate.bnovate.doctype.service_report.service_report.make_sales_order",
+					frm: cur_frm
+				});
+			}, __("Create"));
+
+		}
+	}
+
 });
