@@ -11,6 +11,31 @@ class ServiceReport(Document):
 	pass
 
 @frappe.whitelist()
+def make_from_template(source_name, target_doc=None):
+	return _make_from_template(source_name, target_doc)
+
+def _make_from_template(source_name, target_doc, ignore_permissions=False):
+	def set_missing_values(source, target):
+		pass
+
+	doclist = get_mapped_doc("Service Report Template", source_name, {
+			"Service Report Template": {
+				"doctype": "Service Report",
+				# "field_map": {
+				# 	"intervention_date": "transaction_date",
+				# },
+				# "validation": {
+				# 	"docstatus": ["=", 1]
+				# }
+			},
+			"Service Report Item": {
+				"doctype": "Service Report Item",
+			},
+		}, target_doc, set_missing_values, ignore_permissions=ignore_permissions)
+
+	return doclist
+
+@frappe.whitelist()
 def make_sales_order(source_name, target_doc=None):
 	return _make_sales_order(source_name, target_doc)
 
@@ -46,10 +71,6 @@ def _make_sales_order(source_name, target_doc, ignore_permissions=False):
 				# "condition": is_subscription_item,
 				# "postprocess": update_item
 			},
-			# "Sales Taxes and Charges": {
-			# 	"doctype": "Sales Taxes and Charges",
-			# 	"add_if_empty": True
-			# },
 		}, target_doc, set_missing_values, ignore_permissions=ignore_permissions)
 
 	return doclist

@@ -1,0 +1,199 @@
+{
+ "autoname": "ST-.#####",
+ "beta": 1,
+ "creation": "2023-06-19 15:22:51.497524",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "title",
+  "billing_section",
+  "reason_for_visit",
+  "billing_basis",
+  "column_break_18",
+  "subscription_contract",
+  "quotation",
+  "issue_description_section",
+  "work_description",
+  "column_break_22",
+  "validation_performed",
+  "section_break_23",
+  "final_service_checks",
+  "column_break_15",
+  "data",
+  "parts_section",
+  "set_warehouse",
+  "items",
+  "labor_section",
+  "labour_travel",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title"
+  },
+  {
+   "fieldname": "billing_section",
+   "fieldtype": "Section Break",
+   "label": "Billing"
+  },
+  {
+   "fieldname": "reason_for_visit",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Reason for Visit",
+   "options": "Maintenance\nService\nOther"
+  },
+  {
+   "fieldname": "billing_basis",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Billing Basis",
+   "options": "Under Service Agreement\nUnder Warranty\nAccording to Quotation\nStandard Price List"
+  },
+  {
+   "fieldname": "column_break_18",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.billing_basis == \"Under Service Agreement\"",
+   "fieldname": "subscription_contract",
+   "fieldtype": "Link",
+   "label": "Service Agreement",
+   "options": "Subscription Contract"
+  },
+  {
+   "depends_on": "eval:doc.billing_basis == \"According to Quotation\"",
+   "fieldname": "quotation",
+   "fieldtype": "Link",
+   "label": "Quotation",
+   "options": "Quotation"
+  },
+  {
+   "fieldname": "issue_description_section",
+   "fieldtype": "Section Break",
+   "label": "Issue Description"
+  },
+  {
+   "fieldname": "work_description",
+   "fieldtype": "Text Editor",
+   "label": "Work Description"
+  },
+  {
+   "fieldname": "column_break_22",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "validation_performed",
+   "fieldtype": "Text Editor",
+   "label": "Validation Performed"
+  },
+  {
+   "fieldname": "section_break_23",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "final_service_checks",
+   "fieldtype": "Table",
+   "label": "Final Service Checks",
+   "options": "Service Report Checks"
+  },
+  {
+   "fieldname": "column_break_15",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "data",
+   "fieldtype": "Table",
+   "label": "Data",
+   "options": "Service Report Data Record"
+  },
+  {
+   "fieldname": "parts_section",
+   "fieldtype": "Section Break",
+   "label": "Parts"
+  },
+  {
+   "default": "{bnovate_technician_name} - bN",
+   "fieldname": "set_warehouse",
+   "fieldtype": "Link",
+   "label": "Warehouse",
+   "options": "Warehouse"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "Service Report Item"
+  },
+  {
+   "fieldname": "labor_section",
+   "fieldtype": "Section Break",
+   "label": "Labour and Travel"
+  },
+  {
+   "fetch_from": "bnovate_technician.default_warehouse",
+   "fieldname": "labour_travel",
+   "fieldtype": "Table",
+   "label": "Labour and Travel",
+   "options": "Service Report Item"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Service Report Template",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "modified": "2023-06-19 15:26:10.094912",
+ "modified_by": "Administrator",
+ "module": "bNovate",
+ "name": "Service Report Template",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Service Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "if_owner": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Service Technician",
+   "share": 1
+  }
+ ],
+ "show_name_in_global_search": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "title_field": "title",
+ "track_changes": 1
+}
