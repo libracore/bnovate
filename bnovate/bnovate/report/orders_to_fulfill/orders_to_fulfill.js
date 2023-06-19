@@ -2,6 +2,7 @@
 // For license information, please see license.txt
 /* eslint-disable */
 
+
 frappe.require("/assets/bnovate/js/modals.js")  // provides bnovate.modals
 
 frappe.query_reports["Orders to Fulfill"] = {
@@ -75,6 +76,10 @@ frappe.query_reports["Orders to Fulfill"] = {
 		if (col.fieldname === "ship_date") {
 			return `<span class="coloured ${this.colours[data.day_index % this.colours.length]}">${default_formatter(value, row, col, data)}</span>`;
 		}
+		if (col.fieldname === "open_delivery_notes" && value) {
+			let [legend, colour] = delivery_note_indicator(data);
+			return ` <span class="indicator ${colour}">${value.split(" ").map(n => frappe.utils.get_form_link("Delivery Note", n, true))}, ${legend}</span> (${data.open_delivery_qty}/${data.remaining_qty})`;
+		}
 		return default_formatter(value, row, col, data);
 	}
 };
@@ -93,6 +98,11 @@ function work_order_indicator(doc) {
 			"Cancelled": "darkgrey"
 		}[doc.wo_status]];
 	}
+}
+
+function delivery_note_indicator(row) {
+	// With the current SQL query, only draft DNs can appear...
+	return ["Draft", "red"]
 }
 
 function cartridge_status_link(serial_nos) {

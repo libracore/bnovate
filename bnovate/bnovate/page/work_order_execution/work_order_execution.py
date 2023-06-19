@@ -27,7 +27,6 @@ def start_log(work_order_id):
         'start_time': datetime.now(),
     })
     wo.save()
-    frappe.db.commit()
     return
 
 @frappe.whitelist()
@@ -39,7 +38,6 @@ def stop_log(work_order_id):
             row.end_time = datetime.now()
 
             wo.save()
-            frappe.db.commit()
             return
 
     # If we reached this point, no logs were open
@@ -61,6 +59,8 @@ def calculate_total_time(doc, method=None):
     wo.db_set("total_time", wo.total_time)
     wo.db_set("time_per_unit", wo.time_per_unit)
 
+    update_work_order_status(wo)
+
 def update_work_order_unit_time(stock_entry, method=None):
     """ Re-calculate per-unit time on work orders after a stock entry has changed produced qty.
     
@@ -72,23 +72,30 @@ def update_work_order_unit_time(stock_entry, method=None):
     wo = frappe.get_doc("Work Order", stock_entry.work_order)
     calculate_total_time(wo)
 
-def update_work_order_status(stock_entry, method=None):
+def update_work_order_status_from_ste(stock_entry, method=None):
     """ Set work order status to In Process if draft STEs exist.
      
-     Called by hooks.py
+    Called by hooks.py
     """
 
     if stock_entry.purpose != "Manufacture":
         return
 
     wo = frappe.get_doc("Work Order", stock_entry.work_order)
+    new_ste = None
+    if method == "before_save":
+        new_ste = stock_entry
+    return update_work_order_status(wo, new_ste)
+
+def update_work_order_status(wo, new_ste=None):
     status = wo.get_status()
     if status == "Not Started":
-        # Override this: if draft exist the WO is In Process. If not, keep Not Started
-        draft_stock_entries = frappe._dict(frappe.db.sql("""select purpose, sum(fg_completed_qty)
-            from `tabStock Entry` where work_order=%s and docstatus=0
-            group by purpose""", wo.name))
-        if draft_stock_entries:
+        # Override default behaviour: if draft STE exist or time logging has started, the WO is In Process. If not, keep Not Started
+        draft_stock_entries = frappe.db.get_all("Stock Entry", filters={'work_order': ['=', wo.name], 'docstatus': ['=', 0]})
+        if new_ste and new_ste.docstatus == 0:
+            # In this specific situation, the draft isn't yet in the DB.
+            draft_stock_entries.append(new_ste)
+        if draft_stock_entries or wo.time_log:
             wo.db_set("status", "In Process")
         else: 
             wo.db_set("status", status)
