@@ -38,6 +38,15 @@ frappe.ui.form.on('Service Report', {
 				}
 			}
 		});
+
+		frm.set_query("item_code", "items", function () {
+			return {
+				query: "bnovate.bnovate.doctype.service_report.service_report.item_query",
+				filters: {
+					warehouse: frm.doc.set_warehouse,
+				}
+			}
+		});
 	},
 
 	refresh(frm) {
