@@ -66,7 +66,7 @@ function override_action_buttons(frm) {
                         default: frm.doc.carrier || "DHL",
                     }, {
                         label: "Tracking No",
-                        fieldname: "device_name",
+                        fieldname: "tracking_no",
                         fieldtype: "Data",
                         reqd: 0,
                         default: frm.doc.tracking_no,

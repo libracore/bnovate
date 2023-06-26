@@ -164,6 +164,14 @@ bnovate.utils.email_dialog = function (frm, template_name) {
   });
 }
 
+bnovate.utils.is_fill = function (item_code) {
+  return item_code !== undefined && item_code.startsWith("FIL");
+}
+
+bnovate.utils.is_enclosure = function (item_code) {
+  return item_code !== undefined && (item_code.startsWith("ENC") || item_code === '100146');
+}
+
 
 /*********************************
  * Code to set enclosure owners
