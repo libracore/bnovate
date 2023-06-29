@@ -380,7 +380,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			let input_valid = true;
 			let error = null;
 			let warning = null;
-			const value = input.value.trim();
+			const value = input.value.trim(); // .toUpperCase();
 			if (!value) {
 				error = 'Required Field'
 			} else {

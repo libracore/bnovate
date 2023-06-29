@@ -113,4 +113,6 @@ def make_auto_serial_no(item_code):
         frappe.throw("Item {} needs to be serialized and needs serial no series".format(item_code))
 
     serial_no = sn.get_auto_serial_nos(item_master.serial_no_series, 1)
+    sn_doc = frappe.get_doc(doctype="Serial No", item_code=item_code, serial_no=serial_no)
+    sn_doc.insert()
     return serial_no
