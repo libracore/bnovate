@@ -61,7 +61,7 @@ bnovate.utils.get_next_item_code = async function (prefix) {
   return resp.message;
 }
 
-bnovate.utils.get_random_id = async function get_random_id() {
+bnovate.utils.get_random_id = async function () {
   let resp = await frappe.call({
     method: 'bnovate.bnovate.utils.get_random_id',
     args: {
@@ -70,14 +70,14 @@ bnovate.utils.get_random_id = async function get_random_id() {
   return resp.message;
 }
 
-bnovate.utils.get_naming_series = async function get_naming_series() {
+bnovate.utils.get_naming_series = async function () {
   let resp = await frappe.call({
     method: 'bnovate.bnovate.utils.items.get_naming_series',
   })
   return resp.message;
 }
 
-bnovate.utils.set_naming_series = async function set_naming_series(prefix, number) {
+bnovate.utils.set_naming_series = async function (prefix, number) {
   let resp = await frappe.call({
     method: 'bnovate.bnovate.utils.items.set_naming_series',
     args: {
@@ -88,7 +88,7 @@ bnovate.utils.set_naming_series = async function set_naming_series(prefix, numbe
   return resp.message;
 }
 
-bnovate.utils.run_report = async function run_report(report_name, filters) {
+bnovate.utils.run_report = async function (report_name, filters) {
   let resp = await frappe.call({
     method: "frappe.desk.query_report.run",
     args: {
@@ -99,9 +99,14 @@ bnovate.utils.run_report = async function run_report(report_name, filters) {
   return resp.message;
 }
 
+// Fetch value from settings
+bnovate.utils.get_setting = async function (key) {
+  return frappe.db.get_single_value("bNovate Settings", key)
+}
+
 
 // Promise-ified frappe prompt:
-bnovate.utils.prompt = function prompt(title, fields, primary_action_label, secondary_action_label) {
+bnovate.utils.prompt = function (title, fields, primary_action_label, secondary_action_label) {
   return new Promise((resolve, reject) => {
     const d = new frappe.ui.Dialog({
       title,
@@ -118,12 +123,61 @@ bnovate.utils.prompt = function prompt(title, fields, primary_action_label, seco
   })
 }
 
+// Email dialog that picks all emails from the doc
+bnovate.utils.email_dialog = function (frm, template_name) {
+  if (frm.is_dirty()) {
+    frappe.msgprint('Please save document before emailing');
+    return;
+  }
+
+  // doc.email was set at refresh, fetching from Shipping address
+  var recipients = [frm.doc.email || '', frm.doc.email_id || '', frm.doc.contact_email || ''].filter(i => i).join(', ');
+  var cc = "";
+
+  var doc = Object.assign({}, frm.doc);
+  doc.carrier = frm.doc.carrier || "";
+  doc.tracking_no = frm.doc.tracking_no || "";
+
+  // Render template on the server side:
+  let dlg = frappe.show_progress("Rendering email...", 33, 100, "Please wait.");
+  frappe.call({
+    method: 'frappe.email.doctype.email_template.email_template.get_email_template',
+    args: {
+      template_name: template_name,
+      doc: doc,
+    },
+    callback: function (r) {
+      dlg.hide();
+      frm.composer = new frappe.views.CommunicationComposer({
+        doc: {
+          doctype: frm.doc.doctype,
+          name: frm.doc.name
+        },
+        subject: r.message.subject,
+        recipients: recipients,
+        cc: cc,
+        attach_document_print: 1,
+        message: r.message.message,
+      });
+      setTimeout(() => frm.composer.select_attachments(), 1000);
+    },
+  });
+}
+
+bnovate.utils.is_fill = function (item_code) {
+  return item_code !== undefined && item_code.startsWith("FIL");
+}
+
+bnovate.utils.is_enclosure = function (item_code) {
+  return item_code !== undefined && (item_code.startsWith("ENC") || item_code === '100146');
+}
+
 
 /*********************************
  * Code to set enclosure owners
  *********************************/
 
-bnovate.utils.get_history_report = async function get_history_report() {
+bnovate.utils.get_history_report = async function () {
   let resp = await frappe.call({
     method: "frappe.desk.query_report.run",
     args: {
@@ -166,7 +220,7 @@ bnovate.utils.get_cartridge_owners = async function get_cartridge_owners() {
   return out;
 }
 
-bnovate.utils.set_cartridge_owners = async function set_cartridge_owners(owners) {
+bnovate.utils.set_cartridge_owners = async function (owners) {
   // owners as returned by get_cartridge_owners
   let i = 0;
   for (let row of owners) {

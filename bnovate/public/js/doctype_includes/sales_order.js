@@ -62,7 +62,9 @@ frappe.ui.form.on("Sales Order", {
         );
 
         bnovate.modals.attach_report_modal("projStockModal");
-        setTimeout(() => show_deliverability(frm), 500);
+        if (!frm.doc.__islocal) {
+            setTimeout(() => show_deliverability(frm), 500);
+        }
     },
 
 })
@@ -78,13 +80,11 @@ async function get_deliverability(frm) {
 
 async function show_deliverability(frm) {
     const deliverability = await get_deliverability(frm);
-    console.log(deliverability);
     for (let item of cur_frm.doc.items) {
         const indicator = document.querySelector(`[data-name="${item.name}"] .indicator`)
         let colour = "darkgrey";
         let planned_stock = "";
         let status = deliverability[item.name];
-        console.log(status);
         if (item.stock_qty <= item.delivered_qty) {
             colour = "light-blue";
         } else if (typeof status !== undefined) {

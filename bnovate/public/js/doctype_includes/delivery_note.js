@@ -66,7 +66,7 @@ function override_action_buttons(frm) {
                         default: frm.doc.carrier || "DHL",
                     }, {
                         label: "Tracking No",
-                        fieldname: "device_name",
+                        fieldname: "tracking_no",
                         fieldtype: "Data",
                         reqd: 0,
                         default: frm.doc.tracking_no,
@@ -78,6 +78,7 @@ function override_action_buttons(frm) {
                 frm.doc.carrier = values.carrier;
                 frm.doc.tracking_no = values.tracking_no;
                 frm.save("Update");
+                bnovate.utils.email_dialog(frm, await bnovate.utils.get_setting('dn_template'));
             })
         }
     }

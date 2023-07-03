@@ -226,7 +226,12 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 				item_code: 100017, // Tubing pouch 120 mm
 				qty: 1,
 				t_warehouse: "Stores - bN",
+			}, {
+				item_code: 100799, // Barrel plug for pouches
+				qty: 4,
+				s_warehouse: "Stores - bN",
 			}]
+
 		});
 		return doc;
 	}

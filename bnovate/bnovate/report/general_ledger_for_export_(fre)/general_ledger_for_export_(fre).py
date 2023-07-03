@@ -149,7 +149,6 @@ SELECT
 FROM `tabGL Entry` gl
 LEFT JOIN `tabPurchase Invoice` pinv ON gl.against_voucher = pinv.name
 WHERE gl.posting_date BETWEEN "{from_date}" AND "{to_date}"
-	AND pinv.docstatus = 1
     {conditions}
 ORDER BY gl.posting_date
     """.format(from_date=filters.from_date, to_date=filters.to_date, conditions=conditions)
