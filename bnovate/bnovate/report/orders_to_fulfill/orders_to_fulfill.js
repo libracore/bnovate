@@ -61,8 +61,14 @@ frappe.query_reports["Orders to Fulfill"] = {
 			return "";
 		}
 		if (col.fieldname === "work_order" && data.work_order) {
+			if (data.work_order_acc) {
+				return data.work_order_acc.map(r => {
+					let [legend, colour] = work_order_indicator(r);
+					return ` <span class="indicator ${colour}">${frappe.utils.get_form_link("Work Order", r.work_order, true)}</span> (${r.wo_produced_qty}/${r.wo_qty})`;
+				}).join(", ");
+			}
 			let [legend, colour] = work_order_indicator(data);
-			return ` <span class="indicator ${colour}">${frappe.utils.get_form_link("Work Order", value, true, value)}, ${legend}</span> (${data.wo_produced_qty}/${data.wo_qty})`;
+			return ` <span class="indicator ${colour}">${frappe.utils.get_form_link("Work Order", value, true)}, ${legend}</span> (${data.wo_produced_qty}/${data.wo_qty})`;
 		}
 		if (col.fieldname === "serial_nos" && data.serial_nos) {
 			return `${cartridge_status_link(data.serial_nos)}`;

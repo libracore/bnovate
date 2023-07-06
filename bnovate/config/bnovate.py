@@ -169,6 +169,12 @@ def get_data():
                         "label": _("General Ledger for Export (FRe)"),
                         "doctype": "GL Entry",
                         "is_query_report": True   
+                   }, {
+                        "type": "report",
+                        "name": "Deferred Revenue Report",
+                        "label": _("Deferred Revenue Report"),
+                        "doctype": "GL Entry",
+                        "is_query_report": True   
                    }  
             ]
         },
