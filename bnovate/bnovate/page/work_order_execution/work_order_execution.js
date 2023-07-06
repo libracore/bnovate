@@ -392,9 +392,10 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 						error = "Serial No does not exist";
 					} else if (serial.item_code !== input.dataset.for_item_code) {
 						error = `Serial No is for item code ${serial.item_code}!`
-					} else if (state.work_order_doc.serial_no && state.work_order_doc.serial_no.indexOf(value) <= 0) {
+					} else if (state.work_order_doc.serial_no && state.work_order_doc.serial_no.indexOf(value) < 0) {
 						warning = "Does not match work order instructions";
 					}
+
 
 				} else if (input.classList.contains("check-batch")) {
 					// Check that batch exists and belongs to correct item
@@ -407,6 +408,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 				}
 			}
 
+			$(input).popover('destroy');
 			if (error) {
 				if (value) {
 					// don't show popover for empty field to avoid visual clutter.
@@ -428,7 +430,6 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 				input.classList.remove('required');
 			} else {
 				input.classList.remove('required');
-				$(input).popover('destroy');
 			}
 		}
 
