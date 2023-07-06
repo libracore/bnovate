@@ -234,10 +234,14 @@ def get_data(filters):
     # Work out deliverability of bundles:
     bundle_name = ''
     bundle_stock = 3
+    wo_accumulator = []
     for row in data[::-1]:
         if not row.is_packed_item and row.name == bundle_name:
             # Reached the top of a bundle
             row.sufficient_stock = bundle_stock
+            row.work_order = [r['work_order'] for r in wo_accumulator] # ", ".join(wo_accumulator)
+            row.work_order_acc = wo_accumulator
+            wo_accumulator = []
             bundle_stock = 3
             continue
 
@@ -250,6 +254,14 @@ def get_data(filters):
         if row.sufficient_stock is not None:
             # If this value isn't defined, then ignore
             bundle_stock = min(row.sufficient_stock, bundle_stock)
+
+        if row.work_order:
+            wo_accumulator.append({
+                "work_order": row.work_order,
+                "wo_status": row.wo_status,
+                "wo_qty": row.wo_qty,
+                "wo_produced_qty": row.wo_produced_qty,
+            })
 
 
     # Formatting for alternating colours:
