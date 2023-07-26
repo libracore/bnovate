@@ -125,8 +125,10 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 				produce_serial_no: state.produce_serial_no,
 				produce_batch: state.produce_batch
 			});
-			if (state.remaining_qty > 0 && state.work_order_doc.docstatus == 1 && state.work_order_doc.status != "Stopped") {
-				page.set_primary_action(state.draft_mode ? __('Start') : __('Finish'), finish);
+			if (state.work_order_doc.docstatus == 1 && state.work_order_doc.status != "Stopped") {
+				if (state.remaining_qty > 0) {
+					page.set_primary_action(state.draft_mode ? __('Start') : __('Finish'), finish);
+				}
 				time_tracking.innerHTML = frappe.render_template('time_tracking', {
 					doc: state.work_order_doc,
 					timing_started: state.timing_started,
@@ -348,7 +350,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		}
 
 		if (state.timing_started) {
-			// stop_time_log(state.work_order_id);
+			stop_time_log(state.work_order_id);
 		}
 
 		if (state.produce_serial_no) {
