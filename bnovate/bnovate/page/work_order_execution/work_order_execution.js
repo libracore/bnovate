@@ -348,7 +348,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		}
 
 		if (state.timing_started) {
-			stop_time_log(state.work_order_id);
+			// stop_time_log(state.work_order_id);
 		}
 
 		if (state.produce_serial_no) {
