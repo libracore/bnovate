@@ -30,11 +30,29 @@ def get_session_customers():
     return [ c['customer'] for c in customers]
 
 def get_session_primary_customer():
+    """ Return ID of primary customer, i.e. first in list of linked customers """
     customers = get_session_customers()
     if customers:
         return customers[0]
     else:
         return None
+
+def get_session_primary_customer_details():
+    """ Return dict of relevant information for primary customer """
+    customers = frappe.db.sql("""
+        SELECT 
+            c.`name`,
+            c.`customer_name`,
+            c.`enable_cartridge_portal`
+        FROM `tabCustomer` c
+        WHERE c.`name` = "{customer}"
+    """.format(customer=get_session_primary_customer()), as_dict=True)
+
+    if len(customers) == 0:
+        # TODO: raise error
+        pass
+
+    return customers[0]
 
 def get_session_contact():
     """ Return names of contacts associated to this user id """
@@ -49,6 +67,25 @@ def get_session_contact():
     """.format(user=frappe.session.user), as_dict=True)
 
     return users[0].name
+
+def build_sidebar(context):
+    context.show_sidebar = True
+    context.sidebar_items = [{
+            'route': 'quotations',
+            'title': 'Quotations',
+        }]
+
+    if get_session_primary_customer_details().enable_cartridge_portal:
+        context.sidebar_items.extend([{
+                'route': 'cartridges',
+                'title': 'My Cartridges',
+            }, {
+                'route': 'requests',
+                'title': 'Refill Requests',
+            }, {
+                'route': 'addresses',
+                'title': 'My Addresses',
+            }])
 
 @frappe.whitelist()
 def get_addresses():
