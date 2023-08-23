@@ -59,6 +59,5 @@ def get_instruments():
                 if vnc:
                     asset.cp.vnc = vnc[0]
 
-
     return assets
 
