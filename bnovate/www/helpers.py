@@ -18,16 +18,18 @@ def get_session_customers():
     # fetch customers for this user, ordered the same as in Desk.
     customers = frappe.db.sql("""
         SELECT 
-            `tC1`.`link_name` AS `customer`
+            `tC1`.`link_name` AS `customer_name`,
+            `tCus`.`enable_cartridge_portal`
         FROM `tabContact`
         JOIN `tabDynamic Link` AS `tC1` ON `tC1`.`parenttype` = "Contact" 
                                        AND `tC1`.`link_doctype` = "Customer" 
                                        AND `tC1`.`parent` = `tabContact`.`name`
+        JOIN `tabCustomer` as `tCus` ON `tCus`.`name` = `tC1`.`link_name`
         WHERE `tabContact`.`user` = "{user}"
         ORDER BY `tC1`.`idx`;
     """.format(user=frappe.session.user), as_dict=True)
 
-    return [ c['customer'] for c in customers]
+    return customers
 
 def get_session_primary_customer():
     """ Return ID of primary customer, i.e. first in list of linked customers """
@@ -36,23 +38,6 @@ def get_session_primary_customer():
         return customers[0]
     else:
         return None
-
-def get_session_primary_customer_details():
-    """ Return dict of relevant information for primary customer """
-    customers = frappe.db.sql("""
-        SELECT 
-            c.`name`,
-            c.`customer_name`,
-            c.`enable_cartridge_portal`
-        FROM `tabCustomer` c
-        WHERE c.`name` = "{customer}"
-    """.format(customer=get_session_primary_customer()), as_dict=True)
-
-    if len(customers) == 0:
-        # TODO: raise error
-        pass
-
-    return customers[0]
 
 def get_session_contact():
     """ Return names of contacts associated to this user id """
@@ -68,14 +53,23 @@ def get_session_contact():
 
     return users[0].name
 
+def allow_cartridge_portal():
+    """ True if user is allowed to use cartridge management features """
+    if get_session_primary_customer().enable_cartridge_portal:
+        return True
+
+
 def build_sidebar(context):
     context.show_sidebar = True
     context.sidebar_items = [{
             'route': 'quotations',
             'title': 'Quotations',
+        }, {
+            'route': 'instruments',
+            'title': 'My Instruments',
         }]
 
-    if get_session_primary_customer_details().enable_cartridge_portal:
+    if allow_cartridge_portal():
         context.sidebar_items.extend([{
                 'route': 'cartridges',
                 'title': 'My Cartridges',
@@ -83,7 +77,7 @@ def build_sidebar(context):
                 'route': 'requests',
                 'title': 'Refill Requests',
             }, {
-                'route': 'addresses',
+                'route': 'my_addresses',
                 'title': 'My Addresses',
             }])
 
@@ -127,9 +121,9 @@ def create_address(address_line1, pincode, city, address_type="Shipping", compan
     """ Add address on primary customer associated to this user """
     # fetch customers for this user
     customer = get_session_primary_customer()
-    customer_links = [{'link_doctype': 'Customer', 'link_name': customer}]
+    customer_links = [{'link_doctype': 'Customer', 'link_name': customer.customer_name}]
     # create new address
-    pure_name = "{0}-{1}-{2}-{3}".format(customer, company_name, address_line1, city).replace(" ", "_").replace("&", "and").replace("+", "and").replace("?", "-").replace("=", "-")
+    pure_name = "{0}-{1}-{2}-{3}".format(customer.customer_name, company_name, address_line1, city).replace(" ", "_").replace("&", "and").replace("+", "and").replace("?", "-").replace("=", "-")
     new_address = frappe.get_doc({
         'doctype': 'Address',
         'address_title': pure_name,
@@ -156,7 +150,7 @@ def delete_address(name):
     permitted = False
     for l in address.links:
         for c in customers:
-            if l.link_name == c:
+            if l.link_name == c.customer_name:
                 permitted = True
     if permitted:
         # delete address: drop links

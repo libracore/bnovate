@@ -6,7 +6,7 @@ from frappe import _
 
 from bnovate.bnovate.utils.iot_apis import rms_get_access_configs
 
-from .helpers import get_session_primary_customer, auth
+from .helpers import get_session_primary_customer, auth, build_sidebar
 
 no_cache = 1
 
@@ -14,7 +14,7 @@ auth()
 
 def get_context(context):
     context.instruments = get_instruments()
-    context.show_sidebar = True
+    build_sidebar(context)
     context.title = _("Instruments")
     return context
 
@@ -22,7 +22,7 @@ def get_instruments():
     primary_customer = get_session_primary_customer()
 
     assets = frappe.get_all("Serial No", filters={
-            "owned_by": ["=", primary_customer],
+            "owned_by": ["=", primary_customer.customer_name],
             "item_group": ["=", "Instruments"],
         },
         fields="*"
@@ -59,9 +59,6 @@ def get_instruments():
                 if vnc:
                     asset.cp.vnc = vnc[0]
 
-
-        print("------------------\n\n\n")
-        print(asset.cp)
 
     return assets
 
