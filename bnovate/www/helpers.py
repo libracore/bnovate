@@ -18,7 +18,7 @@ def get_session_customers():
     # fetch customers for this user, ordered the same as in Desk.
     customers = frappe.db.sql("""
         SELECT 
-            `tC1`.`link_name` AS `customer_name`,
+            `tC1`.`link_name` AS `docname`,
             `tCus`.`enable_cartridge_portal`
         FROM `tabContact`
         JOIN `tabDynamic Link` AS `tC1` ON `tC1`.`parenttype` = "Contact" 
@@ -96,7 +96,7 @@ def get_addresses():
             `tabAddress`.`country`,
             `tabAddress`.`is_primary_address`,
             `tabAddress`.`is_shipping_address`,
-            `tC1`.`link_name` AS `customer_name`
+            `tC1`.`link_name` AS `customer_docname`
         FROM `tabContact`
         JOIN `tabDynamic Link` AS `tC1` ON `tC1`.`parenttype` = "Contact" 
                                        AND `tC1`.`link_doctype` = "Customer" 
@@ -121,9 +121,9 @@ def create_address(address_line1, pincode, city, address_type="Shipping", compan
     """ Add address on primary customer associated to this user """
     # fetch customers for this user
     customer = get_session_primary_customer()
-    customer_links = [{'link_doctype': 'Customer', 'link_name': customer.customer_name}]
+    customer_links = [{'link_doctype': 'Customer', 'link_name': customer.docname}]
     # create new address
-    pure_name = "{0}-{1}-{2}-{3}".format(customer.customer_name, company_name, address_line1, city).replace(" ", "_").replace("&", "and").replace("+", "and").replace("?", "-").replace("=", "-")
+    pure_name = "{0}-{1}-{2}-{3}".format(customer.docname, company_name, address_line1, city).replace(" ", "_").replace("&", "and").replace("+", "and").replace("?", "-").replace("=", "-")
     new_address = frappe.get_doc({
         'doctype': 'Address',
         'address_title': pure_name,
@@ -150,7 +150,7 @@ def delete_address(name):
     permitted = False
     for l in address.links:
         for c in customers:
-            if l.link_name == c.customer_name:
+            if l.link_name == c.customer_docname:
                 permitted = True
     if permitted:
         # delete address: drop links

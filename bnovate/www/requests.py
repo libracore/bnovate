@@ -28,7 +28,7 @@ def get_requests():
 
     primary_customer = get_session_primary_customer()
     docs = frappe.get_all("Refill Request", filters={
-            "customer": ["=", primary_customer.customer_name],
+            "customer": ["=", primary_customer.docname],
         },
         fields="*"
     )

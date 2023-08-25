@@ -7,13 +7,11 @@
 #
 #######################################################################
 
-from distutils.command.config import config
-from http.client import responses
-from json import JSONDecodeError
 import time
 import frappe
 import concurrent.futures
 
+from json import JSONDecodeError
 from requests import request
 from requests.auth import HTTPBasicAuth
 
@@ -39,11 +37,13 @@ def _get_settings():
 # BASE API CONNECTIONS
 #######################
 
-@frappe.whitelist()
-def rms_get_status(channel):
-    """ Return status updates on given channel."""
-    # Response and error handling are slightly different from regular API
-    _auth(WRITE)
+def _rms_get_status(channel, auth=True):
+    """ Return status updates on given channel, 
+    
+    Use in situations where authentication should be checked separately  
+    """
+    if auth:
+        _auth(READ)
     settings = _get_settings()
 
     resp = request(
@@ -64,6 +64,11 @@ def rms_get_status(channel):
         raise ApiException("Error fetching RMS Status: " + str(detail))
     return resp.json()['data']
 
+@frappe.whitelist()
+def rms_get_status(channel):
+    """ Return status updates on given channel, can be called from Desk  """
+    # Response and error handling are slightly different from regular API
+    return _rms_get_status(channel, auth=True)
 
 def rms_monitor_status(channel, device_id, attempt=0):
     """ Monitor status channel until completion or error """
@@ -276,15 +281,28 @@ def rms_get_access_sessions(device_id=None):
     responses.sort(key=lambda el: el['protocol'])
     return responses
 
-@frappe.whitelist()
-def rms_start_session(config_id, duration=30*60):
-    """ Opens a new sessions for an existing remote configuration """
+def _rms_start_session(config_id, duration=30*60, auth=True):
+    """ Opens a new session for an existing remote configuration. 
+
+    Auth can be checked separately for portal users.
+    """
     resp = rms_request(
         "/api/devices/connect/{config_id}".format(config_id=config_id),
         "POST",
         body={"duration": duration},
+        auth=auth
     )
     return resp['channel']
+
+@frappe.whitelist()
+def rms_start_session(config_id, duration=30*60):
+    """ Opens a new session for an existing remote configuration. 
+
+    Auth handled for Desk users
+    """
+    return _rms_start_session(config_id, duration)
+
+
 
 
 def combase_get_usage(iccid, settings=None, auth=True):

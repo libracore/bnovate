@@ -27,7 +27,7 @@ def get_request(name):
 
 
     doc = frappe.get_doc("Refill Request", name)
-    if doc.customer != primary_customer.customer_name:
+    if doc.customer != primary_customer.docname:
         return None
     doc.set_indicator()
     return doc
@@ -49,7 +49,7 @@ def make_request(doc):
 
     new_request = frappe.get_doc({
         'doctype': 'Refill Request',
-        'customer': get_session_primary_customer().customer_name,
+        'customer': get_session_primary_customer().name,
         'contact_person': get_session_contact(),
         'transaction_date': today(),
         'shipping_address': doc['shipping_address'],

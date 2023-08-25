@@ -41,25 +41,28 @@ bnovate.iot.rms_get_sessions = async function rms_get_sessions(device_id) {
 }
 
 // Open a new session for an existing remote configuration
-bnovate.iot.rms_start_session = async function rms_start_session(config_id, device_id) {
+bnovate.iot.rms_start_session = async function rms_start_session(config_id, device_id,
+    start_session_method = null,
+    get_status_method = null,
+) {
     let resp = await frappe.call({
-        method: "bnovate.bnovate.utils.iot_apis.rms_start_session",
+        method: start_session_method || 'bnovate.bnovate.utils.iot_apis.rms_start_session',
         args: {
-            config_id
+            config_id,
         }
     });
     const channel = resp.message;
 
     while (true) {
 
-        const status = await bnovate.iot.rms_get_status(channel);
+        const status = await bnovate.iot.rms_get_status(channel, get_status_method);
         console.log(status);
         // if (!status[device_id]) {
         //     continue;
         // }
 
         let [last_update] = status[device_id].slice(-1);
-        frappe.show_progress("Starting session....", status[device_id].length, 8, last_update ? last_update.value : null);
+        frappe.show_progress(__("Starting session...."), status[device_id].length, 8, last_update ? last_update.value : null);
 
         if (last_update.status === "error" || last_update.status === "warning" || last_update.status === "completed") {
             frappe.hide_progress();
@@ -83,9 +86,9 @@ bnovate.iot.rms_start_session = async function rms_start_session(config_id, devi
 }
 
 // Get status updates on notification channel
-bnovate.iot.rms_get_status = async function rms_get_status(channel) {
+bnovate.iot.rms_get_status = async function rms_get_status(channel, method = null) {
     let resp = await frappe.call({
-        method: "bnovate.bnovate.utils.iot_apis.rms_get_status",
+        method: method || 'bnovate.bnovate.utils.iot_apis.rms_get_status',
         args: {
             channel
         }

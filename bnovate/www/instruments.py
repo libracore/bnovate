@@ -4,9 +4,10 @@ import frappe
 
 from frappe import _
 
-from bnovate.bnovate.utils.iot_apis import rms_get_access_configs
+from frappe.exceptions import ValidationError
 
-from .helpers import get_session_primary_customer, auth, build_sidebar
+from bnovate.bnovate.utils.iot_apis import rms_get_access_configs, _rms_start_session, _rms_get_status
+from .helpers import get_session_customers, get_session_primary_customer, auth, build_sidebar
 
 no_cache = 1
 
@@ -22,7 +23,7 @@ def get_instruments():
     primary_customer = get_session_primary_customer()
 
     assets = frappe.get_all("Serial No", filters={
-            "owned_by": ["=", primary_customer.customer_name],
+            "owned_by": ["=", primary_customer.docname],
             "item_group": ["=", "Instruments"],
         },
         fields="*"
@@ -61,3 +62,38 @@ def get_instruments():
 
     return assets
 
+def auth_remote_session(config_id):
+    # Open Remote session if the gateway is owned by a linked customer
+    # Device ID here is the RMS device ID.
+
+    access_configs = [ c for c in rms_get_access_configs(auth=False) if str(c['id']) == config_id ]
+    if not access_configs:
+        raise ValidationError("Remote access configuration does not exist")
+    
+    config = access_configs[0]
+    device_id = config['device_id']
+
+    cp_owner = frappe.get_value("Connectivity Package", filters={
+                "rms_id": ["=", device_id],
+            }, fieldname="customer")
+
+    if cp_owner is None or all(c.docname != cp_owner for c in get_session_customers()):
+        # None of the linked customers match this connectivity package owner
+        raise ValidationError("Logged in user does not have access to this device")
+
+    return True
+
+
+
+@frappe.whitelist()
+def portal_start_session(config_id):
+
+    # Raises error if user is not allowed.
+    auth_remote_session(config_id)
+
+    return _rms_start_session(config_id, auth=False)
+
+@frappe.whitelist()
+def portal_get_status(channel):
+    # TODO: check authorisation using device_id
+    return _rms_get_status(channel, auth=False)
