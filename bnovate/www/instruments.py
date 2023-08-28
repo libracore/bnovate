@@ -68,7 +68,7 @@ def auth_remote_session(config_id):
 
     access_configs = [ c for c in rms_get_access_configs(auth=False) if str(c['id']) == config_id ]
     if not access_configs:
-        raise ValidationError("Remote access configuration does not exist")
+        frappe.throw("Remote access configuration does not exist")
     
     config = access_configs[0]
     device_id = config['device_id']
@@ -79,7 +79,7 @@ def auth_remote_session(config_id):
 
     if cp_owner is None or all(c.docname != cp_owner for c in get_session_customers()):
         # None of the linked customers match this connectivity package owner
-        raise ValidationError("Logged in user does not have access to this device")
+        frappe.throw("{} does not have access to this device".format(frappe.session.user))
 
     return True
 
@@ -90,10 +90,12 @@ def portal_start_session(config_id):
 
     # Raises error if user is not allowed.
     auth_remote_session(config_id)
-
-    return _rms_start_session(config_id, auth=False)
+    channel = _rms_start_session(config_id, auth=False)
+    frappe.cache().set_value("channel-owner-{}".format(channel), frappe.session.sid, expires_in_sec=60*60)
+    return channel
 
 @frappe.whitelist()
 def portal_get_status(channel):
-    # TODO: check authorisation using device_id
+    if not frappe.cache().get_value("channel-owner-{}".format(channel)) == frappe.session.sid:
+        frappe.throw("{} is not authorized to read this channel".format(frappe.session.user))
     return _rms_get_status(channel, auth=False)
