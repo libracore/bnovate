@@ -16,7 +16,7 @@ auth()
 def get_context(context):
     context.instruments = get_instruments()
     build_sidebar(context)
-    context.title = _("Instruments")
+    context.title = _("My Instruments")
     return context
 
 def get_instruments():

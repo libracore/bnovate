@@ -147,9 +147,17 @@ async function get_connections(frm) {
 }
 
 async function start_session(frm, config_id, device_id) {
-	const link = await bnovate.iot.rms_start_session(config_id, device_id);
-	if (link) {
-		window.open("https://" + link, "_blank");
+	const startBtns = [...document.querySelectorAll('.rms-start')];
+	startBtns.map(btn => btn.disabled = true);
+	console.log("disable")
+	try {
+		const link = await bnovate.iot.rms_start_session(config_id, device_id);
+		if (link) {
+			window.open("https://" + link, "_blank");
+		}
+	} finally {
+		startBtns.map(btn => btn.disabled = false);
+		console.log("enable")
 	}
 	get_connections(frm);
 }
@@ -169,7 +177,7 @@ function draw_table(frm, access_configs) {
 				<tr>
 					<td><b>{{ access.name }}</b></td>
 					<td>{{ access.protocol.toUpperCase() }}</td>
-					<td><button class="btn btn-xs btn-primary" onclick="cur_frm.start_session({{ access.id }}, {{ access.device_id }})">New</button></td>
+					<td><button class="btn btn-xs btn-primary rms-start" onclick="cur_frm.start_session({{ access.id }}, {{ access.device_id }})">New</button></td>
 					<td></td>
 				</tr>
 					{% for session in access.sessions %}
@@ -230,9 +238,18 @@ async function configure_device(frm) {
 	}
 
 	set_connections_message(frm, "Loading...");
-	await bnovate.iot.rms_initialize_device(device_id, values.device_name);
-	await get_connection_status(frm);
-	return get_connections(frm);
+	// await bnovate.iot.rms_initialize_device(device_id, values.device_name);
+	await frappe.call({
+		method: "bnovate.bnovate.doctype.connectivity_package.connectivity_package.auto_configure_device",
+		args: {
+			device_id,
+			new_device_name: values.device_name,
+			docname: frm.doc.name,
+		}
+	});
+	frm.reload_doc();
+	// await get_connection_status(frm);
+	// return get_connections(frm);
 }
 
 // Promise-ified frappe prompt:

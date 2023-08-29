@@ -5,11 +5,10 @@
 from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
-from bnovate.bnovate.utils.iot_apis import rms_get_id, rms_get_device
+from bnovate.bnovate.utils.iot_apis import rms_get_id, rms_get_device, rms_initialize_device
 
 class ConnectivityPackage(Document):
 	pass
-
 
 @frappe.whitelist()
 def set_info_from_rms(docname):
@@ -33,3 +32,10 @@ def set_info_from_rms(docname):
 	cp.db_set("iccid", device.iccid[:19])
 
 	return cp
+
+@frappe.whitelist()
+def auto_configure_device(device_id, new_device_name, docname):
+	""" Scan ports, add available remotes, refresh RMS info """
+
+	rms_initialize_device(device_id, new_device_name)
+	return set_info_from_rms(docname)
