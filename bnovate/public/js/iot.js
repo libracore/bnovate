@@ -45,12 +45,20 @@ bnovate.iot.rms_start_session = async function rms_start_session(config_id, devi
     start_session_method = null,
     get_status_method = null,
 ) {
-    let resp = await frappe.call({
-        method: start_session_method || 'bnovate.bnovate.utils.iot_apis.rms_start_session',
-        args: {
-            config_id,
-        }
-    });
+    frappe.show_progress(__("Starting session...."), 0, 8, __("Connecting..."));
+    let resp = {};
+
+    try {
+        resp = await frappe.call({
+            method: start_session_method || 'bnovate.bnovate.utils.iot_apis.rms_start_session',
+            args: {
+                config_id,
+            }
+        });
+    } catch {
+        frappe.hide_progress();
+    }
+
     const channel = resp.message;
 
     while (true) {
