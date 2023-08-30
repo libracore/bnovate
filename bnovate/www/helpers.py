@@ -8,11 +8,24 @@ from frappe import _
 from frappe.contacts.doctype.address.address import get_address_display
 
 def auth():
-    # check login
+    # check login, throw exception if not logged in
     if frappe.session.user=='Guest':
         frappe.throw(_("You need to be logged in to access this page"), frappe.PermissionError)
     if not "@" in frappe.session.user:
         frappe.throw(_("You need to be logged in to access this page"), frappe.PermissionError)
+
+def is_guest():
+    if frappe.session.user=='Guest' or not "@" in frappe.session.user:
+        return True
+    return False
+
+def update_context(context):
+    """ Called by hooks.py as a 'middleware' on all pages, including Desk pages. """
+    build_sidebar(context, context.show_sidebar)
+    return context
+
+def get_settings():
+    return frappe.get_single("bNovate Settings")
 
 def get_session_customers():
     # fetch customers for this user, ordered the same as in Desk.
@@ -53,15 +66,20 @@ def get_session_contact():
 
     return users[0].name
 
-def allow_cartridge_portal():
+def has_cartridge_portal():
     """ True if user is allowed to use cartridge management features """
-    if get_session_primary_customer().enable_cartridge_portal:
+    customer = get_session_primary_customer()
+    if customer is not None and customer.enable_cartridge_portal:
         return True
+    return False
 
 
-def build_sidebar(context):
-    context.show_sidebar = True
+def build_sidebar(context, show=True):
+    context.show_sidebar = show
     context.sidebar_items = [{
+            'route': '/',
+            'title': 'Dashboard',
+        }, {
             'route': 'quotations',
             'title': 'Quotations',
         }, {
@@ -69,7 +87,7 @@ def build_sidebar(context):
             'title': 'My Instruments',
         }]
 
-    if allow_cartridge_portal():
+    if has_cartridge_portal():
         context.sidebar_items.extend([{
                 'route': 'cartridges',
                 'title': 'My Cartridges',

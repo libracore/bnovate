@@ -1,0 +1,106 @@
+{% extends "templates/web.html" %}
+
+{% block page_content %}
+
+{% if is_guest %}
+{{ greeting }}
+{% else %}
+
+<div class="row row-cols-1 row-cols-md-2 g-4">
+    <div class="col">
+        <div class="card">
+            <div class="card-header">Quick Connect</div>
+            <div class="card-body">
+                <dl class="card-text">
+                    {% for instrument in connected_instruments if instrument.cp %}
+                    <dt>{{ instrument.cp.device_name }}</dt>
+                    <dd>
+                        {% if instrument.cp.web %}
+                        <button href="#" class="btn btn-primary open-remote" data-config-id="{{ instrument.cp.web.id }}"
+                            data-device-id="{{ instrument.cp.web.device_id}}">Web UI</button>
+                        {% endif %}
+                        {% if instrument.cp.vnc %}
+                        <button href="#" class="btn btn-primary open-remote" data-config-id="{{ instrument.cp.vnc.id }}"
+                            data-device-id="{{ instrument.cp.vnc.device_id}}">Remote Desktop</button>
+                        {% endif %}
+                    </dd>
+                    {% endfor %}
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    {% if has_cartridge_portal %}
+    <div class="col">
+        <div class="card">
+            <div class="card-header">Refill Requests</div>
+            <div class="card-body">
+                <!-- <h5 class="card-title">Refill Requests</h5> -->
+                <table class="table table-condensed" style="border-bottom: 1px solid #d1d8dd; width:100%">
+                    <thead>
+                        <th>{{ _("#") }}</th>
+                        <th>{{ _("Status") }}</th>
+                        <th>{{ _("Tracking No") }}</th>
+                    </thead>
+                    <tbody>
+                        {% for row in requests %}
+                        <tr>
+                            <td><a href="/requests/{{ row.name }}">{{ row.name }}</a></td>
+                            <td>
+                                <a href="/requests/{{ row.name }}">
+                                    <span
+                                        class="indicator {{ row.indicator_color or ('blue' if row.docstatus==1 else 'darkgrey') }}">
+                                        {{ _(row.get('indicator_title')) or _(row.status) or _("Submitted") }}
+                                    </span>
+                                </a>
+                            </td>
+                            <td>
+                                {% if row.tracking_no and row.status == "Shipped" %}
+                                    <a href="/requests/{{ row.name }}">
+                                    {% if row.carrier and row.carrier.strip() == "DHL" %}
+                                    <a href="https://www.dhl.com/ch-en/home/tracking/tracking-express.html?submit=1&tracking-id={{ row.tracking_no }}">{{
+                                        row.tracking_no }}</a>
+                                    {% else %}
+                                    {{ row.tracking_no }} {{ row.carrier }}
+                                    {% endif %}
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+
+{% endif %}
+
+{% endblock %}
+
+{% block script %}
+<script>
+    frappe.require("/assets/bnovate/js/iot.js");
+
+    let remoteBtns = [...document.querySelectorAll(".open-remote")];
+
+    remoteBtns.map(el => el.addEventListener("click", async (e) => {
+        try {
+            remoteBtns.map(btn => btn.disabled = true)
+            const link = await bnovate.iot.rms_start_session(el.dataset.configId, el.dataset.deviceId,
+                start_session_method = 'bnovate.www.instruments.portal_start_session',
+                get_status_method = 'bnovate.www.instruments.portal_get_status'
+            );
+            if (link) {
+                window.open("https://" + link, "_blank");
+            }
+        } finally {
+            remoteBtns.map(btn => btn.disabled = false)
+        }
+    }));
+
+</script>
+{% endblock %}

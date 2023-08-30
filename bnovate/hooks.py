@@ -158,6 +158,14 @@ standard_portal_menu_items = [
     {"title": _("My Addresses"), "route": "/my_addresses", "reference_doctype": "Address", "role": "Customer"},
 ]
 
+website_context = {
+    "favicon": "/assets/bnovate/favicon.ico",
+    # “splash_image”: “/assets/your_app/images/your_splash.png”
+}
+
+update_website_context = "bnovate.www.helpers.update_context"
+
+
 # Generators
 # ----------
 

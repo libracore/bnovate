@@ -8,7 +8,7 @@ from frappe import _
 
 from bnovate.bnovate.doctype.refill_request.refill_request import RefillRequest
 
-from .helpers import get_session_primary_customer, auth, build_sidebar, allow_cartridge_portal
+from .helpers import get_session_primary_customer, auth, build_sidebar, has_cartridge_portal
 
 no_cache = 1
 
@@ -17,7 +17,7 @@ auth()
 def get_context(context):
     build_sidebar(context)
     
-    if allow_cartridge_portal():
+    if has_cartridge_portal():
         context.data = get_requests()
     else:
         context.data = []
