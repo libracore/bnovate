@@ -125,8 +125,11 @@ def rms_request(path, method='GET', params=None, body=None, settings=None, auth=
 
 @frappe.whitelist()
 def rms_get_device(device_id):
+    return _rms_get_device(device_id)
+
+def _rms_get_device(device_id, auth=True):
     """ Return info from single device """
-    return rms_request("/api/devices/{id}".format(id=device_id))
+    return rms_request("/api/devices/{id}".format(id=device_id), auth=auth)
 
 
 def rms_set_device(device_id, payload, auth=True):

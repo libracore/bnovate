@@ -6,7 +6,7 @@ from frappe import _
 
 from frappe.exceptions import ValidationError
 
-from bnovate.bnovate.utils.iot_apis import rms_get_access_configs, _rms_start_session, _rms_get_status, rms_initialize_device
+from bnovate.bnovate.utils.iot_apis import rms_get_access_configs, _rms_start_session, _rms_get_status, rms_initialize_device, _rms_get_device
 from bnovate.bnovate.doctype.connectivity_package.connectivity_package import set_info_from_rms
 from .helpers import get_session_customers, get_session_primary_customer, auth, build_sidebar
 
@@ -128,3 +128,17 @@ def portal_get_status(channel):
     if not frappe.cache().get_value("channel-owner-{}".format(channel)) == frappe.session.sid:
         frappe.throw("{} is not authorized to read this channel".format(frappe.session.user))
     return _rms_get_status(channel, auth=False)
+
+@frappe.whitelist()
+def portal_get_device(device_id):
+    """ Return connection info only if device_id belongs to a connected Customer """
+
+    cp_owner = frappe.get_value("Connectivity Package", 
+                                filters={"rms_id": ["=", device_id]}, 
+                                fieldname="customer")
+
+    if cp_owner is None or all(c.docname != cp_owner for c in get_session_customers()):
+        # None of the linked customers match this connectivity package owner
+        frappe.throw("{} does not have access to this device".format(frappe.session.user)) 
+
+    return _rms_get_device(device_id, auth=False)

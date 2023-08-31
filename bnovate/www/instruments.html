@@ -64,6 +64,7 @@
                 {% if instrument.cp.web or instrument.cp.vnc %}
                 <dt>****Link</dt>
                 <dd>
+                    <div class="link-status" data-device-id="{{ instrument.cp.rms_id }}"></div><br>
                     {% if instrument.cp.web %}
                         <button href="#" class="btn btn-primary open-remote" data-config-id="{{ instrument.cp.web.id }}" data-device-id="{{ instrument.cp.web.device_id}}">Web UI</button>
                     {% endif %}
@@ -117,6 +118,16 @@
         return resp.message;
     }
 
+    async function portal_get_device(device_id) {
+        let resp = await frappe.call({
+            method: 'bnovate.www.instruments.portal_get_device',
+            args: {
+                device_id
+            }
+        });
+        return resp.message;
+    }
+
     let btn = document.querySelector("#init-device");
     btn.addEventListener("click", async (e) => {
         // TODO: convert this to a wizard modal for guided setup.
@@ -130,7 +141,7 @@
                         fieldtype: "Data",
                         reqd: 1,
                 }, {
-                        label: "Device Friendly Name",
+                        label: "Friendly Name for your Instrument",
                         fieldname: "device_name",
                         fieldtype: "Data",
                         reqd: 1,
@@ -154,8 +165,19 @@
             btn.disabled = false;
         }
 
-    })
+    });
 
+
+    // Load status
+    [...document.querySelectorAll(".link-status")].map( async el => {
+        const device = await portal_get_device(el.dataset.deviceId);
+        console.log("Device status", device)
+
+        el.innerHTML = `
+        <span class="indicator whitespace-nowrap ${device.status ? 'green' : 'red'}">${device.status ? 'Link Online' : 'Link Offline'}</span><br>
+        ${device.operator}<br> ${device.connection_type} [${device.signal} dBm]
+        `
+    })
     
 
 
