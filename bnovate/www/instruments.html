@@ -23,6 +23,12 @@
 
 <h1>{{ _("My Instruments") }}</h1>
 
+<div class="row">
+    <div class="col">
+        <button id="init-device" class="btn btn-primary" style="margin-bottom: 10px">{{ _("Initialize ****Link") }}</button>
+    </div>
+</div>
+
 <div class="card-group">
     {% for instrument in instruments %}
     <div class="card">
@@ -55,7 +61,7 @@
                 <dd>☆☆☆ None</dd>
                 {% endif %}
 
-                {% if instrument.cp %}
+                {% if instrument.cp.web or instrument.cp.vnc %}
                 <dt>****Link</dt>
                 <dd>
                     {% if instrument.cp.web %}
@@ -76,7 +82,12 @@
 
 {% block script %}
 <script>
+    // TODO: once I have my own modal lib, no longer needs all these imports
+    frappe.require("/assets/js/control.min.js")
+    frappe.require("/assets/js/dialog.min.js")  // <-- messes up progress modal.
+
     frappe.require("/assets/bnovate/js/iot.js");
+    frappe.require("/assets/bnovate/js/bnovate_common.js");
 
     let remoteBtns = [...document.querySelectorAll(".open-remote")];
 
@@ -94,6 +105,60 @@
             remoteBtns.map(btn => btn.disabled = false)
         }
     }));
+
+    async function portal_initialize_device(teltonika_serial, device_name) {
+        let resp = await frappe.call({
+            method: 'bnovate.www.instruments.portal_initialize_device',
+            args: {
+                teltonika_serial,
+                device_name
+            }
+        });
+        return resp.message;
+    }
+
+    let btn = document.querySelector("#init-device");
+    btn.addEventListener("click", async (e) => {
+        // TODO: convert this to a wizard modal for guided setup.
+        btn.disabled = true;
+        try {
+            let values = await bnovate.utils.prompt(
+                "Enter device details",
+                [{
+                        label: "****Link Serial No",
+                        fieldname: "teltonika_serial",
+                        fieldtype: "Data",
+                        reqd: 1,
+                }, {
+                        label: "Device Friendly Name",
+                        fieldname: "device_name",
+                        fieldtype: "Data",
+                        reqd: 1,
+                        description: "'Post-Filter', 'Mobile Unit', ...",
+                }],
+                "Connect",
+                "Cancel"
+            )
+
+            if (values) {
+                // TODO: check for errors, actual feedback and not fake progress bar, etc.
+                frappe.show_progress("Connecting...", 20, 100);
+                setTimeout(() => frappe.show_progress("Scanning Network...", 40, 100), 1000);
+                setTimeout(() => frappe.show_progress("Scanning Ports...", 60, 100), 3000);
+
+                await portal_initialize_device(values.teltonika_serial, values.device_name);
+                location.reload();
+            }
+
+        } finally {
+            btn.disabled = false;
+        }
+
+    })
+
+    
+
+
 
 </script>
 {% endblock %}

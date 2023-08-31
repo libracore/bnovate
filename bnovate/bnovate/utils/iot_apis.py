@@ -20,6 +20,10 @@ READ, WRITE = "read", "write"
 class ApiException(Exception):
     pass
 
+class NoEndDevicesFound(ApiException):
+    """ No end devices were found during port scan. """
+    pass
+
 class ChannelNotFound(ApiException):
     """ Raised when a status channel isn't found - may be too early, try again """
 
@@ -70,15 +74,15 @@ def rms_get_status(channel):
     # Response and error handling are slightly different from regular API
     return _rms_get_status(channel, auth=True)
 
-def rms_monitor_status(channel, device_id, attempt=0):
+def rms_monitor_status(channel, device_id, attempt=0, auth=True):
     """ Monitor status channel until completion or error """
-    if attempt >= 20:
+    if attempt >= 30:
         raise ApiException("Timeout requesting status update from channel{}".format(channel))
     try:
-        resp = rms_get_status(channel)
+        resp = _rms_get_status(channel, auth)
     except ChannelNotFound:
         time.sleep(1)
-        return rms_monitor_status(channel, device_id, attempt + 1)
+        return rms_monitor_status(channel, device_id, attempt + 1, auth)
 
     if device_id not in resp:
         raise ApiException("No status update for device {} in channel {}".format(device_id, channel))
@@ -91,7 +95,7 @@ def rms_monitor_status(channel, device_id, attempt=0):
         return updates[-1]
 
     time.sleep(0.5)
-    return rms_monitor_status(channel, device_id, attempt + 1)
+    return rms_monitor_status(channel, device_id, attempt + 1, auth)
 
 
 def rms_request(path, method='GET', params=None, body=None, settings=None, auth=True):
@@ -125,11 +129,12 @@ def rms_get_device(device_id):
     return rms_request("/api/devices/{id}".format(id=device_id))
 
 
-def rms_set_device(device_id, payload):
+def rms_set_device(device_id, payload, auth=True):
     """ Set device data """
     return rms_request("/api/devices/{}".format(device_id),
     "PUT",
-    body=payload)
+    body=payload,
+    auth=auth)
 
 
 def rms_get_devices(settings=None):
@@ -144,7 +149,7 @@ def rms_get_id(serial):
         return matches[0]['id']
     return None
 
-def rms_port_scan(device_id):
+def rms_port_scan(device_id, auth=True):
     """ Return available IPs and ports, i.e. instruments connected to device 
 
     Example return value:
@@ -159,29 +164,31 @@ def rms_port_scan(device_id):
     """
     meta = rms_request(
         "/api/devices/{}/port-scan".format(device_id),
-        params={"type": "ethernet"}
+        params={"type": "ethernet"},
+        auth=auth
     )
-    ports_info = rms_monitor_status(meta['channel'], device_id)
+    ports_info = rms_monitor_status(meta['channel'], device_id, auth=auth)
     if not 'ports' in ports_info \
             or not ports_info['ports'] \
             or not 'devices' in ports_info['ports'][0] \
             or not ports_info['ports'][0]['devices']:
-        raise ApiException("No end devices found")
+        raise NoEndDevicesFound("No end devices found")
     
     return ports_info['ports'][0]['devices'][0]
 
 
-def rms_create_access(device_id, payload):
+def rms_create_access(device_id, payload, auth=True):
     """ Create remote access configurations. See API reference for payload format. """
     meta = rms_request(
         "/api/devices/remote-access",
         "POST",
         body=payload,
+        auth=auth
     )
-    return rms_monitor_status(meta['channel'], device_id)
+    return rms_monitor_status(meta['channel'], device_id, auth=auth)
 
 
-def rms_delete_access(device_id, config_ids):
+def rms_delete_access(device_id, config_ids, auth=True):
     """ Delete access configurations based on IDs.
 
     config_ids: array of int
@@ -192,18 +199,36 @@ def rms_delete_access(device_id, config_ids):
             "/api/devices/remote-access",
             "DELETE",
             body={'id': [id]},
+            auth=auth
         )
-        rms_monitor_status(meta['channel'], device_id)
+        rms_monitor_status(meta['channel'], device_id, auth=auth)
 
 
-@frappe.whitelist()
-def rms_initialize_device(device_id, device_name):
+
+def rms_initialize_device(device_id, device_name, auth=True):
     """ Create remote configurations for a device. """
 
+    # 0) Rename device and clear up existing access configs
     # 1) Port scan
     # 2) Create HTTPS and VNC remotes for first available end-device
-    # 3) Rename teltonika device
-    end_devices = rms_port_scan(device_id)
+
+    # Rename
+    rms_set_device(device_id, {
+        "name": device_name,
+    }, auth)
+
+    # Delete existing remote configs (if no end devices are available, we shouldn't display outdated configs)
+    configs = rms_get_access_configs(device_id, auth=auth)
+    if  configs:
+        rms_delete_access(device_id, 
+            [c['id'] for c in configs if c['protocol'] in ("https", "vnc")],
+            auth=auth)
+        
+    # Port Scan
+    try:
+        end_devices = rms_port_scan(device_id, auth)
+    except NoEndDevicesFound:
+        frappe.throw("No instruments connected to this Link.")
 
     ip, ports = end_devices['ip'], end_devices['port']
     data = []
@@ -227,20 +252,14 @@ def rms_initialize_device(device_id, device_name):
             "credentials_required": False,
         })
 
-    rms_set_device(device_id, {
-        "name": device_name,
-    })
+    # Set new configs, if available
+    if data:
+        # raise ApiException("Neither HTTPS or VNC available on this device")
+        return rms_create_access(device_id, {"data": data}, auth)
+    
+    # False inform that neithe HTTPS nor VNC are available.
+    return False
 
-    if not data:
-        raise ApiException("Neither HTTPS or VNC available on this device")
-
-    # Delete existing remotes, only if we can create new ones
-    configs = rms_get_access_configs(device_id)
-    if configs:
-        rms_delete_access(device_id, 
-            [c['id'] for c in configs if c['protocol'] in ("https", "vnc")])
-
-    return rms_create_access(device_id, {"data": data})
 
 def rms_get_access_configs(device_id=None, settings=None, auth=True):
     """ Return list of access configs based on RMS ID (not SN). """

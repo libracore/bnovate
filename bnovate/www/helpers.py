@@ -80,22 +80,22 @@ def build_sidebar(context, show=True):
             'route': '/',
             'title': 'Dashboard',
         }, {
-            'route': 'quotations',
+            'route': '/quotations',
             'title': 'Quotations',
         }, {
-            'route': 'instruments',
+            'route': '/instruments',
             'title': 'My Instruments',
         }]
 
     if has_cartridge_portal():
         context.sidebar_items.extend([{
-                'route': 'cartridges',
+                'route': '/cartridges',
                 'title': 'My Cartridges',
             }, {
-                'route': 'requests',
+                'route': '/requests',
                 'title': 'Refill Requests',
             }, {
-                'route': 'my_addresses',
+                'route': '/my_addresses',
                 'title': 'My Addresses',
             }])
 

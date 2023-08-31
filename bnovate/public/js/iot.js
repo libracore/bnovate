@@ -104,18 +104,6 @@ bnovate.iot.rms_get_status = async function rms_get_status(channel, method = nul
     return resp.message;
 }
 
-// Set name and auto-configure remotes
-bnovate.iot.rms_initialize_device = async function rms_initialize_device(device_id, device_name) {
-    let resp = await frappe.call({
-        method: "bnovate.bnovate.utils.iot_apis.rms_initialize_device",
-        args: {
-            device_id,
-            device_name
-        }
-    });
-    return resp.message;
-}
-
 
 // Get status of an instrument, to fetch SN for example
 bnovate.iot.get_status = async function get_status(device_id, password, attempt = 1) {

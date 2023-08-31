@@ -6,7 +6,8 @@ from frappe import _
 
 from frappe.exceptions import ValidationError
 
-from bnovate.bnovate.utils.iot_apis import rms_get_access_configs, _rms_start_session, _rms_get_status
+from bnovate.bnovate.utils.iot_apis import rms_get_access_configs, _rms_start_session, _rms_get_status, rms_initialize_device
+from bnovate.bnovate.doctype.connectivity_package.connectivity_package import set_info_from_rms
 from .helpers import get_session_customers, get_session_primary_customer, auth, build_sidebar
 
 no_cache = 1
@@ -63,8 +64,12 @@ def get_instruments():
     return assets
 
 def auth_remote_session(config_id):
-    # Open Remote session if the gateway is owned by a linked customer
-    # Device ID here is the RMS device ID.
+    """ Return True if access config relates to a gateway owned by a linked customer.
+
+    frappe.throw if config doesn't exist or doesn't belong to a customer linked to current user.
+     
+       """
+    # Open Remote session associated with config if the gateway is owned by a linked customer
 
     access_configs = [ c for c in rms_get_access_configs(auth=False) if str(c['id']) == config_id ]
     if not access_configs:
@@ -83,6 +88,30 @@ def auth_remote_session(config_id):
 
     return True
 
+@frappe.whitelist()
+def portal_initialize_device(teltonika_serial, device_name):
+    """ Scan ports and create remote access configs """
+
+    # - Find associated Connectivity Package (CP)
+    # - Authenticate: must belong to a linked Customer
+    # - Get Device ID from CP
+    # - Initialize using device ID.
+    # - Fetch and associate instrument SN
+
+    cp = frappe.get_value("Connectivity Package", filters={
+        "teltonika_serial": ["=", teltonika_serial],
+    }, fieldname=['name', 'customer', 'rms_id'], as_dict=True)
+
+    if cp is None:
+        frappe.throw("Unknown serial number {}".format(teltonika_serial))
+
+    if cp.customer is None or all(customer.docname != cp.customer for customer in get_session_customers()):
+        # None of the linked customers match this connectivity package owner
+        frappe.throw("{} does not have access to device {}".format(frappe.session.user, teltonika_serial))
+ 
+    # If this point is reached, user is authorized.
+    rms_initialize_device(cp.rms_id, device_name, auth=False)
+    frappe.db.set_value('Connectivity Package', cp.name, 'device_name', device_name)
 
 
 @frappe.whitelist()

@@ -42,7 +42,7 @@
                         <th>{{ _("Status") }}</th>
                         <th>{{ _("Tracking No") }}</th>
                     </thead>
-                    <tbody>
+                    <!-- <tbody> -->
                         {% for row in requests %}
                         <tr>
                             <td><a href="/requests/{{ row.name }}">{{ row.name }}</a></td>
@@ -58,7 +58,7 @@
                                 {% if row.tracking_no and row.status == "Shipped" %}
                                     <a href="/requests/{{ row.name }}">
                                     {% if row.carrier and row.carrier.strip() == "DHL" %}
-                                    <a href="https://www.dhl.com/ch-en/home/tracking/tracking-express.html?submit=1&tracking-id={{ row.tracking_no }}">{{
+                                    <a target="_blank" href="https://www.dhl.com/ch-en/home/tracking/tracking-express.html?submit=1&tracking-id={{ row.tracking_no }}">{{
                                         row.tracking_no }}</a>
                                     {% else %}
                                     {{ row.tracking_no }} {{ row.carrier }}
