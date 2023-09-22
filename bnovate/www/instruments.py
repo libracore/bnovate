@@ -15,22 +15,27 @@ no_cache = 1
 auth()
 
 def get_context(context):
-    context.instruments = get_instruments()
+    context.customers = sorted(get_session_customers(), key=lambda c: c.customer_name)
+    context.instruments = get_instruments(context.customers)
     build_sidebar(context)
     context.title = _("My Instruments")
     return context
 
-def get_instruments():
-    primary_customer = get_session_primary_customer()
+def get_instruments(customers):
+    return {c.docname: get_instruments_one_customer(c) for c in customers}
 
+def get_instruments_one_customer(customer):
     assets = frappe.get_all("Serial No", filters={
-            "owned_by": ["=", primary_customer.docname],
+            "owned_by": ["=", customer.docname],
             "item_group": ["=", "Instruments"],
         },
         fields="*"
     )
 
     for asset in assets:
+        # Name stored in DB can be outdated:
+        asset.owned_by_name = customer.customer_name
+
         # Find service agreements
         sa = frappe.get_all("Subscription Contract", filters={
                 "serial_no": ["=", asset.serial_no],

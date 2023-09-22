@@ -32,7 +32,8 @@ def get_session_customers():
     customers = frappe.db.sql("""
         SELECT 
             `tC1`.`link_name` AS `docname`,
-            `tCus`.`enable_cartridge_portal`
+            `tCus`.`enable_cartridge_portal`,
+            `tCus`.`customer_name`
         FROM `tabContact`
         JOIN `tabDynamic Link` AS `tC1` ON `tC1`.`parenttype` = "Contact" 
                                        AND `tC1`.`link_doctype` = "Customer" 

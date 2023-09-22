@@ -98,7 +98,9 @@ app_include_js = [  # Note to self: in case of changes, may need to run bench bu
 ]
 
 # include js, css files in header of web template
-web_include_css = "/assets/bnovate/bnovate-web.css"
+web_include_css = [
+    "/assets/bnovate/bnovate-web.css",
+]
 # web_include_js = "/assets/bnovate/js/web_includes/bnovate.js"
 
 # include js in page

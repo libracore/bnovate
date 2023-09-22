@@ -1,8 +1,10 @@
+from itertools import chain
+
 import frappe
 
 from frappe import _
 
-from .helpers import build_sidebar, is_guest, get_settings, has_cartridge_portal
+from .helpers import build_sidebar, is_guest, get_settings, has_cartridge_portal, get_session_customers
 from .instruments import get_instruments
 from .requests import get_requests
 
@@ -22,7 +24,9 @@ def get_context(context):
     context.title = _("Portal Home")
 
     # Quick connect
-    context.connected_instruments = [ i for i in get_instruments() if i.cp ]
+    context.customers = get_session_customers()
+    instruments = list(chain(*get_instruments(context.customers).values()))
+    context.connected_instruments = [ i for i in instruments if i.cp ]
 
     # Cartridges
     context.has_cartridge_portal = has_cartridge_portal()

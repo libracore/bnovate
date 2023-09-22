@@ -13,7 +13,12 @@
             <div class="card-body">
                 <dl class="card-text">
                     {% for instrument in connected_instruments if instrument.cp %}
-                    <dt>{{ instrument.cp.device_name }}</dt>
+                    <dt>
+                        {% if customers | length > 1 %}
+                            {{ instrument.owned_by_name }} - 
+                        {% endif %}
+                        {{ instrument.cp.device_name }}
+                    </dt>
                     <dd>
                         {% if instrument.cp.web %}
                         <button href="#" class="btn btn-primary open-remote" data-config-id="{{ instrument.cp.web.id }}"
@@ -83,6 +88,7 @@
 
 {% block script %}
 <script>
+    frappe.require("/assets/js/dialog.min.js")  // Fixes progress modal layout
     frappe.require("/assets/bnovate/js/iot.js");
 
     let remoteBtns = [...document.querySelectorAll(".open-remote")];

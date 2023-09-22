@@ -4,17 +4,17 @@
 {% block style %}
 <style>
     .card-group .card {
-    flex: 0 0 33%;
-    border: 1px solid rgba(0, 0, 0, 0.125);
-    border-radius: 0rem;
-    margin: 0.1%;
+        flex: 0 0 33%;
+        border: 1px solid rgba(0, 0, 0, 0.125);
+        border-radius: 0rem;
+        margin: 0.1%;
     }
 
-    .card-group .card + .card {
-    flex: 0 0 33%;
-    border: 1px solid rgba(0, 0, 0, 0.125);
-    border-radius: 0rem;
-    margin: 0.1%;
+    .card-group .card+.card {
+        flex: 0 0 33%;
+        border: 1px solid rgba(0, 0, 0, 0.125);
+        border-radius: 0rem;
+        margin: 0.1%;
     }
 </style>
 {% endblock %}
@@ -25,59 +25,69 @@
 
 <div class="row">
     <div class="col">
-        <button id="init-device" class="btn btn-primary" style="margin-bottom: 10px">{{ _("Initialize ****Link") }}</button>
+        <button id="init-device" class="btn btn-primary" style="margin-bottom: 10px">{{ _("Initialize a BactoLink")
+            }}</button>
     </div>
 </div>
 
-<div class="card-group">
-    {% for instrument in instruments %}
-    <div class="card">
-        <div class="card-body">
-            <img class="card-img-top" src="/assets/bnovate/img/bactosense.jpeg" alt="BactoSense image">
+{% for customer in customers if instruments[customer.docname] %}
+<div class="container mt-4">
 
-            <h5 class="card-title">
-                {% if instrument.cp %}
+    {% if customers|length > 1 %}
+    <h2>{{ customer.customer_name }}</h2>
+    {% endif %}
+
+    <div class="card-group">
+        {% for instrument in instruments[customer.docname] %}
+        <div class="card">
+            <div class="card-body">
+                <img class="card-img-top" src="/assets/bnovate/img/bactosense.jpeg" alt="BactoSense image">
+
+                <h5 class="card-title">
+                    {% if instrument.cp %}
                     {{ instrument.cp.device_name }}
-                {% else %}
+                    {% else %}
                     {{ instrument.serial_no}}
-                {% endif %}
-            </h5>
-
-            <dl class="card-text">
-                <dt>Serial No</dt>
-                <dd>{{ instrument.serial_no }}</dd>
-
-                <dt>Warranty Until</dt>
-                {% if instrument.warranty_expiry_date %}
-                <dd>{{ frappe.utils.formatdate(instrument.warranty_expiry_date, 'medium') }}</dd>
-                {% else  %}
-                <dd>TBC</dd>
-                {% endif %}
-
-                <dt>Service Agreement</dt>
-                {% if instrument.sa %}
-                <dd>★☆☆ Essential</dd>
-                {% else  %}
-                <dd>☆☆☆ None</dd>
-                {% endif %}
-
-                {% if instrument.cp.web or instrument.cp.vnc %}
-                <dt>****Link</dt>
-                <dd>
-                    <div class="link-status" data-device-id="{{ instrument.cp.rms_id }}"></div><br>
-                    {% if instrument.cp.web %}
-                        <button href="#" class="btn btn-primary open-remote" data-config-id="{{ instrument.cp.web.id }}" data-device-id="{{ instrument.cp.web.device_id}}">Web UI</button>
                     {% endif %}
-                    {% if instrument.cp.vnc %}
-                        <button href="#" class="btn btn-primary open-remote" data-config-id="{{ instrument.cp.vnc.id }}" data-device-id="{{ instrument.cp.vnc.device_id}}">Remote Desktop</button>
+                </h5>
+
+                <dl class="card-text">
+                    <dt>Warranty Until</dt>
+                    {% if instrument.warranty_expiry_date %}
+                    <dd>{{ frappe.utils.formatdate(instrument.warranty_expiry_date, 'medium') }}</dd>
+                    {% else %}
+                    <dd>TBC</dd>
                     {% endif %}
-                </dd>
-                {% endif %}
-            </dl>
+
+                    <dt>Service Agreement</dt>
+                    {% if instrument.sa %}
+                    <dd>★☆☆ Essential</dd>
+                    {% else %}
+                    <dd>☆☆☆ None</dd>
+                    {% endif %}
+
+                    {% if instrument.cp.web or instrument.cp.vnc %}
+                    <dt>BactoLink</dt>
+                    <dd>
+                        <div class="link-status" data-device-id="{{ instrument.cp.rms_id }}"></div><br>
+                        {% if instrument.cp.web %}
+                        <button href="#" class="btn btn-primary open-remote" data-config-id="{{ instrument.cp.web.id }}"
+                            data-device-id="{{ instrument.cp.web.device_id}}">Web UI</button>
+                        {% endif %}
+                        {% if instrument.cp.vnc %}
+                        <button href="#" class="btn btn-primary open-remote" data-config-id="{{ instrument.cp.vnc.id }}"
+                            data-device-id="{{ instrument.cp.vnc.device_id}}">Remote Desktop</button>
+                        {% endif %}
+                    </dd>
+                    {% endif %}
+                </dl>
+            </div>
         </div>
+        {% endfor %}
     </div>
-    {% endfor %}
 </div>
+{% endfor %}
+
 
 {% endblock %}
 
@@ -85,7 +95,7 @@
 <script>
     // TODO: once I have my own modal lib, no longer needs all these imports
     frappe.require("/assets/js/control.min.js")
-    frappe.require("/assets/js/dialog.min.js")  // <-- messes up progress modal.
+    frappe.require("/assets/js/dialog.min.js")
 
     frappe.require("/assets/bnovate/js/iot.js");
     frappe.require("/assets/bnovate/js/bnovate_common.js");
@@ -96,8 +106,8 @@
         try {
             remoteBtns.map(btn => btn.disabled = true)
             const link = await bnovate.iot.rms_start_session(el.dataset.configId, el.dataset.deviceId,
-                start_session_method='bnovate.www.instruments.portal_start_session',
-                get_status_method='bnovate.www.instruments.portal_get_status'
+                start_session_method = 'bnovate.www.instruments.portal_start_session',
+                get_status_method = 'bnovate.www.instruments.portal_get_status'
             );
             if (link) {
                 window.open("https://" + link, "_blank");
@@ -136,16 +146,16 @@
             let values = await bnovate.utils.prompt(
                 "Enter device details",
                 [{
-                        label: "****Link Serial No",
-                        fieldname: "teltonika_serial",
-                        fieldtype: "Data",
-                        reqd: 1,
+                    label: "BactoLink Serial No",
+                    fieldname: "teltonika_serial",
+                    fieldtype: "Data",
+                    reqd: 1,
                 }, {
-                        label: "Friendly Name for your Instrument",
-                        fieldname: "device_name",
-                        fieldtype: "Data",
-                        reqd: 1,
-                        description: "'Post-Filter', 'Mobile Unit', ...",
+                    label: "Friendly Name for your Instrument",
+                    fieldname: "device_name",
+                    fieldtype: "Data",
+                    reqd: 1,
+                    description: "'Post-Filter', 'Mobile Unit', ...",
                 }],
                 "Connect",
                 "Cancel"
@@ -153,9 +163,9 @@
 
             if (values) {
                 // TODO: check for errors, actual feedback and not fake progress bar, etc.
-                frappe.show_progress("Connecting...", 20, 100);
-                setTimeout(() => frappe.show_progress("Scanning Network...", 40, 100), 1000);
-                setTimeout(() => frappe.show_progress("Scanning Ports...", 60, 100), 3000);
+                frappe.show_progress("Initializing BactoLink", 20, 100, "Connecting...");
+                setTimeout(() => frappe.show_progress("Initializing BactoLink", 40, 100, "Scanning Network..."), 1000);
+                setTimeout(() => frappe.show_progress("Initializing BactoLink", 60, 100, "Scanning Ports..."), 3000);
 
                 await portal_initialize_device(values.teltonika_serial, values.device_name);
                 location.reload();
@@ -169,7 +179,7 @@
 
 
     // Load status
-    [...document.querySelectorAll(".link-status")].map( async el => {
+    [...document.querySelectorAll(".link-status")].map(async el => {
         const device = await portal_get_device(el.dataset.deviceId);
         console.log("Device status", device)
 
@@ -178,10 +188,9 @@
         ${device.operator}<br> ${device.connection_type} [${device.signal} dBm]
         `
     })
-    
+
 
 
 
 </script>
 {% endblock %}
-
