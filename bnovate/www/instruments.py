@@ -68,7 +68,7 @@ def get_instruments_one_customer(customer):
 
     return assets
 
-def auth_remote_session(config_id):
+def auth_remote_session(config_id, device_id):
     """ Return True if access config relates to a gateway owned by a linked customer.
 
     frappe.throw if config doesn't exist or doesn't belong to a customer linked to current user.
@@ -76,7 +76,7 @@ def auth_remote_session(config_id):
        """
     # Open Remote session associated with config if the gateway is owned by a linked customer
 
-    access_configs = [ c for c in rms_get_access_configs(auth=False) if str(c['id']) == config_id ]
+    access_configs = [ c for c in rms_get_access_configs(device_id=device_id, auth=False) if str(c['id']) == config_id ]
     if not access_configs:
         frappe.throw("Remote access configuration does not exist")
     
@@ -120,10 +120,9 @@ def portal_initialize_device(teltonika_serial, device_name):
 
 
 @frappe.whitelist()
-def portal_start_session(config_id):
-
+def portal_start_session(config_id, device_id):
     # Raises error if user is not allowed.
-    auth_remote_session(config_id)
+    auth_remote_session(config_id, device_id)
     channel = _rms_start_session(config_id, auth=False)
     frappe.cache().set_value("channel-owner-{}".format(channel), frappe.session.sid, expires_in_sec=60*60)
     return channel

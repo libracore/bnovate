@@ -93,9 +93,9 @@
 
 {% block script %}
 <script>
-    // TODO: once I have my own modal lib, no longer needs all these imports
-    frappe.require("/assets/js/control.min.js")
-    frappe.require("/assets/js/dialog.min.js")
+    // TODO: once I have my own modal lib, no longer needs these couple imports
+    frappe.require("/assets/js/control.min.js");
+    frappe.require("/assets/js/dialog.min.js");
 
     frappe.require("/assets/bnovate/js/iot.js");
     frappe.require("/assets/bnovate/js/bnovate_common.js");
@@ -185,7 +185,7 @@
 
         el.innerHTML = `
         <span class="indicator whitespace-nowrap ${device.status ? 'green' : 'red'}">${device.status ? 'Link Online' : 'Link Offline'}</span><br>
-        ${device.operator}<br> ${device.connection_type} [${device.signal} dBm]
+        ${device.operator} <img src="${bnovate.web.signal_icon(device.signal)}" style="max-height: 2em"> <br> ${device.connection_type}[${device.signal} dBm]
         `
     })
 

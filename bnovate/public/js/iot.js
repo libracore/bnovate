@@ -53,6 +53,7 @@ bnovate.iot.rms_start_session = async function rms_start_session(config_id, devi
             method: start_session_method || 'bnovate.bnovate.utils.iot_apis.rms_start_session',
             args: {
                 config_id,
+                device_id,
             }
         });
     } catch {
