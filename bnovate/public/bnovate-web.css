@@ -122,7 +122,7 @@ flex-wrap: wrap;
 }
 
 .fill-width {
-  flex: 1
+  flex: 1;
 }
 
 
@@ -130,4 +130,130 @@ flex-wrap: wrap;
 
 .hide {
   display: none !important;
+}
+
+
+/* Wizard styling */
+
+/* Style needs to be defined outside of shadow DOM. */
+.wizard-ribbon {
+  --number-of-steps: 4;
+  --line-width: 2px;
+  --bullet-size: 2em;
+}
+
+.wizard-ribbon {
+  display: flex;
+  /* justify-content: space-between; */
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+ol.wizard-ribbon {
+  position: relative;
+  overflow: hidden;
+  counter-reset: wizard 0;
+  list-style-type: none;
+}
+
+.wizard-ribbon li {
+  position: relative;
+  float: left;
+  width: calc(100% / var(--number-of-steps));
+  text-align: center;
+  /* color: var(--active-background-color); */
+}
+
+.wizard-ribbon .current {
+  font-weight: bold;
+}
+.wizard-ribbon .current ~ li {
+  color: var(--label-color);
+}
+
+.wizard-ribbon li:before {
+  counter-increment: wizard;
+  content: ""; /* counter(wizard); */
+  display: block;
+  color: var(--line-color);
+  background-color: var(--completed-background-color);
+  border: var(--line-width) solid var(--line-color);
+  text-align: center;
+  width: var(--bullet-size);
+  height: var(--bullet-size);
+  line-height: var(--bullet-size);
+  border-radius: var(--bullet-size);
+  position: relative;
+  left: 50%;
+  margin-bottom: calc(var(--bullet-size) / 2);
+  margin-left: calc(var(--bullet-size) * -0.5);
+  z-index: 1;
+}
+
+.wizard-ribbon .current ~ li:before {
+  background-color: var(--uncompleted-background-color);
+  color: var(--line-color);
+  border-color: var(--line-color);
+}
+
+.wizard-ribbon li + li:after {
+  content: "";
+  display: block;
+  width: 100%;
+  background-color: var(--line-color);
+  height: var(--line-width);
+  position: absolute;
+  left: -50%;
+  top: calc(var(--bullet-size) / 2);
+  z-index: 0;
+}
+
+.wizard-ribbon .current ~ li:after {
+  background-color: var(--line-color);
+}
+
+.wizard-page textarea {
+  width: 100%;
+}
+
+.wizard-page label:hover,
+.wizard-page label:focus-within {
+background-color: #e9ecef;
+}
+
+.wizard-page .card-group > .card {
+  flex: 0 0 33%;
+}
+
+.wizard-page .card-body {
+position: relative;
+padding: 0px;
+}
+
+.wizard-page .card-body label {
+  margin: 0;
+  padding: 10px 20px;
+  height: 100%;
+  width: 100%;
+}
+
+.wizard-page input[type="radio"] {
+position: absolute;
+appearance: none;
+}
+
+.wizard-page input[type="radio"]:checked ~ label {
+background-color: var(--completed-background-color);
+}
+
+.wizard-summary .row {
+  padding: 20px;
+}
+
+.wizard-summary h5 {
+  margin-bottom: 15px;
+}
+
+.wizard-summary .card-body {
+  padding: 10px 20px;
 }

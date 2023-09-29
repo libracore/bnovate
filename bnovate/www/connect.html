@@ -1,0 +1,172 @@
+{% extends "templates/web.html" %}
+
+
+{% block style %}
+<style>
+    label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    /* Styling for input fields */
+    input[type="text"] {
+        width: 100%;
+        padding: 8px;
+        margin-bottom: 10px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+    }
+</style>
+{% endblock %}
+
+{% block page_content %}
+
+<h1>{{ _("Connect BactoLink") }}</h1>
+
+<div id="connect-wizard" class="container mt-5">
+    
+    <ol class="wizard-ribbon my-3">
+        <li class="wizard-step current" data-step="1">{{ _("Connect Hardware") }}</li>
+        <li class="wizard-step" data-step="2">{{ _("Configure Network") }}</li>
+        <li class="wizard-step" data-step="3">{{ _("Initialize Gateway") }}</li>
+        <li class="wizard-step" data-step="4">{{ _("Summary") }}</li>
+    </ol>
+    
+    <div class="wizard-page" id="page1"> 
+
+        <div class="container">
+            <div class="row">
+                <div class="col-lg">
+                    <img src="/assets/bnovate/img/guide/bactolink_setup.png">
+                </div>
+                <div class="col-lg">
+                    <h3>Connect your hardware like in the picture</h2>
+                    <ul>
+                        <li>Power supply to PoE injector</li>
+                        <li>PoE injector to Antenna</li>
+                        <li>PoE injector to BactoSense: ethernet and power</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="wizard-page" id="page2" style="display: none;">
+
+        <div class="container">
+            <div class="row">
+                <div class="col-lg m-2">
+                    <img src="/assets/bnovate/img/guide/service_settings.png" style="border: 0.5px solid black">
+                </div>
+                <div class="col-lg">
+                    <ul>
+                        <li>Check whether DHCP is activated. If not, activate.
+                            (Home Menu → System Settings → Network)</li>
+                        <li>Check whether https is activated. If not, activate and reboot BactoSense.
+                            (Home Menu → System Settings → System Services)</li>
+                        <li>Optionally, enable VNC.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="wizard-page" id="page3" style="display: none;">
+        <div class="row">
+            <div class="col-sm m-2">
+                <form id="gateway-info">
+                    <label for="teltonika_serial">Serial Number:</label>
+                    <input type="text" id="teltonika_serial" name="teltonika_serial" placeholder="60001xxxxx"" value="{{ serial_no }}" required>
+
+                    <label for="device_name">Friendly Name:</label>
+                    <input type="text" id="device_name" name="device_name" placeholder="Mobile Unit, Post-Filtration..." required>
+                </form>
+            </div>
+            <div class="col-sm m-2">
+                <ul>
+                    <li>Enter the Serial Number of the BactoLink</li>
+                    <li>Choose a friendly name to recognize your instrument</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="wizard-page wizard-summary" id="page4" style="display: none;">
+        Done.
+    </div>
+
+    <div class="modal-footer">
+        <div class="wizard-buttons">
+            <button type="button" class="btn btn-secondary" id="prev-button">{{ _("Previous") }}</button>
+            <button type="button" class="btn btn-primary" id="next-button">{{ _("Next") }}</button>
+            <button type="button" class="btn btn-primary" id="confirm-button" hidden>{{ _("Connect") }}</button>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+
+    function get_data() {
+        let frm = document.getElementById("gateway-info");
+        return Object.fromEntries(new FormData(frm));
+    }
+    function validate() {
+        let values = get_data();
+
+        if ( values.teltonika_serial.length <= 9 ) {
+            return false;
+        } else if (values.device_name <= 3) {
+            return false;
+        }
+        return true;
+    }
+
+
+    async function portal_initialize_device(teltonika_serial, device_name) {
+        let resp = await frappe.call({
+            method: 'bnovate.www.instruments.portal_initialize_device',
+            args: {
+                teltonika_serial,
+                device_name
+            }
+        });
+        return resp.message;
+    }
+
+    async function portal_get_device(device_id) {
+        let resp = await frappe.call({
+            method: 'bnovate.www.instruments.portal_get_device',
+            args: {
+                device_id
+            }
+        });
+        return resp.message;
+    }
+
+    // Initiates auto-configuration of the Gateway. Assumes validate has been called.
+    async function connect() {
+        frappe.show_progress("Initializing BactoLink", 20, 100, "Connecting...");
+        setTimeout(() => frappe.show_progress("Initializing BactoLink", 40, 100, "Scanning Network..."), 1000);
+        setTimeout(() => frappe.show_progress("Initializing BactoLink", 60, 100, "Scanning Ports..."), 3000);
+
+        let values = get_data();
+        return await portal_initialize_device(values.teltonika_serial, values.device_name);
+    }
+
+    frappe.require([
+        "/assets/bnovate/js/iot.js",
+        "/assets/bnovate/js/bnovate_common.js",
+        "/assets/bnovate/js/web_includes/wizard_page.js",
+    ]).then(() => {
+        let wizard = new WizardPage("connect-wizard", validate, connect);
+    })
+
+
+</script>
+{% endblock %}

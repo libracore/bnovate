@@ -149,6 +149,9 @@ website_route_rules = [
             "parents": [{"label": _("Refill Requests"), "route": "requests"}]
         }
     }, {
+        "from_route": "/connect/<serial_no>", 
+        "to_route": "connect",
+    }, {
         "from_route": "/internal/storage/<key>", 
         "to_route": "internal/storage",
     }
