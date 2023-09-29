@@ -2,6 +2,7 @@
 // For license information, please see license.txt
 
 frappe.require("/assets/bnovate/js/iot.js")  // provides bnovate.iot
+frappe.require("/assets/bnovate/js/web_includes/helpers.js")  // provides signal icons
 
 frappe.ui.form.on('Connectivity Package', {
 	onload(frm) {
@@ -113,7 +114,7 @@ function clear_connection_status(frm) {
 async function get_connection_status(frm) {
 	const device = await bnovate.iot.rms_get_device(get_device_id(frm));
 	$(frm.fields_dict.connection_status.wrapper).html(`
-		<span class="indicator whitespace-nowrap ${device.status ? 'green' : 'red'}"></span><b>${device.name}</b><br />
+		<span class="indicator whitespace-nowrap ${device.status ? 'green' : 'red'}"></span><b>${device.name}</b> <img src="${bnovate.web.signal_icon(device.signal)}" style="max-height: 2em"> <br />
 		${device.operator}, ${device.connection_type} [${device.signal} dBm] <br />
 		<a href="https://rms.teltonika-networks.com/devices/${device.id}" target="_blank">Manage on RMS<i class="fa fa-external-link"></i></a>
 	`)

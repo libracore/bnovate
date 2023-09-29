@@ -1,7 +1,9 @@
 frappe.require(["/assets/frappe/css/frappe-datatable.css",
 	"/assets/frappe/js/lib/clusterize.min.js",
 	"/assets/frappe/js/lib/Sortable.min.js",
-	"/assets/frappe/js/lib/frappe-datatable.js"])
+	"/assets/frappe/js/lib/frappe-datatable.js",
+	"/assets/bnovate/js/web_includes/helpers.js",
+])
 
 frappe.provide("frappe.bnovate.device_map");
 
@@ -80,7 +82,7 @@ frappe.pages['device-map'].on_page_load = function (wrapper) {
 					device.longitude || device.cell_tower_longitude || device.user_set_longitude || bn_long
 				])
 					.bindPopup(`
-					<span class="indicator whitespace-nowrap ${device.status ? 'green' : 'red'}"></span><b>${device.name}</b><br />
+					<span class="indicator whitespace-nowrap ${device.status ? 'green' : 'red'}"></span><b>${device.name}</b> <img src="${bnovate.web.signal_icon(device.signal)}" style="max-height: 2em"> <br />
 					${device.operator}, ${device.connection_type} [${device.signal} dBm] <br />
 					${frappe.utils.get_form_link("Connectivity Package", device.docname, true, "Manage")}
 					`)
