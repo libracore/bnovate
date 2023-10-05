@@ -8,6 +8,7 @@ from frappe.exceptions import ValidationError
 
 from bnovate.bnovate.utils.iot_apis import rms_get_access_configs, _rms_start_session, _rms_get_status, rms_initialize_device, _rms_get_device
 from bnovate.bnovate.doctype.connectivity_package.connectivity_package import set_info_from_rms
+from bnovate.bnovate.utils.realtime import set_status, STATUS_RUNNING, STATUS_DONE
 from .helpers import get_session_customers, get_session_primary_customer, auth, build_sidebar
 
 no_cache = 1
@@ -98,7 +99,7 @@ def auth_remote_session(config_id, device_id):
     return True
 
 @frappe.whitelist()
-def portal_initialize_device(teltonika_serial, device_name):
+def portal_initialize_device(teltonika_serial, device_name, task_id=None):
     """ Scan ports and create remote access configs """
 
     # - Find associated Connectivity Package (CP)
@@ -106,6 +107,26 @@ def portal_initialize_device(teltonika_serial, device_name):
     # - Get Device ID from CP
     # - Initialize using device ID.
     # - Fetch and associate instrument SN
+
+    progress = [
+        {
+            "stage": "verify_gateway",
+            "description": "Verfifying Gateway...",
+            "status": -1, # None: not started; -1: running; 0: no error; >0: error
+        },
+        {
+            "stage": "detect_instrument",
+            "description": "Detecting Instrument...",
+            "status": None,
+        },
+        {
+            "stage": "",
+            "description": "Verfifying SN...",
+            "status": None,
+        },
+    ]
+
+    set_status(progress, task_id)
 
     cp = frappe.get_value("Connectivity Package", filters={
         "teltonika_serial": ["=", teltonika_serial],
@@ -117,10 +138,19 @@ def portal_initialize_device(teltonika_serial, device_name):
     if cp.customer is None or all(customer.docname != cp.customer for customer in get_session_customers()):
         # None of the linked customers match this connectivity package owner
         frappe.throw("{} does not have access to device {}".format(frappe.session.user, teltonika_serial))
- 
+
     # If this point is reached, user is authorized.
+    progress[0]["status"] = 0
+    progress[1]["status"] = -1
+    set_status(progress, task_id)
+
     rms_initialize_device(cp.rms_id, device_name, auth=False)
     frappe.db.set_value('Connectivity Package', cp.name, 'device_name', device_name)
+
+    progress[1]["status"] = 0
+    progress[2]["status"] = -1
+
+    set_status(progress, task_id, STATUS_DONE)
 
 
 @frappe.whitelist()

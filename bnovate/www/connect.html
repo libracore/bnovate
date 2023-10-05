@@ -29,8 +29,8 @@
     <ol class="wizard-ribbon my-3">
         <li class="wizard-step current" data-step="1">{{ _("Connect Hardware") }}</li>
         <li class="wizard-step" data-step="2">{{ _("Configure Network") }}</li>
-        <li class="wizard-step" data-step="3">{{ _("Initialize Gateway") }}</li>
-        <li class="wizard-step" data-step="4">{{ _("Summary") }}</li>
+        <li class="wizard-step" data-step="3">{{ _("Configure BactoLink") }}</li>
+        <li class="wizard-step" data-step="4">{{ _("Connect") }}</li>
     </ol>
     
     <div class="wizard-page" id="page1"> 
@@ -94,7 +94,13 @@
         </div>
     </div>
     <div class="wizard-page wizard-summary" id="page4" style="display: none;">
-        Done.
+        <div class="row">
+            <div class="col-sm m-2">
+                <i id="results-spinner" class="fa fa-cog fa-spin" style="font-size: 20px"></i>
+                <div id="results-container"></div>
+            </div>
+        </div>
+
     </div>
 
     <div class="modal-footer">
@@ -112,6 +118,12 @@
 {% block script %}
 <script>
 
+    frappe.require("/assets/bnovate/js/realtime.js");
+
+    /********************
+    * UI logic
+    *********************/
+
     function get_data() {
         let frm = document.getElementById("gateway-info");
         return Object.fromEntries(new FormData(frm));
@@ -127,21 +139,45 @@
         return true;
     }
 
+    function draw_progress(status) {
+        console.log(status);
+        const spinner = document.querySelector("#results-spinner");
+        const container = document.querySelector("#results-container");
+        if ( status.code < 0 ) {
+            spinner.style.display = 'block';
+        } else {
+            spinner.style.display = 'none';
+        }
 
-    async function portal_initialize_device(teltonika_serial, device_name) {
-        let resp = await frappe.call({
-            method: 'bnovate.www.instruments.portal_initialize_device',
+        const template = `
+        <ul>
+            {% for task in data %}
+            <li>{{ task.status }} {{ task.description }}</li>
+            {% endfor %}
+        </ul>
+        `
+
+        container.innerHTML = frappe.render_template(template, status);
+    }
+
+    /******************
+    * Backend Wrappers
+    *******************/
+
+    async function portal_initialize_device(teltonika_serial, device_name, task_id) {
+        return await bnovate.realtime.call({
+            method: 'bnovate.www.connect.portal_initialize_device',
             args: {
                 teltonika_serial,
                 device_name
-            }
+            },
+            callback: draw_progress,
         });
-        return resp.message;
     }
 
     async function portal_get_device(device_id) {
         let resp = await frappe.call({
-            method: 'bnovate.www.instruments.portal_get_device',
+            method: 'bnovate.www.connect.portal_get_device',
             args: {
                 device_id
             }
@@ -149,12 +185,12 @@
         return resp.message;
     }
 
+    /********************
+    * Page-specific logic
+    *********************/
+
     // Initiates auto-configuration of the Gateway. Assumes validate has been called.
     async function connect() {
-        frappe.show_progress("Initializing BactoLink", 20, 100, "Connecting...");
-        setTimeout(() => frappe.show_progress("Initializing BactoLink", 40, 100, "Scanning Network..."), 1000);
-        setTimeout(() => frappe.show_progress("Initializing BactoLink", 60, 100, "Scanning Ports..."), 3000);
-
         let values = get_data();
         return await portal_initialize_device(values.teltonika_serial, values.device_name);
     }

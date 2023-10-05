@@ -20,17 +20,11 @@ class WizardPage {
 
         // Add event listeners to the navigation buttons
         $(this.prev).click(() => {
-            if (this.currentPage > 1) {
-                this.currentPage--;
-                this.show_page(this.currentPage);
-            }
+            this.prev_page();
         });
 
         $(this.next).click(() => {
-            if (this.currentPage < this.numPages) {
-                this.currentPage++;
-                this.show_page(this.currentPage);
-            }
+            this.next_page();
         });
 
         $(this.cancel).click(() => {
@@ -44,6 +38,20 @@ class WizardPage {
 
         this.bind_listeners();
         this.show_page(1);
+    }
+
+    prev_page() {
+        if (this.currentPage > 1) {
+            this.currentPage--;
+            this.show_page(this.currentPage);
+        }
+    }
+
+    next_page() {
+        if (this.currentPage < this.numPages) {
+            this.currentPage++;
+            this.show_page(this.currentPage);
+        }
     }
 
     update_buttons() {
@@ -108,10 +116,7 @@ class WizardPage {
 
     async confirm() {
         this.done.disabled = true;
-        try {
-            await this.callback();
-        } finally {
-            this.show_page(4)
-        }
+        this.next_page();
+        await this.callback();
     }
 }

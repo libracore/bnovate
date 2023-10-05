@@ -13,6 +13,10 @@ if (frappe.datetime.get_today && frappe.datetime.get_today().endsWith('04-01')) 
 
 frappe.provide("bnovate.utils")
 
+bnovate.utils.sleep = function (ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 
 /*  ***********************
  * This file contains common global functions 
