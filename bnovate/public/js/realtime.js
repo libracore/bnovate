@@ -31,15 +31,12 @@ bnovate.realtime.on = async function (id, callback, timeout = 60 * 1000) {
     let running_time = 0;
 
     while (running_time < timeout) {
-        console.log('query', running_time)
         running_time += interval;
 
         const status = await get_status(id);
         if (!status) {
             continue;
         }
-
-        console.log("Data from on", status)
 
         callback(status);
 
@@ -49,7 +46,6 @@ bnovate.realtime.on = async function (id, callback, timeout = 60 * 1000) {
             continue;
         } else {
             // TODO: throw error if status is > 0?
-            console.log("Exiting, done", status)
             return true;
         }
     }

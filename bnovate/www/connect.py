@@ -111,18 +111,18 @@ def portal_initialize_device(teltonika_serial, device_name, task_id=None):
     progress = [
         {
             "stage": "verify_gateway",
-            "description": "Verfifying Gateway...",
-            "status": -1, # None: not started; -1: running; 0: no error; >0: error
+            "description": "Verifying Gateway...",
+            "code": -1, # None: not started; -1: running; 0: no error; >0: error
         },
         {
             "stage": "detect_instrument",
             "description": "Detecting Instrument...",
-            "status": None,
+            "code": None,
         },
         {
             "stage": "",
             "description": "Verfifying SN...",
-            "status": None,
+            "code": None,
         },
     ]
 
@@ -140,15 +140,15 @@ def portal_initialize_device(teltonika_serial, device_name, task_id=None):
         frappe.throw("{} does not have access to device {}".format(frappe.session.user, teltonika_serial))
 
     # If this point is reached, user is authorized.
-    progress[0]["status"] = 0
-    progress[1]["status"] = -1
+    progress[0]["code"] = 0
+    progress[1]["code"] = -1
     set_status(progress, task_id)
 
     rms_initialize_device(cp.rms_id, device_name, auth=False)
     frappe.db.set_value('Connectivity Package', cp.name, 'device_name', device_name)
 
-    progress[1]["status"] = 0
-    progress[2]["status"] = -1
+    progress[1]["code"] = 0
+    progress[2]["code"] = -1
 
     set_status(progress, task_id, STATUS_DONE)
 

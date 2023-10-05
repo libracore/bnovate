@@ -96,8 +96,7 @@
     <div class="wizard-page wizard-summary" id="page4" style="display: none;">
         <div class="row">
             <div class="col-sm m-2">
-                <i id="results-spinner" class="fa fa-cog fa-spin" style="font-size: 20px"></i>
-                <div id="results-container"></div>
+                <div id="results-container"><i class="fa fa-cog fa-spin"></i></div>
             </div>
         </div>
 
@@ -140,24 +139,32 @@
     }
 
     function draw_progress(status) {
-        console.log(status);
+        console.log("Draw progress:", status);
         const spinner = document.querySelector("#results-spinner");
         const container = document.querySelector("#results-container");
-        if ( status.code < 0 ) {
-            spinner.style.display = 'block';
-        } else {
-            spinner.style.display = 'none';
+
+        // Render-template doesn't work here, or Jinja will pre-process already on the server side.
+        function indicator(code) {
+            if ( code == null ) {
+                return "";
+            } else if ( code < 0 ) {
+                return `<i class="fa fa-cog fa-spin"></i>`
+            } else if ( code == 0 ) {
+                return `<i class="fa fa-check"></i>`
+            } else  {
+                return `<i class="fa fa-times"></i>`
+            }
+
         }
+        const list = status.data
+            .map(task => `<li>${task.description} ${indicator(task.code)}</li>`)
+            .join("\n");
 
-        const template = `
-        <ul>
-            {% for task in data %}
-            <li>{{ task.status }} {{ task.description }}</li>
-            {% endfor %}
+        container.innerHTML = `
+        <ul> 
+            ${list}
         </ul>
-        `
-
-        container.innerHTML = frappe.render_template(template, status);
+        ` 
     }
 
     /******************
@@ -171,7 +178,7 @@
                 teltonika_serial,
                 device_name
             },
-            callback: draw_progress,
+            callback: (data) => draw_progress(data),
         });
     }
 
