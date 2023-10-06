@@ -29,7 +29,6 @@ def set_status(data, task_id, status=STATUS_RUNNING):
         return
 
     task_id = int(task_id)
-    print("--------------   Setting task {} data {}".format(task_id, data))
 
     if frappe.cache().get_value('bn_sid_{:d}'.format(task_id)) != frappe.session.sid:
         frappe.throw("Forbidden: logged in user does not own this task")
@@ -41,10 +40,6 @@ def get_status(task_id):
     """ Return status, only if the logged in user is associated with the request. """
     task_id = int(task_id)
 
-    print('bn_sid_{:d}'.format(task_id), frappe.cache().get_value('bn_sid_{:d}'.format(task_id)),
-        frappe.cache().get_value('bn_data_{:d}'.format(task_id)))
-
     if frappe.cache().get_value('bn_sid_{:d}'.format(task_id)) != frappe.session.sid:
         frappe.throw("Forbidden: logged in user cannot query status for this task")
-    print("Cached data", frappe.cache().get_value('bn_data_{:d}'.format(task_id)))
     return frappe.cache().get_value('bn_data_{:d}'.format(task_id))

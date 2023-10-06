@@ -92,7 +92,7 @@ async function get_rms_info(frm) {
 
 async function get_instrument_sn(frm) {
 	console.log("ID", get_device_id(frm))
-	const status = await bnovate.iot.get_status(get_device_id(frm), "");
+	const status = await bnovate.iot.get_instrument_status(get_device_id(frm));
 	if (status) {
 		frm.set_value("instrument_serial_no", status.serialNumber);
 		frm.save();
@@ -294,7 +294,7 @@ async function get_instrument_status(frm) {
 	}
 
 	$(frm.fields_dict.instrument_status.wrapper).html(`<i class="fa fa-cog fa-spin" style="font-size: 20px"></i>`);
-	const status = await bnovate.iot.get_status(get_device_id(frm), "");
+	const status = await bnovate.iot.get_instrument_status(get_device_id(frm));
 	$(frm.fields_dict.instrument_status.wrapper).html(frappe.render_template(
 		`
 		<table class="table table-condensed no-margin" style="border-bottom: 1px solid #d1d8dd">

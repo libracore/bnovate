@@ -6,7 +6,8 @@ from frappe import _
 
 from frappe.exceptions import ValidationError
 
-from bnovate.bnovate.utils.iot_apis import rms_get_access_configs, _rms_start_session, _rms_get_status, rms_initialize_device, _rms_get_device
+from bnovate.bnovate.utils.iot_apis import (rms_get_access_configs, _rms_start_session, _rms_get_status, 
+                                            rms_initialize_device, _rms_get_device, _get_instrument_status)
 from bnovate.bnovate.doctype.connectivity_package.connectivity_package import set_info_from_rms
 from bnovate.bnovate.utils.realtime import set_status, STATUS_RUNNING, STATUS_DONE
 from .helpers import get_session_customers, get_session_primary_customer, auth, build_sidebar
@@ -120,8 +121,8 @@ def portal_initialize_device(teltonika_serial, device_name, task_id=None):
             "code": None,
         },
         {
-            "stage": "",
-            "description": "Verfifying SN...",
+            "stage": "detect_sn",
+            "description": "Detecting SN...",
             "code": None,
         },
     ]
@@ -137,6 +138,8 @@ def portal_initialize_device(teltonika_serial, device_name, task_id=None):
 
     if cp.customer is None or all(customer.docname != cp.customer for customer in get_session_customers()):
         # None of the linked customers match this connectivity package owner
+        progress[0]["code"] = 1
+        set_status(progress, task_id, STATUS_DONE)
         frappe.throw("{} does not have access to device {}".format(frappe.session.user, teltonika_serial))
 
     # If this point is reached, user is authorized.
@@ -144,14 +147,48 @@ def portal_initialize_device(teltonika_serial, device_name, task_id=None):
     progress[1]["code"] = -1
     set_status(progress, task_id)
 
-    rms_initialize_device(cp.rms_id, device_name, auth=False)
-    frappe.db.set_value('Connectivity Package', cp.name, 'device_name', device_name)
+    try:
+        rms_initialize_device(cp.rms_id, device_name, auth=False)
+        frappe.db.set_value('Connectivity Package', cp.name, 'device_name', device_name)
+    except Exception as e:
+        progress[1]["code"] = 1
+        progress[1]["error"] = str(e)
+        set_status(progress, task_id, STATUS_DONE)
 
     progress[1]["code"] = 0
     progress[2]["code"] = -1
 
-    set_status(progress, task_id, STATUS_DONE)
+    # Get SN
+    try:
+        instrument_status = _get_instrument_status(cp.rms_id, auth=False)
+    except Exception as e:
+        progress[2]["code"] = 1
+        progress[2]["error"] = str(e)
+        set_status(progress, task_id, STATUS_DONE)
+        raise e
 
+    if 'serialNumber' not in instrument_status:
+        progress[2]["code"] = 1
+        set_status(progress, task_id, STATUS_DONE)
+        frappe.throw("No Serial Number detected.")
+
+    sn = instrument_status['serialNumber']
+
+    # Check serial number exists in our DB
+    try:
+        frappe.get_doc("Serial No", sn)
+    except frappe.DoesNotExistError:
+        progress[2]["code"] = 1
+        set_status(progress, task_id, STATUS_DONE)
+        frappe.throw("Serial No {} does not match a known instrument".format(sn))
+    except Exception as e:
+        progress[2]["code"] = 1
+        set_status(progress, task_id, STATUS_DONE)
+        raise e
+
+    frappe.db.set_value('Connectivity Package', cp.name, 'instrument_serial_no', sn)
+    progress[2]["code"] = 0
+    set_status(progress, task_id, STATUS_DONE)
 
 @frappe.whitelist()
 def portal_start_session(config_id, device_id):

@@ -27,6 +27,15 @@ class NoEndDevicesFound(ApiException):
 class ChannelNotFound(ApiException):
     """ Raised when a status channel isn't found - may be too early, try again """
 
+class TimeoutError(ApiException):
+    """ Failed to complete task in the allowed time. """
+
+class HTTPSUnavailable(ApiException):
+    """ Targetted instrument does not have HTTPS service available """
+
+class StartSessionError(ApiException):
+    """ Could not start a remote connection session """
+
 #######################
 # HELPERS
 #######################
@@ -289,12 +298,12 @@ def rms_get_access_sessions_for_config(config, settings=None, auth=True):
     active.sort(key=lambda el: el['end_time'], reverse=True)
     return dict(sessions=active, **config)
 
-@frappe.whitelist()
-def rms_get_access_sessions(device_id=None):
+def _rms_get_access_sessions(device_id=None, auth=True):
     """ Return list of access config dicts, each with its list of active sessions """
-    _auth(WRITE)  # require write permissions since this returns active session links
+    if auth:
+        _auth(WRITE)  # require write permissions since this returns active session links
     settings = _get_settings()
-    configs = rms_get_access_configs(device_id, settings=settings)
+    configs = rms_get_access_configs(device_id, settings=settings, auth=auth)
     with concurrent.futures.ThreadPoolExecutor() as executor:
         futures = [ executor.submit(rms_get_access_sessions_for_config, c, settings=settings, auth=False) for c in configs ]
         responses = [ future.result() for future in concurrent.futures.as_completed(futures) ]
@@ -302,6 +311,10 @@ def rms_get_access_sessions(device_id=None):
     # Alphabetical sort by protocol, so that they always appear in the same order.
     responses.sort(key=lambda el: el['protocol'])
     return responses
+
+@frappe.whitelist()
+def rms_get_access_sessions(device_id=None):
+    return _rms_get_access_sessions(device_id)
 
 def _rms_start_session(config_id, duration=30*60, auth=True):
     """ Opens a new session for an existing remote configuration. 
@@ -325,6 +338,30 @@ def rms_start_session(config_id, duration=30*60):
     return _rms_start_session(config_id, duration)
 
 
+def rms_wait_for_session(channel, device_id, auth=True, attempt=0, timeout=60):
+    """ Returns once session (intiated by rms_start_session) is ready """
+
+    if attempt > 60:
+        raise TimeoutError("Timeout opening remote connection session")
+
+    status = _rms_get_status(channel, auth=auth)
+    print("-------------- status", status)
+
+    if str(device_id) not in status:
+        # TODO: what do we do?
+        frappe.throw("Status not available")
+
+    last_update = status[str(device_id)][-1]
+
+    if last_update['status'] in ('error', 'warning'):
+        message = last_update['value'] if 'value' in last_update else str(last_update['errorCode'])
+        raise StartSessionError(message)
+
+    if last_update['status'] == 'completed':
+        return last_update['link']
+
+    time.sleep(1)
+    return rms_wait_for_session(channel, device_id, auth, attempt+1, timeout)
 
 
 def combase_get_usage(iccid, settings=None, auth=True):
@@ -382,3 +419,50 @@ def get_devices_and_data():
 
     return devices
 
+
+################################
+# BactoSense API interface
+################################
+
+def _get_instrument_status(device_id, password="", auth=True, attempt=1):
+    """ Get instrument status, for example to fetch Serial Number or service due date.
+
+    device_id is RMS device ID. Will fetch status from first instrument available.
+    """
+
+    # - Check for existing remote connections
+    # - If none exist, create one and start again.
+    # - Pick the first HTTPS session available
+    # - Fetch and return status from BactoSense API
+
+    if attempt > 3:
+        raise TimeoutError("Could not open an HTTPS connection with the device.")
+
+    active_sessions = _rms_get_access_sessions(device_id, auth=auth)
+    https_sessions = [s for s in active_sessions if s['protocol'] == "https"]
+
+    if len(https_sessions) == 0:
+        raise HTTPSUnavailable("Device does not have an HTTPS connection available.")
+
+    https = https_sessions[0]
+
+    if len(https['sessions']) == 0:
+        channel = _rms_start_session(https['id'], auth=auth)
+        rms_wait_for_session(channel, device_id, auth=auth)
+        return _get_instrument_status(device_id, password, auth, attempt+1)
+    
+    return request(
+        "GET", 
+        "https://{}/api/status".format(https['sessions'][0]['url']),
+        auth=HTTPBasicAuth("guest", password)
+    ).json()
+
+
+@frappe.whitelist()
+def get_instrument_status(device_id, password=""):
+    """ Get instrument status, for example to fetch Serial Number or service due date.
+
+    device_id is RMS device ID. Will fetch status from first instrument available.
+    """
+
+    return _get_instrument_status(device_id, password)

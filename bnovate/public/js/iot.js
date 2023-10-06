@@ -105,29 +105,12 @@ bnovate.iot.rms_get_status = async function rms_get_status(channel, method = nul
     return resp.message;
 }
 
-
-// Get status of an instrument, to fetch SN for example
-bnovate.iot.get_status = async function get_status(device_id, password, attempt = 1) {
-    if (attempt >= 3) {
-        return;
-    }
-
-    const connections = await bnovate.iot.rms_get_sessions(device_id);
-    const https = connections.find(s => s.protocol == "https");
-
-    if (!https) {
-        frappe.throw("No HTTPS connections available.");
-        return;
-    }
-
-    if (!https.sessions.length) {
-        await bnovate.iot.rms_start_session(https.id, device_id);
-        return bnovate.iot.get_status(device_id, password, attempt + 1)
-    }
-
-    const url = 'https://' + https.sessions[0].url + '/api/status';
-    const headers = { 'Authorization': 'Basic ' + btoa('guest:' + password) };
-    let resp = await fetch(url, { headers });
-    let status = await resp.json();
-    return status;
+bnovate.iot.get_instrument_status = async function get_instrument_status(device_id) {
+    let resp = await frappe.call({
+        method: 'bnovate.bnovate.utils.iot_apis.get_instrument_status',
+        args: {
+            device_id
+        }
+    });
+    return resp.message;
 }

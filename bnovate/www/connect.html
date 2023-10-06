@@ -143,6 +143,11 @@
         const spinner = document.querySelector("#results-spinner");
         const container = document.querySelector("#results-container");
 
+        if ( !status ) {
+            container.innerHTML = '<i class="fa fa-cog fa-spin"></i>';
+            return;
+        }
+
         // Render-template doesn't work here, or Jinja will pre-process already on the server side.
         function indicator(code) {
             if ( code == null ) {
@@ -157,13 +162,13 @@
 
         }
         const list = status.data
-            .map(task => `<li>${task.description} ${indicator(task.code)}</li>`)
+            .map(task => `<tr><td class="p-2">${indicator(task.code)}</td><td class="p-2">${task.description}</td></tr>`)
             .join("\n");
 
         container.innerHTML = `
-        <ul> 
+        <table> 
             ${list}
-        </ul>
+        </table>
         ` 
     }
 
@@ -199,6 +204,7 @@
     // Initiates auto-configuration of the Gateway. Assumes validate has been called.
     async function connect() {
         let values = get_data();
+        draw_progress();
         return await portal_initialize_device(values.teltonika_serial, values.device_name);
     }
 
