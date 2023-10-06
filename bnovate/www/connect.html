@@ -28,7 +28,7 @@
     
     <ol class="wizard-ribbon my-3">
         <li class="wizard-step current" data-step="1">{{ _("Connect Hardware") }}</li>
-        <li class="wizard-step" data-step="2">{{ _("Configure Network") }}</li>
+        <li class="wizard-step" data-step="2">{{ _("Configure BactoSense") }}</li>
         <li class="wizard-step" data-step="3">{{ _("Configure BactoLink") }}</li>
         <li class="wizard-step" data-step="4">{{ _("Connect") }}</li>
     </ol>
@@ -42,11 +42,12 @@
                 </div>
                 <div class="col-lg">
                     <h3>Connect your hardware like in the picture</h2>
-                    <ul>
-                        <li>Power supply to PoE injector</li>
-                        <li>PoE injector to Antenna</li>
-                        <li>PoE injector to BactoSense: ethernet and power</li>
-                    </ul>
+                    <ol>
+                        <li>Ethernet Connection between PoE-Injector and the RS45 port of the BactoSense.</li>
+                        <li>Power Connection between PoE-Injector and power port of the BactoSense.</li>
+                        <li>Ethernet Connection between PoE-Injector and GSM Antenna (10m cable).</li>
+                        <li>Power Supply to PoE-Injector. Note that the Power Supply is delivered with the BactoSense, not with the BactoLink.</li>
+                    </ol>
                 </div>
             </div>
         </div>
@@ -61,6 +62,7 @@
                     <img src="/assets/bnovate/img/guide/service_settings.png" style="border: 0.5px solid black">
                 </div>
                 <div class="col-lg">
+                    <h3>Configure network settings of the BactoSense</h2>
                     <ul>
                         <li>Check whether DHCP is activated. If not, activate.
                             (Home Menu → System Settings → Network)</li>
@@ -79,7 +81,7 @@
             <div class="col-sm m-2">
                 <form id="gateway-info">
                     <label for="teltonika_serial">Serial Number:</label>
-                    <input type="text" id="teltonika_serial" name="teltonika_serial" placeholder="60001xxxxx"" value="{{ serial_no }}" required>
+                    <input type="text" id="teltonika_serial" name="teltonika_serial" placeholder="60001xxxxx"" value="{{ serial_no or '' }}" required>
 
                     <label for="device_name">Friendly Name:</label>
                     <input type="text" id="device_name" name="device_name" placeholder="Mobile Unit, Post-Filtration..." required>
@@ -93,8 +95,12 @@
             </div>
         </div>
     </div>
+
     <div class="wizard-page wizard-summary" id="page4" style="display: none;">
         <div class="row">
+            <div class="col-sm m-2" style="text-align:center">
+                <div id="link-status" style="text-align:left"></div>
+            </div>
             <div class="col-sm m-2">
                 <div id="results-container"><i class="fa fa-cog fa-spin"></i></div>
             </div>
@@ -106,7 +112,8 @@
         <div class="wizard-buttons">
             <button type="button" class="btn btn-secondary" id="prev-button">{{ _("Previous") }}</button>
             <button type="button" class="btn btn-primary" id="next-button">{{ _("Next") }}</button>
-            <button type="button" class="btn btn-primary" id="confirm-button" hidden>{{ _("Connect") }}</button>
+            <button type="button" class="btn btn-primary" id="connect-button" hidden>{{ _("Connect") }}</button>
+            <a type="button" class="btn btn-primary" id="done-button" href="/instruments" hidden>{{ _("Finish") }}</a>
         </div>
     </div>
 
@@ -187,25 +194,22 @@
         });
     }
 
-    async function portal_get_device(device_id) {
-        let resp = await frappe.call({
-            method: 'bnovate.www.connect.portal_get_device',
-            args: {
-                device_id
-            }
-        });
-        return resp.message;
-    }
-
     /********************
     * Page-specific logic
     *********************/
 
     // Initiates auto-configuration of the Gateway. Assumes validate has been called.
     async function connect() {
+        document.querySelector("#done-button").enabled = false;
         let values = get_data();
         draw_progress();
-        return await portal_initialize_device(values.teltonika_serial, values.device_name);
+        let device = await portal_initialize_device(values.teltonika_serial, values.device_name);
+        document.querySelector('#link-status').innerHTML = `
+        <span class="indicator whitespace-nowrap ${device.status ? 'green' : 'red'}">${device.status ? 'Link Online' : 'Link Offline'}</span><br>
+        ${device.operator} <img src="${bnovate.web.signal_icon(device.signal)}" style="max-height: 2em"> <br> ${device.connection_type}[${device.signal} dBm]
+        `
+        document.querySelector("#done-button").enabled = true;
+
     }
 
     frappe.require([

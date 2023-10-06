@@ -101,7 +101,7 @@ def auth_remote_session(config_id, device_id):
 
 @frappe.whitelist()
 def portal_initialize_device(teltonika_serial, device_name, task_id=None):
-    """ Scan ports and create remote access configs """
+    """ Scan ports and create remote access configs. Return device details. """
 
     # - Find associated Connectivity Package (CP)
     # - Authenticate: must belong to a linked Customer
@@ -189,6 +189,8 @@ def portal_initialize_device(teltonika_serial, device_name, task_id=None):
     frappe.db.set_value('Connectivity Package', cp.name, 'instrument_serial_no', sn)
     progress[2]["code"] = 0
     set_status(progress, task_id, STATUS_DONE)
+
+    return _rms_get_device(cp.rms_id, auth=False)
 
 @frappe.whitelist()
 def portal_start_session(config_id, device_id):

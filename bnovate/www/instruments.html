@@ -58,6 +58,9 @@
                     <dd>TBC</dd>
                     {% endif %}
 
+                    <dt>Serial No</dt>
+                    <dd>{{ instrument.serial_no }}</dd>
+
                     <dt>Service Agreement</dt>
                     {% if instrument.sa %}
                     <dd>★☆☆ Essential</dd>
@@ -136,47 +139,6 @@
         });
         return resp.message;
     }
-    
-    /*
-    let btn = document.querySelector("#init-device");
-    btn.addEventListener("click", async (e) => {
-        // TODO: convert this to a wizard modal for guided setup.
-        btn.disabled = true;
-        try {
-            let values = await bnovate.utils.prompt(
-                "Enter device details",
-                [{
-                    label: "BactoLink Serial No",
-                    fieldname: "teltonika_serial",
-                    fieldtype: "Data",
-                    reqd: 1,
-                }, {
-                    label: "Friendly Name for your Instrument",
-                    fieldname: "device_name",
-                    fieldtype: "Data",
-                    reqd: 1,
-                    description: "'Post-Filter', 'Mobile Unit', ...",
-                }],
-                "Connect",
-                "Cancel"
-            )
-
-            if (values) {
-                // TODO: check for errors, actual feedback and not fake progress bar, etc.
-                frappe.show_progress("Initializing BactoLink", 20, 100, "Connecting...");
-                setTimeout(() => frappe.show_progress("Initializing BactoLink", 40, 100, "Scanning Network..."), 1000);
-                setTimeout(() => frappe.show_progress("Initializing BactoLink", 60, 100, "Scanning Ports..."), 3000);
-
-                await portal_initialize_device(values.teltonika_serial, values.device_name);
-                location.reload();
-            }
-
-        } finally {
-            btn.disabled = false;
-        }
-
-    });
-    */
 
 
     // Load status

@@ -16,7 +16,8 @@ class WizardPage {
 
         this.next = document.getElementById("next-button");
         this.prev = document.getElementById("prev-button");
-        this.done = document.getElementById("confirm-button");
+        this.connect = document.getElementById("connect-button");
+        this.done = document.getElementById("done-button");
 
         // Add event listeners to the navigation buttons
         $(this.prev).click(() => {
@@ -32,7 +33,7 @@ class WizardPage {
             $(this.modal).modal("hide");
         });
 
-        $(this.done).click(() => {
+        $(this.connect).click(() => {
             this.confirm();
         });
 
@@ -61,15 +62,17 @@ class WizardPage {
             this.prev.disabled = false;
         }
 
-
         if (this.currentPage == this.numPages) {
             this.next.hidden = true;
-            this.done.hidden = true;
+            this.connect.hidden = true;
+            this.done.hidden = false;
         } else if (this.currentPage == 3) {
             this.next.hidden = true;
-            this.done.hidden = false;
+            this.connect.hidden = false;
+            this.done.hidden = true;
         } else {
             this.next.hidden = false;
+            this.connect.hidden = true;
             this.done.hidden = true;
         }
 
@@ -91,9 +94,9 @@ class WizardPage {
             this.next.disabled = false;
         } else if (this.currentPage == 3) {
             if (this.validate()) {
-                this.done.disabled = false;
+                this.connect.disabled = false;
             } else {
-                this.done.disabled = true;
+                this.connect.disabled = true;
             }
         }
     }
@@ -115,7 +118,7 @@ class WizardPage {
     }
 
     async confirm() {
-        this.done.disabled = true;
+        this.connect.disabled = true;
         this.next_page();
         await this.callback();
     }
