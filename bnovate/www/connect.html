@@ -45,7 +45,7 @@
                     <ol>
                         <li>Ethernet Connection between PoE-Injector and the RS45 port of the BactoSense.</li>
                         <li>Power Connection between PoE-Injector and power port of the BactoSense.</li>
-                        <li>Ethernet Connection between PoE-Injector and GSM Antenna (10m cable).</li>
+                        <li>Ethernet Connection between PoE-Injector and Antenna (10m cable).</li>
                         <li>Power Supply to PoE-Injector. Note that the Power Supply is delivered with the BactoSense, not with the BactoLink.</li>
                     </ol>
                 </div>
@@ -98,11 +98,11 @@
 
     <div class="wizard-page wizard-summary" id="page4" style="display: none;">
         <div class="row">
-            <div class="col-sm m-2" style="text-align:center">
-                <div id="link-status" style="text-align:left"></div>
-            </div>
             <div class="col-sm m-2">
                 <div id="results-container"><i class="fa fa-cog fa-spin"></i></div>
+            </div>
+            <div class="col-sm m-2" style="text-align:center">
+                <div id="link-status" style="text-align:left"></div>
             </div>
         </div>
 
@@ -168,13 +168,19 @@
             }
 
         }
-        const list = status.data
-            .map(task => `<tr><td class="p-2">${indicator(task.code)}</td><td class="p-2">${task.description}</td></tr>`)
+        const rows = status.data
+            .map(task => {
+                return `<tr>
+                    <td class="p-2">${indicator(task.code)}</td>
+                    <td class="p-2">${task.description}</td>
+                    <td class="p-2 text-danger">${task.error || "" }</td>
+                </tr>`;
+            })
             .join("\n");
 
         container.innerHTML = `
         <table> 
-            ${list}
+            ${rows}
         </table>
         ` 
     }
@@ -204,10 +210,12 @@
         let values = get_data();
         draw_progress();
         let device = await portal_initialize_device(values.teltonika_serial, values.device_name);
-        document.querySelector('#link-status').innerHTML = `
-        <span class="indicator whitespace-nowrap ${device.status ? 'green' : 'red'}">${device.status ? 'Link Online' : 'Link Offline'}</span><br>
-        ${device.operator} <img src="${bnovate.web.signal_icon(device.signal)}" style="max-height: 2em"> <br> ${device.connection_type}[${device.signal} dBm]
-        `
+        if ( device ) {
+            document.querySelector('#link-status').innerHTML = `
+                <span class="indicator whitespace-nowrap ${device.status ? 'green' : 'red'}">${device.status ? 'Link Online' : 'Link Offline'}</span><br>
+                ${device.operator} <img src="${bnovate.web.signal_icon(device.signal)}" style="max-height: 2em"> <br> ${device.connection_type}[${device.signal} dBm]
+            `
+        }
         document.querySelector("#done-button").enabled = true;
 
     }

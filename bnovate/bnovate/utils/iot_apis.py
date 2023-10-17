@@ -238,11 +238,11 @@ def rms_initialize_device(device_id, device_name, auth=True):
         
     # Port Scan
     try:
-        end_devices = rms_port_scan(device_id, auth)
+        end_device = rms_port_scan(device_id, auth)
     except NoEndDevicesFound:
         frappe.throw("No instruments connected to this Link.")
 
-    ip, ports = end_devices['ip'], end_devices['port']
+    ip, ports = end_device['ip'], end_device['port']
     data = []
     if 443 in ports:
         data.append({
@@ -266,12 +266,9 @@ def rms_initialize_device(device_id, device_name, auth=True):
 
     # Set new configs, if available
     if data:
-        # raise ApiException("Neither HTTPS or VNC available on this device")
-        return rms_create_access(device_id, {"data": data}, auth)
-    
-    # False inform that neithe HTTPS nor VNC are available.
-    return False
+        rms_create_access(device_id, {"data": data}, auth)
 
+    return data
 
 def rms_get_access_configs(device_id=None, settings=None, auth=True):
     """ Return list of access configs based on RMS ID (not SN). """
@@ -438,13 +435,14 @@ def _get_instrument_status(device_id, password="", auth=True, attempt=1):
     if attempt > 3:
         raise TimeoutError("Could not open an HTTPS connection with the device.")
 
-    active_sessions = _rms_get_access_sessions(device_id, auth=auth)
-    https_sessions = [s for s in active_sessions if s['protocol'] == "https"]
+    # Get a list of configs and associated active sessions
+    sessions = _rms_get_access_sessions(device_id, auth=auth)
+    https_configs = [s for s in sessions if s['protocol'] == "https"]
 
-    if len(https_sessions) == 0:
+    if len(https_configs) == 0:
         raise HTTPSUnavailable("Device does not have an HTTPS connection available.")
 
-    https = https_sessions[0]
+    https = https_configs[0]
 
     if len(https['sessions']) == 0:
         channel = _rms_start_session(https['id'], auth=auth)
