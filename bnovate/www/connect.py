@@ -112,17 +112,17 @@ def portal_initialize_device(teltonika_serial, device_name, task_id=None):
     progress = [
         {
             "stage": "verify_gateway",
-            "description": "Verifying Gateway...",
+            "description": _("Verifying Gateway..."),
             "code": -1, # None: not started; -1: running; 0: no error; >0: error
         },
         {
             "stage": "detect_instrument",
-            "description": "Detecting Instrument...",
+            "description": _("Detecting Instrument..."),
             "code": None,
         },
         {
             "stage": "detect_sn",
-            "description": "Detecting SN...",
+            "description": _("Detecting SN..."),
             "code": None,
         },
     ]
@@ -135,14 +135,14 @@ def portal_initialize_device(teltonika_serial, device_name, task_id=None):
 
     if cp is None:
         progress[0]["code"] = 1
-        progress[0]["error"] = "Unregistered serial number"
+        progress[0]["error"] = _("Unregistered serial number")
         set_status(progress, task_id, STATUS_DONE)
         frappe.throw("Unregistered serial number {}".format(teltonika_serial))
 
     if cp.customer is None or all(customer.docname != cp.customer for customer in get_session_customers()):
         # None of the linked customers match this connectivity package owner
         progress[0]["code"] = 1
-        progress[0]["error"] = "Unauthorized"
+        progress[0]["error"] = _("Unauthorized")
         set_status(progress, task_id, STATUS_DONE)
         frappe.throw("{} does not have access to device {}".format(frappe.session.user, teltonika_serial))
 
@@ -152,7 +152,7 @@ def portal_initialize_device(teltonika_serial, device_name, task_id=None):
     dev = _rms_get_device(cp.rms_id, auth=False)
     if not dev["status"]:
         progress[0]["code"] = 1
-        progress[0]["error"] = "Link is Offline"
+        progress[0]["error"] = _("Link is Offline")
         return set_status(progress, task_id, STATUS_DONE)
 
     # Start scan
@@ -175,7 +175,7 @@ def portal_initialize_device(teltonika_serial, device_name, task_id=None):
     # Check that HTTPS is available
     if not next((c for c in connections if c['protocol']), False):
         progress[2]["code"] = 1
-        progress[2]["error"] = "HTTPS not available"
+        progress[2]["error"] = _("HTTPS not available")
         return set_status(progress, task_id, STATUS_DONE)
 
     # Get SN
@@ -189,9 +189,9 @@ def portal_initialize_device(teltonika_serial, device_name, task_id=None):
 
     if 'serialNumber' not in instrument_status:
         progress[2]["code"] = 1
-        progress[2]["error"] = "No serial number found"
+        progress[2]["error"] = _("No serial number found")
         set_status(progress, task_id, STATUS_DONE)
-        frappe.throw("No Serial Number detected.")
+        frappe.throw(_("No serial number found"))
 
     sn = instrument_status['serialNumber']
 
@@ -200,7 +200,7 @@ def portal_initialize_device(teltonika_serial, device_name, task_id=None):
         frappe.get_doc("Serial No", sn)
     except frappe.DoesNotExistError:
         progress[2]["code"] = 1
-        progress[2]["error"] = "Serial No does not match a known instrument"
+        progress[2]["error"] = _("Serial No does not match a known instrument")
         set_status(progress, task_id, STATUS_DONE)
         frappe.throw("Serial No {} does not match a known instrument".format(sn))
     except Exception as e:

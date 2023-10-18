@@ -25,7 +25,7 @@
 
 <div class="row">
     <div class="col">
-        <a href="/connect" class="btn btn-primary" style="margin-bottom: 10px">{{ _("Initialize a BactoLink") }}</a>
+        <a href="/connect" class="btn btn-primary" style="margin-bottom: 10px">{{ _("Initialize BactoLink") }}</a>
     </div>
 </div>
 
@@ -51,17 +51,17 @@
                 </h5>
 
                 <dl class="card-text">
-                    <dt>Warranty Until</dt>
+                    <dt>{{ _("Warranty Until") }}</dt>
                     {% if instrument.warranty_expiry_date %}
                     <dd>{{ frappe.utils.formatdate(instrument.warranty_expiry_date, 'medium') }}</dd>
                     {% else %}
                     <dd>TBC</dd>
                     {% endif %}
 
-                    <dt>Serial No</dt>
+                    <dt>{{ _("Serial No") }}</dt>
                     <dd>{{ instrument.serial_no }}</dd>
 
-                    <dt>Service Agreement</dt>
+                    <dt>{{ _("Service Agreement") }}</dt>
                     {% if instrument.sa %}
                     <dd>★☆☆ Essential</dd>
                     {% else %}
@@ -74,11 +74,11 @@
                         <div class="link-status" data-device-id="{{ instrument.cp.rms_id }}"></div><br>
                         {% if instrument.cp.web %}
                         <button href="#" class="btn btn-primary open-remote" data-config-id="{{ instrument.cp.web.id }}"
-                            data-device-id="{{ instrument.cp.web.device_id}}">Web UI</button>
+                            data-device-id="{{ instrument.cp.web.device_id}}">{{ _("Web UI") }}</button>
                         {% endif %}
                         {% if instrument.cp.vnc %}
                         <button href="#" class="btn btn-primary open-remote" data-config-id="{{ instrument.cp.vnc.id }}"
-                            data-device-id="{{ instrument.cp.vnc.device_id}}">Remote Desktop</button>
+                            data-device-id="{{ instrument.cp.vnc.device_id}}">{{ _("Touch UI") }}</button>
                         {% endif %}
                     </dd>
                     {% endif %}

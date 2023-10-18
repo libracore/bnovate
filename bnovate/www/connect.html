@@ -80,10 +80,10 @@
         <div class="row">
             <div class="col-sm m-2">
                 <form id="gateway-info">
-                    <label for="teltonika_serial">Serial Number:</label>
+                    <label for="teltonika_serial">{{ _("Serial Number") }}:</label>
                     <input type="text" id="teltonika_serial" name="teltonika_serial" placeholder="60001xxxxx"" value="{{ serial_no or '' }}" required>
 
-                    <label for="device_name">Friendly Name:</label>
+                    <label for="device_name">{{ _("Friendly Name") }}:</label>
                     <input type="text" id="device_name" name="device_name" placeholder="Mobile Unit, Post-Filtration..." required>
                 </form>
             </div>

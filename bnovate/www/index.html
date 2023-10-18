@@ -9,7 +9,7 @@
 <div class="row row-cols-1 row-cols-md-2 g-4">
     <div class="col">
         <div class="card">
-            <div class="card-header">Quick Connect</div>
+            <div class="card-header">{{ _("Quick Connect") }}</div>
             <div class="card-body">
                 <dl class="card-text">
                     {% for instrument in connected_instruments if instrument.cp %}
@@ -22,11 +22,11 @@
                     <dd>
                         {% if instrument.cp.web %}
                         <button href="#" class="btn btn-primary open-remote" data-config-id="{{ instrument.cp.web.id }}"
-                            data-device-id="{{ instrument.cp.web.device_id}}">Web UI</button>
+                            data-device-id="{{ instrument.cp.web.device_id}}">{{ _("Web UI") }}</button>
                         {% endif %}
                         {% if instrument.cp.vnc %}
                         <button href="#" class="btn btn-primary open-remote" data-config-id="{{ instrument.cp.vnc.id }}"
-                            data-device-id="{{ instrument.cp.vnc.device_id}}">Remote Desktop</button>
+                            data-device-id="{{ instrument.cp.vnc.device_id}}">{{ _("Touch UI") }}</button>
                         {% endif %}
                     </dd>
                     {% endfor %}
@@ -38,7 +38,7 @@
     {% if has_cartridge_portal %}
     <div class="col">
         <div class="card">
-            <div class="card-header">Refill Requests</div>
+            <div class="card-header">{{ _("Refill Requests") }}</div>
             <div class="card-body">
                 <!-- <h5 class="card-title">Refill Requests</h5> -->
                 <table class="table table-condensed" style="border-bottom: 1px solid #d1d8dd; width:100%">

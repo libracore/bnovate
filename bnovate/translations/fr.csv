@@ -1,7 +1,7 @@
+apps/bnovate/bnovate/bnovate/doctype/connectivity_package/connectivity_package_list.js,View Map,Voir la carte
 apps/bnovate/bnovate/bnovate/doctype/connectivity_package/connectivity_package.js,Auto-configure,Auto-configuration
 apps/bnovate/bnovate/bnovate/doctype/connectivity_package/connectivity_package.js,Get Instrument SN,Obtenir l'instrument SN
 apps/bnovate/bnovate/bnovate/doctype/connectivity_package/connectivity_package.js,Get RMS Info,Obtenir des informations sur le SMR
-apps/bnovate/bnovate/bnovate/doctype/connectivity_package/connectivity_package_list.js,View Map,Voir la carte
 apps/bnovate/bnovate/bnovate/doctype/storage_location/storage_location_list.js,Find Item,Trouver un article
 apps/bnovate/bnovate/bnovate/doctype/subscription_contract/subscription_contract.js,End Date was changed to the next end of billing cycle,La date de fin a été modifiée pour correspondre à la prochaine fin de cycle de facturation.
 apps/bnovate/bnovate/bnovate/doctype/subscription_contract/subscription_contract.js,"For 'Product Bundle' items, Warehouse, Serial No and Batch No will be considered from the 'Packing List' table. If Warehouse and Batch No are same for all packing items for any 'Product Bundle' item, those values can be entered in the main Item table, values will be cied to 'Packing List' table.","Pour les articles de l'""ensemble de produits"", l'entrepôt, le numéro de série et le numéro de lot seront pris en compte dans le tableau de la ""liste d'emballage"". Si l'entrepôt et le numéro de lot sont les mêmes pour tous les articles d'emballage d'un ""ensemble de produits"", ces valeurs peuvent être saisies dans le tableau principal de l'article, les valeurs seront transférées dans le tableau ""Liste d'emballage""."
@@ -153,6 +153,7 @@ apps/bnovate/bnovate/config/bnovate.py,Worktime Overview,Aperçu du temps de tra
 apps/bnovate/bnovate/config/bnovate.py,Worktime Settings,Paramètres du temps de travail
 apps/bnovate/bnovate/config/desktop.py,bNovate,bNovate
 apps/bnovate/bnovate/public/js/doctype_includes/contact.js,User ID is already associated with another contact:,L'ID de l'utilisateur est déjà associé à un autre contact :
+apps/bnovate/bnovate/public/js/doctype_includes/contact.js,User ID is already associated with another contact:,L'ID de l'utilisateur est déjà associé à un autre contact :
 apps/bnovate/bnovate/public/js/doctype_includes/delivery_note.js,Aggregate Invoice,Facture globale
 apps/bnovate/bnovate/public/js/doctype_includes/delivery_note.js,Confirm Shipment,Confirmer l'envoi
 apps/bnovate/bnovate/public/js/doctype_includes/delivery_note.js,Request Pickup,Demande d'enlèvement
@@ -161,13 +162,31 @@ apps/bnovate/bnovate/public/js/iot.js,Error initializing connection,Erreur d'ini
 apps/bnovate/bnovate/public/js/iot.js,Starting session....,Démarrage de la session....
 apps/bnovate/bnovate/www/cartridges.html,Nothing to display.,Rien à afficher.
 apps/bnovate/bnovate/www/cartridges.html,Select cartridges,Sélectionner les cartouches
+apps/bnovate/bnovate/www/cartridges.html,"Select the cartridges you wish to refill. If none of your cartridges are at bNovate, you cannot order a refill.","Sélectionnez les cartouches que vous souhaitez recharger. Si aucune de vos cartouches ne se trouve chez bNovate, vous ne pouvez pas commander de recharge."
 apps/bnovate/bnovate/www/connect.html,Configure BactoLink,Configurer BactoLink
 apps/bnovate/bnovate/www/connect.html,Configure BactoSense,Configurer BactoSense
 apps/bnovate/bnovate/www/connect.html,Connect,Connecter
 apps/bnovate/bnovate/www/connect.html,Connect BactoLink,Connecter BactoLink
 apps/bnovate/bnovate/www/connect.html,Connect Hardware,Connecter le matériel
+apps/bnovate/bnovate/www/connect.html,Friendly Name,Nom amical
+apps/bnovate/bnovate/www/connect.html,Serial Number,Numéro de série
+apps/bnovate/bnovate/www/connect.py,Detecting Instrument...,Instrument de détection...
+apps/bnovate/bnovate/www/connect.py,Detecting SN...,Détecter les SN...
+apps/bnovate/bnovate/www/connect.py,HTTPS not available,HTTPS non disponible
+apps/bnovate/bnovate/www/connect.py,Link is Offline,Le lien est hors ligne
+apps/bnovate/bnovate/www/connect.py,No serial number found,Aucun numéro de série n'a été trouvé
+apps/bnovate/bnovate/www/connect.py,Serial No does not match a known instrument,Le numéro de série ne correspond pas à un instrument connu
+apps/bnovate/bnovate/www/connect.py,Unauthorized,Non autorisé
+apps/bnovate/bnovate/www/connect.py,Unregistered serial number,Numéro de série non enregistré
+apps/bnovate/bnovate/www/connect.py,Verifying Gateway...,Vérification de la passerelle...
+apps/bnovate/bnovate/www/index.html,Quick Connect,Connexion rapide
 apps/bnovate/bnovate/www/index.py,Portal Home,Accueil du portail
 apps/bnovate/bnovate/www/instruments.html,My Instruments,Mes instruments
+apps/bnovate/bnovate/www/instruments.html,Initialize BactoLink,Initialiser un BactoLink
+apps/bnovate/bnovate/www/instruments.html,Service Agreement,Accord de service
+apps/bnovate/bnovate/www/instruments.html,Touch UI,Touch UI
+apps/bnovate/bnovate/www/instruments.html,Warranty Until,Garantie jusqu'à
+apps/bnovate/bnovate/www/instruments.html,Web UI,Web UI
 apps/bnovate/bnovate/www/internal/storage.html,Slot,Fente
 apps/bnovate/bnovate/www/my_addresses.html,Address Details,Détails de l'adresse
 apps/bnovate/bnovate/www/my_addresses.html,Delete this address?,Supprimer cette adresse ?

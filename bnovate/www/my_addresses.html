@@ -84,7 +84,7 @@
                                 <label for="country" class="formbuilder-select-label">{{ _("Country") }}</label>
                                 <select class="form-control" name="country" id="country" required>
                                     {% for country in countries %}
-                                    <option value="{{ country }}">{{ _(country) }}</option>
+                                    <option value="{{ country }}" {{ "selected" if country == "Switzerland" }} >{{ _(country) }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
