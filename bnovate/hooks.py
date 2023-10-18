@@ -55,6 +55,7 @@ fixtures = [
             "Serial No-owned_by_name",
             "Serial No-owner_set_by",
             # Refill requests
+            # "Customer-enable_cartridge_portal",
             "Sales Order Item-refill_request",
             "Sales Order Item-serial_nos",  # pluralized to avoid automations from selling controller
             "Sales Order-indicator_key",
@@ -97,8 +98,10 @@ app_include_js = [  # Note to self: in case of changes, may need to run bench bu
 ]
 
 # include js, css files in header of web template
-web_include_css = "/assets/bnovate/bnovate-web.css"
-# web_include_js = "/assets/bnovate/js/web_includes/bnovate.js"
+web_include_css = [
+    "/assets/bnovate/bnovate-web.css",
+]
+web_include_js = "/assets/bnovate/js/web_includes/helpers.js"
 
 # include js in page
 # page_js = {"page" : "public/js/file.js"}
@@ -146,6 +149,9 @@ website_route_rules = [
             "parents": [{"label": _("Refill Requests"), "route": "requests"}]
         }
     }, {
+        "from_route": "/connect/<serial_no>", 
+        "to_route": "connect",
+    }, {
         "from_route": "/internal/storage/<key>", 
         "to_route": "internal/storage",
     }
@@ -156,6 +162,14 @@ standard_portal_menu_items = [
     {"title": _("Refill Requests"), "route": "/requests", "reference_doctype": "Refill Request", "role": "Customer"},
     {"title": _("My Addresses"), "route": "/my_addresses", "reference_doctype": "Address", "role": "Customer"},
 ]
+
+website_context = {
+    "favicon": "/assets/bnovate/favicon.ico",
+    # “splash_image”: “/assets/your_app/images/your_splash.png”
+}
+
+update_website_context = "bnovate.www.helpers.update_context"
+
 
 # Generators
 # ----------

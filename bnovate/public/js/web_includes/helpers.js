@@ -26,3 +26,17 @@ bnovate.web.get_countries = async function get_countries() {
     const resp = await frappe.call("bnovate.www.helpers.get_countries")
     return resp.message;
 }
+
+// Return FA icon corresponding to signal strength
+bnovate.web.signal_icon = function (strength) {
+    if (strength > -65) {
+        return '/assets/bnovate/img/icons/signal-strength-4.svg';
+    } else if (strength > -75) {
+        return '/assets/bnovate/img/icons/signal-strength-3.svg';
+    } else if (strength > -85) {
+        return '/assets/bnovate/img/icons/signal-strength-2.svg';
+    } else if (strength > -95) {
+        return '/assets/bnovate/img/icons/signal-strength-1.svg';
+    }
+    return '/assets/bnovate/img/icons/signal-strength-0.svg';
+}
