@@ -342,7 +342,6 @@ def rms_wait_for_session(channel, device_id, auth=True, attempt=0, timeout=60):
         raise TimeoutError("Timeout opening remote connection session")
 
     status = _rms_get_status(channel, auth=auth)
-    print("-------------- status", status)
 
     if str(device_id) not in status:
         # TODO: what do we do?
