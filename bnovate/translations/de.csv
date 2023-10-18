@@ -1,0 +1,192 @@
+apps/bnovate/bnovate/bnovate/doctype/connectivity_package/connectivity_package.js,Auto-configure,Automatisch konfigurieren
+apps/bnovate/bnovate/bnovate/doctype/connectivity_package/connectivity_package.js,Get Instrument SN,Instrument SN erhalten
+apps/bnovate/bnovate/bnovate/doctype/connectivity_package/connectivity_package.js,Get RMS Info,RMS-Informationen abrufen
+apps/bnovate/bnovate/bnovate/doctype/connectivity_package/connectivity_package_list.js,View Map,Karte ansehen
+apps/bnovate/bnovate/bnovate/doctype/storage_location/storage_location_list.js,Find Item,Artikel finden
+apps/bnovate/bnovate/bnovate/doctype/subscription_contract/subscription_contract.js,End Date was changed to the next end of billing cycle,Enddatum wurde auf das nächste Ende des Abrechnungszyklus geändert
+apps/bnovate/bnovate/bnovate/doctype/subscription_contract/subscription_contract.js,"For 'Product Bundle' items, Warehouse, Serial No and Batch No will be considered from the 'Packing List' table. If Warehouse and Batch No are same for all packing items for any 'Product Bundle' item, those values can be entered in the main Item table, values will be cied to 'Packing List' table.","Für ""Produktbündel""-Artikel werden Lager, Seriennummer und Chargennummer aus der Tabelle ""Packliste"" berücksichtigt. Wenn Lager und Chargennummer für alle Verpackungsartikel eines Produktbündelartikels gleich sind, können diese Werte in die Hauptartikeltabelle eingegeben werden; die Werte werden in die Tabelle ""Verpackungsliste"" übernommen."
+apps/bnovate/bnovate/bnovate/doctype/subscription_contract/subscription_contract.js,Modify / Upgrade,Ändern / Aufrüsten
+apps/bnovate/bnovate/bnovate/doctype/subscription_contract/subscription_contract.js,Planned End Date was changed to the next end of billing cycle,Geplantes Enddatum wurde auf das nächste Ende des Abrechnungszyklus geändert
+apps/bnovate/bnovate/bnovate/doctype/subscription_contract/subscription_contract.py,End date must be defined.,Das Enddatum muss definiert werden.
+apps/bnovate/bnovate/bnovate/doctype/subscription_contract/subscription_contract.py,End date must be later than start date.,Das Enddatum muss nach dem Startdatum liegen.
+apps/bnovate/bnovate/bnovate/doctype/subscription_contract/subscription_contract.py,Please create all invoices up until the chosen end date.,Bitte erstellen Sie alle Rechnungen bis zum gewählten Enddatum.
+apps/bnovate/bnovate/bnovate/page/work_order_execution/items_read.html,Big Label,Großes Etikett
+apps/bnovate/bnovate/bnovate/page/work_order_execution/items_read.html,Existing Stock Entries,Vorhandene Bestandseinträge
+apps/bnovate/bnovate/bnovate/page/work_order_execution/items_read.html,Rating Plate,Typenschild
+apps/bnovate/bnovate/bnovate/page/work_order_execution/items_read.html,Small Label,Kleines Etikett
+apps/bnovate/bnovate/bnovate/page/work_order_execution/items_write.html,Additional Consumed Qty,Zusätzlich verbrauchte Menge
+apps/bnovate/bnovate/bnovate/page/work_order_execution/items_write.html,Batch no is automatically generated.,Die Chargennummer wird automatisch generiert.
+apps/bnovate/bnovate/bnovate/page/work_order_execution/items_write.html,Batch produced,Produzierte Charge
+apps/bnovate/bnovate/bnovate/page/work_order_execution/items_write.html,Serial No produced,Seriennummer hergestellt
+apps/bnovate/bnovate/bnovate/page/work_order_execution/items_write.html,Serial no is automatically generated,Die Seriennummer wird automatisch generiert
+apps/bnovate/bnovate/bnovate/page/work_order_execution/time_tracking.html,Start timer,Timer starten
+apps/bnovate/bnovate/bnovate/page/work_order_execution/time_tracking.html,Stop timer,Zeitschaltuhr anhalten
+apps/bnovate/bnovate/bnovate/page/work_order_execution/work_order_execution.html,BOM no,Stücklisten-Nr.
+apps/bnovate/bnovate/bnovate/page/work_order_execution/work_order_execution.html,Expected delivery date,Voraussichtliches Lieferdatum
+apps/bnovate/bnovate/bnovate/page/work_order_execution/work_order_execution.html,Item to Manufacture,Artikel zum Herstellen
+apps/bnovate/bnovate/bnovate/page/work_order_execution/work_order_execution.html,Quantity Produced,Produzierte Menge
+apps/bnovate/bnovate/bnovate/report/aggregate_invoicing/aggregate_invoicing.js,Show Invoiced Periods,Abgerechnete Zeiträume anzeigen
+apps/bnovate/bnovate/bnovate/report/aggregate_invoicing/aggregate_invoicing.py,Configuration missing,Konfiguration fehlt
+apps/bnovate/bnovate/bnovate/report/aggregate_invoicing/aggregate_invoicing.py,End Billing Period,Ende Abrechnungszeitraum
+apps/bnovate/bnovate/bnovate/report/aggregate_invoicing/aggregate_invoicing.py,End Subscription,Abonnement beenden
+apps/bnovate/bnovate/bnovate/report/aggregate_invoicing/aggregate_invoicing.py,"Multiple taxes and charges templates found, using the default template for this customer. Consider creating the invoice by hand.","Es wurden mehrere Vorlagen für Steuern und Gebühren gefunden, die die Standardvorlage für diesen Kunden verwenden. Erwägen Sie, die Rechnung von Hand zu erstellen."
+apps/bnovate/bnovate/bnovate/report/aggregate_invoicing/aggregate_invoicing.py,Please define a default sales taxes and charges template for customer group {}.,Bitte definieren Sie eine Standardvorlage für Steuern und Gebühren für die Kundengruppe {}.
+apps/bnovate/bnovate/bnovate/report/aggregate_invoicing/aggregate_invoicing.py,SINV End Period,SINV Ende Zeitraum
+apps/bnovate/bnovate/bnovate/report/aggregate_invoicing/aggregate_invoicing.py,SINV Start Period,SINV Startzeitraum
+apps/bnovate/bnovate/bnovate/report/aggregate_invoicing/aggregate_invoicing.py,Start Billing / Ship Date,Beginn Rechnungsstellung / Versanddatum
+apps/bnovate/bnovate/bnovate/report/aggregate_invoicing/aggregate_invoicing.py,Start Subscription,Start Abonnement
+apps/bnovate/bnovate/bnovate/report/aggregate_invoicing/aggregate_invoicing.py,Tax Conflict,Steuerkonflikt
+apps/bnovate/bnovate/bnovate/report/all_on_stock/all_on_stock.py,SNR,SNR
+apps/bnovate/bnovate/bnovate/report/ancestry_report/ancestry_report.py,Voucher,Gutschein
+apps/bnovate/bnovate/bnovate/report/cartridge_status/cartridge_status.js,At bNovate only,Nur bei bNovate
+apps/bnovate/bnovate/bnovate/report/cartridge_status/cartridge_status.py,Manufacturing Stock Entry,Fertigungsbestandserfassung
+apps/bnovate/bnovate/bnovate/report/cartridge_status/cartridge_status.py,Order Status,Status der Bestellung
+apps/bnovate/bnovate/bnovate/report/cartridge_status/cartridge_status.py,Owned by Customer,Im Besitz des Kunden
+apps/bnovate/bnovate/bnovate/report/connected_devices/connected_devices.py,Data Usage [MB],Datenverwendung [MB]
+apps/bnovate/bnovate/bnovate/report/connected_devices/connected_devices.py,Device Name,Gerät Name
+apps/bnovate/bnovate/bnovate/report/connected_devices/connected_devices.py,Operator,Betreiber
+apps/bnovate/bnovate/bnovate/report/connected_devices/connected_devices.py,Package Name,Name des Pakets
+apps/bnovate/bnovate/bnovate/report/connected_devices/connected_devices.py,Signal [dBm],Signal [dBm]
+apps/bnovate/bnovate/bnovate/report/connected_devices/connected_devices.py,Since date,Seit Datum
+apps/bnovate/bnovate/bnovate/report/connected_devices/connected_devices.py,Transfer doc,Dokument übertragen
+apps/bnovate/bnovate/bnovate/report/deferred_revenue_report/deferred_revenue_report.py,Deferred Amount,Aufgeschobener Betrag
+apps/bnovate/bnovate/bnovate/report/deferred_revenue_report/deferred_revenue_report.py,Recognized Amount,Anerkannter Betrag
+apps/bnovate/bnovate/bnovate/report/enclosure_filling_history/enclosure_filling_history.js,Serial no,Laufende Nummer
+apps/bnovate/bnovate/bnovate/report/enclosure_filling_history/enclosure_filling_history.py,Enclosure Serial,Gehäuse seriell
+apps/bnovate/bnovate/bnovate/report/enclosure_filling_history/enclosure_filling_history.py,Expiry date,Verfallsdatum
+apps/bnovate/bnovate/bnovate/report/enclosure_filling_history/enclosure_filling_history.py,Fill Serial,Serienmäßig ausfüllen
+apps/bnovate/bnovate/bnovate/report/enclosure_filling_history/enclosure_filling_history.py,Fill Type,Füllung Typ
+apps/bnovate/bnovate/bnovate/report/enclosure_filling_history/enclosure_filling_history.py,Production date,Produktionsdatum
+apps/bnovate/bnovate/bnovate/report/enclosure_filling_history/enclosure_filling_history.py,STE,STE
+apps/bnovate/bnovate/bnovate/report/late_purchases/late_purchases.js,Expected in ... days,Erwartet in ... Tagen
+apps/bnovate/bnovate/bnovate/report/late_purchases/late_purchases.js,Only stock items,Nur Lagerartikel
+apps/bnovate/bnovate/bnovate/report/late_purchases/late_purchases.py,Expected date,Voraussichtliches Datum
+apps/bnovate/bnovate/bnovate/report/late_purchases/late_purchases.py,PO,PO
+apps/bnovate/bnovate/bnovate/report/late_purchases/late_purchases.py,Qty total,Menge insgesamt
+apps/bnovate/bnovate/bnovate/report/late_purchases/late_purchases.py,Sold item,Verkaufter Artikel
+apps/bnovate/bnovate/bnovate/report/on_time_delivery_kpis/on_time_delivery_kpis.py,1-2d,1-2d
+apps/bnovate/bnovate/bnovate/report/on_time_delivery_kpis/on_time_delivery_kpis.py,3-7d,3-7d
+apps/bnovate/bnovate/bnovate/report/on_time_delivery_kpis/on_time_delivery_kpis.py,>7d,>7d
+apps/bnovate/bnovate/bnovate/report/on_time_delivery_kpis/on_time_delivery_kpis.py,DN,DN
+apps/bnovate/bnovate/bnovate/report/on_time_delivery_kpis/on_time_delivery_kpis.py,Delay,Verzögerung
+apps/bnovate/bnovate/bnovate/report/on_time_delivery_kpis/on_time_delivery_kpis.py,On time,Pünktlich
+apps/bnovate/bnovate/bnovate/report/on_time_delivery_kpis/on_time_delivery_kpis.py,Planned date,Geplantes Datum
+apps/bnovate/bnovate/bnovate/report/on_time_delivery_kpis/on_time_delivery_kpis.py,SO,SO
+apps/bnovate/bnovate/bnovate/report/on_time_delivery_kpis/on_time_delivery_kpis.py,Shipped date,Datum des Versands
+apps/bnovate/bnovate/bnovate/report/open_work_orders_for_lab/open_work_orders_for_lab.py,Qty Remaining,Verbleibende Menge
+apps/bnovate/bnovate/bnovate/report/order_book/order_book.js,Period Length,Zeitraum Länge
+apps/bnovate/bnovate/bnovate/report/order_book/order_book.py,Expected Billing,Erwartete Abrechnung
+apps/bnovate/bnovate/bnovate/report/order_book/order_book.py,Qty Delivered,Gelieferte Menge
+apps/bnovate/bnovate/bnovate/report/order_book/order_book.py,SO date,SO Datum
+apps/bnovate/bnovate/bnovate/report/order_book/order_book.py,Total Expected Revenue,Erwartete Gesamteinnahmen
+apps/bnovate/bnovate/bnovate/report/orders_to_fulfill/orders_to_fulfill.js,Include Drafts,Entwürfe einbeziehen
+apps/bnovate/bnovate/bnovate/report/orders_to_fulfill/orders_to_fulfill.js,Only manufactured items,Nur hergestellte Artikel
+apps/bnovate/bnovate/bnovate/report/orders_to_fulfill/orders_to_fulfill.py,Go?,Gehen?
+apps/bnovate/bnovate/bnovate/report/orders_to_fulfill/orders_to_fulfill.py,Item code,Artikelcode
+apps/bnovate/bnovate/bnovate/report/orders_to_fulfill/orders_to_fulfill.py,Item group,Artikelgruppe
+apps/bnovate/bnovate/bnovate/report/orders_to_fulfill/orders_to_fulfill.py,Qty Ordered,Bestellte Menge
+apps/bnovate/bnovate/bnovate/report/orders_to_fulfill/orders_to_fulfill.py,Ship date,Versanddatum
+apps/bnovate/bnovate/bnovate/report/payment_entry_accounts/payment_entry_accounts.py,PE,PE
+apps/bnovate/bnovate/bnovate/report/payment_entry_accounts/payment_entry_accounts.py,PINV,PINV
+apps/bnovate/bnovate/bnovate/report/portal_users/portal_users.py,Has Cartridge Portal,Hat Cartridge Portal
+apps/bnovate/bnovate/bnovate/report/portal_users/portal_users.py,Is Primary Customer,Ist Hauptkunde
+apps/bnovate/bnovate/bnovate/report/projected_stock/projected_stock.js,Include SO Drafts,SO Entwürfe einbeziehen
+apps/bnovate/bnovate/bnovate/report/projected_stock/projected_stock.js,Include WO Drafts,WO-Entwürfe einbeziehen
+apps/bnovate/bnovate/bnovate/report/projected_stock/projected_stock.py,Docname,Doku-Name
+apps/bnovate/bnovate/bnovate/report/projected_stock/projected_stock.py,Doctype,Doctype
+apps/bnovate/bnovate/bnovate/report/projected_stock/projected_stock.py,Guaranteed Quantity,Garantierte Menge
+apps/bnovate/bnovate/bnovate/report/projected_stock/projected_stock.py,Projected Quantity,Voraussichtliche Menge
+apps/bnovate/bnovate/bnovate/report/shipping_and_billing_history/shipping_and_billing_history.py,Shipped item,Versendete Ware
+apps/bnovate/bnovate/bnovate/report/shipping_and_billing_history/shipping_and_billing_history.py,Sold rate,Verkaufte Rate
+apps/bnovate/bnovate/bnovate/report/stored_cartridges/stored_cartridges.py,Last Customer,Letzter Kunde
+apps/bnovate/bnovate/bnovate/report/stored_cartridges/stored_cartridges.py,Last Customer Name,Nachname des Kunden
+apps/bnovate/bnovate/bnovate/report/stored_cartridges/stored_cartridges.py,Owned by Customer Name,Im Besitz des Kunden Name
+apps/bnovate/bnovate/bnovate/report/subscription_timeline/subscription_timeline.js,Show only reminders,Nur Mahnungen anzeigen
+apps/bnovate/bnovate/bnovate/report/subscription_timeline/subscription_timeline.py,Item Rate,Artikel Rate
+apps/bnovate/bnovate/bnovate/report/subscription_timeline/subscription_timeline.py,Renewal Reminder From,Verlängerungserinnerung von
+apps/bnovate/bnovate/bnovate/report/weekly_kpi/weekly_kpi.py,Cum. instruments,Cum. Instrumente
+apps/bnovate/bnovate/bnovate/report/weekly_kpi/weekly_kpi.py,Cum. orders,Kumulierte Aufträge
+apps/bnovate/bnovate/bnovate/report/weekly_kpi/weekly_kpi.py,Instruments,Instrumente
+apps/bnovate/bnovate/bnovate/report/weekly_kpi/weekly_kpi.py,Orders confirmed,Bestätigte Aufträge
+apps/bnovate/bnovate/bnovate/report/work_order_planning/work_order_planning.js,Simple View,Einfache Ansicht
+apps/bnovate/bnovate/bnovate/report/work_order_planning/work_order_planning.py,Delivery date,Liefertermin
+apps/bnovate/bnovate/bnovate/utils/dashboards.py,Add-ons,Add-ons
+apps/bnovate/bnovate/bnovate/utils/dashboards.py,Storage,Lagerung
+apps/bnovate/bnovate/config/bnovate.py,Aggregate Invoicing,Aggregierte Fakturierung
+apps/bnovate/bnovate/config/bnovate.py,Bulk upload scanned purchase invoices,Bulk-Upload gescannter Eingangsrechnungen
+apps/bnovate/bnovate/config/bnovate.py,Cartridge Return,Patronenrücklauf
+apps/bnovate/bnovate/config/bnovate.py,Cartridge Status,Status der Patrone
+apps/bnovate/bnovate/config/bnovate.py,Cartridge Tools,Kartuschen-Werkzeuge
+apps/bnovate/bnovate/config/bnovate.py,Confirm return of cartridges,Bestätigung der Rückgabe der Patronen
+apps/bnovate/bnovate/config/bnovate.py,Connected Device Map,Karte der angeschlossenen Geräte
+apps/bnovate/bnovate/config/bnovate.py,Connectivity Package,Konnektivitätspaket
+apps/bnovate/bnovate/config/bnovate.py,Customers requesting refills through Portal,"Kunden, die Nachfüllungen über das Portal anfordern"
+apps/bnovate/bnovate/config/bnovate.py,Deferred Revenue Report,Bericht über die aufgeschobenen Einnahmen
+apps/bnovate/bnovate/config/bnovate.py,Enclosure Filling History,Geschichte der Beilagenbefüllung
+apps/bnovate/bnovate/config/bnovate.py,Enclosure Movement History,Geschichte der Einschließungsbewegung
+apps/bnovate/bnovate/config/bnovate.py,Execution page for work orders,Ausführungsseite für Arbeitsaufträge
+apps/bnovate/bnovate/config/bnovate.py,General Ledger for Export (FRe),Hauptbuch für den Export (FRe)
+apps/bnovate/bnovate/config/bnovate.py,Information about connected devices,Informationen über angeschlossene Geräte
+apps/bnovate/bnovate/config/bnovate.py,IoT,IoT
+apps/bnovate/bnovate/config/bnovate.py,KPIs,KPIs
+apps/bnovate/bnovate/config/bnovate.py,Kontrolle MwSt,Kontrolle MwSt
+apps/bnovate/bnovate/config/bnovate.py,Late Purchases,Verspätete Käufe
+apps/bnovate/bnovate/config/bnovate.py,On Time Delivery KPIs,Pünktliche Lieferung KPIs
+apps/bnovate/bnovate/config/bnovate.py,Open Work Orders for Lab,Offene Arbeitsaufträge für das Labor
+apps/bnovate/bnovate/config/bnovate.py,Order Book,Buch bestellen
+apps/bnovate/bnovate/config/bnovate.py,Order Tracking,Auftragsverfolgung
+apps/bnovate/bnovate/config/bnovate.py,Orders to Fulfill,Zu erfüllende Aufträge
+apps/bnovate/bnovate/config/bnovate.py,PINV uploader,PINV-Uploader
+apps/bnovate/bnovate/config/bnovate.py,Portal Users,Portal-Benutzer
+apps/bnovate/bnovate/config/bnovate.py,Production Tracking,Verfolgung der Produktion
+apps/bnovate/bnovate/config/bnovate.py,Projected Stock,Voraussichtlicher Bestand
+apps/bnovate/bnovate/config/bnovate.py,Shipping And Billing History,Versand- und Rechnungsverlauf
+apps/bnovate/bnovate/config/bnovate.py,Storage Location,Speicherort
+apps/bnovate/bnovate/config/bnovate.py,Storage Locations,Speicherorte
+apps/bnovate/bnovate/config/bnovate.py,Subscription Contract,Abonnement-Vertrag
+apps/bnovate/bnovate/config/bnovate.py,Subscriptions and service contracts,Abonnements und Dienstleistungsverträge
+apps/bnovate/bnovate/config/bnovate.py,Switzerland,Schweiz
+apps/bnovate/bnovate/config/bnovate.py,Weekly KPI,Wöchentlicher KPI
+apps/bnovate/bnovate/config/bnovate.py,Work Order Execution,Ausführung von Arbeitsaufträgen
+apps/bnovate/bnovate/config/bnovate.py,Work Order Planning,Planung von Arbeitsaufträgen
+apps/bnovate/bnovate/config/desktop.py,bNovate,bNovate
+apps/bnovate/bnovate/public/js/doctype_includes/contact.js,User ID is already associated with another contact:,Die Benutzer-ID ist bereits mit einem anderen Kontakt verbunden:
+apps/bnovate/bnovate/public/js/doctype_includes/delivery_note.js,Aggregate Invoice,Gesamtrechnung
+apps/bnovate/bnovate/public/js/doctype_includes/delivery_note.js,Confirm Shipment,Bestätigen Sie den Versand
+apps/bnovate/bnovate/public/js/doctype_includes/delivery_note.js,Request Pickup,Abholung anfordern
+apps/bnovate/bnovate/public/js/iot.js,Connecting...,Verbinden...
+apps/bnovate/bnovate/public/js/iot.js,Error initializing connection,Fehler beim Initialisieren der Verbindung
+apps/bnovate/bnovate/public/js/iot.js,Starting session....,Start der Sitzung....
+apps/bnovate/bnovate/www/cartridges.html,Nothing to display.,Nichts zu sehen.
+apps/bnovate/bnovate/www/cartridges.html,Select cartridges,Patronen auswählen
+apps/bnovate/bnovate/www/cartridges.html,"Select the cartridges you wish to refill. If none of your cartridges are at bNovate, you cannot order a refill.","Wählen Sie die Patronen aus, die Sie nachfüllen möchten. Wenn keine Ihrer Patronen bei bNovate vorhanden ist, können Sie keine Nachfüllung bestellen."
+apps/bnovate/bnovate/www/connect.html,Configure BactoLink,BactoLink konfigurieren
+apps/bnovate/bnovate/www/connect.html,Configure BactoSense,BactoSense konfigurieren
+apps/bnovate/bnovate/www/connect.html,Connect,Verbindung
+apps/bnovate/bnovate/www/connect.html,Connect BactoLink,BactoLink verbinden
+apps/bnovate/bnovate/www/connect.html,Connect Hardware,Hardware anschließen
+apps/bnovate/bnovate/www/connect.html,Friendly Name,Freundlicher Name
+apps/bnovate/bnovate/www/connect.html,Serial Number,Seriennummer
+apps/bnovate/bnovate/www/connect.py,Detecting Instrument...,Erkennung von Instrument...
+apps/bnovate/bnovate/www/connect.py,Detecting SN...,Erkennung von SN...
+apps/bnovate/bnovate/www/connect.py,HTTPS not available,HTTPS nicht verfügbar
+apps/bnovate/bnovate/www/connect.py,Link is Offline,Link ist offline
+apps/bnovate/bnovate/www/connect.py,No serial number found,Keine Seriennummer gefunden
+apps/bnovate/bnovate/www/connect.py,Serial No does not match a known instrument,Seriennummer stimmt nicht mit einem bekannten Gerät überein
+apps/bnovate/bnovate/www/connect.py,Unauthorized,Unbefugte
+apps/bnovate/bnovate/www/connect.py,Unregistered serial number,Nicht registrierte Seriennummer
+apps/bnovate/bnovate/www/connect.py,Verifying Gateway...,Gateway überprüfen...
+apps/bnovate/bnovate/www/index.html,Quick Connect,Schnellverbindung
+apps/bnovate/bnovate/www/index.py,Portal Home,Portal Startseite
+apps/bnovate/bnovate/www/instruments.html,Initialize BactoLink,BactoLink initialisieren
+apps/bnovate/bnovate/www/instruments.html,My Instruments,Meine Instrumente
+apps/bnovate/bnovate/www/instruments.html,Service Agreement,Dienstleistungsvertrag
+apps/bnovate/bnovate/www/instruments.html,Touch UI,Touch UI
+apps/bnovate/bnovate/www/instruments.html,Warranty Until,Garantie bis
+apps/bnovate/bnovate/www/instruments.html,Web UI,Web UI
+apps/bnovate/bnovate/www/internal/storage.html,Slot,Schlitz
+apps/bnovate/bnovate/www/my_addresses.html,Address Details,Adresse Details
+apps/bnovate/bnovate/www/my_addresses.html,Delete this address?,Diese Adresse löschen?
+apps/bnovate/bnovate/www/request.py,You cannot order to this billing address,Sie können nicht an diese Rechnungsadresse bestellen
+apps/bnovate/bnovate/www/request.py,You cannot order to this shipping address,Sie können nicht an diese Lieferadresse bestellen
+apps/bnovate/bnovate/www/requests.html,Request date,Datum der Anfrage

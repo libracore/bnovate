@@ -314,7 +314,7 @@
    "fieldname": "renewal_reminder_period",
    "fieldtype": "Select",
    "hidden": 1,
-   "label": " Renewal Reminder Period",
+   "label": "Renewal Reminder Period",
    "options": "WEEK\nMONTH",
    "read_only": 1
   },
@@ -468,7 +468,7 @@
   }
  ],
  "is_submittable": 1,
- "modified": "2023-05-30 15:35:03.795541",
+ "modified": "2023-10-18 15:15:41.572520",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Subscription Contract",

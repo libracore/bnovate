@@ -8,7 +8,7 @@
     <div class="col">
         <button id="request-refill" class="btn btn-primary" style="margin-bottom: 10px" title="{{ _('Select cartridges') }}" disabled>{{ _("Request Refill") }}</button> <br/>
         {% if data %}
-        <p><i>{{ _("Select the cartridges you wish to refill.") }}</i></p>
+        <p><i>{{ _("Select the cartridges you wish to refill. If none of your cartridges are at bNovate, you cannot order a refill.") }}</i></p>
         {% else %}
         <p><i>{{ _("Nothing to display.") }}</i></p>
         {% endif %}
@@ -43,7 +43,7 @@
                             {{ row.serial_no }}
                         </label>
                     </td>
-                    <td>{{ row.location }}</td>
+                    <td>{{ _(row.location) }}</td>
                     <td>{{ _(row.status) }}</td>
                     <td>{{ frappe.format(row.posting_date, {'fieldtype': 'Date'}) }}</td>
                     <td>

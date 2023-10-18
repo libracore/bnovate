@@ -17,7 +17,11 @@ def get_context(context):
     context.form_dict = frappe.form_dict
     context.name = frappe.form_dict.name
     context.show_sidebar = True
-    context.add_breadcrumbs = False
+    context.add_breadcrumbs = True
+    context.parents = [
+		{ "name": _("Refill Requests"), "route": "/requests" },
+	]
+    context.title = context.name
     return context
 
 
@@ -27,7 +31,7 @@ def get_request(name):
 
 
     doc = frappe.get_doc("Refill Request", name)
-    if doc.customer != primary_customer:
+    if doc.customer != primary_customer.docname:
         return None
     doc.set_indicator()
     return doc
@@ -49,7 +53,7 @@ def make_request(doc):
 
     new_request = frappe.get_doc({
         'doctype': 'Refill Request',
-        'customer': get_session_primary_customer(),
+        'customer': get_session_primary_customer().name,
         'contact_person': get_session_contact(),
         'transaction_date': today(),
         'shipping_address': doc['shipping_address'],

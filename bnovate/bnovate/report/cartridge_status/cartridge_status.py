@@ -56,6 +56,9 @@ def get_data(filters):
         serial_nos = '("' + '", "'.join(filters.serial_no) + '")'
         extra_filters += '\nAND sn.serial_no IN {0}'.format(serial_nos)
 
+    # Like this the strings are picked up:
+    translations_hack = [_("Shipped to Customer")]
+
     sql_query = """
         SELECT 
             sn.serial_no, 

@@ -178,18 +178,30 @@ def get_data():
                    }  
             ]
         },
-        #  {
-        #     "label": _("IoT"),
-        #     "icon": "octicon octicon-git-compare",
-        #     "items": [
-        #            {
-        #                 "type": "page",
-        #                 "name": "device-map",
-        #                 "label": _("Connected Device Map"),
-        #                 "description": _("Information about connected devices")           
-        #            }
-        #     ]
-        # },
+         {
+            "label": _("IoT"),
+            "icon": "octicon octicon-git-compare",
+            "items": [
+                   {
+                        "type": "page",
+                        "name": "device-map",
+                        "label": _("Connected Device Map"),
+                        "description": _("Information about connected devices")           
+                   },
+                   {
+                       "type": "doctype",
+                       "name": "Connectivity Package",
+                       "label": _("Connectivity Package"),
+                       "description": _("Connectivity Package")
+                   }, {
+                        "type": "report",
+                        "name": "Portal Users",
+                        "label": _("Portal Users"),
+                        "doctype": "Contact",
+                        "is_query_report": True   
+                   }
+            ]
+        },
         {
             "label": _("Switzerland"),
             "icon": "fa fa-money",

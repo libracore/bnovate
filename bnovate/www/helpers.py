@@ -8,28 +8,45 @@ from frappe import _
 from frappe.contacts.doctype.address.address import get_address_display
 
 def auth():
-    # check login
+    # check login, throw exception if not logged in
     if frappe.session.user=='Guest':
         frappe.throw(_("You need to be logged in to access this page"), frappe.PermissionError)
     if not "@" in frappe.session.user:
         frappe.throw(_("You need to be logged in to access this page"), frappe.PermissionError)
 
+def is_guest():
+    if frappe.session.user=='Guest' or not "@" in frappe.session.user:
+        return True
+    return False
+
+def update_context(context):
+    """ Called by hooks.py as a 'middleware' on all pages, including Desk pages. """
+    build_sidebar(context, context.show_sidebar)
+    return context
+
+def get_settings():
+    return frappe.get_single("bNovate Settings")
+
 def get_session_customers():
     # fetch customers for this user, ordered the same as in Desk.
     customers = frappe.db.sql("""
         SELECT 
-            `tC1`.`link_name` AS `customer`
+            `tC1`.`link_name` AS `docname`,
+            `tCus`.`enable_cartridge_portal`,
+            `tCus`.`customer_name`
         FROM `tabContact`
         JOIN `tabDynamic Link` AS `tC1` ON `tC1`.`parenttype` = "Contact" 
                                        AND `tC1`.`link_doctype` = "Customer" 
                                        AND `tC1`.`parent` = `tabContact`.`name`
+        JOIN `tabCustomer` as `tCus` ON `tCus`.`name` = `tC1`.`link_name`
         WHERE `tabContact`.`user` = "{user}"
         ORDER BY `tC1`.`idx`;
     """.format(user=frappe.session.user), as_dict=True)
 
-    return [ c['customer'] for c in customers]
+    return customers
 
 def get_session_primary_customer():
+    """ Return ID of primary customer, i.e. first in list of linked customers """
     customers = get_session_customers()
     if customers:
         return customers[0]
@@ -50,6 +67,39 @@ def get_session_contact():
 
     return users[0].name
 
+def has_cartridge_portal():
+    """ True if user is allowed to use cartridge management features """
+    customer = get_session_primary_customer()
+    if customer is not None and customer.enable_cartridge_portal:
+        return True
+    return False
+
+
+def build_sidebar(context, show=True):
+    context.show_sidebar = show
+    context.sidebar_items = [{
+            'route': '/',
+            'title': 'Dashboard',
+        }, {
+            'route': '/quotations',
+            'title': 'Quotations',
+        }, {
+            'route': '/instruments',
+            'title': 'My Instruments',
+        }]
+
+    if has_cartridge_portal():
+        context.sidebar_items.extend([{
+                'route': '/cartridges',
+                'title': 'My Cartridges',
+            }, {
+                'route': '/requests',
+                'title': 'Refill Requests',
+            }, {
+                'route': '/my_addresses',
+                'title': 'My Addresses',
+            }])
+
 @frappe.whitelist()
 def get_addresses():
     """ Return addresses for the current contact """
@@ -65,7 +115,7 @@ def get_addresses():
             `tabAddress`.`country`,
             `tabAddress`.`is_primary_address`,
             `tabAddress`.`is_shipping_address`,
-            `tC1`.`link_name` AS `customer_name`
+            `tC1`.`link_name` AS `customer_docname`
         FROM `tabContact`
         JOIN `tabDynamic Link` AS `tC1` ON `tC1`.`parenttype` = "Contact" 
                                        AND `tC1`.`link_doctype` = "Customer" 
@@ -90,9 +140,9 @@ def create_address(address_line1, pincode, city, address_type="Shipping", compan
     """ Add address on primary customer associated to this user """
     # fetch customers for this user
     customer = get_session_primary_customer()
-    customer_links = [{'link_doctype': 'Customer', 'link_name': customer}]
+    customer_links = [{'link_doctype': 'Customer', 'link_name': customer.docname}]
     # create new address
-    pure_name = "{0}-{1}-{2}-{3}".format(customer, company_name, address_line1, city).replace(" ", "_").replace("&", "and").replace("+", "and").replace("?", "-").replace("=", "-")
+    pure_name = "{0}-{1}-{2}-{3}".format(customer.docname, company_name, address_line1, city).replace(" ", "_").replace("&", "and").replace("+", "and").replace("?", "-").replace("=", "-")
     new_address = frappe.get_doc({
         'doctype': 'Address',
         'address_title': pure_name,
@@ -119,7 +169,7 @@ def delete_address(name):
     permitted = False
     for l in address.links:
         for c in customers:
-            if l.link_name == c:
+            if l.link_name == c.customer_docname:
                 permitted = True
     if permitted:
         # delete address: drop links
