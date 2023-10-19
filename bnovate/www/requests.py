@@ -12,9 +12,9 @@ from .helpers import get_session_primary_customer, auth, build_sidebar, has_cart
 
 no_cache = 1
 
-auth()
 
 def get_context(context):
+    auth()
     build_sidebar(context)
     
     if has_cartridge_portal():

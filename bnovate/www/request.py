@@ -10,9 +10,9 @@ from .helpers import auth, get_session_primary_customer, get_session_contact, ge
 
 no_cache = 1
 
-auth()
 
 def get_context(context):
+    auth()
     context.doc = get_request(frappe.form_dict.name)
     context.form_dict = frappe.form_dict
     context.name = frappe.form_dict.name

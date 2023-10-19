@@ -127,7 +127,7 @@ doctype_list_js = {
 # ----------
 
 # application home page (will override Website Settings)
-# home_page = "desk"
+# home_page = "index"
 
 # website user home page (by Role)
 # role_home_page = {
