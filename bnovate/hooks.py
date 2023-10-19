@@ -127,15 +127,18 @@ doctype_list_js = {
 # ----------
 
 # application home page (will override Website Settings)
-# home_page = "login"
+# home_page = "desk"
 
 # website user home page (by Role)
 # role_home_page = {
-# "Role": "home_page"
+#     "Customer": "index"
 # }
 
+# # Website user home page, instead of directing to /me after login
+# website_user_home_page = "index"
+
 # Website user home page (by function)
-# get_website_user_home_page = "bnovate.utils.get_home_page"
+get_website_user_home_page = "bnovate.config.homepage.get_homepage"
 
 has_website_permission = {
     # 'Blanket Order': ['TBD']

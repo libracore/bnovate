@@ -114,10 +114,10 @@ apps/bnovate/bnovate/bnovate/utils/dashboards.py,Add-ons,Add-ons
 apps/bnovate/bnovate/bnovate/utils/dashboards.py,Storage,Lagerung
 apps/bnovate/bnovate/config/bnovate.py,Aggregate Invoicing,Aggregierte Fakturierung
 apps/bnovate/bnovate/config/bnovate.py,Bulk upload scanned purchase invoices,Bulk-Upload gescannter Eingangsrechnungen
-apps/bnovate/bnovate/config/bnovate.py,Cartridge Return,Patronenrücklauf
-apps/bnovate/bnovate/config/bnovate.py,Cartridge Status,Status der Patrone
+apps/bnovate/bnovate/config/bnovate.py,Cartridge Return,Kartuschenrücklauf
+apps/bnovate/bnovate/config/bnovate.py,Cartridge Status,Status der Kartuschen
 apps/bnovate/bnovate/config/bnovate.py,Cartridge Tools,Kartuschen-Werkzeuge
-apps/bnovate/bnovate/config/bnovate.py,Confirm return of cartridges,Bestätigung der Rückgabe der Patronen
+apps/bnovate/bnovate/config/bnovate.py,Confirm return of cartridges,Bestätigung der Rückgabe der Kartuschen
 apps/bnovate/bnovate/config/bnovate.py,Connected Device Map,Karte der angeschlossenen Geräte
 apps/bnovate/bnovate/config/bnovate.py,Connectivity Package,Konnektivitätspaket
 apps/bnovate/bnovate/config/bnovate.py,Customers requesting refills through Portal,"Kunden, die Nachfüllungen über das Portal anfordern"
@@ -159,7 +159,7 @@ apps/bnovate/bnovate/public/js/iot.js,Error initializing connection,Fehler beim 
 apps/bnovate/bnovate/public/js/iot.js,Starting session....,Start der Sitzung....
 apps/bnovate/bnovate/www/cartridges.html,Nothing to display.,Nichts zu sehen.
 apps/bnovate/bnovate/www/cartridges.html,Select cartridges,Patronen auswählen
-apps/bnovate/bnovate/www/cartridges.html,"Select the cartridges you wish to refill. If none of your cartridges are at bNovate, you cannot order a refill.","Wählen Sie die Patronen aus, die Sie nachfüllen möchten. Wenn keine Ihrer Patronen bei bNovate vorhanden ist, können Sie keine Nachfüllung bestellen."
+apps/bnovate/bnovate/www/cartridges.html,"Select the cartridges you wish to refill. If none of your cartridges are at bNovate, you cannot order a refill.","Wählen Sie die Kartuschen aus, die Sie nachfüllen möchten. Wenn keine Ihrer Kartuschen bei bNovate vorhanden ist, können Sie keine Nachfüllung bestellen."
 apps/bnovate/bnovate/www/connect.html,Configure BactoLink,BactoLink konfigurieren
 apps/bnovate/bnovate/www/connect.html,Configure BactoSense,BactoSense konfigurieren
 apps/bnovate/bnovate/www/connect.html,Connect,Verbindung
