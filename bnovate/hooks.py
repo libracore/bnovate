@@ -135,10 +135,10 @@ doctype_list_js = {
 # }
 
 # # Website user home page, instead of directing to /me after login
-# website_user_home_page = "index"
+website_user_home_page = "index"
 
 # Website user home page (by function)
-get_website_user_home_page = "bnovate.config.homepage.get_homepage"
+# get_website_user_home_page = "bnovate.config.homepage.get_homepage"
 
 has_website_permission = {
     # 'Blanket Order': ['TBD']

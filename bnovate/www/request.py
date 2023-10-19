@@ -53,7 +53,7 @@ def make_request(doc):
 
     new_request = frappe.get_doc({
         'doctype': 'Refill Request',
-        'customer': get_session_primary_customer().name,
+        'customer': get_session_primary_customer().docname,
         'contact_person': get_session_contact(),
         'transaction_date': today(),
         'shipping_address': doc['shipping_address'],
