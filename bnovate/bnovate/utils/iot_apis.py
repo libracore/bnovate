@@ -15,6 +15,8 @@ from json import JSONDecodeError
 from requests import request
 from requests.auth import HTTPBasicAuth
 
+from bnovate.bnovate.doctype.audit_log import audit_log
+
 READ, WRITE = "read", "write"
 
 class ApiException(Exception):
@@ -462,4 +464,6 @@ def get_instrument_status(device_id, password=""):
     device_id is RMS device ID. Will fetch status from first instrument available.
     """
 
+    # TODO: move this to connectivity package so that we can store more useful info.
+    audit_log.log("Get Status", data={'device_id': device_id})
     return _get_instrument_status(device_id, password)
