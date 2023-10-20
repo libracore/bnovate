@@ -161,9 +161,9 @@ website_route_rules = [
 ]
 
 standard_portal_menu_items = [
-    {"title": _("My Cartridges"), "route": "/cartridges", "reference_doctype": "", "role": "Customer"},
+    {"title": _("Cartridges"), "route": "/cartridges", "reference_doctype": "", "role": "Customer"},
     {"title": _("Refill Requests"), "route": "/requests", "reference_doctype": "Refill Request", "role": "Customer"},
-    {"title": _("My Addresses"), "route": "/my_addresses", "reference_doctype": "Address", "role": "Customer"},
+    {"title": _("Addresses"), "route": "/my_addresses", "reference_doctype": "Address", "role": "Customer"},
 ]
 
 website_context = {
@@ -172,6 +172,9 @@ website_context = {
 }
 
 update_website_context = "bnovate.www.helpers.update_context"
+extend_website_page_controller_context  = {
+    "frappe.www.login": "bnovate.www.login",
+}
 
 
 # Generators
