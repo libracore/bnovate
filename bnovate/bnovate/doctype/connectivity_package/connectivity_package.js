@@ -45,7 +45,7 @@ frappe.ui.form.on('Connectivity Package', {
 	},
 
 	async get_status(frm) {
-		get_instrument_status(frm);
+		get_service_info(frm);
 	},
 
 	async validate(frm) {
@@ -90,17 +90,6 @@ async function get_rms_info(frm) {
 	return resp.message;
 };
 
-async function get_instrument_sn(frm) {
-	console.log("ID", get_device_id(frm))
-	const status = await bnovate.iot.get_instrument_status(get_device_id(frm));
-	if (status) {
-		frm.set_value("instrument_serial_no", status.serialNumber);
-		frm.save();
-		console.log(status)
-	}
-	return status
-}
-
 function clear_connection_status(frm) {
 	$(frm.fields_dict.connection_status.wrapper).html(``);
 	let message = null;
@@ -119,6 +108,31 @@ async function get_connection_status(frm) {
 		<a href="https://rms.teltonika-networks.com/devices/${device.id}" target="_blank">Manage on RMS<i class="fa fa-external-link"></i></a>
 	`)
 }
+
+async function get_instrument_status(frm) {
+	const resp = await frappe.call({
+		method: 'bnovate.bnovate.doctype.connectivity_package.connectivity_package.get_instrument_status',
+		args: {
+			docname: frm.doc.name,
+		}
+	})
+	return resp.message
+}
+
+async function get_instrument_sn(frm) {
+	frappe.show_progress("Fetching Serial No...", 30, 100);
+	setTimeout(() => frappe.show_progress("Fetching Serial No...", 60, 100), 300);
+	const resp = await frappe.call({
+		method: 'bnovate.bnovate.doctype.connectivity_package.connectivity_package.get_instrument_sn',
+		args: {
+			docname: frm.doc.name,
+		}
+	});
+
+	frappe.hide_progress();
+	frm.reload_doc();
+}
+
 
 ///////////////////////
 // Remote connections
@@ -282,7 +296,7 @@ function clear_instrument_status(frm) {
 	$(frm.fields_dict.instrument_status.wrapper).html(``);
 }
 
-async function get_instrument_status(frm) {
+async function get_service_info(frm) {
 
 	function format_date(unix_ts) {
 		const date = moment.unix(unix_ts);
@@ -294,7 +308,7 @@ async function get_instrument_status(frm) {
 	}
 
 	$(frm.fields_dict.instrument_status.wrapper).html(`<i class="fa fa-cog fa-spin" style="font-size: 20px"></i>`);
-	const status = await bnovate.iot.get_instrument_status(get_device_id(frm));
+	const status = await get_instrument_status(frm);
 	$(frm.fields_dict.instrument_status.wrapper).html(frappe.render_template(
 		`
 		<table class="table table-condensed no-margin" style="border-bottom: 1px solid #d1d8dd">

@@ -104,13 +104,3 @@ bnovate.iot.rms_get_status = async function rms_get_status(channel, method = nul
     });
     return resp.message;
 }
-
-bnovate.iot.get_instrument_status = async function get_instrument_status(device_id) {
-    let resp = await frappe.call({
-        method: 'bnovate.bnovate.utils.iot_apis.get_instrument_status',
-        args: {
-            device_id
-        }
-    });
-    return resp.message;
-}

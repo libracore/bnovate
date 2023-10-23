@@ -7,8 +7,8 @@ from frappe import _
 from frappe.exceptions import ValidationError
 
 from bnovate.bnovate.utils.iot_apis import (rms_get_access_configs, _rms_start_session, _rms_get_status, 
-                                            rms_initialize_device, _rms_get_device, _get_instrument_status)
-from bnovate.bnovate.doctype.connectivity_package.connectivity_package import set_info_from_rms
+                                            rms_initialize_device, _rms_get_device)
+from bnovate.bnovate.doctype.connectivity_package.connectivity_package import set_info_from_rms, _get_instrument_status
 from bnovate.bnovate.utils.realtime import set_status, STATUS_RUNNING, STATUS_DONE
 from .helpers import get_session_customers, get_session_primary_customer, auth, build_sidebar
 
@@ -179,7 +179,7 @@ def portal_initialize_device(teltonika_serial, device_name, task_id=None):
 
     # Get SN
     try:
-        instrument_status = _get_instrument_status(cp.rms_id, auth=False)
+        instrument_status = _get_instrument_status(cp.name, auth=False)
     except Exception as e:
         progress[2]["code"] = 1
         progress[2]["error"] = str(e)
@@ -212,14 +212,6 @@ def portal_initialize_device(teltonika_serial, device_name, task_id=None):
     set_status(progress, task_id, STATUS_DONE)
 
     return _rms_get_device(cp.rms_id, auth=False)
-
-@frappe.whitelist()
-def portal_start_session(config_id, device_id):
-    # Raises error if user is not allowed.
-    auth_remote_session(config_id, device_id)
-    channel = _rms_start_session(config_id, auth=False)
-    frappe.cache().set_value("channel-owner-{}".format(channel), frappe.session.sid, expires_in_sec=60*60)
-    return channel
 
 @frappe.whitelist()
 def portal_get_status(channel):

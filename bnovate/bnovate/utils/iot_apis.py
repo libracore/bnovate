@@ -15,8 +15,6 @@ from json import JSONDecodeError
 from requests import request
 from requests.auth import HTTPBasicAuth
 
-from bnovate.bnovate.doctype.audit_log import audit_log
-
 READ, WRITE = "read", "write"
 
 class ApiException(Exception):
@@ -422,7 +420,7 @@ def get_devices_and_data():
 # BactoSense API interface
 ################################
 
-def _get_instrument_status(device_id, password="", auth=True, attempt=1):
+def get_instrument_status(device_id, password="", auth=True, attempt=1):
     """ Get instrument status, for example to fetch Serial Number or service due date.
 
     device_id is RMS device ID. Will fetch status from first instrument available.
@@ -448,22 +446,10 @@ def _get_instrument_status(device_id, password="", auth=True, attempt=1):
     if len(https['sessions']) == 0:
         channel = _rms_start_session(https['id'], auth=auth)
         rms_wait_for_session(channel, device_id, auth=auth)
-        return _get_instrument_status(device_id, password, auth, attempt+1)
+        return get_instrument_status(device_id, password, auth, attempt+1)
     
     return request(
         "GET", 
         "https://{}/api/status".format(https['sessions'][0]['url']),
         auth=HTTPBasicAuth("guest", password)
     ).json()
-
-
-@frappe.whitelist()
-def get_instrument_status(device_id, password=""):
-    """ Get instrument status, for example to fetch Serial Number or service due date.
-
-    device_id is RMS device ID. Will fetch status from first instrument available.
-    """
-
-    # TODO: move this to connectivity package so that we can store more useful info.
-    audit_log.log("Get Status", data={'device_id': device_id})
-    return _get_instrument_status(device_id, password)
