@@ -298,6 +298,10 @@ def rms_get_access_sessions_for_config(config, settings=None, auth=True):
     active.sort(key=lambda el: el['end_time'], reverse=True)
     return dict(sessions=active, **config)
 
+@frappe.whitelist()
+def rms_get_access_sessions(device_id=None):
+    return _rms_get_access_sessions(device_id)
+
 def _rms_get_access_sessions(device_id=None, auth=True):
     """ Return list of access config dicts, each with its list of active sessions """
     if auth:
@@ -311,10 +315,6 @@ def _rms_get_access_sessions(device_id=None, auth=True):
     # Alphabetical sort by protocol, so that they always appear in the same order.
     responses.sort(key=lambda el: el['protocol'])
     return responses
-
-@frappe.whitelist()
-def rms_get_access_sessions(device_id=None):
-    return _rms_get_access_sessions(device_id)
 
 
 @frappe.whitelist()
@@ -334,7 +334,7 @@ def _rms_start_session(config_id, device_id, duration=30*60, auth=True, task_id=
     """
     device_id = str(device_id)
     set_status({
-        "progress": 0,
+        "progress": 5,
         "message": _("Connecting..."),
     }, task_id)
 

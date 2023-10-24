@@ -56,7 +56,6 @@ bnovate.realtime.on = async function (id, callback, timeout = 60 * 1000) {
 // Server side method need to use set_status for messages to pass.
 bnovate.realtime.call = async function ({ method, args, callback, timeout = 60 * 1000 }) {
     const task_id = await bnovate.realtime.get_task_id();
-    console.log("Logging to task id ", task_id)
     const task = frappe.call({
         method,
         args: {

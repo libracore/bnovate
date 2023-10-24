@@ -7,7 +7,7 @@ from frappe import _
 from frappe.exceptions import ValidationError
 
 from bnovate.bnovate.utils.iot_apis import rms_get_access_configs, _rms_start_session, _rms_get_status, rms_initialize_device, _rms_get_device
-from bnovate.bnovate.doctype.connectivity_package.connectivity_package import set_info_from_rms
+from bnovate.bnovate.doctype.connectivity_package.connectivity_package import _start_session
 from .helpers import get_session_customers, get_session_primary_customer, auth, build_sidebar
 
 no_cache = 1
@@ -68,44 +68,31 @@ def get_instruments_one_customer(customer):
 
     return assets
 
-def auth_remote_session(config_id, device_id):
+def auth_remote_session(config_id, cp_docname):
     """ Return True if access config relates to a gateway owned by a linked customer.
 
     frappe.throw if config doesn't exist or doesn't belong to a customer linked to current user.
      
-       """
-    # Open Remote session associated with config if the gateway is owned by a linked customer
+    """
 
-    access_configs = [ c for c in rms_get_access_configs(device_id=device_id, auth=False) if str(c['id']) == config_id ]
-    if not access_configs:
-        frappe.throw("Remote access configuration does not exist")
-    
-    config = access_configs[0]
-    device_id = config['device_id']
-
-    cp_owner = frappe.get_value("Connectivity Package", filters={
-                "rms_id": ["=", device_id],
-            }, fieldname="customer")
+    cp_owner, device_id = frappe.get_value("Connectivity Package", cp_docname, fieldname=["customer", "rms_id"])
 
     if cp_owner is None or all(c.docname != cp_owner for c in get_session_customers()):
         # None of the linked customers match this connectivity package owner
         frappe.throw("{} does not have access to this device".format(frappe.session.user))
 
+    access_configs = [ c for c in rms_get_access_configs(device_id=device_id, auth=False) if str(c['id']) == config_id ]
+    if not access_configs:
+        frappe.throw("Remote access configuration does not exist")
+    
+
     return True
 
 @frappe.whitelist()
-def portal_start_session(config_id, device_id, task_id=None):
+def portal_start_session(config_id, cp_docname, task_id=None):
     # Raises error if user is not allowed.
-    auth_remote_session(config_id, device_id)
-    return _rms_start_session(config_id, device_id, auth=False, task_id=task_id)
-    frappe.cache().set_value("channel-owner-{}".format(channel), frappe.session.sid, expires_in_sec=60*60)
-    return channel
-
-@frappe.whitelist()
-def portal_get_status(channel):
-    if not frappe.cache().get_value("channel-owner-{}".format(channel)) == frappe.session.sid:
-        frappe.throw("{} is not authorized to read this channel".format(frappe.session.user))
-    return _rms_get_status(channel, auth=False)
+    auth_remote_session(config_id, cp_docname)
+    return _start_session(cp_docname, config_id, auth=False, task_id=task_id)
 
 @frappe.whitelist()
 def portal_get_device(device_id):

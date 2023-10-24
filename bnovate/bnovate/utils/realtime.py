@@ -24,9 +24,6 @@ def get_new_id():
 
 def set_status(data, task_id, status=STATUS_RUNNING):
     """ Set realtime data for task_id. If task_id is None, ignore. """
-
-    print("------------ Post status --------------------", task_id, data)
-
     if task_id is None:
         return
 

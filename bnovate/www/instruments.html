@@ -74,11 +74,11 @@
                         <div class="link-status" data-device-id="{{ instrument.cp.rms_id }}"></div><br>
                         {% if instrument.cp.web %}
                         <button href="#" class="btn btn-primary open-remote" data-config-id="{{ instrument.cp.web.id }}"
-                            data-device-id="{{ instrument.cp.web.device_id}}" >{{ _("Web UI") }}</button>
+                            data-cp-docname="{{ instrument.cp.name }}" data-device-id="{{ instrument.cp.web.device_id}}" >{{ _("Web UI") }}</button>
                         {% endif %}
                         {% if instrument.cp.vnc %}
                         <button href="#" class="btn btn-primary open-remote" data-config-id="{{ instrument.cp.vnc.id }}"
-                            data-device-id="{{ instrument.cp.vnc.device_id}}">{{ _("Touch UI") }}</button>
+                            data-cp-docname="{{ instrument.cp.name }}" data-device-id="{{ instrument.cp.vnc.device_id}}">{{ _("Touch UI") }}</button>
                         {% endif %}
                     </dd>
                     {% endif %}
@@ -107,24 +107,7 @@
     remoteBtns.map(el => el.addEventListener("click", async (e) => {
         try {
             remoteBtns.map(btn => btn.disabled = true)
-            const resp = await bnovate.realtime.call({
-                method: "bnovate.www.instruments.portal_start_session",
-                args: {
-                    config_id: el.dataset.configId,
-                    device_id: el.dataset.deviceId
-                },
-                callback(status) {
-                    console.log(status);
-                    if (status.data.progress < 100) {
-                        frappe.show_progress(__("Starting session...."), status.data.progress, 100);
-                    }
-                }
-            })
-            const link = resp.message;
-            if (link) {
-                frappe.hide_progress();
-                window.open("https://" + link, "_blank");
-            }
+            bnovate.iot.portal_start_session(el.dataset.configId, el.dataset.cpDocname);
         } finally {
             remoteBtns.map(btn => btn.disabled = false)
         }
@@ -140,7 +123,6 @@
         return resp.message;
     }
 
-
     // Load status
     [...document.querySelectorAll(".link-status")].map(async el => {
         const device = await portal_get_device(el.dataset.deviceId);
@@ -151,9 +133,6 @@
         ${device.operator} <img src="${bnovate.web.signal_icon(device.signal)}" style="max-height: 2em"> <br> ${device.connection_type}[${device.signal} dBm]
         `
     })
-
-
-
 
 </script>
 {% endblock %}

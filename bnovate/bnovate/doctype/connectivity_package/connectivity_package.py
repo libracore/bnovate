@@ -5,7 +5,8 @@
 from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
-from bnovate.bnovate.utils.iot_apis import rms_get_id, rms_get_device, rms_initialize_device, rms_start_session
+from bnovate.bnovate.utils.iot_apis import (rms_get_id, rms_get_device, rms_initialize_device, 
+                                            _rms_start_session, rms_get_access_configs)
 from bnovate.bnovate.utils import iot_apis
 from bnovate.bnovate.doctype.audit_log import audit_log
 
@@ -74,6 +75,7 @@ def _get_instrument_status(docname, auth=True, task_id=None):
     audit_log.log(
         action="Get Instrument Status", 
         data={'rms_device_id': rms_id},
+        protocol="HTTPS",
         serial_no=instrument_serial_no,
         connectivity_package=docname,
     )
@@ -83,5 +85,26 @@ def _get_instrument_status(docname, auth=True, task_id=None):
 
 @frappe.whitelist()
 def start_session(docname, config_id, task_id=None):
-    rms_id = frappe.get_value("Connectivity Package", docname, ['rms_id'])
-    return rms_start_session(config_id, rms_id, task_id=task_id)
+    return _start_session(docname, config_id, task_id=task_id)
+
+def _start_session(docname, config_id, auth=True, task_id=None):
+    """ Start remote connection, return URL. 
+    
+    Adds audit logging. Skip auth only if checked before call.
+    """
+    rms_id, instrument_serial_no = frappe.get_value("Connectivity Package", docname, ['rms_id', 'instrument_serial_no'])
+    access_configs = rms_get_access_configs(rms_id, auth=auth)
+    config = next((c for c in access_configs if str(c['id']) == str(config_id)), None) 
+    
+    audit_log.log(
+        action="Start Remote Session", 
+        data={
+            'rms_device_id': rms_id, 
+            'connection_name': config['name'] if config else 'Unknown',
+        },
+        protocol=config['protocol'].upper() if config else 'Unknown',
+        serial_no=instrument_serial_no,
+        connectivity_package=docname,
+    )
+
+    return _rms_start_session(config_id, rms_id, auth=auth, task_id=task_id)

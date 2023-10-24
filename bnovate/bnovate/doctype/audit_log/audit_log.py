@@ -12,7 +12,7 @@ class AuditLog(Document):
 	pass
 
 
-def log(action, data, serial_no=None, connectivity_package=None):
+def log(action, data, protocol=None, serial_no=None, connectivity_package=None):
 	""" Add audit log entry """
 
 	new_log = frappe.get_doc({
@@ -20,6 +20,7 @@ def log(action, data, serial_no=None, connectivity_package=None):
 		'docstatus': 1,
 		'action': action,
 		'data': json.dumps(data),
+		'protocol': protocol,
 		'serial_no': serial_no,
 		'connectivity_package': connectivity_package,
 	})

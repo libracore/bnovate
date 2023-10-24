@@ -6,6 +6,7 @@
  "field_order": [
   "action",
   "data",
+  "protocol",
   "serial_no",
   "connectivity_package",
   "amended_from"
@@ -42,10 +43,15 @@
    "fieldtype": "Link",
    "label": "Connectivity Package",
    "options": "Connectivity Package"
+  },
+  {
+   "fieldname": "protocol",
+   "fieldtype": "Data",
+   "label": "Protocol"
   }
  ],
  "is_submittable": 1,
- "modified": "2023-10-23 16:46:33.591084",
+ "modified": "2023-10-24 21:39:01.384829",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Audit Log",

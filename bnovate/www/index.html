@@ -22,11 +22,11 @@
                     <dd>
                         {% if instrument.cp.web %}
                         <button href="#" class="btn btn-primary open-remote" data-config-id="{{ instrument.cp.web.id }}"
-                            data-device-id="{{ instrument.cp.web.device_id}}">{{ _("Web UI") }}</button>
+                            data-cp-docname="{{ instrument.cp.name}}">{{ _("Web UI") }}</button>
                         {% endif %}
                         {% if instrument.cp.vnc %}
                         <button href="#" class="btn btn-primary open-remote" data-config-id="{{ instrument.cp.vnc.id }}"
-                            data-device-id="{{ instrument.cp.vnc.device_id}}">{{ _("Touch UI") }}</button>
+                            data-cp-docname="{{ instrument.cp.name}}">{{ _("Touch UI") }}</button>
                         {% endif %}
                     </dd>
                     {% endfor %}
@@ -96,13 +96,7 @@
     remoteBtns.map(el => el.addEventListener("click", async (e) => {
         try {
             remoteBtns.map(btn => btn.disabled = true)
-            const link = await bnovate.iot.rms_start_session(el.dataset.configId, el.dataset.deviceId,
-                start_session_method = 'bnovate.www.instruments.portal_start_session',
-                get_status_method = 'bnovate.www.instruments.portal_get_status'
-            );
-            if (link) {
-                window.open("https://" + link, "_blank");
-            }
+            await bnovate.iot.portal_start_session(el.dataset.configId, el.dataset.cpDocname);
         } finally {
             remoteBtns.map(btn => btn.disabled = false)
         }
