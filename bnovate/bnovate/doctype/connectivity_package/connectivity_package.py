@@ -5,12 +5,13 @@
 from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
-from bnovate.bnovate.utils.iot_apis import rms_get_id, rms_get_device, rms_initialize_device
+from bnovate.bnovate.utils.iot_apis import rms_get_id, rms_get_device, rms_initialize_device, rms_start_session
 from bnovate.bnovate.utils import iot_apis
 from bnovate.bnovate.doctype.audit_log import audit_log
 
 class ConnectivityPackage(Document):
     pass
+
 
 @frappe.whitelist()
 def set_info_from_rms(docname):
@@ -35,12 +36,16 @@ def set_info_from_rms(docname):
 
     return cp
 
+
 @frappe.whitelist()
 def auto_configure_device(device_id, new_device_name, docname):
     """ Scan ports, add available remotes, refresh RMS info """
+    
+    # TODO: set SN automatically
 
     rms_initialize_device(device_id, new_device_name)
     return set_info_from_rms(docname)
+
 
 @frappe.whitelist()
 def get_instrument_sn(docname):
@@ -51,14 +56,17 @@ def get_instrument_sn(docname):
         cp.db_set("instrument_serial_no", status['serialNumber'])
         return status['serialNumber']
 
-@frappe.whitelist()
-def get_instrument_status(docname):
-    return _get_instrument_status(docname)
 
-def _get_instrument_status(docname, auth=True):
+@frappe.whitelist()
+def get_instrument_status(docname, task_id=None):
+    return _get_instrument_status(docname, task_id)
+
+
+def _get_instrument_status(docname, auth=True, task_id=None):
     """ Return /api/status of the actual instrument connected to the matching BactoLink.
      
     Skip authentication if you have already authenticated the request, for example from portal.
+    task_id: for realtime updates
     """
 
     rms_id, instrument_serial_no = frappe.get_value("Connectivity Package", docname, ['rms_id', 'instrument_serial_no'])
@@ -70,4 +78,10 @@ def _get_instrument_status(docname, auth=True):
         connectivity_package=docname,
     )
 
-    return iot_apis.get_instrument_status(rms_id, auth=auth)
+    return iot_apis.get_instrument_status(rms_id, auth=auth, task_id=task_id)
+
+
+@frappe.whitelist()
+def start_session(docname, config_id, task_id=None):
+    rms_id = frappe.get_value("Connectivity Package", docname, ['rms_id'])
+    return rms_start_session(config_id, rms_id, task_id=task_id)

@@ -6,7 +6,7 @@ from frappe import _
 
 from frappe.exceptions import ValidationError
 
-from bnovate.bnovate.utils.iot_apis import (rms_get_access_configs, _rms_start_session, _rms_get_status, 
+from bnovate.bnovate.utils.iot_apis import (rms_get_access_configs, _rms_get_status, 
                                             rms_initialize_device, _rms_get_device)
 from bnovate.bnovate.doctype.connectivity_package.connectivity_package import set_info_from_rms, _get_instrument_status
 from bnovate.bnovate.utils.realtime import set_status, STATUS_RUNNING, STATUS_DONE

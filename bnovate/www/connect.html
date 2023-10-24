@@ -190,7 +190,7 @@
     *******************/
 
     async function portal_initialize_device(teltonika_serial, device_name, task_id) {
-        return await bnovate.realtime.call({
+        const resp = await bnovate.realtime.call({
             method: 'bnovate.www.connect.portal_initialize_device',
             args: {
                 teltonika_serial,
@@ -198,6 +198,7 @@
             },
             callback: (data) => draw_progress(data),
         });
+        return resp.message;
     }
 
     /********************

@@ -2,6 +2,7 @@
 // For license information, please see license.txt
 
 frappe.require("/assets/bnovate/js/iot.js")  // provides bnovate.iot
+frappe.require("/assets/bnovate/js/realtime.js")  // provides bnovate.iot
 frappe.require("/assets/bnovate/js/web_includes/helpers.js")  // provides signal icons
 
 frappe.ui.form.on('Connectivity Package', {
@@ -110,10 +111,13 @@ async function get_connection_status(frm) {
 }
 
 async function get_instrument_status(frm) {
-	const resp = await frappe.call({
+	const resp = await bnovate.realtime.call({
 		method: 'bnovate.bnovate.doctype.connectivity_package.connectivity_package.get_instrument_status',
 		args: {
 			docname: frm.doc.name,
+		},
+		callback(status) {
+			console.log(status);
 		}
 	})
 	return resp.message
@@ -166,8 +170,23 @@ async function start_session(frm, config_id, device_id) {
 	startBtns.map(btn => btn.disabled = true);
 	console.log("disable")
 	try {
-		const link = await bnovate.iot.rms_start_session(config_id, device_id);
+		// const link = await bnovate.iot.rms_start_session(config_id, device_id);
+		const resp = await bnovate.realtime.call({
+			method: "bnovate.bnovate.doctype.connectivity_package.connectivity_package.start_session",
+			args: {
+				docname: frm.doc.name,
+				config_id: config_id,
+			},
+			callback(status) {
+				console.log(status);
+				if (status.data.progress < 100) {
+					frappe.show_progress(__("Starting session...."), status.data.progress, 100, __(status.data.message));
+				}
+			}
+		})
+		const link = resp.message;
 		if (link) {
+			frappe.hide_progress();
 			window.open("https://" + link, "_blank");
 		}
 	} finally {
@@ -253,7 +272,6 @@ async function configure_device(frm) {
 	}
 
 	set_connections_message(frm, "Loading...");
-	// await bnovate.iot.rms_initialize_device(device_id, values.device_name);
 	await frappe.call({
 		method: "bnovate.bnovate.doctype.connectivity_package.connectivity_package.auto_configure_device",
 		args: {
@@ -263,8 +281,6 @@ async function configure_device(frm) {
 		}
 	});
 	frm.reload_doc();
-	// await get_connection_status(frm);
-	// return get_connections(frm);
 }
 
 // Promise-ified frappe prompt:
