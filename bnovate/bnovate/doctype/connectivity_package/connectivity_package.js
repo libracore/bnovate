@@ -2,7 +2,7 @@
 // For license information, please see license.txt
 
 frappe.require("/assets/bnovate/js/iot.js")  // provides bnovate.iot
-frappe.require("/assets/bnovate/js/realtime.js")  // provides bnovate.iot
+frappe.require("/assets/bnovate/js/realtime.js")
 frappe.require("/assets/bnovate/js/web_includes/helpers.js")  // provides signal icons
 
 frappe.ui.form.on('Connectivity Package', {
@@ -18,7 +18,7 @@ frappe.ui.form.on('Connectivity Package', {
 
 	async refresh(frm) {
 		frm.rms_modal = rms_modal;
-		frm.start_session = (config_id, device_id) => start_session(frm, config_id, device_id);
+		frm.start_session = (config_id) => start_session(frm, config_id);
 
 		clear_connection_status(frm);
 		clear_instrument_status(frm);
@@ -165,12 +165,10 @@ async function get_connections(frm) {
 	}
 }
 
-async function start_session(frm, config_id, device_id) {
+async function start_session(frm, config_id) {
 	const startBtns = [...document.querySelectorAll('.rms-start')];
 	startBtns.map(btn => btn.disabled = true);
-	console.log("disable")
 	try {
-		// const link = await bnovate.iot.rms_start_session(config_id, device_id);
 		const resp = await bnovate.realtime.call({
 			method: "bnovate.bnovate.doctype.connectivity_package.connectivity_package.start_session",
 			args: {
@@ -191,7 +189,6 @@ async function start_session(frm, config_id, device_id) {
 		}
 	} finally {
 		startBtns.map(btn => btn.disabled = false);
-		console.log("enable")
 	}
 	get_connections(frm);
 }
@@ -211,7 +208,7 @@ function draw_table(frm, access_configs) {
 				<tr>
 					<td><b>{{ access.name }}</b></td>
 					<td>{{ access.protocol.toUpperCase() }}</td>
-					<td><button class="btn btn-xs btn-primary rms-start" onclick="cur_frm.start_session({{ access.id }}, {{ access.device_id }})">New</button></td>
+					<td><button class="btn btn-xs btn-primary rms-start" onclick="cur_frm.start_session({{ access.id }})">New</button></td>
 					<td></td>
 				</tr>
 					{% for session in access.sessions %}

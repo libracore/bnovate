@@ -327,7 +327,7 @@ def rms_start_session(config_id, device_id, duration=30*60, task_id=None):
 
 
 def _rms_start_session(config_id, device_id, duration=30*60, auth=True, task_id=None):
-    """ Opens a new session for an existing remote configuration. 
+    """ Opens a new session for an existing remote configuration. Return URL.
 
     Auth can be checked separately for portal users.
     Pass task_id for realtime upates.

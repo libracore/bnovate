@@ -94,36 +94,10 @@ def auth_remote_session(config_id, device_id):
     return True
 
 @frappe.whitelist()
-def portal_initialize_device(teltonika_serial, device_name):
-    """ Scan ports and create remote access configs """
-
-    # - Find associated Connectivity Package (CP)
-    # - Authenticate: must belong to a linked Customer
-    # - Get Device ID from CP
-    # - Initialize using device ID.
-    # - Fetch and associate instrument SN
-
-    cp = frappe.get_value("Connectivity Package", filters={
-        "teltonika_serial": ["=", teltonika_serial],
-    }, fieldname=['name', 'customer', 'rms_id'], as_dict=True)
-
-    if cp is None:
-        frappe.throw("Unknown serial number {}".format(teltonika_serial))
-
-    if cp.customer is None or all(customer.docname != cp.customer for customer in get_session_customers()):
-        # None of the linked customers match this connectivity package owner
-        frappe.throw("{} does not have access to device {}".format(frappe.session.user, teltonika_serial))
- 
-    # If this point is reached, user is authorized.
-    rms_initialize_device(cp.rms_id, device_name, auth=False)
-    frappe.db.set_value('Connectivity Package', cp.name, 'device_name', device_name)
-
-
-@frappe.whitelist()
-def portal_start_session(config_id, device_id):
+def portal_start_session(config_id, device_id, task_id=None):
     # Raises error if user is not allowed.
     auth_remote_session(config_id, device_id)
-    channel = _rms_start_session(config_id, auth=False)
+    return _rms_start_session(config_id, device_id, auth=False, task_id=task_id)
     frappe.cache().set_value("channel-owner-{}".format(channel), frappe.session.sid, expires_in_sec=60*60)
     return channel
 
