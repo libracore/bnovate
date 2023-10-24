@@ -7,8 +7,10 @@ from frappe import _
 from frappe.exceptions import ValidationError
 
 from bnovate.bnovate.utils.iot_apis import (rms_get_access_configs, rms_initialize_device, _rms_get_device)
-from bnovate.bnovate.doctype.connectivity_package.connectivity_package import _get_instrument_status
 from bnovate.bnovate.utils.realtime import set_status, STATUS_RUNNING, STATUS_DONE
+from bnovate.bnovate.doctype.connectivity_package.connectivity_package import _get_instrument_status
+from bnovate.bnovate.doctype.audit_log import audit_log
+
 from .helpers import get_session_customers, get_session_primary_customer, auth, build_sidebar
 
 no_cache = 1
@@ -82,6 +84,8 @@ def portal_initialize_device(teltonika_serial, device_name, task_id=None):
     # - Initialize using device ID.
     # - Fetch and associate instrument SN
 
+    # TODO: move to Connectivity Package and make this default autoconf for desk users as well.
+
     progress = [
         {
             "stage": "verify_gateway",
@@ -100,6 +104,13 @@ def portal_initialize_device(teltonika_serial, device_name, task_id=None):
         },
     ]
 
+    audit_log.log(
+        action="Gateway Autoconfiguration Request",
+        data={
+            'teltonika_serial': teltonika_serial,
+            'device_name': device_name,
+        },
+    )
     set_status(progress, task_id)
 
     cp = frappe.get_value("Connectivity Package", filters={
@@ -184,5 +195,15 @@ def portal_initialize_device(teltonika_serial, device_name, task_id=None):
     frappe.db.set_value('Connectivity Package', cp.name, 'instrument_serial_no', sn)
     progress[2]["code"] = 0
     set_status(progress, task_id, STATUS_DONE)
+
+    audit_log.log(
+        action="Gateway Autoconfiguration Success",
+        data={
+            'teltonika_serial': teltonika_serial,
+            'device_name': device_name,
+        },
+        serial_no=sn,
+        connectivity_package=cp.name,
+    )
 
     return _rms_get_device(cp.rms_id, auth=False)
