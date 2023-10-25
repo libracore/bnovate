@@ -28,7 +28,7 @@
                     </dt>
                     <dd>
                         {% if instrument.cp.web %}
-                        <button href="#" class="btn btn-primary get-status" data-cp-docname="{{ instrument.cp.name }} data-cp-devicename="{{ instrument.cp.device_name }}" >
+                        <button href="#" class="btn btn-primary get-status" data-cp-docname="{{ instrument.cp.name }}" data-cp-devicename="{{ instrument.cp.device_name }}" >
                             {{ _("Status") }}</button>
 
                         <button href="#" class="btn btn-primary open-remote" data-config-id="{{ instrument.cp.web.id }}"
