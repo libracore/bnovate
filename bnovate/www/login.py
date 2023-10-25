@@ -13,7 +13,7 @@ def get_context(context):
 
     if context.provider_logins:
         config_hostname = frappe.utils.get_url()
-        session_hostname = frappe.utils.get_host_name_from_request()
+        session_hostname = frappe.utils.get_host_name_from_request().replace("http://", "https://")
 
         for provider in context.provider_logins:
             provider['auth_url'] = provider['auth_url'].replace(
