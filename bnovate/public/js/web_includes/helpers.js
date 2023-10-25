@@ -3,9 +3,8 @@
 
 frappe.provide("bnovate.web");
 
-frappe.require("/assets/js/control.min.js");
-frappe.require("/assets/js/dialog.min.js");
-frappe.require("/assets/bnovate/js/bnovate_common.js");
+// frappe.require("/assets/js/control.min.js");
+// frappe.require("/assets/js/dialog.min.js");
 
 bnovate.web.get_addresses = async function get_addresses() {
     const resp = await frappe.call("bnovate.www.helpers.get_addresses")
