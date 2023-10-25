@@ -131,7 +131,7 @@ def _get_instrument_status(docname, auth=True, task_id=None):
 
 @frappe.whitelist()
 def sweep_instrument_status(docnames, task_id=None):
-    return _sweep_instrument_status(docnames, task_id)
+    return _sweep_instrument_status(docnames, task_id=task_id)
 
 def _sweep_instrument_status(docnames, auth=True, task_id=None):
     """ Return instrument for each CP identified by docnames.
@@ -140,6 +140,8 @@ def _sweep_instrument_status(docnames, auth=True, task_id=None):
     Preserves the order of the list.
     """
 
+    # Avoid all db calls inside future - call them first
+    settings = iot_apis._get_settings()
     if auth:
         iot_apis._auth()
 
@@ -148,19 +150,18 @@ def _sweep_instrument_status(docnames, auth=True, task_id=None):
 
     cps = [ frappe.get_value(
             "Connectivity Package", docname, 
-            ['name', 'rms_id', 'instrument_serial_no'], as_dict=True
+            ['name', 'rms_id', 'instrument_serial_no', 'device_name'], as_dict=True
         )  for docname in docnames]
 
-    settings = iot_apis._get_settings()
+    set_status(cps, task_id)
 
-    def _get_status(cp):
+    def _add_status(cp):
         # Complete dict in place, seems to work well enough
         cp.status = iot_apis.get_instrument_status(cp.rms_id, settings=settings, auth=False)
-        return cp.name
 
     # Get data usage for each SIM iccid:
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        futures = [ executor.submit(_get_status, cp) for cp in cps ]
+        futures = [ executor.submit(_add_status, cp) for cp in cps ]
         for future in concurrent.futures.as_completed(futures):
             set_status(cps, task_id)
 

@@ -72,6 +72,18 @@ bnovate.iot.portal_get_instrument_status = async function (cp_docname) {
     return resp.message;
 }
 
+bnovate.iot.portal_sweep_instrument_status = async function (cp_docnames, callback = (status) => null) {
+    const resp = await bnovate.realtime.call({
+        method: "bnovate.www.instruments.portal_sweep_instrument_status",
+        args: {
+            cp_docnames
+        },
+        callback
+    })
+    frappe.hide_progress();
+    return resp.message;
+}
+
 // Start a remote connection session and open in new tab. Authenticates portal users.
 bnovate.iot.portal_start_session = async function (config_id, cp_docname) {
     frappe.show_progress(__("Starting session...."), 0, 100);

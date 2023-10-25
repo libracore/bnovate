@@ -99,13 +99,18 @@ app_include_js = [  # Note to self: in case of changes, may need to run bench bu
 
 # include js, css files in header of web template
 web_include_css = [
-    "/assets/bnovate/bnovate-web.css",
+    "/assets/css/bnovate-web.min.css",
 ]
+
 web_include_js = [
+    "/assets/bnovate/js/bnovate_common.js",
     "/assets/bnovate/js/web_includes/helpers.js",
+    "/assets/bnovate/js/lib/frappe-datatable/sortable.js",
+    "/assets/bnovate/js/lib/frappe-datatable/frappe-datatable.min.js",
     "/assets/js/moment-bundle.min.js",
     "/assets/js/control.min.js",
     "/assets/js/dialog.min.js",
+    "/assets/js/bnovate-web.min.js",
 ]
 
 # include js in page

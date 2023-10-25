@@ -16,7 +16,6 @@ def get_context(context):
     # User can see cartridges from all the customers he manages
     context.is_guest = is_guest()
     context.is_desk_user = is_desk_user()
-    print("=========================  IS DESK ========================", context.is_desk_user )
     if context.is_guest:
         context.greeting = get_settings().portal_home_page
         return context
