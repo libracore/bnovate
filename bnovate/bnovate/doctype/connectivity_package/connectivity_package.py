@@ -3,7 +3,12 @@
 # For license information, please see license.txt
 
 from __future__ import unicode_literals
+
+import json
+import concurrent
+
 import frappe
+
 from frappe.model.document import Document
 from bnovate.bnovate.utils.iot_apis import (rms_get_id, rms_get_device, rms_initialize_device, 
                                             _rms_start_session, rms_get_access_configs)
@@ -13,7 +18,6 @@ from bnovate.bnovate.doctype.audit_log import audit_log
 
 class ConnectivityPackage(Document):
     pass
-
 
 @frappe.whitelist()
 def set_info_from_rms(docname):
@@ -125,6 +129,43 @@ def _get_instrument_status(docname, auth=True, task_id=None):
 
     return iot_apis.get_instrument_status(rms_id, auth=auth, task_id=task_id)
 
+@frappe.whitelist()
+def sweep_instrument_status(docnames, task_id=None):
+    return _sweep_instrument_status(docnames, task_id)
+
+def _sweep_instrument_status(docnames, auth=True, task_id=None):
+    """ Return instrument for each CP identified by docnames.
+     
+    Posts updates as they arrive through Realtime. 
+    Preserves the order of the list.
+    """
+
+    if auth:
+        iot_apis._auth()
+
+    if type(docnames) != list:
+        docnames = json.loads(docnames)
+
+    cps = [ frappe.get_value(
+            "Connectivity Package", docname, 
+            ['name', 'rms_id', 'instrument_serial_no'], as_dict=True
+        )  for docname in docnames]
+
+    settings = iot_apis._get_settings()
+
+    def _get_status(cp):
+        # Complete dict in place, seems to work well enough
+        cp.status = iot_apis.get_instrument_status(cp.rms_id, settings=settings, auth=False)
+        return cp.name
+
+    # Get data usage for each SIM iccid:
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        futures = [ executor.submit(_get_status, cp) for cp in cps ]
+        for future in concurrent.futures.as_completed(futures):
+            set_status(cps, task_id)
+
+    set_status(cps, task_id, STATUS_DONE)
+    return cps
 
 @frappe.whitelist()
 def start_session(docname, config_id, task_id=None):

@@ -21,9 +21,12 @@ def get_context(context):
     context.instruments = get_instruments(context.customers)
     # build_sidebar(context)
     context.title = _("Connect BactoLink")
+    context.add_breadcrumbs = True
+    context.parents = [
+		{ "name": _("Instruments"), "route": "/instruments" },
+	]
 
-    # Gateway serial no
-    # if frappe.form_dict.serial_no:
+    # Find gateway serial No in URL
     context.serial_no = frappe.form_dict.serial_no
     return context
 

@@ -53,14 +53,15 @@ def _get_settings():
 # BASE API CONNECTIONS
 #######################
 
-def _rms_get_status(channel, auth=True):
+def _rms_get_status(channel, settings=None, auth=True):
     """ Return status updates on given channel, 
     
     Use in situations where authentication should be checked separately  
     """
     if auth:
         _auth(READ)
-    settings = _get_settings()
+    if settings is None:
+        settings = _get_settings()
 
     resp = request(
         "GET", 
@@ -302,11 +303,12 @@ def rms_get_access_sessions_for_config(config, settings=None, auth=True):
 def rms_get_access_sessions(device_id=None):
     return _rms_get_access_sessions(device_id)
 
-def _rms_get_access_sessions(device_id=None, auth=True):
+def _rms_get_access_sessions(device_id=None, settings=None, auth=True):
     """ Return list of access config dicts, each with its list of active sessions """
     if auth:
         _auth(WRITE)  # require write permissions since this returns active session links
-    settings = _get_settings()
+    if settings is None:
+        settings = _get_settings()
     configs = rms_get_access_configs(device_id, settings=settings, auth=auth)
     with concurrent.futures.ThreadPoolExecutor() as executor:
         futures = [ executor.submit(rms_get_access_sessions_for_config, c, settings=settings, auth=False) for c in configs ]
@@ -326,7 +328,7 @@ def rms_start_session(config_id, device_id, duration=30*60, task_id=None):
     return _rms_start_session(config_id, device_id, duration, task_id=task_id)
 
 
-def _rms_start_session(config_id, device_id, duration=30*60, auth=True, task_id=None):
+def _rms_start_session(config_id, device_id, duration=30*60, settings=None, auth=True, task_id=None):
     """ Opens a new session for an existing remote configuration. Return URL.
 
     Auth can be checked separately for portal users.
@@ -342,6 +344,7 @@ def _rms_start_session(config_id, device_id, duration=30*60, auth=True, task_id=
         "/api/devices/connect/{config_id}".format(config_id=config_id),
         "POST",
         body={"duration": duration},
+        settings=settings,
         auth=auth
     )
     channel = resp['channel']
@@ -352,7 +355,7 @@ def _rms_start_session(config_id, device_id, duration=30*60, auth=True, task_id=
         if attempt > 120:
             raise TimeoutError("Timeout opening remote connection session")
 
-        status = _rms_get_status(channel, auth=auth)
+        status = _rms_get_status(channel, settings=settings, auth=auth)
 
         if device_id not in status:
             # TODO: what do we do?
@@ -437,7 +440,7 @@ def get_devices_and_data():
 # BactoSense API interface
 ################################
 
-def get_instrument_status(device_id, password="", auth=True, task_id=None):
+def get_instrument_status(device_id, password="", settings=None, auth=True, task_id=None):
     """ Get instrument status, for example to fetch Serial Number or service due date.
 
     device_id is RMS device ID. Will fetch status from first instrument available.
@@ -450,7 +453,7 @@ def get_instrument_status(device_id, password="", auth=True, task_id=None):
     # - Fetch and return status from BactoSense API
 
     # Get a list of configs and associated active sessions
-    sessions = _rms_get_access_sessions(device_id, auth=auth)
+    sessions = _rms_get_access_sessions(device_id, settings=settings, auth=auth)
     https_configs = [s for s in sessions if s['protocol'] == "https"]
 
     if len(https_configs) == 0:
@@ -459,7 +462,7 @@ def get_instrument_status(device_id, password="", auth=True, task_id=None):
     https = https_configs[0]
 
     if len(https['sessions']) == 0:
-        link = _rms_start_session(https['id'], device_id, auth=auth, task_id=task_id)
+        link = _rms_start_session(https['id'], device_id, settings=settings, auth=auth, task_id=task_id)
     else:
         link = https['sessions'][0]['url']
     

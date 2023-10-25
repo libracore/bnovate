@@ -41,6 +41,20 @@ bnovate.iot.rms_get_sessions = async function rms_get_sessions(device_id) {
     return sessions.message;
 }
 
+bnovate.iot.sweep_instrument_status = async function (cp_docnames) {
+    const resp = await bnovate.realtime.call({
+        method: "bnovate.bnovate.doctype.connectivity_package.connectivity_package.sweep_instrument_status",
+        args: {
+            docnames: cp_docnames
+        },
+        callback(status) {
+            console.log(status)
+        }
+    })
+    frappe.hide_progress();
+    return resp.message;
+}
+
 bnovate.iot.portal_get_instrument_status = async function (cp_docname) {
     frappe.show_progress(__("Starting session...."), 5, 100);
     const resp = await bnovate.realtime.call({
