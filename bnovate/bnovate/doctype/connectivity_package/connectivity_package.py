@@ -54,8 +54,6 @@ def auto_configure_device(device_id, new_device_name, docname, task_id=None):
         connectivity_package=docname,
     )
 
-    raise Exception("Oh noes")
-
     set_status({
         "progress": 10,
         "message": "Initializing..."
