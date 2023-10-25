@@ -16,6 +16,7 @@
         border-radius: 0rem;
         margin: 0.1%;
     }
+
 </style>
 {% endblock %}
 
@@ -73,12 +74,14 @@
                     <dd>
                         <div class="link-status" data-device-id="{{ instrument.cp.rms_id }}"></div><br>
                         {% if instrument.cp.web %}
-                        <button href="#" class="btn btn-primary open-remote" data-config-id="{{ instrument.cp.web.id }}"
-                            data-cp-docname="{{ instrument.cp.name }}" data-device-id="{{ instrument.cp.web.device_id}}" >{{ _("Web UI") }}</button>
+                        <button href="#" class="btn btn-primary get-status my-1" data-cp-docname="{{ instrument.cp.name }}" >
+                            {{ _("Get Status") }}</button><br>
+                        <button href="#" class="btn btn-primary open-remote my-1" data-config-id="{{ instrument.cp.web.id }}"
+                            data-cp-docname="{{ instrument.cp.name }}" >{{ _("Web UI") }}</button>
                         {% endif %}
                         {% if instrument.cp.vnc %}
-                        <button href="#" class="btn btn-primary open-remote" data-config-id="{{ instrument.cp.vnc.id }}"
-                            data-cp-docname="{{ instrument.cp.name }}" data-device-id="{{ instrument.cp.vnc.device_id}}">{{ _("Touch UI") }}</button>
+                        <button href="#" class="btn btn-primary open-remote my-1" data-config-id="{{ instrument.cp.vnc.id }}"
+                            data-cp-docname="{{ instrument.cp.name }}">{{ _("Touch UI") }}</button>
                         {% endif %}
                     </dd>
                     {% endif %}
@@ -95,21 +98,29 @@
 
 {% block script %}
 <script>
-    frappe.require("/assets/js/control.min.js");
-    frappe.require("/assets/js/dialog.min.js");
-
     frappe.require("/assets/bnovate/js/iot.js");
     frappe.require("/assets/bnovate/js/realtime.js")
     frappe.require("/assets/bnovate/js/bnovate_common.js");
 
+    let buttons = [...document.querySelectorAll("button")];
     let remoteBtns = [...document.querySelectorAll(".open-remote")];
-
     remoteBtns.map(el => el.addEventListener("click", async (e) => {
+        buttons.map(btn => btn.disabled = true)
         try {
-            remoteBtns.map(btn => btn.disabled = true)
             bnovate.iot.portal_start_session(el.dataset.configId, el.dataset.cpDocname);
         } finally {
-            remoteBtns.map(btn => btn.disabled = false)
+            buttons.map(btn => btn.disabled = false)
+        }
+    }));
+
+    let statusBtns = [...document.querySelectorAll(".get-status")];
+    statusBtns.map(el => el.addEventListener("click", async (e) => {
+        buttons.map(btn => btn.disabled = true)
+        let status = null;
+        try {
+            await bnovate.web.get_instrument_status_modal(el.dataset.cpDocname);
+        } finally {
+            buttons.map(btn => btn.disabled = false)
         }
     }));
 
@@ -126,8 +137,6 @@
     // Load status
     [...document.querySelectorAll(".link-status")].map(async el => {
         const device = await portal_get_device(el.dataset.deviceId);
-        console.log("Device status", device)
-
         el.innerHTML = `
         <span class="indicator whitespace-nowrap ${device.status ? 'green' : 'red'}">${device.status ? 'Link Online' : 'Link Offline'}</span><br>
         ${device.operator} <img src="${bnovate.web.signal_icon(device.signal)}" style="max-height: 2em"> <br> ${device.connection_type}[${device.signal} dBm]

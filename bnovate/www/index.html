@@ -21,6 +21,9 @@
                     </dt>
                     <dd>
                         {% if instrument.cp.web %}
+                        <button href="#" class="btn btn-primary get-status" data-cp-docname="{{ instrument.cp.name }}" >
+                            {{ _("Get Status") }}</button>
+
                         <button href="#" class="btn btn-primary open-remote" data-config-id="{{ instrument.cp.web.id }}"
                             data-cp-docname="{{ instrument.cp.name}}">{{ _("Web UI") }}</button>
                         {% endif %}
@@ -91,14 +94,25 @@
     frappe.require("/assets/js/dialog.min.js")  // Fixes progress modal layout
     frappe.require("/assets/bnovate/js/iot.js");
 
+    let buttons = [...document.querySelectorAll("button")];
     let remoteBtns = [...document.querySelectorAll(".open-remote")];
-
     remoteBtns.map(el => el.addEventListener("click", async (e) => {
+        buttons.map(btn => btn.disabled = true)
         try {
-            remoteBtns.map(btn => btn.disabled = true)
-            await bnovate.iot.portal_start_session(el.dataset.configId, el.dataset.cpDocname);
+            bnovate.iot.portal_start_session(el.dataset.configId, el.dataset.cpDocname);
         } finally {
-            remoteBtns.map(btn => btn.disabled = false)
+            buttons.map(btn => btn.disabled = false)
+        }
+    }));
+
+    let statusBtns = [...document.querySelectorAll(".get-status")];
+    statusBtns.map(el => el.addEventListener("click", async (e) => {
+        buttons.map(btn => btn.disabled = true)
+        let status = null;
+        try {
+            await bnovate.web.get_instrument_status_modal(el.dataset.cpDocname);
+        } finally {
+            buttons.map(btn => btn.disabled = false)
         }
     }));
 

@@ -101,7 +101,10 @@ app_include_js = [  # Note to self: in case of changes, may need to run bench bu
 web_include_css = [
     "/assets/bnovate/bnovate-web.css",
 ]
-web_include_js = "/assets/bnovate/js/web_includes/helpers.js"
+web_include_js = [
+    "/assets/bnovate/js/web_includes/helpers.js",
+    "/assets/js/moment-bundle.min.js",
+]
 
 # include js in page
 # page_js = {"page" : "public/js/file.js"}

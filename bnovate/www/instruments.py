@@ -6,9 +6,9 @@ from frappe import _
 
 from frappe.exceptions import ValidationError
 
-from bnovate.bnovate.utils.iot_apis import rms_get_access_configs, _rms_start_session, _rms_get_status, rms_initialize_device, _rms_get_device
-from bnovate.bnovate.doctype.connectivity_package.connectivity_package import _start_session
-from .helpers import get_session_customers, get_session_primary_customer, auth, build_sidebar
+from bnovate.bnovate.utils.iot_apis import rms_get_access_configs, _rms_get_device
+from bnovate.bnovate.doctype.connectivity_package.connectivity_package import _start_session, _get_instrument_status
+from .helpers import get_session_customers, auth, build_sidebar
 
 no_cache = 1
 
@@ -107,3 +107,16 @@ def portal_get_device(device_id):
         frappe.throw("{} does not have access to this device".format(frappe.session.user)) 
 
     return _rms_get_device(device_id, auth=False)
+
+
+@frappe.whitelist()
+def portal_get_instrument_status(cp_docname, task_id=None):
+    """ Return instrument status from embedded /api/status """
+
+    cp_owner = frappe.get_value("Connectivity Package", cp_docname, fieldname="customer")
+
+    if cp_owner is None or all(c.docname != cp_owner for c in get_session_customers()):
+        # None of the linked customers match this connectivity package owner
+        frappe.throw("{} does not have access to this device".format(frappe.session.user)) 
+
+    return _get_instrument_status(cp_docname, auth=False, task_id=task_id)

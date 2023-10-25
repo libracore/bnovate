@@ -23,6 +23,10 @@ body {
   margin-top: 5px;
 }
 
+.modal-dialog {
+  max-width: 800px;
+}
+
 
 /* Forms */
 .has-error .control-label {
