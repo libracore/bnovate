@@ -3,9 +3,8 @@
 
 frappe.provide("bnovate.web");
 
-frappe.require("/assets/js/control.min.js");
-frappe.require("/assets/js/dialog.min.js");
-frappe.require("/assets/bnovate/js/bnovate_common.js");
+// frappe.require("/assets/js/control.min.js");
+// frappe.require("/assets/js/dialog.min.js");
 
 bnovate.web.get_addresses = async function get_addresses() {
     const resp = await frappe.call("bnovate.www.helpers.get_addresses")
@@ -45,7 +44,7 @@ bnovate.web.signal_icon = function (strength) {
     return '/assets/bnovate/img/icons/signal-strength-0.svg';
 }
 
-bnovate.web.get_instrument_status_modal = async function (cp_docname) {
+bnovate.web.get_instrument_status_modal = async function (cp_docname, cp_device_name) {
     const status = await bnovate.iot.portal_get_instrument_status(cp_docname);
 
     function format_date(unix_ts) {
@@ -60,7 +59,7 @@ bnovate.web.get_instrument_status_modal = async function (cp_docname) {
     if (status) {
         console.log(status)
         bnovate.utils.html_dialog(
-            __('Status'),
+            cp_device_name || __('Status'),
             `<table class="table table-condensed no-margin" style="border-bottom: 1px solid #d1d8dd">
                 <tbody>
                     <tr>

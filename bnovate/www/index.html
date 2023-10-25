@@ -2,6 +2,13 @@
 
 {% block page_content %}
 
+{% if is_desk_user %}
+<div class="alert alert-warning" role="alert">
+    This is the customer portal. You are an internal user, you probably want to see the <a href="/desk">desk</a>.<br>
+    <i>Ceci est le portail client. Vous êtes un utilisateur interne, vous cherchez probablement le <a href="/desk">bureau</a>.</i>
+</div>
+{% endif %}
+
 {% if is_guest %}
 {{ greeting }}
 {% else %}
@@ -21,8 +28,8 @@
                     </dt>
                     <dd>
                         {% if instrument.cp.web %}
-                        <button href="#" class="btn btn-primary get-status" data-cp-docname="{{ instrument.cp.name }}" >
-                            {{ _("Get Status") }}</button>
+                        <button href="#" class="btn btn-primary get-status" data-cp-docname="{{ instrument.cp.name }} data-cp-devicename="{{ instrument.cp.device_name }}" >
+                            {{ _("Status") }}</button>
 
                         <button href="#" class="btn btn-primary open-remote" data-config-id="{{ instrument.cp.web.id }}"
                             data-cp-docname="{{ instrument.cp.name}}">{{ _("Web UI") }}</button>
@@ -110,7 +117,7 @@
         buttons.map(btn => btn.disabled = true)
         let status = null;
         try {
-            await bnovate.web.get_instrument_status_modal(el.dataset.cpDocname);
+            await bnovate.web.get_instrument_status_modal(el.dataset.cpDocname, el.dataset.cpDevicename);
         } finally {
             buttons.map(btn => btn.disabled = false)
         }

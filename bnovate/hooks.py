@@ -104,6 +104,8 @@ web_include_css = [
 web_include_js = [
     "/assets/bnovate/js/web_includes/helpers.js",
     "/assets/js/moment-bundle.min.js",
+    "/assets/js/control.min.js",
+    "/assets/js/dialog.min.js",
 ]
 
 # include js in page
