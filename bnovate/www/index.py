@@ -4,7 +4,7 @@ import frappe
 
 from frappe import _
 
-from .helpers import build_sidebar, is_guest, get_settings, has_cartridge_portal, get_session_customers
+from .helpers import build_sidebar, is_guest, get_settings, has_cartridge_portal, get_session_customers, is_desk_user
 from .instruments import get_instruments
 from .requests import get_requests
 
@@ -15,6 +15,7 @@ no_cache = 1
 def get_context(context):
     # User can see cartridges from all the customers he manages
     context.is_guest = is_guest()
+    context.is_desk_user = is_desk_user()
     if context.is_guest:
         context.greeting = get_settings().portal_home_page
         return context

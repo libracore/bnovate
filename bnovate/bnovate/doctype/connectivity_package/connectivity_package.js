@@ -178,7 +178,7 @@ async function start_session(frm, config_id) {
 			callback(status) {
 				console.log(status);
 				if (status.data.progress < 100) {
-					frappe.show_progress(__("Starting session...."), status.data.progress, 100, __(status.data.message));
+					frappe.show_progress(__("Starting session..."), status.data.progress, 100, __(status.data.message));
 				}
 			}
 		})
@@ -278,7 +278,7 @@ async function configure_device(frm) {
 		},
 		callback(status) {
 			if (status.data.progress < 100) {
-				frappe.show_progress(__("Starting session...."), status.data.progress, 100, status.data.message);
+				frappe.show_progress(__("Starting session..."), status.data.progress, 100, status.data.message);
 			}
 		}
 	});

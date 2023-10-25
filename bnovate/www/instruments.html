@@ -74,8 +74,8 @@
                     <dd>
                         <div class="link-status" data-device-id="{{ instrument.cp.rms_id }}"></div><br>
                         {% if instrument.cp.web %}
-                        <button href="#" class="btn btn-primary get-status my-1" data-cp-docname="{{ instrument.cp.name }}" >
-                            {{ _("Get Status") }}</button><br>
+                        <button href="#" class="btn btn-primary get-status my-1" data-cp-docname="{{ instrument.cp.name }}" data-cp-devicename="{{ instrument.cp.device_name }}" >
+                            {{ _("Status") }}</button><br>
                         <button href="#" class="btn btn-primary open-remote my-1" data-config-id="{{ instrument.cp.web.id }}"
                             data-cp-docname="{{ instrument.cp.name }}" >{{ _("Web UI") }}</button>
                         {% endif %}
@@ -118,7 +118,7 @@
         buttons.map(btn => btn.disabled = true)
         let status = null;
         try {
-            await bnovate.web.get_instrument_status_modal(el.dataset.cpDocname);
+            await bnovate.web.get_instrument_status_modal(el.dataset.cpDocname, el.dataset.cpDevicename);
         } finally {
             buttons.map(btn => btn.disabled = false)
         }
