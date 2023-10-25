@@ -55,7 +55,7 @@ fixtures = [
             "Serial No-owned_by_name",
             "Serial No-owner_set_by",
             # Refill requests
-            # "Customer-enable_cartridge_portal",
+            "Customer-enable_cartridge_portal",
             "Sales Order Item-refill_request",
             "Sales Order Item-serial_nos",  # pluralized to avoid automations from selling controller
             "Sales Order-indicator_key",
@@ -101,7 +101,12 @@ app_include_js = [  # Note to self: in case of changes, may need to run bench bu
 web_include_css = [
     "/assets/bnovate/bnovate-web.css",
 ]
-web_include_js = "/assets/bnovate/js/web_includes/helpers.js"
+web_include_js = [
+    "/assets/bnovate/js/web_includes/helpers.js",
+    "/assets/js/moment-bundle.min.js",
+    "/assets/js/control.min.js",
+    "/assets/js/dialog.min.js",
+]
 
 # include js in page
 # page_js = {"page" : "public/js/file.js"}
@@ -127,15 +132,18 @@ doctype_list_js = {
 # ----------
 
 # application home page (will override Website Settings)
-# home_page = "login"
+# home_page = "index"
 
 # website user home page (by Role)
 # role_home_page = {
-# "Role": "home_page"
+#     "Customer": "index"
 # }
 
+# # Website user home page, instead of directing to /me after login
+website_user_home_page = "index"
+
 # Website user home page (by function)
-# get_website_user_home_page = "bnovate.utils.get_home_page"
+# get_website_user_home_page = "bnovate.config.homepage.get_homepage"
 
 has_website_permission = {
     # 'Blanket Order': ['TBD']
@@ -158,9 +166,9 @@ website_route_rules = [
 ]
 
 standard_portal_menu_items = [
-    {"title": _("My Cartridges"), "route": "/cartridges", "reference_doctype": "", "role": "Customer"},
+    {"title": _("Cartridges"), "route": "/cartridges", "reference_doctype": "", "role": "Customer"},
     {"title": _("Refill Requests"), "route": "/requests", "reference_doctype": "Refill Request", "role": "Customer"},
-    {"title": _("My Addresses"), "route": "/my_addresses", "reference_doctype": "Address", "role": "Customer"},
+    {"title": _("Addresses"), "route": "/my_addresses", "reference_doctype": "Address", "role": "Customer"},
 ]
 
 website_context = {
@@ -169,6 +177,9 @@ website_context = {
 }
 
 update_website_context = "bnovate.www.helpers.update_context"
+extend_website_page_controller_context  = {
+    "frappe.www.login": "bnovate.www.login",
+}
 
 
 # Generators

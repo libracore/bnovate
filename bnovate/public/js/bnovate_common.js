@@ -127,6 +127,21 @@ bnovate.utils.prompt = function (title, fields, primary_action_label, secondary_
   })
 }
 
+bnovate.utils.html_dialog = function (title, body) {
+  return new Promise((resolve, reject) => {
+    const d = new frappe.ui.Dialog({
+      title,
+      fields: [{
+        fieldname: 'description',
+        fieldtype: 'HTML',
+        options: body || '',
+      }],
+      secondary_action() { resolve(null); },
+    })
+    d.show();
+  })
+}
+
 // Email dialog that picks all emails from the doc
 bnovate.utils.email_dialog = function (frm, template_name) {
   if (frm.is_dirty()) {

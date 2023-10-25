@@ -2,6 +2,7 @@
 // For license information, please see license.txt
 
 frappe.require("/assets/bnovate/js/iot.js")  // provides bnovate.iot
+frappe.require("/assets/bnovate/js/realtime.js")
 frappe.require("/assets/bnovate/js/web_includes/helpers.js")  // provides signal icons
 
 frappe.ui.form.on('Connectivity Package', {
@@ -17,7 +18,7 @@ frappe.ui.form.on('Connectivity Package', {
 
 	async refresh(frm) {
 		frm.rms_modal = rms_modal;
-		frm.start_session = (config_id, device_id) => start_session(frm, config_id, device_id);
+		frm.start_session = (config_id) => start_session(frm, config_id);
 
 		clear_connection_status(frm);
 		clear_instrument_status(frm);
@@ -45,7 +46,7 @@ frappe.ui.form.on('Connectivity Package', {
 	},
 
 	async get_status(frm) {
-		get_instrument_status(frm);
+		get_service_info(frm);
 	},
 
 	async validate(frm) {
@@ -90,17 +91,6 @@ async function get_rms_info(frm) {
 	return resp.message;
 };
 
-async function get_instrument_sn(frm) {
-	console.log("ID", get_device_id(frm))
-	const status = await bnovate.iot.get_instrument_status(get_device_id(frm));
-	if (status) {
-		frm.set_value("instrument_serial_no", status.serialNumber);
-		frm.save();
-		console.log(status)
-	}
-	return status
-}
-
 function clear_connection_status(frm) {
 	$(frm.fields_dict.connection_status.wrapper).html(``);
 	let message = null;
@@ -116,9 +106,37 @@ async function get_connection_status(frm) {
 	$(frm.fields_dict.connection_status.wrapper).html(`
 		<span class="indicator whitespace-nowrap ${device.status ? 'green' : 'red'}"></span><b>${device.name}</b> <img src="${bnovate.web.signal_icon(device.signal)}" style="max-height: 2em"> <br />
 		${device.operator}, ${device.connection_type} [${device.signal} dBm] <br />
-		<a href="https://rms.teltonika-networks.com/devices/${device.id}" target="_blank">Manage on RMS<i class="fa fa-external-link"></i></a>
+		<a href="https://rms.teltonika-networks.com/devices/${device.id}" target="_blank">Manage on RMS <i class="fa fa-external-link"></i></a>
 	`)
 }
+
+async function get_instrument_status(frm) {
+	const resp = await bnovate.realtime.call({
+		method: 'bnovate.bnovate.doctype.connectivity_package.connectivity_package.get_instrument_status',
+		args: {
+			docname: frm.doc.name,
+		},
+		callback(status) {
+			console.log(status);
+		}
+	})
+	return resp.message
+}
+
+async function get_instrument_sn(frm) {
+	frappe.show_progress("Fetching Serial No...", 30, 100);
+	setTimeout(() => frappe.show_progress("Fetching Serial No...", 60, 100), 300);
+	const resp = await frappe.call({
+		method: 'bnovate.bnovate.doctype.connectivity_package.connectivity_package.get_instrument_sn',
+		args: {
+			docname: frm.doc.name,
+		}
+	});
+
+	frappe.hide_progress();
+	frm.reload_doc();
+}
+
 
 ///////////////////////
 // Remote connections
@@ -147,18 +165,30 @@ async function get_connections(frm) {
 	}
 }
 
-async function start_session(frm, config_id, device_id) {
+async function start_session(frm, config_id) {
 	const startBtns = [...document.querySelectorAll('.rms-start')];
 	startBtns.map(btn => btn.disabled = true);
-	console.log("disable")
 	try {
-		const link = await bnovate.iot.rms_start_session(config_id, device_id);
+		const resp = await bnovate.realtime.call({
+			method: "bnovate.bnovate.doctype.connectivity_package.connectivity_package.start_session",
+			args: {
+				docname: frm.doc.name,
+				config_id: config_id,
+			},
+			callback(status) {
+				console.log(status);
+				if (status.data.progress < 100) {
+					frappe.show_progress(__("Starting session..."), status.data.progress, 100, __(status.data.message));
+				}
+			}
+		})
+		const link = resp.message;
 		if (link) {
+			frappe.hide_progress();
 			window.open("https://" + link, "_blank");
 		}
 	} finally {
 		startBtns.map(btn => btn.disabled = false);
-		console.log("enable")
 	}
 	get_connections(frm);
 }
@@ -178,7 +208,7 @@ function draw_table(frm, access_configs) {
 				<tr>
 					<td><b>{{ access.name }}</b></td>
 					<td>{{ access.protocol.toUpperCase() }}</td>
-					<td><button class="btn btn-xs btn-primary rms-start" onclick="cur_frm.start_session({{ access.id }}, {{ access.device_id }})">New</button></td>
+					<td><button class="btn btn-xs btn-primary rms-start" onclick="cur_frm.start_session({{ access.id }})">New</button></td>
 					<td></td>
 				</tr>
 					{% for session in access.sessions %}
@@ -239,18 +269,21 @@ async function configure_device(frm) {
 	}
 
 	set_connections_message(frm, "Loading...");
-	// await bnovate.iot.rms_initialize_device(device_id, values.device_name);
-	await frappe.call({
+	await bnovate.realtime.call({
 		method: "bnovate.bnovate.doctype.connectivity_package.connectivity_package.auto_configure_device",
 		args: {
 			device_id,
 			new_device_name: values.device_name,
 			docname: frm.doc.name,
+		},
+		callback(status) {
+			if (status.data.progress < 100) {
+				frappe.show_progress(__("Starting session..."), status.data.progress, 100, status.data.message);
+			}
 		}
 	});
+	frappe.hide_progress();
 	frm.reload_doc();
-	// await get_connection_status(frm);
-	// return get_connections(frm);
 }
 
 // Promise-ified frappe prompt:
@@ -282,7 +315,7 @@ function clear_instrument_status(frm) {
 	$(frm.fields_dict.instrument_status.wrapper).html(``);
 }
 
-async function get_instrument_status(frm) {
+async function get_service_info(frm) {
 
 	function format_date(unix_ts) {
 		const date = moment.unix(unix_ts);
@@ -294,7 +327,7 @@ async function get_instrument_status(frm) {
 	}
 
 	$(frm.fields_dict.instrument_status.wrapper).html(`<i class="fa fa-cog fa-spin" style="font-size: 20px"></i>`);
-	const status = await bnovate.iot.get_instrument_status(get_device_id(frm));
+	const status = await get_instrument_status(frm);
 	$(frm.fields_dict.instrument_status.wrapper).html(frappe.render_template(
 		`
 		<table class="table table-condensed no-margin" style="border-bottom: 1px solid #d1d8dd">

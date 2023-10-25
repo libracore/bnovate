@@ -10,9 +10,9 @@ from .helpers import auth, get_session_primary_customer, get_session_contact, ge
 
 no_cache = 1
 
-auth()
 
 def get_context(context):
+    auth()
     context.doc = get_request(frappe.form_dict.name)
     context.form_dict = frappe.form_dict
     context.name = frappe.form_dict.name
@@ -53,7 +53,7 @@ def make_request(doc):
 
     new_request = frappe.get_doc({
         'doctype': 'Refill Request',
-        'customer': get_session_primary_customer().name,
+        'customer': get_session_primary_customer().docname,
         'contact_person': get_session_contact(),
         'transaction_date': today(),
         'shipping_address': doc['shipping_address'],

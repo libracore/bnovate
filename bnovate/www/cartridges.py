@@ -8,9 +8,9 @@ from bnovate.bnovate.report.cartridge_status import cartridge_status
 
 no_cache = 1
 
-auth()
 
 def get_context(context):
+    auth()
     # User can see cartridges from all the customers he manages
     managed_customers = [c.docname for c in get_session_customers()]
     if has_cartridge_portal() and managed_customers:

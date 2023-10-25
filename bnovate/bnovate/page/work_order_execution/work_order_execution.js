@@ -17,7 +17,7 @@ The workflow goes:
 	- Submit -> Creates stock entry, redirects to "view" state
 
 
-The main view switches between two tables: read and write (to adjust quantities, enter S/N....)
+The main view switches between two tables: read and write (to adjust quantities, enter S/N...)
 
 For serialized items, we force entry of components for one item at a time, so the "Submit" button becomes a "Next" button.
 Also, STEs are saved in draft state, to allow scanning serial numbers before closing an enclosure, then submitting after QC.

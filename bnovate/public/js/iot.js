@@ -1,5 +1,6 @@
-frappe.provide("bnovate.iot");
+frappe.require("/assets/bnovate/js/realtime.js");
 
+frappe.provide("bnovate.iot");
 
 /***********************************
  * Client-side wrappers for IoT APIS
@@ -40,77 +41,41 @@ bnovate.iot.rms_get_sessions = async function rms_get_sessions(device_id) {
     return sessions.message;
 }
 
-// Open a new session for an existing remote configuration
-bnovate.iot.rms_start_session = async function rms_start_session(config_id, device_id,
-    start_session_method = null,
-    get_status_method = null,
-) {
-    frappe.show_progress(__("Starting session...."), 0, 8, __("Connecting..."));
-    let resp = {};
-
-    try {
-        resp = await frappe.call({
-            method: start_session_method || 'bnovate.bnovate.utils.iot_apis.rms_start_session',
-            args: {
-                config_id,
-                device_id,
-            }
-        });
-    } catch {
-        frappe.hide_progress();
-    }
-
-    const channel = resp.message;
-
-    while (true) {
-
-        const status = await bnovate.iot.rms_get_status(channel, get_status_method);
-        console.log(status);
-        // if (!status[device_id]) {
-        //     continue;
-        // }
-
-        let [last_update] = status[device_id].slice(-1);
-        frappe.show_progress(__("Starting session...."), status[device_id].length, 8, last_update ? last_update.value : null);
-
-        if (last_update.status === "error" || last_update.status === "warning" || last_update.status === "completed") {
-            frappe.hide_progress();
-
-            if (last_update.status === "error" || last_update.status === "warning") {
-                console.log(last_update)
-                frappe.msgprint({
-                    title: __("Error initializing connection"),
-                    message: last_update.value || last_update.errorCode.toString(),
-                    indicator: 'red',
-                })
-                return;
-            }
-
-            return last_update.link
-        }
-
-        // Sleep 1 sec and loop again
-        await new Promise(resolve => setTimeout(resolve, 1000))
-    }
-}
-
-// Get status updates on notification channel
-bnovate.iot.rms_get_status = async function rms_get_status(channel, method = null) {
-    let resp = await frappe.call({
-        method: method || 'bnovate.bnovate.utils.iot_apis.rms_get_status',
+bnovate.iot.portal_get_instrument_status = async function (cp_docname) {
+    frappe.show_progress(__("Starting session...."), 5, 100);
+    const resp = await bnovate.realtime.call({
+        method: "bnovate.www.instruments.portal_get_instrument_status",
         args: {
-            channel
+            cp_docname
+        },
+        callback(status) {
+            if (status.data.progress < 100) {
+                frappe.show_progress(__("Starting session...."), status.data.progress, 100);
+            }
         }
-    });
+    })
+    frappe.hide_progress();
     return resp.message;
 }
 
-bnovate.iot.get_instrument_status = async function get_instrument_status(device_id) {
-    let resp = await frappe.call({
-        method: 'bnovate.bnovate.utils.iot_apis.get_instrument_status',
+// Start a remote connection session and open in new tab. Authenticates portal users.
+bnovate.iot.portal_start_session = async function (config_id, cp_docname) {
+    frappe.show_progress(__("Starting session...."), 0, 100);
+    const resp = await bnovate.realtime.call({
+        method: "bnovate.www.instruments.portal_start_session",
         args: {
-            device_id
+            config_id,
+            cp_docname
+        },
+        callback(status) {
+            if (status.data.progress < 100) {
+                frappe.show_progress(__("Starting session...."), status.data.progress, 100);
+            }
         }
-    });
-    return resp.message;
+    })
+    frappe.hide_progress();
+    const link = resp.message;
+    if (link) {
+        window.open("https://" + link, "_blank");
+    }
 }

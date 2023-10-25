@@ -12,8 +12,11 @@ import frappe
 import concurrent.futures
 
 from json import JSONDecodeError
+from frappe import _
 from requests import request
 from requests.auth import HTTPBasicAuth
+
+from bnovate.bnovate.utils.realtime import set_status, STATUS_DONE, STATUS_RUNNING
 
 READ, WRITE = "read", "write"
 
@@ -295,6 +298,10 @@ def rms_get_access_sessions_for_config(config, settings=None, auth=True):
     active.sort(key=lambda el: el['end_time'], reverse=True)
     return dict(sessions=active, **config)
 
+@frappe.whitelist()
+def rms_get_access_sessions(device_id=None):
+    return _rms_get_access_sessions(device_id)
+
 def _rms_get_access_sessions(device_id=None, auth=True):
     """ Return list of access config dicts, each with its list of active sessions """
     if auth:
@@ -309,56 +316,66 @@ def _rms_get_access_sessions(device_id=None, auth=True):
     responses.sort(key=lambda el: el['protocol'])
     return responses
 
-@frappe.whitelist()
-def rms_get_access_sessions(device_id=None):
-    return _rms_get_access_sessions(device_id)
 
-def _rms_start_session(config_id, duration=30*60, auth=True):
+@frappe.whitelist()
+def rms_start_session(config_id, device_id, duration=30*60, task_id=None):
     """ Opens a new session for an existing remote configuration. 
 
-    Auth can be checked separately for portal users.
+    Auth handled for Desk users
     """
+    return _rms_start_session(config_id, device_id, duration, task_id=task_id)
+
+
+def _rms_start_session(config_id, device_id, duration=30*60, auth=True, task_id=None):
+    """ Opens a new session for an existing remote configuration. Return URL.
+
+    Auth can be checked separately for portal users.
+    Pass task_id for realtime upates.
+    """
+    device_id = str(device_id)
+    set_status({
+        "progress": 5,
+        "message": _("Connecting..."),
+    }, task_id)
+
     resp = rms_request(
         "/api/devices/connect/{config_id}".format(config_id=config_id),
         "POST",
         body={"duration": duration},
         auth=auth
     )
-    return resp['channel']
+    channel = resp['channel']
 
-@frappe.whitelist()
-def rms_start_session(config_id, duration=30*60):
-    """ Opens a new session for an existing remote configuration. 
+    def wait_for_link(attempt=0):
+        time.sleep(0.5)  # Sleep first to allow channel time to appear
 
-    Auth handled for Desk users
-    """
-    return _rms_start_session(config_id, duration)
+        if attempt > 120:
+            raise TimeoutError("Timeout opening remote connection session")
 
+        status = _rms_get_status(channel, auth=auth)
 
-def rms_wait_for_session(channel, device_id, auth=True, attempt=0, timeout=60):
-    """ Returns once session (intiated by rms_start_session) is ready """
+        if device_id not in status:
+            # TODO: what do we do?
+            frappe.throw("Status not available")
 
-    if attempt > 60:
-        raise TimeoutError("Timeout opening remote connection session")
+        last_update = status[device_id][-1]
+        message = last_update['value'] if 'value' in last_update else str(last_update['errorCode']) if 'errorCode' in last_update else ''
 
-    status = _rms_get_status(channel, auth=auth)
+        finished = last_update['status'] in ('error', 'warning', 'completed')
+        set_status({
+            "progress": 100. if finished else len(status[device_id]) / 8. * 100.,
+            "message": message,
+        }, task_id, STATUS_DONE if finished else STATUS_RUNNING)
 
-    if str(device_id) not in status:
-        # TODO: what do we do?
-        frappe.throw("Status not available")
+        if last_update['status'] in ('error', 'warning'):
+            raise StartSessionError(message)
 
-    last_update = status[str(device_id)][-1]
+        if last_update['status'] == 'completed':
+            return last_update['link']
 
-    if last_update['status'] in ('error', 'warning'):
-        message = last_update['value'] if 'value' in last_update else str(last_update['errorCode'])
-        raise StartSessionError(message)
+        return wait_for_link(attempt+1)
 
-    if last_update['status'] == 'completed':
-        return last_update['link']
-
-    time.sleep(1)
-    return rms_wait_for_session(channel, device_id, auth, attempt+1, timeout)
-
+    return wait_for_link()
 
 def combase_get_usage(iccid, settings=None, auth=True):
     """ Return data usage of SIM card in MB, or None.
@@ -420,19 +437,17 @@ def get_devices_and_data():
 # BactoSense API interface
 ################################
 
-def _get_instrument_status(device_id, password="", auth=True, attempt=1):
+def get_instrument_status(device_id, password="", auth=True, task_id=None):
     """ Get instrument status, for example to fetch Serial Number or service due date.
 
     device_id is RMS device ID. Will fetch status from first instrument available.
+    task_id: for realtime updates.
     """
 
     # - Check for existing remote connections
     # - If none exist, create one and start again.
     # - Pick the first HTTPS session available
     # - Fetch and return status from BactoSense API
-
-    if attempt > 3:
-        raise TimeoutError("Could not open an HTTPS connection with the device.")
 
     # Get a list of configs and associated active sessions
     sessions = _rms_get_access_sessions(device_id, auth=auth)
@@ -444,22 +459,12 @@ def _get_instrument_status(device_id, password="", auth=True, attempt=1):
     https = https_configs[0]
 
     if len(https['sessions']) == 0:
-        channel = _rms_start_session(https['id'], auth=auth)
-        rms_wait_for_session(channel, device_id, auth=auth)
-        return _get_instrument_status(device_id, password, auth, attempt+1)
+        link = _rms_start_session(https['id'], device_id, auth=auth, task_id=task_id)
+    else:
+        link = https['sessions'][0]['url']
     
     return request(
         "GET", 
-        "https://{}/api/status".format(https['sessions'][0]['url']),
+        "https://{}/api/status".format(link),
         auth=HTTPBasicAuth("guest", password)
     ).json()
-
-
-@frappe.whitelist()
-def get_instrument_status(device_id, password=""):
-    """ Get instrument status, for example to fetch Serial Number or service due date.
-
-    device_id is RMS device ID. Will fetch status from first instrument available.
-    """
-
-    return _get_instrument_status(device_id, password)
