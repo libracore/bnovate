@@ -31,7 +31,7 @@ def is_desk_user():
     user_type = frappe.db.get_value("User", {"name": frappe.session.user}, "user_type")
     if user_type == "System User":
         return True
-    return True
+    return False
 
 def is_system_user():
     return is_desk_user()
