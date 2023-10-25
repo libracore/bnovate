@@ -21,12 +21,15 @@
                     </dt>
                     <dd>
                         {% if instrument.cp.web %}
+                        <button href="#" class="btn btn-primary get-status" data-cp-docname="{{ instrument.cp.name }}" >
+                            {{ _("Get Status") }}</button>
+
                         <button href="#" class="btn btn-primary open-remote" data-config-id="{{ instrument.cp.web.id }}"
-                            data-device-id="{{ instrument.cp.web.device_id}}">{{ _("Web UI") }}</button>
+                            data-cp-docname="{{ instrument.cp.name}}">{{ _("Web UI") }}</button>
                         {% endif %}
                         {% if instrument.cp.vnc %}
                         <button href="#" class="btn btn-primary open-remote" data-config-id="{{ instrument.cp.vnc.id }}"
-                            data-device-id="{{ instrument.cp.vnc.device_id}}">{{ _("Touch UI") }}</button>
+                            data-cp-docname="{{ instrument.cp.name}}">{{ _("Touch UI") }}</button>
                         {% endif %}
                     </dd>
                     {% endfor %}
@@ -91,20 +94,25 @@
     frappe.require("/assets/js/dialog.min.js")  // Fixes progress modal layout
     frappe.require("/assets/bnovate/js/iot.js");
 
+    let buttons = [...document.querySelectorAll("button")];
     let remoteBtns = [...document.querySelectorAll(".open-remote")];
-
     remoteBtns.map(el => el.addEventListener("click", async (e) => {
+        buttons.map(btn => btn.disabled = true)
         try {
-            remoteBtns.map(btn => btn.disabled = true)
-            const link = await bnovate.iot.rms_start_session(el.dataset.configId, el.dataset.deviceId,
-                start_session_method = 'bnovate.www.instruments.portal_start_session',
-                get_status_method = 'bnovate.www.instruments.portal_get_status'
-            );
-            if (link) {
-                window.open("https://" + link, "_blank");
-            }
+            bnovate.iot.portal_start_session(el.dataset.configId, el.dataset.cpDocname);
         } finally {
-            remoteBtns.map(btn => btn.disabled = false)
+            buttons.map(btn => btn.disabled = false)
+        }
+    }));
+
+    let statusBtns = [...document.querySelectorAll(".get-status")];
+    statusBtns.map(el => el.addEventListener("click", async (e) => {
+        buttons.map(btn => btn.disabled = true)
+        let status = null;
+        try {
+            await bnovate.web.get_instrument_status_modal(el.dataset.cpDocname);
+        } finally {
+            buttons.map(btn => btn.disabled = false)
         }
     }));
 

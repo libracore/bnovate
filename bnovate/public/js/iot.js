@@ -1,5 +1,6 @@
-frappe.provide("bnovate.iot");
+frappe.require("/assets/bnovate/js/realtime.js");
 
+frappe.provide("bnovate.iot");
 
 /***********************************
  * Client-side wrappers for IoT APIS
@@ -105,12 +106,41 @@ bnovate.iot.rms_get_status = async function rms_get_status(channel, method = nul
     return resp.message;
 }
 
-bnovate.iot.get_instrument_status = async function get_instrument_status(device_id) {
-    let resp = await frappe.call({
-        method: 'bnovate.bnovate.utils.iot_apis.get_instrument_status',
+bnovate.iot.portal_get_instrument_status = async function (cp_docname) {
+    frappe.show_progress(__("Starting session...."), 5, 100);
+    const resp = await bnovate.realtime.call({
+        method: "bnovate.www.instruments.portal_get_instrument_status",
         args: {
-            device_id
+            cp_docname
+        },
+        callback(status) {
+            if (status.data.progress < 100) {
+                frappe.show_progress(__("Starting session...."), status.data.progress, 100);
+            }
         }
-    });
+    })
+    frappe.hide_progress();
     return resp.message;
+}
+
+// Start a remote connection session and open in new tab. Authenticates portal users.
+bnovate.iot.portal_start_session = async function (config_id, cp_docname) {
+    frappe.show_progress(__("Starting session...."), 0, 100);
+    const resp = await bnovate.realtime.call({
+        method: "bnovate.www.instruments.portal_start_session",
+        args: {
+            config_id,
+            cp_docname
+        },
+        callback(status) {
+            if (status.data.progress < 100) {
+                frappe.show_progress(__("Starting session...."), status.data.progress, 100);
+            }
+        }
+    })
+    frappe.hide_progress();
+    const link = resp.message;
+    if (link) {
+        window.open("https://" + link, "_blank");
+    }
 }

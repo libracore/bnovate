@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
+import urllib
 
 from frappe import _
 
@@ -85,19 +86,19 @@ def build_sidebar(context, show=True):
             'title': 'Quotations',
         }, {
             'route': '/instruments',
-            'title': 'My Instruments',
+            'title': 'Instruments',
         }]
 
     if has_cartridge_portal():
         context.sidebar_items.extend([{
                 'route': '/cartridges',
-                'title': 'My Cartridges',
+                'title': 'Cartridges',
             }, {
                 'route': '/requests',
                 'title': 'Refill Requests',
             }, {
                 'route': '/my_addresses',
-                'title': 'My Addresses',
+                'title': 'Addresses',
             }])
 
 @frappe.whitelist()

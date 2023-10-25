@@ -66,5 +66,5 @@ bnovate.realtime.call = async function ({ method, args, callback, timeout = 60 *
     bnovate.realtime.on(task_id, callback, timeout);
 
     const resp = await task;
-    return resp.message;
+    return resp;
 }
