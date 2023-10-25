@@ -7,6 +7,7 @@ import frappe
 from frappe.model.document import Document
 from bnovate.bnovate.utils.iot_apis import (rms_get_id, rms_get_device, rms_initialize_device, 
                                             _rms_start_session, rms_get_access_configs)
+from bnovate.bnovate.utils.realtime import set_status, STATUS_DONE
 from bnovate.bnovate.utils import iot_apis
 from bnovate.bnovate.doctype.audit_log import audit_log
 
@@ -39,13 +40,57 @@ def set_info_from_rms(docname):
 
 
 @frappe.whitelist()
-def auto_configure_device(device_id, new_device_name, docname):
+def auto_configure_device(device_id, new_device_name, docname, task_id=None):
     """ Scan ports, add available remotes, refresh RMS info """
-    
-    # TODO: set SN automatically
 
+    device_id, teltonika_serial = frappe.get_value("Connectivity Package", docname, ['rms_id', 'teltonika_serial'])
+
+    audit_log.log(
+        action="Gateway Autoconfiguration Request (backend)",
+        data={
+            'teltonika_serial': teltonika_serial,
+            'device_name': new_device_name,
+        },
+        connectivity_package=docname,
+    )
+
+    raise Exception("Oh noes")
+
+    set_status({
+        "progress": 10,
+        "message": "Initializing..."
+    }, task_id)
+    
     rms_initialize_device(device_id, new_device_name)
-    return set_info_from_rms(docname)
+
+    set_status({
+        "progress": 50,
+        "message": "Fetching Gateway Info..."
+    }, task_id)
+
+    set_info_from_rms(docname)
+
+    set_status({
+        "progress": 80,
+        "message": "Fetching Instrument Info..."
+    }, task_id)
+
+    sn = get_instrument_sn(docname)
+
+    audit_log.log(
+        action="Gateway Autoconfiguration Success (backend)",
+        data={
+            'teltonika_serial': teltonika_serial,
+            'device_name': new_device_name,
+        },
+        serial_no=sn,
+        connectivity_package=docname,
+    )
+
+    set_status({
+        "progress": 100,
+        "message": "Done"
+    }, task_id, STATUS_DONE)
 
 
 @frappe.whitelist()

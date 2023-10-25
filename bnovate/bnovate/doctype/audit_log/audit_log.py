@@ -12,8 +12,9 @@ class AuditLog(Document):
 	pass
 
 
-def log(action, data, protocol=None, serial_no=None, connectivity_package=None):
-	""" Add audit log entry """
+def log(action, data, protocol=None, serial_no=None, connectivity_package=None, commit=True):
+	""" Add audit log entry 
+	"""
 
 	new_log = frappe.get_doc({
 		'doctype': 'Audit Log',
@@ -26,4 +27,8 @@ def log(action, data, protocol=None, serial_no=None, connectivity_package=None):
 	})
 
 	new_log.insert(ignore_permissions=True)
+
+	if commit:
+		frappe.db.commit()
+		
 	return new_log

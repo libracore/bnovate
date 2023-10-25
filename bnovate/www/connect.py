@@ -78,13 +78,13 @@ def get_instruments_one_customer(customer):
 def portal_initialize_device(teltonika_serial, device_name, task_id=None):
     """ Scan ports and create remote access configs. Return device details. """
 
+    # Function is basically rewritten for more interactive feedback.
+
     # - Find associated Connectivity Package (CP)
     # - Authenticate: must belong to a linked Customer
     # - Get Device ID from CP
     # - Initialize using device ID.
     # - Fetch and associate instrument SN
-
-    # TODO: move to Connectivity Package and make this default autoconf for desk users as well.
 
     progress = [
         {

@@ -106,7 +106,7 @@ async function get_connection_status(frm) {
 	$(frm.fields_dict.connection_status.wrapper).html(`
 		<span class="indicator whitespace-nowrap ${device.status ? 'green' : 'red'}"></span><b>${device.name}</b> <img src="${bnovate.web.signal_icon(device.signal)}" style="max-height: 2em"> <br />
 		${device.operator}, ${device.connection_type} [${device.signal} dBm] <br />
-		<a href="https://rms.teltonika-networks.com/devices/${device.id}" target="_blank">Manage on RMS<i class="fa fa-external-link"></i></a>
+		<a href="https://rms.teltonika-networks.com/devices/${device.id}" target="_blank">Manage on RMS <i class="fa fa-external-link"></i></a>
 	`)
 }
 
@@ -269,14 +269,20 @@ async function configure_device(frm) {
 	}
 
 	set_connections_message(frm, "Loading...");
-	await frappe.call({
+	await bnovate.realtime.call({
 		method: "bnovate.bnovate.doctype.connectivity_package.connectivity_package.auto_configure_device",
 		args: {
 			device_id,
 			new_device_name: values.device_name,
 			docname: frm.doc.name,
+		},
+		callback(status) {
+			if (status.data.progress < 100) {
+				frappe.show_progress(__("Starting session...."), status.data.progress, 100, status.data.message);
+			}
 		}
 	});
+	frappe.hide_progress();
 	frm.reload_doc();
 }
 
