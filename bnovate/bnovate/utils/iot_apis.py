@@ -371,7 +371,7 @@ def _rms_start_session(config_id, device_id, duration=30*60, settings=None, auth
         }, task_id, STATUS_DONE if finished else STATUS_RUNNING)
 
         if last_update['status'] in ('error', 'warning'):
-            raise StartSessionError(message)
+            frappe.throw(message, StartSessionError)
 
         if last_update['status'] == 'completed':
             return last_update['link']

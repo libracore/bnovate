@@ -57,19 +57,24 @@ bnovate.iot.sweep_instrument_status = async function (cp_docnames) {
 
 bnovate.iot.portal_get_instrument_status = async function (cp_docname) {
     frappe.show_progress(__("Starting session...."), 5, 100);
-    const resp = await bnovate.realtime.call({
-        method: "bnovate.www.instruments.portal_get_instrument_status",
-        args: {
-            cp_docname
-        },
-        callback(status) {
-            if (status.data.progress < 100) {
-                frappe.show_progress(__("Starting session...."), status.data.progress, 100);
+    try {
+        const resp = await bnovate.realtime.call({
+            method: "bnovate.www.instruments.portal_get_instrument_status",
+            args: {
+                cp_docname
+            },
+            callback(status) {
+                if (status.data.progress < 100) {
+                    frappe.show_progress(__("Starting session...."), status.data.progress, 100);
+                }
             }
-        }
-    })
-    frappe.hide_progress();
-    return resp.message;
+        })
+        frappe.hide_progress();
+        return resp.message;
+    } catch (e) {
+        frappe.hide_progress();
+        throw (e)
+    }
 }
 
 bnovate.iot.portal_sweep_instrument_status = async function (cp_docnames, callback = (status) => null) {
@@ -86,22 +91,27 @@ bnovate.iot.portal_sweep_instrument_status = async function (cp_docnames, callba
 
 // Start a remote connection session and open in new tab. Authenticates portal users.
 bnovate.iot.portal_start_session = async function (config_id, cp_docname) {
-    frappe.show_progress(__("Starting session...."), 0, 100);
-    const resp = await bnovate.realtime.call({
-        method: "bnovate.www.instruments.portal_start_session",
-        args: {
-            config_id,
-            cp_docname
-        },
-        callback(status) {
-            if (status.data.progress < 100) {
-                frappe.show_progress(__("Starting session...."), status.data.progress, 100);
-            }
+    try {
+        frappe.show_progress(__("Starting session...."), 0, 100);
+        const resp = await bnovate.realtime.call({
+            method: "bnovate.www.instruments.portal_start_session",
+            args: {
+                config_id,
+                cp_docname
+            },
+            callback(status) {
+                if (status.data.progress < 100) {
+                    frappe.show_progress(__("Starting session...."), status.data.progress, 100);
+                }
+            },
+        })
+        const link = resp.message;
+        if (link) {
+            window.open("https://" + link, "_blank");
         }
-    })
-    frappe.hide_progress();
-    const link = resp.message;
-    if (link) {
-        window.open("https://" + link, "_blank");
+        frappe.hide_progress();
+    } catch (e) {
+        frappe.hide_progress();
+        throw (e);
     }
 }

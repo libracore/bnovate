@@ -106,7 +106,7 @@
     remoteBtns.map(el => el.addEventListener("click", async (e) => {
         buttons.map(btn => btn.disabled = true)
         try {
-            bnovate.iot.portal_start_session(el.dataset.configId, el.dataset.cpDocname);
+            await bnovate.iot.portal_start_session(el.dataset.configId, el.dataset.cpDocname);
         } finally {
             buttons.map(btn => btn.disabled = false)
         }
