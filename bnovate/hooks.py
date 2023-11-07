@@ -126,6 +126,7 @@ doctype_js = {
     "Delivery Note": ["public/js/doctype_includes/delivery_note.js"],
     "Sales Invoice": ["public/js/doctype_includes/sales_invoice.js"],
     "Serial No": ["public/js/doctype_includes/serial_no.js"],
+    "Work Order": ["public/js/doctype_includes/work_order.js"],
 }
 doctype_list_js = {
     "Item": ["public/js/doctype_includes/item_list.js"],
