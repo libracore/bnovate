@@ -32,7 +32,7 @@
   {
    "description": "In MB",
    "fieldname": "data_usage",
-   "fieldtype": "Data",
+   "fieldtype": "Float",
    "label": "Data Usage"
   },
   {
@@ -65,7 +65,7 @@
   }
  ],
  "is_submittable": 1,
- "modified": "2023-11-08 17:22:28.321393",
+ "modified": "2023-11-08 19:01:18.729870",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Connectivity Usage",

@@ -12,6 +12,7 @@ class ConnectivityUsage(Document):
 	pass
 
 
+@frappe.whitelist()
 def fetch_usage_for_period(start_date, end_date=None):
 	""" Fetch usage from cell provider and save to DB
 
@@ -19,6 +20,8 @@ def fetch_usage_for_period(start_date, end_date=None):
 	the month containing end_date, whichever is earlier.
 
 	"""
+	if type(start_date) != date:
+		start_date = frappe.utils.dateutils.get_datetime(start_date).date()
 
 	# Fetch up until last month - current cycle shouldn't be saved to DB
 	today = date.today()
@@ -41,7 +44,6 @@ def fetch_usage_for_period(start_date, end_date=None):
 
 	cp_lookup = { cp['iccid']: cp for cp in frappe.get_all("Connectivity Package", fields=['name', 'iccid', 'customer'])}
 
-	# TODO Check for duplicates in DB
 	usage = combase_get_cycle_usage(cycles)
 	for cycle_start, device_usages in usage.items():
 		for device_id, device_usage in device_usages.items():
@@ -60,6 +62,14 @@ def fetch_usage_for_period(start_date, end_date=None):
 
 	frappe.db.commit()
 
+def fetch_usage_last_few_months():
+	""" Called by hooks.py on a periodic basis """
+	return fetch_usage_for_period(date.today() - timedelta(days=3*31))
+
+
+#####################################
+# Helpers
+#####################################
 
 def first_day_of_month(day: date):
 	return day.replace(day=1)

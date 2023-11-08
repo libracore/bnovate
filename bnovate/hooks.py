@@ -284,9 +284,9 @@ scheduler_events = {
     # 	"weekly": [
     # 		"bnovate.tasks.weekly"
     # 	]
-    # 	"monthly": [
-    # 		"bnovate.tasks.monthly"
-    # 	]
+    	"monthly": [
+            "bnovate.bnovate.doctype.connectivity_usage.connectivity_usage.fetch_usage_last_few_months"
+    	]
 }
 
 # Testing
