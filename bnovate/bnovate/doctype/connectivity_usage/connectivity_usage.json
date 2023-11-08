@@ -1,0 +1,89 @@
+{
+ "creation": "2023-11-08 17:22:28.321393",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "iccid",
+  "period_start",
+  "period_end",
+  "data_usage",
+  "connectivity_package",
+  "customer",
+  "customer_name",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "iccid",
+   "fieldtype": "Data",
+   "label": "ICCID"
+  },
+  {
+   "fieldname": "period_start",
+   "fieldtype": "Date",
+   "label": "Period Start"
+  },
+  {
+   "fieldname": "period_end",
+   "fieldtype": "Date",
+   "label": "Period End"
+  },
+  {
+   "description": "In MB",
+   "fieldname": "data_usage",
+   "fieldtype": "Data",
+   "label": "Data Usage"
+  },
+  {
+   "fieldname": "connectivity_package",
+   "fieldtype": "Link",
+   "label": "Connectivity Package",
+   "options": "Connectivity Package"
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer"
+  },
+  {
+   "description": "Customer linked to the package at the time of retrieving the data usage.",
+   "fetch_from": "customer.customer_name",
+   "fieldname": "customer_name",
+   "fieldtype": "Data",
+   "label": "Customer Name"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Connectivity Usage",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "is_submittable": 1,
+ "modified": "2023-11-08 17:22:28.321393",
+ "modified_by": "Administrator",
+ "module": "bNovate",
+ "name": "Connectivity Usage",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}
