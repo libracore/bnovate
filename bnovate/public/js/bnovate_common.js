@@ -168,10 +168,7 @@ bnovate.utils.email_dialog = function (frm, template_name) {
     callback: function (r) {
       dlg.hide();
       frm.composer = new frappe.views.CommunicationComposer({
-        doc: {
-          doctype: frm.doc.doctype,
-          name: frm.doc.name
-        },
+        doc: frm.doc,
         subject: r.message.subject,
         recipients: recipients,
         cc: cc,
