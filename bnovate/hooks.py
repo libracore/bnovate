@@ -186,6 +186,10 @@ extend_website_page_controller_context  = {
     "frappe.www.login": "bnovate.www.login",
 }
 
+website_redirects = [
+    # {"source": "/redirectme(/.*)?", "target": "https://localhost:8000/\1"},
+]
+
 
 # Generators
 # ----------

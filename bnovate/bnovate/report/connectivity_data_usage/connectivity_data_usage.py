@@ -56,6 +56,4 @@ def get_data(filters):
 	ORDER BY cu.period_start, cu.data_usage DESC
 	""".format(start_date=start_date, end_date=end_date, extra_filters=extra_filters)
 
-	print(sql_query)
-
 	return frappe.db.sql(sql_query, as_dict=True)
