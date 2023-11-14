@@ -15,7 +15,7 @@ no_cache = 1
 
 
 def get_context(context):
-    auth()
+    auth(context)
     context.customers = sorted(get_session_customers(), key=lambda c: c.customer_name)
     context.instruments = get_instruments(context.customers)
     build_sidebar(context)

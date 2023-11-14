@@ -8,11 +8,11 @@ from frappe import _
 
 from frappe.contacts.doctype.address.address import get_address_display
 
-def auth():
-    # check login, throw exception if not logged in
-    if frappe.session.user=='Guest':
-        frappe.throw(_("You need to be logged in to access this page"), frappe.PermissionError)
-    if not "@" in frappe.session.user:
+def auth(context):
+    """ check login, throw exception if not logged in """
+    frappe.local.return_to_path = "/" + context.pathname
+
+    if frappe.session.user=='Guest' or not "@" in frappe.session.user:
         frappe.throw(_("You need to be logged in to access this page"), frappe.PermissionError)
 
 def is_guest():
