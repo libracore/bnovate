@@ -8,7 +8,7 @@
 
 
 frappe.ui.form.on("Work Order", {
-    qc_required(frm) {
-        console.log(frm.doc, frm.doc.production_item);
-    },
+    // qc_required(frm) {
+    //     console.log(frm.doc, frm.doc.production_item);
+    // },
 })
