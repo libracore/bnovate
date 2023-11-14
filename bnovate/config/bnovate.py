@@ -195,6 +195,12 @@ def get_data():
                        "description": _("Connectivity Package")
                    }, {
                         "type": "report",
+                        "name": "Connectivity Data Usage",
+                        "label": _("Data Usage"),
+                        "doctype": "Connectivity Package",
+                        "is_query_report": True   
+                   }, {
+                        "type": "report",
                         "name": "Portal Users",
                         "label": _("Portal Users"),
                         "doctype": "Contact",

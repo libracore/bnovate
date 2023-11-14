@@ -26,7 +26,8 @@
 
 <div id="connect-wizard" class="container mt-5">
     
-    <ol class="wizard-ribbon my-3">
+    <!-- Show only on computer screen, hidden on mobile -->
+    <ol class="wizard-ribbon my-3 d-none d-md-block">
         <li class="wizard-step current" data-step="1">{{ _("Connect Hardware") }}</li>
         <li class="wizard-step" data-step="2">{{ _("Configure BactoSense") }}</li>
         <li class="wizard-step" data-step="3">{{ _("Configure BactoLink") }}</li>

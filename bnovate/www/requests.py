@@ -14,7 +14,7 @@ no_cache = 1
 
 
 def get_context(context):
-    auth()
+    auth(context)
     build_sidebar(context)
     
     if has_cartridge_portal():

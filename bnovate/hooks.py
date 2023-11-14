@@ -111,6 +111,8 @@ web_include_js = [
     "/assets/js/control.min.js",
     "/assets/js/dialog.min.js",
     "/assets/js/bnovate-web.min.js",
+
+    "/assets/bnovate/js/web_includes/login_redirect.js",
 ]
 
 # include js in page
@@ -146,7 +148,7 @@ doctype_list_js = {
 # }
 
 # # Website user home page, instead of directing to /me after login
-website_user_home_page = "index"
+website_user_home_page = ""
 
 # Website user home page (by function)
 # get_website_user_home_page = "bnovate.config.homepage.get_homepage"
@@ -184,8 +186,11 @@ website_context = {
 
 update_website_context = "bnovate.www.helpers.update_context"
 extend_website_page_controller_context  = {
-    "frappe.www.login": "bnovate.www.login",
 }
+
+website_redirects = [
+    # {"source": "/redirectme(/.*)?", "target": "https://localhost:8000/\1"},
+]
 
 
 # Generators
@@ -285,9 +290,9 @@ scheduler_events = {
     # 	"weekly": [
     # 		"bnovate.tasks.weekly"
     # 	]
-    # 	"monthly": [
-    # 		"bnovate.tasks.monthly"
-    # 	]
+    	"monthly": [
+            "bnovate.bnovate.doctype.connectivity_usage.connectivity_usage.fetch_usage_last_few_months"
+    	]
 }
 
 # Testing

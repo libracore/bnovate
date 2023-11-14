@@ -10,7 +10,7 @@ no_cache = 1
 
 
 def get_context(context):
-    auth()
+    auth(context)
     # User can see cartridges from all the customers he manages
     managed_customers = [c.docname for c in get_session_customers()]
     if has_cartridge_portal() and managed_customers:
