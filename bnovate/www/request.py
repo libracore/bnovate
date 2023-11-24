@@ -12,7 +12,7 @@ no_cache = 1
 
 
 def get_context(context):
-    auth()
+    auth(context)
     context.doc = get_request(frappe.form_dict.name)
     context.form_dict = frappe.form_dict
     context.name = frappe.form_dict.name

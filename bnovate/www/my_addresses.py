@@ -9,7 +9,7 @@ no_cache = 1
 
 
 def get_context(context):
-    auth()
+    auth(context)
     # User can see cartridges from all the customers he manages
     build_sidebar(context)
     context.addresses = get_addresses()

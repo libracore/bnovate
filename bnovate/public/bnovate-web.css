@@ -27,6 +27,14 @@ body {
   max-width: 800px;
 }
 
+.indicator::before {
+  margin-bottom: 2px;
+}
+
+.modal .indicator::before {
+  margin-bottom: 4px;
+}
+
 
 /* Forms */
 .has-error .control-label {
@@ -51,7 +59,6 @@ body {
 }
 
 .flex-column {
-  .flex;
   flex-direction: column;
 }
 

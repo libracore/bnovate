@@ -94,18 +94,26 @@ app_include_js = [  # Note to self: in case of changes, may need to run bench bu
     "/assets/bnovate/js/bnovate_common.js",
     "/assets/bnovate/js/iot.js",
     "/assets/js/bnovate_libs.min.js",
+    "/assets/bnovate/js/lib/jsconfetti/js-confetti.browser.js",
     # "/assets/js/bnovate.js",   # Empty probably because it wasn't coded as a module.
 ]
 
 # include js, css files in header of web template
 web_include_css = [
-    "/assets/bnovate/bnovate-web.css",
+    "/assets/css/bnovate-web.min.css",
 ]
+
 web_include_js = [
+    "/assets/bnovate/js/bnovate_common.js",
     "/assets/bnovate/js/web_includes/helpers.js",
+    "/assets/bnovate/js/lib/frappe-datatable/sortable.js",
+    "/assets/bnovate/js/lib/frappe-datatable/frappe-datatable.min.js",
     "/assets/js/moment-bundle.min.js",
     "/assets/js/control.min.js",
     "/assets/js/dialog.min.js",
+    "/assets/js/bnovate-web.min.js",
+
+    "/assets/bnovate/js/web_includes/login_redirect.js",
 ]
 
 # include js in page
@@ -121,6 +129,7 @@ doctype_js = {
     "Delivery Note": ["public/js/doctype_includes/delivery_note.js"],
     "Sales Invoice": ["public/js/doctype_includes/sales_invoice.js"],
     "Serial No": ["public/js/doctype_includes/serial_no.js"],
+    "Work Order": ["public/js/doctype_includes/work_order.js"],
 }
 doctype_list_js = {
     "Item": ["public/js/doctype_includes/item_list.js"],
@@ -140,7 +149,7 @@ doctype_list_js = {
 # }
 
 # # Website user home page, instead of directing to /me after login
-website_user_home_page = "index"
+website_user_home_page = ""
 
 # Website user home page (by function)
 # get_website_user_home_page = "bnovate.config.homepage.get_homepage"
@@ -178,8 +187,11 @@ website_context = {
 
 update_website_context = "bnovate.www.helpers.update_context"
 extend_website_page_controller_context  = {
-    "frappe.www.login": "bnovate.www.login",
 }
+
+website_redirects = [
+    # {"source": "/redirectme(/.*)?", "target": "https://localhost:8000/\1"},
+]
 
 
 # Generators
@@ -279,9 +291,9 @@ scheduler_events = {
     # 	"weekly": [
     # 		"bnovate.tasks.weekly"
     # 	]
-    # 	"monthly": [
-    # 		"bnovate.tasks.monthly"
-    # 	]
+    	"monthly": [
+            "bnovate.bnovate.doctype.connectivity_usage.connectivity_usage.fetch_usage_last_few_months",
+    	]
 }
 
 # Testing

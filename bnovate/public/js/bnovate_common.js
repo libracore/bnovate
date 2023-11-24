@@ -17,6 +17,38 @@ bnovate.utils.sleep = function (ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+bnovate.utils.confetti = function () {
+
+  const pick_random_item = function (arr) {
+    if (arr.length === 0) {
+      return null;
+    }
+    return arr[Math.floor(Math.random() * arr.length)];
+
+  }
+
+  const configs = [
+    {},
+    { confettiRadius: 12, confettiNumber: 100 },
+    { emojis: ['🌈', '⚡️', '💥', '✨', '💫', '🌸'] },
+    { emojis: ['⚡️', '💥', '✨', '💫'] },
+    { emojis: ['🦄'], confettiRadius: 100, confettiNumber: 30 },
+    {
+      confettiColors: ['#ffbe0b', '#fb5607', '#ff006e', '#8338ec', '#3a86ff'],
+      confettiRadius: 10,
+      confettiNumber: 150,
+    },
+    {
+      confettiColors: ['#9b5de5', '#f15bb5', '#fee440', '#00bbf9', '#00f5d4'],
+      confettiRadius: 6,
+      confettiNumber: 300,
+    },
+
+  ]
+  bnovate.utils.confettiPopper = bnovate.utils.confettiPopper || new JSConfetti();
+  return bnovate.utils.confettiPopper.addConfetti(pick_random_item(configs));
+}
+
 
 /*  ***********************
  * This file contains common global functions 
@@ -168,10 +200,7 @@ bnovate.utils.email_dialog = function (frm, template_name) {
     callback: function (r) {
       dlg.hide();
       frm.composer = new frappe.views.CommunicationComposer({
-        doc: {
-          doctype: frm.doc.doctype,
-          name: frm.doc.name
-        },
+        doc: frm.doc,
         subject: r.message.subject,
         recipients: recipients,
         cc: cc,

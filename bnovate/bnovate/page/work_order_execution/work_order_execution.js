@@ -261,6 +261,20 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 				.filter(it => it.serial_no)
 				.map(it => it.serial_no.trim().replaceAll("\n", ", ")).
 				join(", ");
+
+
+			// Watch out, we can't attach an array to doc, or we get an error on submit.
+			let all_serial_nos = [doc.produced_serial_nos?.split(', ') || [], doc.scrap_serial_nos?.split(', ') || []].flat().filter(x => x);
+			await Promise.all(all_serial_nos.map(sn => {
+				return !!sn && frappe.model.with_doc('Serial No', sn)
+			}));
+
+			doc.extras = {}
+			doc.extras.serial_no_data = all_serial_nos.map(sn => ({
+				name: sn,
+				attachments: !!sn && state.docinfo['Serial No']?.[sn]?.attachments || [],
+				link: frappe.utils.get_form_link("Serial No", sn, true, sn),
+			}));
 		}
 
 		// Load attachments / linked docs
@@ -751,6 +765,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 				doc,
 			}
 		});
+		bnovate.utils.confetti();
 		return resp.message;
 	}
 	bnovate.work_order_execution.submit_doc = submit_doc;

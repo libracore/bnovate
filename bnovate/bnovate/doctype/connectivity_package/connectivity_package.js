@@ -14,6 +14,7 @@ frappe.ui.form.on('Connectivity Package', {
 				}
 			}
 		});
+
 	},
 
 	async refresh(frm) {
@@ -38,6 +39,13 @@ frappe.ui.form.on('Connectivity Package', {
 			get_connection_status(frm);
 			get_connections(frm);
 		}
+		frm.add_custom_button(__("View Data Usage"), async () => {
+			frappe.route_options = {
+				"connectivity_package": frm.doc.name,
+			};
+			await frappe.set_route("query-report", "Connectivity Data Usage");
+			frappe.query_report.refresh();
+		});
 	},
 
 	async refresh_connections(frm) {

@@ -7,9 +7,20 @@
         "public/js/lib/leaflet/leaflet.markercluster.js"
     ],
 
+    "js/bnovate-web.min.js": [
+        "public/js/lib/frappe-datatable/sortable.js",
+        "public/js/lib/frappe-datatable/frappe-datatable.js"
+    ],
+
     "css/bnovate.min.css": [
         "public/bnovate.css",
         "public/js/lib/leaflet/MarkerCluster.css",
         "public/js/lib/leaflet/MarkerCluster.Default.css"
+    ],
+
+    "css/bnovate-web.min.css": [
+        "public/bnovate-web.css",
+        "public/js/lib/frappe-datatable/frappe-datatable.css"
     ]
+
 }

@@ -12,6 +12,10 @@ import frappe
 import concurrent.futures
 
 from json import JSONDecodeError
+from typing import List
+from datetime import date
+from itertools import chain
+
 from frappe import _
 from requests import request
 from requests.auth import HTTPBasicAuth
@@ -21,6 +25,9 @@ from bnovate.bnovate.utils.realtime import set_status, STATUS_DONE, STATUS_RUNNI
 READ, WRITE = "read", "write"
 
 class ApiException(Exception):
+    pass
+
+class CombaseException(Exception):
     pass
 
 class NoEndDevicesFound(ApiException):
@@ -53,14 +60,15 @@ def _get_settings():
 # BASE API CONNECTIONS
 #######################
 
-def _rms_get_status(channel, auth=True):
+def _rms_get_status(channel, settings=None, auth=True):
     """ Return status updates on given channel, 
     
     Use in situations where authentication should be checked separately  
     """
     if auth:
         _auth(READ)
-    settings = _get_settings()
+    if settings is None:
+        settings = _get_settings()
 
     resp = request(
         "GET", 
@@ -129,6 +137,30 @@ def rms_request(path, method='GET', params=None, body=None, settings=None, auth=
         return resp['meta']
     elif 'data' in resp:
         return resp['data']
+
+def combase_request(path, params=None, settings=None, auth=True):
+    """ Fetch path from API
+
+    Skip permission check and settings lookup if these are called concurrently. Just make sure to 
+    check at least once calling _auth()!
+    
+    """
+    if auth:
+        _auth()
+    if settings is None:
+        settings = _get_settings()
+
+    resp = request(
+        "GET", 
+        "https://restapi2.jasper.com/rws/api/v1" + path, 
+        params=params,
+        auth=HTTPBasicAuth(settings.combase_api_username, settings.combase_api_key)
+    ).json()
+
+    if 'errorCode' in resp:
+        raise CombaseException("{}: {}".format(resp['errorCode'], resp['errorMessage']))
+
+    return resp
 
 
 ##################################
@@ -302,11 +334,12 @@ def rms_get_access_sessions_for_config(config, settings=None, auth=True):
 def rms_get_access_sessions(device_id=None):
     return _rms_get_access_sessions(device_id)
 
-def _rms_get_access_sessions(device_id=None, auth=True):
+def _rms_get_access_sessions(device_id=None, settings=None, auth=True):
     """ Return list of access config dicts, each with its list of active sessions """
     if auth:
         _auth(WRITE)  # require write permissions since this returns active session links
-    settings = _get_settings()
+    if settings is None:
+        settings = _get_settings()
     configs = rms_get_access_configs(device_id, settings=settings, auth=auth)
     with concurrent.futures.ThreadPoolExecutor() as executor:
         futures = [ executor.submit(rms_get_access_sessions_for_config, c, settings=settings, auth=False) for c in configs ]
@@ -326,7 +359,7 @@ def rms_start_session(config_id, device_id, duration=30*60, task_id=None):
     return _rms_start_session(config_id, device_id, duration, task_id=task_id)
 
 
-def _rms_start_session(config_id, device_id, duration=30*60, auth=True, task_id=None):
+def _rms_start_session(config_id, device_id, duration=30*60, settings=None, auth=True, task_id=None):
     """ Opens a new session for an existing remote configuration. Return URL.
 
     Auth can be checked separately for portal users.
@@ -342,6 +375,7 @@ def _rms_start_session(config_id, device_id, duration=30*60, auth=True, task_id=
         "/api/devices/connect/{config_id}".format(config_id=config_id),
         "POST",
         body={"duration": duration},
+        settings=settings,
         auth=auth
     )
     channel = resp['channel']
@@ -352,7 +386,7 @@ def _rms_start_session(config_id, device_id, duration=30*60, auth=True, task_id=
         if attempt > 120:
             raise TimeoutError("Timeout opening remote connection session")
 
-        status = _rms_get_status(channel, auth=auth)
+        status = _rms_get_status(channel, settings=settings, auth=auth)
 
         if device_id not in status:
             # TODO: what do we do?
@@ -368,7 +402,7 @@ def _rms_start_session(config_id, device_id, duration=30*60, auth=True, task_id=
         }, task_id, STATUS_DONE if finished else STATUS_RUNNING)
 
         if last_update['status'] in ('error', 'warning'):
-            raise StartSessionError(message)
+            frappe.throw(message, StartSessionError)
 
         if last_update['status'] == 'completed':
             return last_update['link']
@@ -377,24 +411,21 @@ def _rms_start_session(config_id, device_id, duration=30*60, auth=True, task_id=
 
     return wait_for_link()
 
-def combase_get_usage(iccid, settings=None, auth=True):
+#############################
+# SIM & Data provider
+#############################
+
+def combase_get_ctd_usage(iccid, settings=None, auth=True):
     """ Return data usage of SIM card in MB, or None.
 
 
-    Skip permission check if these are called concurrently. Just make sure to 
+    Skip permission check and settings lookup if these are called concurrently. Just make sure to 
     check at least once calling _auth()!
     
     """
-    if auth:
-        _auth()
-    if settings is None:
-        settings = _get_settings()
 
-    resp = request(
-        "GET", 
-        "https://restapi2.jasper.com/rws/api/v1/devices/{iccid}/ctdUsages".format(iccid=iccid), 
-        auth=HTTPBasicAuth(settings.combase_api_username, settings.combase_api_key)
-    ).json()
+    resp = combase_request("/devices/{iccid}/ctdUsages".format(iccid=iccid), 
+                           settings=settings, auth=auth)
 
     if not 'ctdDataUsage' in resp:
         return None
@@ -414,7 +445,7 @@ def get_devices_and_data():
 
     # Get data usage for each SIM iccid:
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        futures = [ executor.submit(combase_get_usage, iccid, settings, auth=False) for iccid in iccids ]
+        futures = [ executor.submit(combase_get_ctd_usage, iccid, settings, auth=False) for iccid in iccids ]
         responses = [ future.result() for future in concurrent.futures.as_completed(futures) ]
         lookup = { k: v for k, v in responses }
 
@@ -432,12 +463,113 @@ def get_devices_and_data():
 
     return devices
 
+def combase_get_devices():
+    """ Return all SIM cards registered """
+    # TODO: check pagination when more than 50 devices
+    devices = []
+    resp = {
+        'lastPage': False,
+        'pageNumber': 0,
+    }
+    while 'lastPage' in resp and not resp['lastPage']:
+        resp = combase_request(
+            "/devices", 
+            params={
+                'modifiedSince': '2023-01-01T00:00:00+00:00',
+                'pageNumber': resp['pageNumber'] + 1,
+            },
+        )
+
+        if not 'devices' in resp:
+            continue
+
+        devices.extend(resp['devices'])
+
+    return devices
+
+def combase_get_plans():
+    """ Return all rate plans """
+    devices = combase_get_devices()
+    return sorted(list(set(d['ratePlan'] for d in devices)))
+
+def combase_get_cycle_usage(cycles: List[date]):
+    """ Return data usage for all devices in the billing cycle
+
+    cycle: list of dates, one per month
+
+    """
+
+    _auth()
+    settings = _get_settings()
+
+    start_dates = [date(d.year, d.month, 1) for d in cycles]
+    plans = combase_get_plans()
+
+    def plan_cycle_usage(plan, cycle_start):
+        # Return dict of { device: usage } for a plan and cycle.
+        # Return dict of { cycle, }
+        # Sum all zones together for now.
+        cycle_formatted = cycle_start.strftime("%Y-%m-01Z")
+        usage = []
+        zones = []
+        resp = { 
+            'lastPage': False,
+            'pageNumber': 0,
+        }
+
+        # Get all pages
+        while 'lastPage' in resp and not resp['lastPage']:
+            resp = combase_request(
+                "/usages", 
+                params={
+                    'ratePlanName': plan,
+                    'cycleStartDate': cycle_formatted,
+                    'pageNumber': resp['pageNumber'] + 1,
+                },
+                settings=settings,
+                auth=False, 
+            )
+
+            if not 'zones' in resp:
+                continue
+            
+            zones.extend(resp['zones'])
+
+        for zone in zones:
+            if not 'devices' in zone:
+                continue
+            for device in zone['devices']:
+                data_usage = device['usage']['dataUsage'] / 1024 / 1024
+                usage.append((cycle_start, device['deviceId'], data_usage))
+
+        return usage
+
+    # Collect usage data for each device and cycle
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        futures = [ executor.submit(plan_cycle_usage, plan, cycle) for plan in plans for cycle in start_dates]
+        responses = list(chain(*[ future.result() for future in concurrent.futures.as_completed(futures) ]))
+
+    # Some devices switch plan mid-cycle.
+    sum_usage = {
+        # SIMdeviceId: usage in MB 
+    }
+    for cycle, device_id, usage in sorted(responses, key=lambda r: r[0]):
+        if cycle not in sum_usage:
+            sum_usage[cycle] = {}
+
+        if device_id not in sum_usage[cycle]:
+            sum_usage[cycle][device_id] = 0
+
+        sum_usage[cycle][device_id] += usage
+
+    return sum_usage
+
 
 ################################
 # BactoSense API interface
 ################################
 
-def get_instrument_status(device_id, password="", auth=True, task_id=None):
+def get_instrument_status(device_id, password="", settings=None, auth=True, task_id=None):
     """ Get instrument status, for example to fetch Serial Number or service due date.
 
     device_id is RMS device ID. Will fetch status from first instrument available.
@@ -450,7 +582,7 @@ def get_instrument_status(device_id, password="", auth=True, task_id=None):
     # - Fetch and return status from BactoSense API
 
     # Get a list of configs and associated active sessions
-    sessions = _rms_get_access_sessions(device_id, auth=auth)
+    sessions = _rms_get_access_sessions(device_id, settings=settings, auth=auth)
     https_configs = [s for s in sessions if s['protocol'] == "https"]
 
     if len(https_configs) == 0:
@@ -459,7 +591,7 @@ def get_instrument_status(device_id, password="", auth=True, task_id=None):
     https = https_configs[0]
 
     if len(https['sessions']) == 0:
-        link = _rms_start_session(https['id'], device_id, auth=auth, task_id=task_id)
+        link = _rms_start_session(https['id'], device_id, settings=settings, auth=auth, task_id=task_id)
     else:
         link = https['sessions'][0]['url']
     
