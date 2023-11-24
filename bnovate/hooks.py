@@ -94,6 +94,7 @@ app_include_js = [  # Note to self: in case of changes, may need to run bench bu
     "/assets/bnovate/js/bnovate_common.js",
     "/assets/bnovate/js/iot.js",
     "/assets/js/bnovate_libs.min.js",
+    "/assets/bnovate/js/lib/jsconfetti/js-confetti.browser.js",
     # "/assets/js/bnovate.js",   # Empty probably because it wasn't coded as a module.
 ]
 
@@ -291,7 +292,7 @@ scheduler_events = {
     # 		"bnovate.tasks.weekly"
     # 	]
     	"monthly": [
-            "bnovate.bnovate.doctype.connectivity_usage.connectivity_usage.fetch_usage_last_few_months"
+            "bnovate.bnovate.doctype.connectivity_usage.connectivity_usage.fetch_usage_last_few_months",
     	]
 }
 
