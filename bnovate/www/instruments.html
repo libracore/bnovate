@@ -133,13 +133,18 @@
         return resp.message;
     }
 
-    // Load status
-    [...document.querySelectorAll(".link-status")].map(async el => {
-        const device = await portal_get_device(el.dataset.deviceId);
-        el.innerHTML = `
-        <span class="indicator whitespace-nowrap ${device.status ? 'green' : 'red'}">${device.status ? 'Link Online' : 'Link Offline'}</span><br>
-        ${device.operator} <img src="${bnovate.web.signal_icon(device.signal)}" style="max-height: 2em"> <br> ${device.connection_type}[${device.signal} dBm]
-        `
+    frappe.require([
+        "/assets/bnovate/js/iot.js",
+        "/assets/bnovate/js/realtime.js"
+    ]).then(() => {
+        // Load status
+        [...document.querySelectorAll(".link-status")].map(async el => {
+            const device = await portal_get_device(el.dataset.deviceId);
+            el.innerHTML = `
+            <span class="indicator whitespace-nowrap ${device.status ? 'green' : 'red'}">${device.status ? 'Link Online' : 'Link Offline'}</span><br>
+            ${device.operator} <img src="${bnovate.web.signal_icon(device.signal)}" style="max-height: 2em"> <br> ${device.connection_type}[${device.signal} dBm]
+            `
+        })
     })
 
 </script>
