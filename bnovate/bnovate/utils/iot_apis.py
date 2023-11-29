@@ -99,7 +99,7 @@ def rms_monitor_status(channel, device_id, attempt=0, auth=True):
     if attempt >= 30:
         raise ApiException("Timeout requesting status update from channel{}".format(channel))
     try:
-        resp = _rms_get_status(channel, auth)
+        resp = _rms_get_status(channel, auth=auth)
     except ChannelNotFound:
         time.sleep(1)
         return rms_monitor_status(channel, device_id, attempt + 1, auth)
