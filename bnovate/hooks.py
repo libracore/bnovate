@@ -315,3 +315,13 @@ override_doctype_dashboards = {
     "Serial No": "bnovate.bnovate.utils.dashboards.get_serial_no_dashboard_data",
     "Sales Order": "bnovate.bnovate.utils.dashboards.get_sales_order_dashboard_data",
 }
+
+# Jinja
+# ----------------------------
+
+jenv = {
+    "methods": [
+        "find_serial_no:bnovate.bnovate.doctype.storage_location.storage_location.find_serial_no",
+        "find_serial_nos:bnovate.bnovate.doctype.storage_location.storage_location.find_serial_nos",
+    ],
+}
