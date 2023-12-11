@@ -34,6 +34,8 @@ frappe.query_reports["Cartridge Status"] = {
         } else if (value && col.fieldname === 'woe') {
             let [legend, colour] = work_order_entry_indicator(data);
             return `<span class="indicator ${colour}">${frappe.utils.get_form_link("Stock Entry", value, true, value)} [${legend}]</span>`;
+        } else if (value && (col.fieldname === "storage_location" || col.fieldname === "storage_slot")) {
+            return frappe.utils.get_form_link("Storage Location", data.storage_location_docname, true, value);
         }
 
         return default_formatter(value, row, col, data);

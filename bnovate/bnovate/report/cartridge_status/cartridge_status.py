@@ -95,6 +95,7 @@ def get_data(filters):
             wo.status AS wo_status,
             woe.woe_name AS woe, -- Work Order Entry, i.e. stock entry associated with that cartridge 
             woe.woe_docstatus AS woe_docstatus,
+            loc.name as storage_location_docname,
             loc.title as storage_location,
             sl.label as storage_slot
 

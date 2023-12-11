@@ -58,6 +58,7 @@ function print_url(url) {
   frappe.show_progress("Preparing...", 10, 100);
   setTimeout(() => frappe.show_progress("Preparing...", 60, 100), 500);
   setTimeout(() => frappe.show_progress("Preparing...", 80, 100), 900);
+  setTimeout(() => frappe.hide_progress(), 1000);
   let iframe = document.createElement('iframe');
   iframe.style.display = 'none';
   document.body.append(iframe);
