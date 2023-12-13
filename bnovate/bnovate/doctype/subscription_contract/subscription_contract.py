@@ -246,6 +246,7 @@ def create_credit_notes(docname, sinv_items, selected_items):
 
 		# Set refund amount
 		for item in sinv_ret.items:
+			item.price_list_rate = refunds[item.sc_detail][item.service_start_date]
 			item.rate = refunds[item.sc_detail][item.service_start_date]
 			item.enable_deferred_revenue = False
 
