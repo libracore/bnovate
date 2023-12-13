@@ -84,17 +84,17 @@ frappe.ui.form.on("Sales Order", {
                 },
                 error: () => frm.set_value('custom_shipping_rule', ''),
             })
-            return frm.call({
-                doc: frm.doc,
-                method: "apply_custom_shipping_rule",
-                callback: function (r) {
-                }
-            }).fail();
         }
         else {
             frm.cscript.calculate_taxes_and_totals();
         }
 
+    },
+
+    taxes_and_charges(frm) {
+        // Re-calculate shipping. FIXME: race condition.
+        // frm.trigger('custom_shipping_rule');
+        // console.log('Should have triggered taxes refresh');
     },
 
 })
