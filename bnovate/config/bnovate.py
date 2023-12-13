@@ -175,7 +175,12 @@ def get_data():
                         "label": _("Deferred Revenue Report"),
                         "doctype": "GL Entry",
                         "is_query_report": True   
-                   }  
+                   }, {
+                       "type": "doctype",
+                       "name": "Custom Shipping Rule",
+                       "label": _("Shipping Rule"),
+                       "description": _("Shipping Rules for bNovate")
+                   }
             ]
         },
          {

@@ -79,6 +79,8 @@ fixtures = [
             "Delivery Note-tracking_no"
             "Delivery Note-column_break_25",
             "Delivery Note-packing_stage",
+            # Custom shipping rules
+            "Sales Order-custom_shipping_rule",
         ]]]
     }
 ]

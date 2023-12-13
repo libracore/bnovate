@@ -67,6 +67,36 @@ frappe.ui.form.on("Sales Order", {
         }
     },
 
+    custom_shipping_rule(frm) {
+        // Call Custom Shipping Rule instead of built-in one:
+
+        if (frm.doc.custom_shipping_rule) {
+            return frappe.call({
+                method: 'bnovate.bnovate.doctype.custom_shipping_rule.custom_shipping_rule.apply_rule',
+                args: {
+                    doc: frm.doc,
+                },
+                callback: (r) => {
+                    if (!r.exc) {
+                        frm.refresh_fields();
+                        frm.cscript.calculate_taxes_and_totals();
+                    }
+                },
+                error: () => frm.set_value('custom_shipping_rule', ''),
+            })
+            return frm.call({
+                doc: frm.doc,
+                method: "apply_custom_shipping_rule",
+                callback: function (r) {
+                }
+            }).fail();
+        }
+        else {
+            frm.cscript.calculate_taxes_and_totals();
+        }
+
+    },
+
 })
 
 async function get_deliverability(frm) {
