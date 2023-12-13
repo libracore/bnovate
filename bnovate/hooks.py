@@ -80,6 +80,7 @@ fixtures = [
             "Delivery Note-column_break_25",
             "Delivery Note-packing_stage",
             # Custom shipping rules
+            "Sales Taxes and Charges-hide_if_zero",
             "Sales Order-custom_shipping_rule",
         ]]]
     }
