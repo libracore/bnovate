@@ -5,6 +5,7 @@
 from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
+from erpnext.stock.doctype.serial_no.serial_no import get_serial_nos
 
 class StorageLocation(Document):
 	pass
@@ -26,7 +27,8 @@ def find_serial_no(serial_no, throw=True, key=None):
 		loc.title AS title,
 		loc.`key` AS secret_key,
 		slot.label AS slot,
-		slot.name AS slot_docname
+		slot.name AS slot_docname,
+		slot.serial_no AS serial_no
 	FROM `tabStorage Location` loc
 	JOIN `tabStorage Slot` slot ON slot.parent = loc.name
 	WHERE slot.serial_no = "{serial_no}"
@@ -40,8 +42,13 @@ def find_serial_no(serial_no, throw=True, key=None):
 
 	if throw:
 		frappe.throw("Serial number not found: {}".format(serial_no))
-	return None
-	
+	return {'serial_no': serial_no}
+
+
+@frappe.whitelist()
+def find_serial_nos(serial_nos, throw=True, key=None):
+	return [find_serial_no(s, throw, key) for s in get_serial_nos(serial_nos)]
+
 
 @frappe.whitelist(allow_guest=True)
 def store_serial_no(location_name, serial_no, key=None):

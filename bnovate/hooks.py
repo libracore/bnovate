@@ -79,6 +79,9 @@ fixtures = [
             "Delivery Note-tracking_no"
             "Delivery Note-column_break_25",
             "Delivery Note-packing_stage",
+            # Custom shipping rules
+            "Sales Taxes and Charges-hide_if_zero",
+            "Sales Order-custom_shipping_rule",
         ]]]
     }
 ]
@@ -314,4 +317,14 @@ scheduler_events = {
 override_doctype_dashboards = {
     "Serial No": "bnovate.bnovate.utils.dashboards.get_serial_no_dashboard_data",
     "Sales Order": "bnovate.bnovate.utils.dashboards.get_sales_order_dashboard_data",
+}
+
+# Jinja
+# ----------------------------
+
+jenv = {
+    "methods": [
+        "find_serial_no:bnovate.bnovate.doctype.storage_location.storage_location.find_serial_no",
+        "find_serial_nos:bnovate.bnovate.doctype.storage_location.storage_location.find_serial_nos",
+    ],
 }

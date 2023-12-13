@@ -1,0 +1,44 @@
+{
+ "creation": "2023-12-12 10:47:14.248204",
+ "description": "A condition for a Shipping Rule. Customized for bNovate",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "from_value",
+  "to_value",
+  "shipping_amount"
+ ],
+ "fields": [
+  {
+   "fieldname": "from_value",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "From Value",
+   "reqd": 1
+  },
+  {
+   "fieldname": "to_value",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "To Value"
+  },
+  {
+   "fieldname": "shipping_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Shipping Amount",
+   "options": "currency",
+   "reqd": 1
+  }
+ ],
+ "istable": 1,
+ "modified": "2023-12-12 10:47:14.248204",
+ "modified_by": "Administrator",
+ "module": "bNovate",
+ "name": "Custom Shipping Rule Condition",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}
