@@ -12,6 +12,7 @@ app_icon = "octicon octicon-beaker"
 app_color = "#3b6e8f"
 app_email = "info@libracore.com"
 app_license = "AGPL"
+app_logo_url = "/assets/bnovate/img/bnovate_logo.svg"
 
 # Fixtures
 # -----------------
