@@ -1,11 +1,20 @@
 // Set navbar to an obvious colour if running on dev machine:
+const r = document.querySelector(':root');
 if (window.location.host.indexOf("localhost") >= 0) {
-  let link = document.createElement('link');
-  link.type = 'text/css';
-  link.rel = 'stylesheet';
-  link.href = '/assets/bnovate/bnovate-dev.css';
-  document.querySelector('head').appendChild(link);
+  r.style.setProperty('--navbar-color', '#e98332ff');
 }
+
+// Set country flags based on company:
+const default_company = frappe.defaults.get_default('Company');
+if (default_company.indexOf('SA') >= 0) {
+  r.style.setProperty('--flag', 'url("/assets/bnovate/img/flags/ch.png")');
+} else if (default_company.indexOf('Ltd') >= 0) {
+  r.style.setProperty('--flag', 'url("/assets/bnovate/img/flags/uk.png")');
+} else if (default_company.toLowerCase().indexOf('gmbh') >= 0) {
+  r.style.setProperty('--flag', 'url("/assets/bnovate/img/flags/de.png")');
+}
+
+
 if (frappe.datetime.get_today && frappe.datetime.get_today().endsWith('04-01')) {
   console.log("Party time!")
   document.querySelector("body").classList.add('party-time');
