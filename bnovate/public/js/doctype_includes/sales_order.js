@@ -24,7 +24,7 @@ frappe.ui.form.on("Sales Order", {
         frm.set_query("custom_shipping_rule", () => {
             return {
                 filters: {
-                    currency: frm.doc.currency,
+                    // currency: frm.doc.currency,
                     country: frm.doc.shipping_country,
                 }
             }
