@@ -83,6 +83,7 @@ fixtures = [
             # Custom shipping rules
             "Sales Taxes and Charges-hide_if_zero",
             "Sales Order-custom_shipping_rule",
+            "Sales Order-shipping_country",
         ]]]
     }
 ]

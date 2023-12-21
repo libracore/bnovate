@@ -9,9 +9,11 @@ from frappe import _, msgprint, throw
 from frappe.utils import flt, fmt_money
 from frappe.model.document import Document
 from erpnext.accounts.doctype.shipping_rule.shipping_rule import ShippingRule
+from bnovate.bnovate.utils import get_fixed_exchange_rate
 
 
 class CurrencyMismatchError(frappe.ValidationError): pass
+class CurrencyExchangeMissingError(frappe.ValidationError): pass
 
 class CustomShippingRule(ShippingRule):
 
@@ -40,9 +42,12 @@ class CustomShippingRule(ShippingRule):
 
         # convert to order currency
         if doc.currency != self.currency:
-            throw(_("Shipping rule currency does not match document currency"), CurrencyMismatchError)
+            # Apply long-term shipping rate
+            exchange_rate = get_fixed_exchange_rate(self.currency, doc.currency, doc.transaction_date)
+            if not exchange_rate:
+                throw(_("No 'Fixed Exchange Rate' from shipping list currency {0} to document currency {1}").format(self.currency, doc.currency), CurrencyExchangeMissingError)
 
-            # shipping_amount = flt(shipping_amount / doc.conversion_rate, 2)
+            shipping_amount = flt(shipping_amount * exchange_rate, 2)
 
         self.add_shipping_rule_to_tax_table(doc, shipping_amount)
 

@@ -180,6 +180,11 @@ def get_data():
                        "name": "Custom Shipping Rule",
                        "label": _("Shipping Rule"),
                        "description": _("Shipping Rules for bNovate")
+                   }, {
+                       "type": "doctype",
+                       "name": "Fixed Currency Exchange",
+                       "label": _("Fixed Currency Exchange"),
+                       "description": _("Long-term currency exchange rates, used for shipping rates")
                    }
             ]
         },

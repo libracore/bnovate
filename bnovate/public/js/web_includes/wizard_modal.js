@@ -53,6 +53,7 @@ const template_page1 = `
                     <option value=""></option>
                     <option>TCC</option>
                     <option>ICC</option>
+                    <option>ICC+</option>
                 </select>
             </td>
         </tr>
@@ -64,6 +65,7 @@ const template_page1 = `
                     <option value=""></option>
                     <option>TCC</option>
                     <option>ICC</option>
+                    <option>ICC+</option>
                 </select>
             </td>
         </tr>
