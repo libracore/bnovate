@@ -79,9 +79,11 @@ def make_sales_order(source_name, target_doc=None):
         # Map request items to sales order items.
         tcc_sns = list(set(row.serial_no for row in source.items if row.type == "TCC"))
         icc_sns = list(set(row.serial_no for row in source.items if row.type == "ICC"))
+        icp_sns = list(set(row.serial_no for row in source.items if row.type == "ICC+"))
 
         item_code_tcc = '200019'
         item_code_icc = '200054'
+        item_code_icp = '200141.02'
 
         target_copy = target.as_dict()
         def get_blanket_order(item_code):
@@ -107,6 +109,14 @@ def make_sales_order(source_name, target_doc=None):
                 "qty": len(icc_sns),
                 "refill_request": source.name,
                 "blanket_order": get_blanket_order(item_code_icc),
+            })
+        if icp_sns:
+            target.append("items", {
+                "item_code": item_code_icp,
+                "serial_nos": "\n".join(icp_sns),
+                "qty": len(icp_sns),
+                "refill_request": source.name,
+                "blanket_order": get_blanket_order(item_code_icp),
             })
 
         target.run_method("set_missing_values")
