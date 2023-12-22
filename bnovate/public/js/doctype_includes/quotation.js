@@ -13,6 +13,15 @@ frappe.ui.form.on("Quotation", {
             'label': 'Subscription',
         });
     },
+    onload(frm) {
+        frm.set_query("custom_shipping_rule", () => {
+            return {
+                filters: {
+                    country: frm.doc.shipping_country,
+                }
+            }
+        })
+    },
     setup(frm) {
         frm.custom_make_buttons['Subscription'] = 'Make Subscription';
         frm.cscript['Make Subscription'] = function () {
