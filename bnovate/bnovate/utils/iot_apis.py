@@ -595,8 +595,11 @@ def get_instrument_status(device_id, password="", settings=None, auth=True, task
     else:
         link = https['sessions'][0]['url']
     
-    return request(
-        "GET", 
-        "https://{}/api/status".format(link),
-        auth=HTTPBasicAuth("guest", password)
-    ).json()
+    try:
+        return request(
+            "GET", 
+            "https://{}/api/status".format(link),
+            auth=HTTPBasicAuth("guest", password)
+        ).json()
+    except ValueError:
+        frappe.throw(_("Could not fetch valid status from the instrument"))
