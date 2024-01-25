@@ -87,6 +87,8 @@ fixtures = [
             "Sales Order-shipping_country",
             "Quotation-custom_shipping_rule",
             "Quotation-shipping_country",
+            # Stock management
+            "Material Request Item-default_supplier",
         ]]]
     }
 ]
@@ -140,6 +142,7 @@ doctype_js = {
     "Sales Invoice": ["public/js/doctype_includes/sales_invoice.js"],
     "Serial No": ["public/js/doctype_includes/serial_no.js"],
     "Work Order": ["public/js/doctype_includes/work_order.js"],
+    "Material Request": ["public/js/doctype_includes/material_request.js"],
 }
 doctype_list_js = {
     "Item": ["public/js/doctype_includes/item_list.js"],
