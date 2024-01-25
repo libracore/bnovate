@@ -71,6 +71,7 @@ fixtures = [
             "Serial No-status_details",
             "Stock Entry-from_customer",
             "Stock Entry-from_customer_name",
+            "Blanket Order-currency",
             # Addresses
             "Address-company_name",
             # DN workflow
@@ -84,6 +85,10 @@ fixtures = [
             "Sales Taxes and Charges-hide_if_zero",
             "Sales Order-custom_shipping_rule",
             "Sales Order-shipping_country",
+            "Quotation-custom_shipping_rule",
+            "Quotation-shipping_country",
+            # Stock management
+            "Material Request Item-default_supplier",
         ]]]
     }
 ]
@@ -126,15 +131,18 @@ web_include_js = [
 
 # include js in doctype views
 doctype_js = {
-    "Item": ["public/js/doctype_includes/item.js"],
-    "Customer": ["public/js/doctype_includes/customer.js"],
+    "Blanket Order": ["public/js/doctype_includes/blanket_order.js"],
     "Contact": ["public/js/doctype_includes/contact.js"],
+    "Customer": ["public/js/doctype_includes/customer.js"],
+    "Delivery Note": ["public/js/doctype_includes/delivery_note.js"],
+    "Item": ["public/js/doctype_includes/item.js"],
+    "Purchase Order": ["public/js/doctype_includes/purchase_order.js"],
     "Quotation": ["public/js/doctype_includes/quotation.js"],
     "Sales Order": ["public/js/doctype_includes/sales_order.js"],
-    "Delivery Note": ["public/js/doctype_includes/delivery_note.js"],
     "Sales Invoice": ["public/js/doctype_includes/sales_invoice.js"],
     "Serial No": ["public/js/doctype_includes/serial_no.js"],
     "Work Order": ["public/js/doctype_includes/work_order.js"],
+    "Material Request": ["public/js/doctype_includes/material_request.js"],
 }
 doctype_list_js = {
     "Item": ["public/js/doctype_includes/item_list.js"],
@@ -258,8 +266,14 @@ doc_events = {
         ],
         "after_delete": "bnovate.bnovate.page.work_order_execution.work_order_execution.update_work_order_status_from_ste",
     },
+    "Purchase Order": {
+        "before_submit": "bnovate.bnovate.utils.controllers.check_blanket_order_currency",
+    },
     "Sales Order": {
-        "before_submit": "bnovate.bnovate.utils.enclosures.check_so_serial_no",
+        "before_submit": [
+            "bnovate.bnovate.utils.enclosures.check_so_serial_no",
+            "bnovate.bnovate.utils.controllers.check_blanket_order_currency",
+        ],
         "on_submit": "bnovate.bnovate.doctype.refill_request.refill_request.update_status_from_sales_order",
         "on_update_after_submit": "bnovate.bnovate.utils.enclosures.check_so_serial_no",
         "on_cancel": "bnovate.bnovate.doctype.refill_request.refill_request.update_status_from_sales_order",
@@ -309,9 +323,9 @@ scheduler_events = {
 # Overriding Methods
 # ------------------------------
 #
-# override_whitelisted_methods = {
-# 	"frappe.desk.doctype.event.event.get_events": "bnovate.event.get_events"
-# }
+override_whitelisted_methods = {
+	# "erpnext.stock.get_item_details.get_item_details": "bnovate.bnovate.utils.overrides.get_item_details",
+}
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
