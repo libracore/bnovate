@@ -44,7 +44,7 @@ bnovate.storage.store_serial_no = async function store_serial_no(location_name, 
     }
 }
 
-bnovate.storage.remove_serial_no = async function remove_serial_no(serial_no, key) {
+bnovate.storage.remove_serial_no = async function remove_serial_no(serial_no, throwErr = true, key = null) {
     if (!serial_no) {
         const input = await bnovate.storage.prompt_sn("Remove");
         serial_no = input?.serial_no;
@@ -55,14 +55,17 @@ bnovate.storage.remove_serial_no = async function remove_serial_no(serial_no, ke
             method: "bnovate.bnovate.doctype.storage_location.storage_location.remove_serial_no",
             args: {
                 serial_no,
-                key
+                "throw": throwErr,
+                key,
             }
         })
         const location = resp.message;
         if (cur_frm) {
             cur_frm.reload_doc();
         }
-        await bnovate.storage.msgprint(`<b>Location:</b> ${location.title}<br><b>Slot:</b> ${location.slot}`, `Item removed from storage`);
+        if (location.title) {
+            await bnovate.storage.msgprint(`<b>Location:</b> ${location.title}<br><b>Slot:</b> ${location.slot}`, `Item removed from storage`);
+        }
         return location;
     }
 }

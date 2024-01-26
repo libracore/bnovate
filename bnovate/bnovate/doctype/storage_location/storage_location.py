@@ -42,7 +42,7 @@ def find_serial_no(serial_no, throw=True, key=None):
 
 	if throw:
 		frappe.throw("Serial number not found: {}".format(serial_no))
-	return {'serial_no': serial_no}
+	return frappe._dict({'serial_no': serial_no})
 
 
 @frappe.whitelist()
@@ -60,7 +60,7 @@ def store_serial_no(location_name, serial_no, key=None):
 
 	# Check that serial_no is not currently stored:
 	location = find_serial_no(serial_no, throw=False, key=key)
-	if location is not None:
+	if location.title is not None:
 		frappe.throw("Serial No {} is already stored in {}".format(serial_no, location.title))
 
 	location = frappe.get_doc("Storage Location", location_name)
@@ -76,19 +76,28 @@ def store_serial_no(location_name, serial_no, key=None):
 
 
 @frappe.whitelist(allow_guest=True)
-def remove_serial_no(serial_no, key=None):
-	""" Remove serial number from storage slot """
+def remove_serial_no(serial_no, throw=True, key=None):
+	""" Remove serial number from storage slot. 
+
+	Always returns a dict with serial_no. Contains a location if it was stored.
+	
+	"""
+
+	if throw in ('false', '0'):
+		throw = False
+	if throw in ('true', '1'):
+		throw = True
 
 	if not key:
 		frappe.has_permission("Storage Location", "write", throw=True)
 
-	location = find_serial_no(serial_no, key=key)
+	location = find_serial_no(serial_no, throw=throw, key=key)
 
 	if key and location.secret_key != key:
 		frappe.throw("Key does not match.")
 
-	slot = frappe.get_doc("Storage Slot", location.slot_docname)
-	slot.db_set("serial_no", None)
+	if location.slot_docname:
+		slot = frappe.get_doc("Storage Slot", location.slot_docname)
+		slot.db_set("serial_no", None)
 
 	return location
-
