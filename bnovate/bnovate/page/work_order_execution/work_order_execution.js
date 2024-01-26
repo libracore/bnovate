@@ -32,6 +32,7 @@ Also, STEs are saved in draft state, to allow scanning serial numbers before clo
 // 		one with existing SNs & Batches. Would allow scanning components in several stages, and
 // 		SNs wouldn't be lost when redrawing the table after adding additional items.
 
+frappe.require("/assets/bnovate/js/storage.js")
 frappe.provide("bnovate.work_order_execution")
 
 frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
@@ -539,7 +540,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 
 		handle_scrap(state.ste_doc, state.work_order_doc.production_item);
 		handle_warehouses(state.ste_doc, state.work_order_doc);
-		handle_fills(state.ste_doc, state.work_order_doc.production_item);
+		await handle_fills(state.ste_doc, state.work_order_doc.production_item);
 		calculate_product_valuation(state.ste_doc, state.work_order_doc.production_item);
 
 		// Post comment (saved doc has a docname)
@@ -594,9 +595,10 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		}
 	}
 
-	function handle_fills(ste_doc, bom_item) {
+	async function handle_fills(ste_doc, bom_item) {
 		// Handles special workflows related to fills refills
 		// - builds "fill associations" table.
+		// - removes ENC from storage if applicable
 		// Assumes all serial numbers are filled in ste_doc.items.
 
 		if (!is_fill(bom_item)) {
@@ -605,6 +607,8 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 
 		let enc_sn = ste_doc.items.find(it => !it.s_warehouse && it.item_code == "100146")?.serial_no;
 		let fill_sn = ste_doc.items.find(it => !it.s_warehouse && it.item_code == bom_item)?.serial_no;
+
+		await bnovate.storage.remove_serial_no(enc_sn);
 
 		if (enc_sn && fill_sn) {
 			ste_doc.fill_associations = [{
