@@ -76,17 +76,22 @@ def store_serial_no(location_name, serial_no, key=None):
 
 
 @frappe.whitelist(allow_guest=True)
-def remove_serial_no(serial_no, key=None):
+def remove_serial_no(serial_no, throw=True, key=None):
 	""" Remove serial number from storage slot. 
 
 	Always returns a dict with serial_no. Contains a location if it was stored.
 	
 	"""
 
+	if throw in ('false', '0'):
+		throw = False
+	if throw in ('true', '1'):
+		throw = True
+
 	if not key:
 		frappe.has_permission("Storage Location", "write", throw=True)
 
-	location = find_serial_no(serial_no, key=key)
+	location = find_serial_no(serial_no, throw=throw, key=key)
 
 	if key and location.secret_key != key:
 		frappe.throw("Key does not match.")

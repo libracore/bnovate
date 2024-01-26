@@ -69,7 +69,7 @@
     });
 
     document.querySelector("#remove").addEventListener("click", async () => {
-        await bnovate.storage.remove_serial_no(get_sn(), "{{ contents.key }}");
+        await bnovate.storage.remove_serial_no(get_sn(), true, "{{ contents.key }}");
         location.reload();
     });
 
