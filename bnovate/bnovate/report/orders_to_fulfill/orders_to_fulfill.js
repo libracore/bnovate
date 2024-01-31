@@ -33,6 +33,7 @@ frappe.query_reports["Orders to Fulfill"] = {
 		this.week_index = 1;
 		this.date_index = 1;
 		this.colours = ["light", "dark"];
+		this.report.$chart.hide();
 
 
 		report.page.add_inner_button(__('Toggle Chart'), () => {
@@ -49,7 +50,7 @@ frappe.query_reports["Orders to Fulfill"] = {
 		// Activate tooltips on columns
 		$(function () {
 			$('[data-toggle="tooltip"]').tooltip()
-		})
+		});
 	},
 	formatter(value, row, col, data, default_formatter) {
 		if (col.fieldname === "sufficient_stock" && typeof value !== 'undefined') {
@@ -82,9 +83,14 @@ frappe.query_reports["Orders to Fulfill"] = {
 		if (col.fieldname === "ship_date") {
 			return `<span class="coloured ${this.colours[data.day_index % this.colours.length]}">${default_formatter(value, row, col, data)}</span>`;
 		}
-		if (col.fieldname === "open_delivery_notes" && value) {
-			let [legend, colour] = delivery_note_indicator(data);
-			return ` <span class="indicator ${colour}">${value.split(" ").map(n => frappe.utils.get_form_link("Delivery Note", n, true))}, ${legend}</span> (${data.open_delivery_qty}/${data.remaining_qty})`;
+		if (col.fieldname === "open_delivery_notes") {
+			if (value) {
+				let [legend, colour] = delivery_note_indicator(data);
+				return ` <span class="indicator ${colour}">${value.split(" ").map(n => frappe.utils.get_form_link("Delivery Note", n, true))}, ${legend}</span> (${data.open_delivery_qty}/${data.remaining_qty})`;
+			} else {
+				return `<button class="btn btn-xs btn-primary create-dn" onclick="create_dn('${data.sales_order}')">Create DN</button>`;
+
+			}
 		}
 		return default_formatter(value, row, col, data);
 	}
@@ -120,4 +126,64 @@ function cartridge_status_link(serial_nos) {
 		{
 			serial_no: serial_nos,  // Note that this is encoded in a data- tag, so it'll be a comma-separated string
 		});
+}
+
+async function create_dn(so_docname) {
+
+	const items = frappe.query_report.data
+		.filter(row => row.sales_order == so_docname && row.indent == 0 && !!row.serial_nos)  // keep only rows with SNs
+		.map(row => ({
+			...row,
+			serial_nos: row.serial_nos?.trim().split('\n') || [],
+		}));
+
+	const msg_body = frappe.render_template(`
+		<table class="table table-condensed no-margin" style="border-bottom: 1px solid #d1d8dd">
+			<thead>
+				<th>Qty</th>
+				<th>Item Name</th>
+			</thead>
+			<tbody>
+				{% for row in rows %}
+				<tr>
+					<td>{{ row.remaining_qty }}</td>
+					<td><b>{{ row.item_name }}</b>
+						<ul>
+						{% for sn in row.serial_nos %}
+							<li>{{ sn }}</li>
+						{% endfor %}
+						</ul>
+					</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	`, { rows: items })
+
+	const ok = await bnovate.utils.prompt(
+		`Create DN for ${so_docname}?`,
+		[{
+			fieldname: 'description',
+			fieldtype: 'HTML',
+			options: msg_body,
+		}],
+		"Create DN",
+		"Cancel"
+	);
+
+	if (!ok) {
+		return;
+	}
+
+	frappe.model.open_mapped_doc({
+		method: "erpnext.selling.doctype.sales_order.sales_order.make_delivery_note",
+		frm: {
+			doc: {
+				name: so_docname,
+			},
+			get_selected() {
+				return []
+			}
+		},
+	});
 }
