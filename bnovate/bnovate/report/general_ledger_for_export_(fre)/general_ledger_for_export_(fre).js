@@ -25,15 +25,22 @@ frappe.query_reports["General Ledger for Export (FRe)"] = {
 			"label": __("Account"),
 			"fieldtype": "Link",
 			"options": "Account",
-			// "get_query": function () {
-			// 	var company = frappe.query_report.get_filter_value('company');
-			// 	return {
-			// 		"doctype": "Account",
-			// 		"filters": {
-			// 			"company": company,
-			// 		}
-			// 	}
-			// }
+			"get_query": function () {
+				var company = frappe.query_report.get_filter_value('company');
+				if (!company) return;
+				return {
+					"doctype": "Account",
+					"filters": {
+						"company": company,
+					}
+				}
+			}
+		},
+		{
+			"fieldname": "company",
+			"label": __("Company"),
+			"fieldtype": "Link",
+			"options": "Company",
 		},
 	]
 };
