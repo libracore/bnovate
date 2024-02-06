@@ -89,6 +89,7 @@ fixtures = [
             "Quotation-shipping_country",
             # Stock management
             "Material Request Item-default_supplier",
+            "Purchase Receipt-scan",
         ]]]
     }
 ]
@@ -137,6 +138,7 @@ doctype_js = {
     "Delivery Note": ["public/js/doctype_includes/delivery_note.js"],
     "Item": ["public/js/doctype_includes/item.js"],
     "Purchase Order": ["public/js/doctype_includes/purchase_order.js"],
+    "Purchase Receipt": ["public/js/doctype_includes/purchase_receipt.js"],
     "Quotation": ["public/js/doctype_includes/quotation.js"],
     "Sales Order": ["public/js/doctype_includes/sales_order.js"],
     "Sales Invoice": ["public/js/doctype_includes/sales_invoice.js"],
