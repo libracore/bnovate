@@ -20,6 +20,20 @@ class ConnectivityPackage(Document):
     pass
 
 @frappe.whitelist()
+def register_new_device(docname, current_admin_password, task_id=None):
+    """ Register a new gateway to the Teltonika Platform.
+
+    Company ID specified in bNovate settings. Only support TRB series for not.
+     
+    """
+    teltonika_serial, imei = frappe.get_value("Connectivity Package", docname, ['teltonika_serial', 'imei'])
+    iot_apis.rms_add_device(teltonika_serial, current_admin_password, imei=imei, task_id=task_id)
+
+    # Note: if freshly regsitered, device won't be online, so info is missing.
+    return set_info_from_rms(docname)
+
+
+@frappe.whitelist()
 def set_info_from_rms(docname):
     """ Fill device info from RMS. """
 
@@ -37,8 +51,10 @@ def set_info_from_rms(docname):
 
     cp.db_set("device_name", device.name)
     cp.db_set("imei", device.imei)
-    cp.db_set("mac_address", device.mac)
-    cp.db_set("iccid", device.iccid[:19])
+    if device.mac is not None:
+        cp.db_set("mac_address", device.mac)
+    if device.iccid is not None:
+        cp.db_set("iccid", device.iccid[:19])
 
     return cp
 

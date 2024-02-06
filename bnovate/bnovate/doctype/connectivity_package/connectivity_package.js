@@ -30,6 +30,7 @@ frappe.ui.form.on('Connectivity Package', {
 		}
 
 		if (frm.doc.teltonika_serial) {
+			frm.add_custom_button(__("Register Device to RMS"), () => register_device(frm), "Admin");
 			frm.add_custom_button(__("Get RMS Info"), () => get_rms_info(frm), "Get Info");
 		}
 		if (frm.doc.rms_id) {
@@ -87,6 +88,45 @@ function get_device_id(frm) {
 	}
 	return frm.doc.rms_id;
 }
+
+async function register_device(frm) {
+
+	// TODO: make it a password field?
+	let values = await prompt(
+		"Enter device details",
+		[{
+			label: "Admin Password",
+			fieldname: "admin_password",
+			fieldtype: "Data",
+			reqd: 1,
+		}],
+		"Configure",
+		"Cancel"
+	);
+
+	if (!values) {
+		return;
+	}
+
+	await bnovate.realtime.call({
+		method: "bnovate.bnovate.doctype.connectivity_package.connectivity_package.register_new_device",
+		args: {
+			docname: frm.doc.name,
+			current_admin_password: values.admin_password,
+		},
+		callback(status) {
+			console.log(status);
+			if (status.data.progress < 100) {
+				frappe.show_progress(__("Adding device..."), status.data.progress, 100, __(status.data.message));
+			}
+			if (status.code == 0) {
+				frappe.hide_progress();
+			}
+		}
+	})
+	frm.reload_doc();
+}
+
 
 async function get_rms_info(frm) {
 	const resp = await frappe.call({
