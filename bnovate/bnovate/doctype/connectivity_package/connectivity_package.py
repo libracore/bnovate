@@ -32,6 +32,11 @@ def register_new_device(docname, current_admin_password, task_id=None):
     # Note: if freshly regsitered, device won't be online, so info is missing.
     return set_info_from_rms(docname)
 
+@frappe.whitelist()
+def set_admin_password(docname, new_admin_password, task_id=None):
+    device_id = frappe.get_value("Connectivity Package", docname, ['rms_id'])
+
+    return iot_apis.rms_set_password(device_id, new_admin_password, task_id=task_id)
 
 @frappe.whitelist()
 def set_info_from_rms(docname):

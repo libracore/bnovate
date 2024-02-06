@@ -212,10 +212,6 @@ def rms_add_device(serial, current_admin_password, imei=None, mac=None, device_s
         "auto_credit_enable": 1,
     }]}
 
-    print("\n\n\n------------------------------\n\n\n")
-    print(payload)
-    print("\n\n\n------------------------------\n\n\n")
-
     set_status({
         "progress": 0,
         "message": _("Initiating request..."),
@@ -266,21 +262,69 @@ def rms_add_device(serial, current_admin_password, imei=None, mac=None, device_s
     return wait_for_result()
 
 
-def rms_set_password(device_id, new_password, auth=True):
+def rms_set_password(device_id, new_password, auth=True, task_id=None):
     """ Set admin password of a device """
 
-    payload = {
+    settings = _get_settings()
+    payload = {"data": [{
         "id": device_id,
         "password": new_password,
         "password_confirmation": new_password,
-    }
+    }]}
 
-    return rms_request(
-        "/api/devices/passwords/set",
-        "POST",
-        body=payload,
-        auth=auth
-    )
+    print("\n\n\n-----------------------\n\n\n")
+    print(payload)
+    print("\n\n\n-----------------------\n\n\n")
+
+    set_status({
+        "progress": 0,
+        "message": _("Initiating request..."),
+    }, task_id)
+
+    try:
+        resp = rms_request(
+            "/api/devices/passwords/set",
+            "POST",
+            body=payload,
+            auth=auth)
+    except ApiException as e:
+        set_status({ "progress": 100, "message": _("Error") }, task_id, STATUS_DONE)
+        raise e
+    channel = resp['channel']
+
+    def wait_for_result(attempt=0):
+        time.sleep(0.5)  # Sleep first to allow channel time to appear
+
+        if attempt > 120:
+            set_status({
+                "progress": 100,
+                "message": "Timeout.",
+            }, task_id, STATUS_DONE)
+            raise TimeoutError("Timeout adding device to RMS")
+
+        status = _rms_get_status(channel, settings=settings, auth=auth)
+        if device_id not in status:
+            frappe.throw("Status not available")
+
+        last_update = status[device_id][-1]
+        message = last_update['value'] if 'value' in last_update else str(last_update['errorCode']) if 'errorCode' in last_update else ''
+        finished = last_update['status'] in ('error', 'warning', 'completed')
+
+        set_status({
+            "progress": 100. if finished else 30 + attempt,
+            "message": message,
+        }, task_id, STATUS_DONE if finished else STATUS_RUNNING)
+
+        if last_update['status'] in ('error', 'warning'):
+            frappe.throw(message, AddDeviceError)
+
+        if last_update['status'] == 'completed':
+            return 'success'
+
+        return wait_for_result(attempt + 1)
+
+    return wait_for_result()
+ 
 
 
 @frappe.whitelist()
