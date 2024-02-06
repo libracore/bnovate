@@ -33,7 +33,6 @@ frappe.query_reports["Orders to Fulfill"] = {
 		this.week_index = 1;
 		this.date_index = 1;
 		this.colours = ["light", "dark"];
-		this.report.$chart.hide();
 
 
 		report.page.add_inner_button(__('Toggle Chart'), () => {
@@ -51,6 +50,7 @@ frappe.query_reports["Orders to Fulfill"] = {
 		$(function () {
 			$('[data-toggle="tooltip"]').tooltip()
 		});
+		this.report.$chart.hide();
 	},
 	formatter(value, row, col, data, default_formatter) {
 		if (col.fieldname === "sufficient_stock" && typeof value !== 'undefined') {
@@ -77,7 +77,10 @@ frappe.query_reports["Orders to Fulfill"] = {
 		if (col.fieldname === "weeknum") {
 			return `<span class="coloured ${this.colours[data.week_index % this.colours.length]}">${default_formatter(value, row, col, data)}</span>`;
 		}
-		if (col.fieldname === "sales_order" || col.fieldname === "customer" || col.fieldname === "customer_name") {
+		if (col.fieldname === "customer_name") {
+			return `<span class="coloured ${this.colours[data.so_index % this.colours.length]}">${frappe.utils.get_form_link("Customer", data.customer, true, data.customer_name)}</span>`;
+		}
+		if (col.fieldname === "sales_order" || col.fieldname === "customer") {
 			return `<span class="coloured ${this.colours[data.so_index % this.colours.length]}">${default_formatter(value, row, col, data)}</span>`;
 		}
 		if (col.fieldname === "ship_date") {
