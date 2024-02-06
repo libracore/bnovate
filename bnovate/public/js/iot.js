@@ -3,6 +3,32 @@ frappe.require("/assets/bnovate/js/realtime.js");
 frappe.provide("bnovate.iot");
 
 /***********************************
+ * Utils
+ ***********************************/
+
+// Return SN, MAC, IMEI, batch based on the QR code on side of box
+bnovate.iot.decode_teltonika_qr = function (contents) {
+    // Structure of the string in the QR code:
+    // SN:0123456789;I:123456789123456;M:123456789012;B:012;
+
+    const map = { SN: 'teltonika_serial', I: 'imei', M: 'mac_address', B: 'batch' };
+
+    result = {};
+    contents
+        .split(';')
+        .filter(i => !!i)
+        .forEach(pair => {
+            let [key, value] = pair.split(':')
+            if (map[key] !== undefined) {
+                result[map[key]] = value;
+            }
+        })
+
+    return result
+
+}
+
+/***********************************
  * Client-side wrappers for IoT APIS
  ***********************************/
 
