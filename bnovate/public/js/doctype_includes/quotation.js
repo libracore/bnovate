@@ -42,4 +42,25 @@ frappe.ui.form.on("Quotation", {
             };
         }, 500);
     },
+    custom_shipping_rule(frm) {
+        if (frm.doc.custom_shipping_rule) {
+            return frappe.call({
+                method: 'bnovate.bnovate.doctype.custom_shipping_rule.custom_shipping_rule.apply_rule',
+                args: {
+                    doc: frm.doc,
+                },
+                callback: (r) => {
+                    if (!r.exc) {
+                        frm.refresh_fields();
+                        frm.cscript.calculate_taxes_and_totals();
+                    }
+                },
+                error: () => frm.set_value('custom_shipping_rule', ''),
+            })
+        } else {
+            frm.cscript.calculate_taxes_and_totals();
+        }
+
+    },
+
 })
