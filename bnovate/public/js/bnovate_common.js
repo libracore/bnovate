@@ -4,16 +4,18 @@ if (window.location.host.indexOf("localhost") >= 0) {
   r.style.setProperty('--navbar-color', '#e98332ff');
 }
 
-// Set country flags based on company:
-const default_company = frappe.defaults.get_default('Company');
-if (default_company.indexOf('SA') >= 0) {
-  r.style.setProperty('--flag', 'url("/assets/bnovate/img/flags/ch.png")');
-} else if (default_company.indexOf('Ltd') >= 0) {
-  r.style.setProperty('--flag', 'url("/assets/bnovate/img/flags/uk.png")');
-} else if (default_company.toLowerCase().indexOf('gmbh') >= 0) {
-  r.style.setProperty('--flag', 'url("/assets/bnovate/img/flags/de.png")');
-} else if (default_company.toLowerCase().indexOf('llc') >= 0) {
-  r.style.setProperty('--flag', 'url("/assets/bnovate/img/flags/us.jpg")');
+if (frappe.defaults !== undefined) {
+  // Set country flags based on company:
+  const default_company = frappe.defaults.get_default('Company');
+  if (default_company.indexOf('SA') >= 0) {
+    r.style.setProperty('--flag', 'url("/assets/bnovate/img/flags/ch.png")');
+  } else if (default_company.indexOf('Ltd') >= 0) {
+    r.style.setProperty('--flag', 'url("/assets/bnovate/img/flags/uk.png")');
+  } else if (default_company.toLowerCase().indexOf('gmbh') >= 0) {
+    r.style.setProperty('--flag', 'url("/assets/bnovate/img/flags/de.png")');
+  } else if (default_company.toLowerCase().indexOf('llc') >= 0) {
+    r.style.setProperty('--flag', 'url("/assets/bnovate/img/flags/us.jpg")');
+  }
 }
 
 

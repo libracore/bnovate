@@ -37,11 +37,15 @@ body.party-time {
   content: "";
   position: absolute;
   top: 0;
-  left: 0;
+  left: 50px;
   height: 100%;
-  width: 100px;
+  width: 50px;
   background: linear-gradient(to right, var(--navbar-color-transparent), var(--navbar-color));
   z-index: -1;
+}
+
+.navbar-fixed-top {
+  border-width: 0;
 }
 
 /* ------------------------------------------------------------------- */
