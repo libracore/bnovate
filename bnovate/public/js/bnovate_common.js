@@ -12,6 +12,8 @@ if (default_company.indexOf('SA') >= 0) {
   r.style.setProperty('--flag', 'url("/assets/bnovate/img/flags/uk.png")');
 } else if (default_company.toLowerCase().indexOf('gmbh') >= 0) {
   r.style.setProperty('--flag', 'url("/assets/bnovate/img/flags/de.png")');
+} else if (default_company.toLowerCase().indexOf('llc') >= 0) {
+  r.style.setProperty('--flag', 'url("/assets/bnovate/img/flags/us.jpg")');
 }
 
 
