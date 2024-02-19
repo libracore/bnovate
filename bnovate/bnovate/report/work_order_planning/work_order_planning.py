@@ -119,6 +119,7 @@ SELECT
     wo.qty as planned_qty,
     wo.produced_qty,
     (wo.qty - wo.produced_qty) AS required_qty,
+    wo.docstatus,
     wo.status,
     wo.serial_no,
     wo.comment,
@@ -169,7 +170,9 @@ ORDER BY wo2.planned_start_date, p.docname, p.detail_doctype -- Put 'Work Order 
 
     for row in data:
         row.stock_indicator = ["red", "orange", "green"][row.sufficient_stock]
-            
+
+    if filters.simple_view:
+        data = [row for row in data if  row.docstatus == 1]
 
     # import pprint
     # pp = pprint.PrettyPrinter(indent=4)
