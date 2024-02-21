@@ -59,6 +59,7 @@ def get_columns(filters):
         {'fieldname': 'item_code', 'fieldtype': 'Data', 'label':_('Item'), 'options': 'Item', 'width': 300, 'align': 'left'},
         {'fieldname': 'sales_order', 'fieldtype': 'Link', 'label': _('Sales Order'), 'options': 'Sales Order', 'width': 100},
         {'fieldname': 'serial_no', 'fieldtype': 'Data', 'label': _('Serial No'), 'width': 200, 'align': 'left'},
+        {'fieldname': 'bom_description', 'fieldtype': 'Data', 'label': _('BOM Description'), 'width': 200, 'align': 'left'},
         {'fieldname': 'comment', 'fieldtype': 'Data', 'label': _('Comment'), 'width': 200, 'align': 'left'},
     ]
 
@@ -119,10 +120,12 @@ SELECT
     wo.qty as planned_qty,
     wo.produced_qty,
     (wo.qty - wo.produced_qty) AS required_qty,
+    wo.docstatus,
     wo.status,
     wo.serial_no,
     wo.comment,
     wo.sales_order,
+    wo.bom_description,
 
     -- Fields for Work Order Items (consumed items)
     woi.required_qty AS reqd_item_qty,
@@ -169,7 +172,9 @@ ORDER BY wo2.planned_start_date, p.docname, p.detail_doctype -- Put 'Work Order 
 
     for row in data:
         row.stock_indicator = ["red", "orange", "green"][row.sufficient_stock]
-            
+
+    if filters.simple_view:
+        data = [row for row in data if  row.docstatus == 1]
 
     # import pprint
     # pp = pprint.PrettyPrinter(indent=4)
