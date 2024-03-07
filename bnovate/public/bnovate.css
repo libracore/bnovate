@@ -54,6 +54,7 @@ body.party-time {
 /* Remove border below report table headers - spans too wide when embedded in Form */
 .dt-scrollable {
   border-top: 0px;
+  min-height: 500px;
 }
 
 /* Change padding of table cells to simulate a full background fill */
