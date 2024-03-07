@@ -62,9 +62,10 @@ def fetch_usage_for_period(start_date, end_date=None):
 
 	frappe.db.commit()
 
-def fetch_usage_last_few_months():
+@frappe.whitelist()
+def fetch_usage_last_few_months(months=3):
 	""" Called by hooks.py on a periodic basis """
-	return fetch_usage_for_period(date.today() - timedelta(days=3*31))
+	return fetch_usage_for_period(date.today() - timedelta(days=int(months)*31))
 
 
 #####################################
