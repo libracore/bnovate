@@ -115,7 +115,7 @@ apps/bnovate/bnovate/bnovate/utils/dashboards.py,Storage,Lagerung
 apps/bnovate/bnovate/config/bnovate.py,Aggregate Invoicing,Aggregierte Fakturierung
 apps/bnovate/bnovate/config/bnovate.py,Bulk upload scanned purchase invoices,Bulk-Upload gescannter Eingangsrechnungen
 apps/bnovate/bnovate/config/bnovate.py,Cartridge Return,Kartuschenrücklauf
-apps/bnovate/bnovate/config/bnovate.py,Cartridge Status,Status der Kartuschen
+apps/bnovate/bnovate/config/bnovate.py,Cartridge Status,Status der Kartusche
 apps/bnovate/bnovate/config/bnovate.py,Cartridge Tools,Kartuschen-Werkzeuge
 apps/bnovate/bnovate/config/bnovate.py,Confirm return of cartridges,Bestätigung der Rückgabe der Kartuschen
 apps/bnovate/bnovate/config/bnovate.py,Connected Device Map,Karte der angeschlossenen Geräte
@@ -158,16 +158,16 @@ apps/bnovate/bnovate/public/js/iot.js,Connecting...,Verbinden...
 apps/bnovate/bnovate/public/js/iot.js,Error initializing connection,Fehler beim Initialisieren der Verbindung
 apps/bnovate/bnovate/public/js/iot.js,Starting session...,Start der Sitzung...
 apps/bnovate/bnovate/www/cartridges.html,Nothing to display.,Nichts zu sehen.
-apps/bnovate/bnovate/www/cartridges.html,Select cartridges,Patronen auswählen
+apps/bnovate/bnovate/www/cartridges.html,Select cartridges,Kartuschen auswählen
 apps/bnovate/bnovate/www/cartridges.html,"Select the cartridges you wish to refill. If none of your cartridges are at bNovate, you cannot order a refill.","Wählen Sie die Kartuschen aus, die Sie nachfüllen möchten. Wenn keine Ihrer Kartuschen bei bNovate vorhanden ist, können Sie keine Nachfüllung bestellen."
 apps/bnovate/bnovate/www/connect.html,Configure BactoLink,BactoLink konfigurieren
 apps/bnovate/bnovate/www/connect.html,Configure BactoSense,BactoSense konfigurieren
-apps/bnovate/bnovate/www/connect.html,Connect,Verbindung
+apps/bnovate/bnovate/www/connect.html,Connect,Verbinden Sie
 apps/bnovate/bnovate/www/connect.html,Connect BactoLink,BactoLink verbinden
 apps/bnovate/bnovate/www/connect.html,Connect Hardware,Hardware anschließen
 apps/bnovate/bnovate/www/connect.html,Friendly Name,Freundlicher Name
 apps/bnovate/bnovate/www/connect.html,Serial Number,Seriennummer
-apps/bnovate/bnovate/www/connect.py,Detecting Instrument...,Erkennung von Instrument...
+apps/bnovate/bnovate/www/connect.py,Detecting Instrument...,Erkennungsinstrument...
 apps/bnovate/bnovate/www/connect.py,Detecting SN...,Erkennung von SN...
 apps/bnovate/bnovate/www/connect.py,HTTPS not available,HTTPS nicht verfügbar
 apps/bnovate/bnovate/www/connect.py,Link is Offline,Link ist offline
@@ -178,7 +178,7 @@ apps/bnovate/bnovate/www/connect.py,Unregistered serial number,Nicht registriert
 apps/bnovate/bnovate/www/connect.py,Verifying Gateway...,Gateway überprüfen...
 apps/bnovate/bnovate/www/index.html,Quick Connect,Schnellverbindung
 apps/bnovate/bnovate/www/index.py,Portal Home,Portal Startseite
-apps/bnovate/bnovate/www/instruments.html,Initialize BactoLink,BactoLink initialisieren
+apps/bnovate/bnovate/www/instruments.html,Initialize a BactoLink,Einen BactoLink initialisieren
 apps/bnovate/bnovate/www/instruments.html,My Instruments,Meine Instrumente
 apps/bnovate/bnovate/www/instruments.html,Service Agreement,Dienstleistungsvertrag
 apps/bnovate/bnovate/www/instruments.html,Touch UI,Touch UI
@@ -190,3 +190,40 @@ apps/bnovate/bnovate/www/my_addresses.html,Delete this address?,Diese Adresse l�
 apps/bnovate/bnovate/www/request.py,You cannot order to this billing address,Sie können nicht an diese Rechnungsadresse bestellen
 apps/bnovate/bnovate/www/request.py,You cannot order to this shipping address,Sie können nicht an diese Lieferadresse bestellen
 apps/bnovate/bnovate/www/requests.html,Request date,Datum der Anfrage
+apps/bnovate/bnovate/bnovate/doctype/connectivity_package/connectivity_package.js,Adding device...,Gerät hinzufügen...
+apps/bnovate/bnovate/bnovate/doctype/connectivity_package/connectivity_package.js,Please ensure the device is online first,"Bitte stellen Sie sicher, dass das Gerät zuerst online ist"
+apps/bnovate/bnovate/bnovate/doctype/connectivity_package/connectivity_package.js,Register device to RMS,Gerät bei RMS registrieren
+apps/bnovate/bnovate/bnovate/doctype/connectivity_package/connectivity_package.js,Set admin password,Administrator-Passwort festlegen
+apps/bnovate/bnovate/bnovate/doctype/connectivity_package/connectivity_package.js,Setting password...,Passwort einstellen...
+apps/bnovate/bnovate/bnovate/doctype/connectivity_package/connectivity_package.js,View Data Usage,Datenverwendung anzeigen
+apps/bnovate/bnovate/bnovate/doctype/custom_shipping_rule/custom_shipping_rule.py,No 'Fixed Exchange Rate' from shipping list currency {0} to document currency {1},Kein 'Fester Wechselkurs' von Versandlistenwährung {0} zu Dokumentwährung {1}
+apps/bnovate/bnovate/bnovate/report/cartridge_status/cartridge_status.py,Shelf,Regal
+apps/bnovate/bnovate/bnovate/report/connected_devices/connected_devices.py,CTD Data Usage [MB],CTD-Datenverbrauch [MB]
+apps/bnovate/bnovate/bnovate/report/connectivity_data_usage/connectivity_data_usage.js,Sum by month,Summe pro Monat
+apps/bnovate/bnovate/bnovate/report/connectivity_data_usage/connectivity_data_usage.py,MAX Usage [MB],MAX-Nutzung [MB]
+apps/bnovate/bnovate/bnovate/report/connectivity_data_usage/connectivity_data_usage.py,MEAN Usage [MB],MEAN Verbrauch [MB]
+apps/bnovate/bnovate/bnovate/report/connectivity_data_usage/connectivity_data_usage.py,Period End,Ende des Zeitraums
+apps/bnovate/bnovate/bnovate/report/connectivity_data_usage/connectivity_data_usage.py,Period Start,Zeitraum Beginn
+apps/bnovate/bnovate/bnovate/report/connectivity_data_usage/connectivity_data_usage.py,SUM Usage [MB],SUM Verbrauch [MB]
+apps/bnovate/bnovate/bnovate/report/orders_to_fulfill/orders_to_fulfill.py,WK,WK
+apps/bnovate/bnovate/bnovate/report/work_order_planning/work_order_planning.js,New Delivery Date,Neuer Liefertermin
+apps/bnovate/bnovate/bnovate/report/work_order_planning/work_order_planning.js,New Start Date,Neuer Starttermin
+apps/bnovate/bnovate/bnovate/report/work_order_planning/work_order_planning.js,Show Chart,Tabelle anzeigen
+apps/bnovate/bnovate/bnovate/report/work_order_planning/work_order_planning.py,BOM Description,Stückliste Beschreibung
+apps/bnovate/bnovate/bnovate/utils/iot_apis.py,Could not fetch valid status from the instrument,Es konnte kein gültiger Status vom Gerät abgerufen werden
+apps/bnovate/bnovate/bnovate/utils/iot_apis.py,Initiating request...,Anfrage einleiten...
+apps/bnovate/bnovate/config/bnovate.py,Data Usage,Datenverwendung
+apps/bnovate/bnovate/config/bnovate.py,Fixed Currency Exchange,Fester Währungsumtausch
+apps/bnovate/bnovate/config/bnovate.py,"Long-term currency exchange rates, used for shipping rates","Langfristige Wechselkurse, die für die Frachtraten verwendet werden"
+apps/bnovate/bnovate/config/bnovate.py,Shipping Rules for bNovate,Versandvorschriften für bNovate
+apps/bnovate/bnovate/public/js/doctype_includes/contact.js,User ID is already associated with another contact:,Die Benutzer-ID ist bereits mit einem anderen Kontakt verbunden:
+apps/bnovate/bnovate/public/js/doctype_includes/material_request.js,Work Order (select items),Arbeitsauftrag (Artikel auswählen)
+apps/bnovate/bnovate/public/js/iot.js,Starting session....,Start der Sitzung....
+apps/bnovate/bnovate/public/js/web_includes/helpers.js,Cartridge Expiry,Ablauf der Kartusche
+apps/bnovate/bnovate/public/js/web_includes/helpers.js,Cartridge Level,Loading...
+apps/bnovate/bnovate/public/js/web_includes/helpers.js,Cartridge Serial No,Seriennummer der Kassette
+apps/bnovate/bnovate/public/js/web_includes/helpers.js,Fill Serial No,Seriennummer ausfüllen
+apps/bnovate/bnovate/public/js/web_includes/helpers.js,Service: Due Date,Dienstleistung: Fälligkeitsdatum
+apps/bnovate/bnovate/public/js/web_includes/helpers.js,Service: Wear Parts Lifetime Remaining,Service: Verbleibende Lebensdauer der Verschleißteile
+apps/bnovate/bnovate/www/instruments.html,GUI Relay,GUI-Relais
+apps/bnovate/bnovate/www/scan.py,Health Scan,Gesundheitsscan
