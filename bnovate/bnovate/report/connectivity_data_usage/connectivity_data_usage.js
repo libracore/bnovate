@@ -27,5 +27,11 @@ frappe.query_reports["Connectivity Data Usage"] = {
 			"fieldtype": "Link",
 			"options": "Customer"
 		},
+		{
+			"fieldname": "summarize",
+			"label": __("Sum by month"),
+			"fieldtype": "Check",
+			"default": true
+		},
 	]
 };

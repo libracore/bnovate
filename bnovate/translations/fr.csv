@@ -182,7 +182,7 @@ apps/bnovate/bnovate/www/connect.py,Verifying Gateway...,Vérification de la pas
 apps/bnovate/bnovate/www/index.html,Quick Connect,Connexion rapide
 apps/bnovate/bnovate/www/index.py,Portal Home,Accueil du portail
 apps/bnovate/bnovate/www/instruments.html,My Instruments,Mes instruments
-apps/bnovate/bnovate/www/instruments.html,Initialize BactoLink,Initialiser un BactoLink
+apps/bnovate/bnovate/www/instruments.html,Initialize a BactoLink,Initialiser un BactoLink
 apps/bnovate/bnovate/www/instruments.html,Service Agreement,Accord de service
 apps/bnovate/bnovate/www/instruments.html,Touch UI,Touch UI
 apps/bnovate/bnovate/www/instruments.html,Warranty Until,Garantie jusqu'à
@@ -193,3 +193,40 @@ apps/bnovate/bnovate/www/my_addresses.html,Delete this address?,Supprimer cette 
 apps/bnovate/bnovate/www/request.py,You cannot order to this billing address,Vous ne pouvez pas commander à cette adresse de facturation
 apps/bnovate/bnovate/www/request.py,You cannot order to this shipping address,Vous ne pouvez pas commander à cette adresse de livraison
 apps/bnovate/bnovate/www/requests.html,Request date,Date de la demande
+apps/bnovate/bnovate/bnovate/doctype/connectivity_package/connectivity_package.js,Adding device...,Ajout d'un dispositif...
+apps/bnovate/bnovate/bnovate/doctype/connectivity_package/connectivity_package.js,Please ensure the device is online first,Assurez-vous d'abord que l'appareil est en ligne
+apps/bnovate/bnovate/bnovate/doctype/connectivity_package/connectivity_package.js,Register device to RMS,Enregistrer l'appareil à RMS
+apps/bnovate/bnovate/bnovate/doctype/connectivity_package/connectivity_package.js,Set admin password,Définir le mot de passe administrateur
+apps/bnovate/bnovate/bnovate/doctype/connectivity_package/connectivity_package.js,Setting password...,Réglage du mot de passe...
+apps/bnovate/bnovate/bnovate/doctype/connectivity_package/connectivity_package.js,View Data Usage,Voir l'utilisation des données
+apps/bnovate/bnovate/bnovate/doctype/custom_shipping_rule/custom_shipping_rule.py,No 'Fixed Exchange Rate' from shipping list currency {0} to document currency {1},"Pas de ""taux de change fixe"" entre la devise de la liste d'expédition {0} et la devise du document {1}."
+apps/bnovate/bnovate/bnovate/report/cartridge_status/cartridge_status.py,Shelf,Étagère
+apps/bnovate/bnovate/bnovate/report/connected_devices/connected_devices.py,CTD Data Usage [MB],Utilisation des données CTD [MB]
+apps/bnovate/bnovate/bnovate/report/connectivity_data_usage/connectivity_data_usage.js,Sum by month,Somme par mois
+apps/bnovate/bnovate/bnovate/report/connectivity_data_usage/connectivity_data_usage.py,MAX Usage [MB],MAX Data [MB]
+apps/bnovate/bnovate/bnovate/report/connectivity_data_usage/connectivity_data_usage.py,MEAN Usage [MB],MOYENNE Data [MB]
+apps/bnovate/bnovate/bnovate/report/connectivity_data_usage/connectivity_data_usage.py,Period End,Fin de la période
+apps/bnovate/bnovate/bnovate/report/connectivity_data_usage/connectivity_data_usage.py,Period Start,Début de la période
+apps/bnovate/bnovate/bnovate/report/connectivity_data_usage/connectivity_data_usage.py,SUM Usage [MB],SUM Data [MB]
+apps/bnovate/bnovate/bnovate/report/orders_to_fulfill/orders_to_fulfill.py,WK,SEM
+apps/bnovate/bnovate/bnovate/report/work_order_planning/work_order_planning.js,New Delivery Date,Nouvelle date de livraison
+apps/bnovate/bnovate/bnovate/report/work_order_planning/work_order_planning.js,New Start Date,Nouvelle date de début
+apps/bnovate/bnovate/bnovate/report/work_order_planning/work_order_planning.js,Show Chart,Afficher le graphique
+apps/bnovate/bnovate/bnovate/report/work_order_planning/work_order_planning.py,BOM Description,Description de la nomenclature
+apps/bnovate/bnovate/bnovate/utils/iot_apis.py,Could not fetch valid status from the instrument,Impossible d'obtenir un état valide de l'instrument
+apps/bnovate/bnovate/bnovate/utils/iot_apis.py,Initiating request...,Initialisation de la demande...
+apps/bnovate/bnovate/config/bnovate.py,Data Usage,Utilisation des données
+apps/bnovate/bnovate/config/bnovate.py,Fixed Currency Exchange,Taux de change fixe
+apps/bnovate/bnovate/config/bnovate.py,"Long-term currency exchange rates, used for shipping rates","Taux de change à long terme, utilisés pour les tarifs d'expédition"
+apps/bnovate/bnovate/config/bnovate.py,Shipping Rules for bNovate,Règles d'expédition pour bNovate
+apps/bnovate/bnovate/public/js/doctype_includes/contact.js,User ID is already associated with another contact:,L'ID de l'utilisateur est déjà associé à un autre contact :
+apps/bnovate/bnovate/public/js/doctype_includes/material_request.js,Work Order (select items),Ordre de fabrication (sélectionner les éléments)
+apps/bnovate/bnovate/public/js/iot.js,Starting session....,Démarrage de la session....
+apps/bnovate/bnovate/public/js/web_includes/helpers.js,Cartridge Expiry,Expiration de la cartouche
+apps/bnovate/bnovate/public/js/web_includes/helpers.js,Cartridge Level,Niveau de la cartouche
+apps/bnovate/bnovate/public/js/web_includes/helpers.js,Cartridge Serial No,Numéro de série de la cartouche
+apps/bnovate/bnovate/public/js/web_includes/helpers.js,Fill Serial No,Numéro de remplissage
+apps/bnovate/bnovate/public/js/web_includes/helpers.js,Service: Due Date,Service : Date d'échéance
+apps/bnovate/bnovate/public/js/web_includes/helpers.js,Service: Wear Parts Lifetime Remaining,Service : Durée de vie pièces d'usure
+apps/bnovate/bnovate/www/instruments.html,GUI Relay,Relais GUI
+apps/bnovate/bnovate/www/scan.py,Health Scan,Scan Santé

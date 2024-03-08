@@ -63,35 +63,35 @@ bnovate.web.get_instrument_status_modal = async function (cp_docname, cp_device_
             `<table class="table table-condensed no-margin" style="border-bottom: 1px solid #d1d8dd">
                 <tbody>
                     <tr>
-                        <th>Serial No</th>
+                        <th>{{__('Serial No')}}</th>
                         <td>${status.serialNumber}</td>
                     </tr>
                     <tr>
-                        <th>Status</th>
+                        <th>{{__('Status')}}</th>
                         <td>${status.status}</td>
                     </tr>
                     <tr>
-                        <th>Fill Serial No</th>
+                        <th>{{__('Fill Serial No')}}</th>
                         <td>${status.fillSerial}</td>
                     </tr>
                     <tr>
-                        <th>Cartridge Level</th>
+                        <th>{{__('Cartridge Level')}}</th>
                         <td>${Math.round(status.cartridgeLevel / (status.cartridgeCapacity || 1000) * 100)} %</td>
                     </tr>
                     <tr>
-                        <th>Cartridge Expiry</th>
+                        <th>{{__('Cartridge Expiry')}}</th>
                         <td>${format_date(status.cartridgeExpiry)}</div></td>
                     </tr>
                     <tr>
-                        <th>Cartridge Serial No</th>
+                        <th>{{__('Cartridge Serial No')}}</th>
                         <td>${status.cartridgeSerial}</td>
                     </tr>
                     <tr>
-                        <th>Service: Due Date</th>
+                        <th>{{__('Service: Due Date')}}</th>
                         <td>${format_date(status.nextServiceDue)}</td>
                     </tr>
                     <tr>
-                        <th>Service: Wear Parts Lifetime Remaining</th>
+                        <th>{{__('Service: Wear Parts Lifetime Remaining')}}</th>
                         <td>${Math.round(100 - Math.max(status.valveMotions / (status.valveLifetime || 60000), status.plungerMotions / (status.plungerLifetime || 10000)) * 100)} %</td>
                     </tr>
                 </tbody>

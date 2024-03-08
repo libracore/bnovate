@@ -189,7 +189,7 @@ def rms_set_device(device_id, payload, auth=True):
 
 def rms_get_devices(settings=None):
     """ Return list of all devices connected to RMS """
-    return rms_request("/api/devices", settings=settings)
+    return rms_request("/api/devices", params={"limit": 10000}, settings=settings)
 
 def rms_add_device(serial, current_admin_password, imei=None, mac=None, device_series="trb", auth=True, task_id=None):
     """ Add a device to this company's RMS account.
@@ -271,10 +271,6 @@ def rms_set_password(device_id, new_password, auth=True, task_id=None):
         "password": new_password,
         "password_confirmation": new_password,
     }]}
-
-    print("\n\n\n-----------------------\n\n\n")
-    print(payload)
-    print("\n\n\n-----------------------\n\n\n")
 
     set_status({
         "progress": 0,
@@ -579,7 +575,8 @@ def get_devices_and_data():
     devices = rms_get_devices(settings=settings)
 
     # To avoid modifying memory in the parallel fetches, build dict of iccid: data_usage:
-    iccids = [ device['iccid'][:19] for device in devices if 'iccid' in device ]
+    iccids = [ device['iccid'][:19] for device in devices 
+                 if 'iccid' in device and device['iccid'] is not None]
 
 
     # Get data usage for each SIM iccid:
@@ -590,9 +587,9 @@ def get_devices_and_data():
 
     # And assign to respective devices
     for device in devices:
-        device['sim_data_usage_mb'] = None
+        device['sim_data_usage_mb'] = 0
 
-        if 'iccid' not in device:
+        if 'iccid' not in device or device['iccid'] is None:
             continue
 
         iccid = device['iccid'][:19]

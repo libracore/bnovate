@@ -213,7 +213,9 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 		let selected = await prompt_credit_note_choice(reimbursable_sinv_items);
 		console.log(selected);
 		let credit_notes = await this.create_credit_notes(reimbursable_sinv_items, selected);
-		frappe.msgprint(`Created credit note(s): ${credit_notes.map(cn => frappe.utils.get_form_link("Sales Invoice", cn.name, true, cn.name))}`);
+		if (credit_notes.length > 0) {
+			frappe.msgprint(`Created credit note(s): ${credit_notes.map(cn => frappe.utils.get_form_link("Sales Invoice", cn.name, true, cn.name))}`);
+		}
 	},
 	// Create a copy of current doc, but starting from day after end date.
 	amend_stopped() {
@@ -306,8 +308,12 @@ function prompt_end_date(default_date) {
 
 function prompt_credit_note_choice(refundable_items) {
 	const template = `
-	<table class="table">
-	<tbody>
+	{% if refundable_items.length == 0 %}
+	<p>No credit notes needed, skip to next step.</p>
+
+	{% else %}
+		<table class="table">
+		<tbody>
 		<tr>
 		 	<th></th>
 			<th>SINV</th>
@@ -324,8 +330,9 @@ function prompt_credit_note_choice(refundable_items) {
 			<td>{{ format_currency(item.refund, item.currency) }} </td>
 		</tr>
 		{% endfor %}
-	</tbody>
-	</table>
+		</tbody>
+		</table>
+	{% endif %}
 	`
 	return new Promise((resolve, reject) => {
 		let d = new frappe.ui.Dialog({
@@ -336,7 +343,7 @@ function prompt_credit_note_choice(refundable_items) {
 				fieldtype: "HTML",
 				options: frappe.render_template(template, { refundable_items })
 			}],
-			primary_action_label: 'Create Credit Notes',
+			primary_action_label: refundable_items.length > 0 ? 'Create Credit Notes' : 'Next',
 			primary_action(values) {
 				const selected = [...document.querySelectorAll('.cn-select')]
 					.filter(el => el.checked)

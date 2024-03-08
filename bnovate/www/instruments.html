@@ -26,7 +26,7 @@
 
 <div class="row">
     <div class="col">
-        <a href="/connect" class="btn btn-primary" style="margin-bottom: 10px">{{ _("Initialize BactoLink") }}</a>
+        <a href="/connect" class="btn btn-primary" style="margin-bottom: 10px">{{ _("Initialize a BactoLink") }}</a>
     </div>
 </div>
 
@@ -98,6 +98,7 @@
 
 {% block script %}
 <script>
+    frappe.require("/assets/bnovate/js/web_includes/translations.js")
     frappe.require("/assets/bnovate/js/iot.js");
     frappe.require("/assets/bnovate/js/realtime.js")
 

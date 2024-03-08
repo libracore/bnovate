@@ -57,7 +57,8 @@ def get_data(filters):
     entries = get_invoiceable_entries(from_date=filters.from_date, 
         to_date=filters.to_date, customer=filters.customer,
         show_invoiced=filters.show_invoiced,
-        doctype=filters.doctype)
+        doctype=filters.doctype,
+        ignore_stopped=filters.ignore_stopped)
 
     # find customers
     customers = []
@@ -118,7 +119,7 @@ def get_data(filters):
 
 
 def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype=None, 
-    subscription=None, show_invoiced=False, show_drafts=True):
+    subscription=None, show_invoiced=False, show_drafts=True, ignore_stopped=True):
     if not from_date:
         from_date = "2000-01-01"
     if not to_date:
@@ -139,6 +140,10 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
     if show_invoiced:
         invoiced_filter = "OR si.docstatus < 2"
     shipping_account = frappe.get_single("bNovate Settings").shipping_income_account
+
+    stopped_filter = ""
+    if ignore_stopped:
+        stopped_filter = "AND ss.stopped != 1"
         
     sql_query = """
         -- --sql
@@ -292,12 +297,13 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
             AND (bp.period_start >= "{from_date}" OR "{from_date}" <= bp.period_end) -- Keep contracts active on from_date. end_date already filtered by RECURSIVE above
             AND ss.docstatus = 1
             AND ss.name LIKE "{subscription}"
+            {stopped_filter}
         ORDER BY ss.name, period_start, ssi_index
         ) AS subs
         
         ORDER BY reference, date;
     """.format(from_date=from_date, to_date=to_date, customer=customer, shipping_account=shipping_account,
-        invoiced_filter=invoiced_filter, subscription=subscription, sinv_docstatus=sinv_docstatus)
+        invoiced_filter=invoiced_filter, subscription=subscription, sinv_docstatus=sinv_docstatus, stopped_filter=stopped_filter)
     entries = frappe.db.sql(sql_query, as_dict=True)
 
     # Just filter in python...
