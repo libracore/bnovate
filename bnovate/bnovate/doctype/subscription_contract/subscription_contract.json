@@ -441,12 +441,14 @@
    "options": "Contact"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "contact_email",
    "fieldtype": "Data",
    "label": "Contact Email",
    "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "contact_display",
    "fieldtype": "Small Text",
    "label": "Contact Display",
@@ -468,7 +470,7 @@
   }
  ],
  "is_submittable": 1,
- "modified": "2023-10-18 15:15:41.572520",
+ "modified": "2024-03-08 17:01:16.489373",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Subscription Contract",
