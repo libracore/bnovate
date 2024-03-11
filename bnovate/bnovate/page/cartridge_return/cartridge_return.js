@@ -213,21 +213,21 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 			docstatus: 1,
 			from_customer: enc.customer,
 			items: [{
-				item_code: 100146,
+				item_code: '100146',
 				qty: 1,
 				s_warehouse: enc.warehouse,
 				t_warehouse: warehouse,
 				serial_no: enc.serial_no,
 			}, {
-				item_code: 101011.02, // Tubing pouch 200 mm, needs cleaning
+				item_code: '101011.02', // Tubing pouch 200 mm, needs cleaning
 				qty: 3,
 				t_warehouse: "Stores - bN",
 			}, {
-				item_code: 101012.02, // Tubing pouch 120 mm, needs cleaning
+				item_code: '101012.02', // Tubing pouch 120 mm, needs cleaning
 				qty: 1,
 				t_warehouse: "Stores - bN",
 			}, {
-				item_code: 100799, // Barrel plug for pouches
+				item_code: '100799', // Barrel plug for pouches
 				qty: 4,
 				s_warehouse: "Stores - bN",
 			}]
