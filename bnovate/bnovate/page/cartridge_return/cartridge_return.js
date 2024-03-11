@@ -219,11 +219,11 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 				t_warehouse: warehouse,
 				serial_no: enc.serial_no,
 			}, {
-				item_code: 100016, // Tubing pouch 200 mm
+				item_code: 101011.02, // Tubing pouch 200 mm, needs cleaning
 				qty: 3,
-				t_warehouse: "To Refill - bN",
+				t_warehouse: "Stores - bN",
 			}, {
-				item_code: 100017, // Tubing pouch 120 mm
+				item_code: 101012.02, // Tubing pouch 120 mm, needs cleaning
 				qty: 1,
 				t_warehouse: "Stores - bN",
 			}, {
