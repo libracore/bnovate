@@ -57,6 +57,7 @@ fixtures = [
             "Serial No-owner_set_by",
             # Refill requests
             "Customer-enable_cartridge_portal",
+            "Customer-allow_unstored_cartridges",
             "Sales Order Item-refill_request",
             "Sales Order Item-serial_nos",  # pluralized to avoid automations from selling controller
             "Sales Order-indicator_key",

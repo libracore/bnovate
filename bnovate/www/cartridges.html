@@ -32,7 +32,7 @@
                 <tr>
                     <td style="padding: 0px">
                         <label for="check-{{ row.serial_no }}" style="padding: 12px; margin-bottom: 0px;">
-                            {% if row.location == "bNovate" and not row.refill_request %}
+                            {% if (allow_unstored_cartridges or row.location == "bNovate") and not (row.refill_request or row.open_sales_order) %}
                             <input name="select" id="check-{{ row.serial_no }}"class="serial-check" type="checkbox" data-serial="{{ row.serial_no }}"
                                 style="margin-right: 12px" >
                             {% endif %}

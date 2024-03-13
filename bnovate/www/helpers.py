@@ -50,6 +50,7 @@ def get_session_customers():
         SELECT 
             `tC1`.`link_name` AS `docname`,
             `tCus`.`enable_cartridge_portal`,
+            `tCus`.`allow_unstored_cartridges`,
             `tCus`.`customer_name`
         FROM `tabContact`
         JOIN `tabDynamic Link` AS `tC1` ON `tC1`.`parenttype` = "Contact" 
@@ -88,6 +89,14 @@ def has_cartridge_portal():
     """ True if user is allowed to use cartridge management features """
     customer = get_session_primary_customer()
     if customer is not None and customer.enable_cartridge_portal:
+        return True
+    return False
+
+def allow_unstored_cartridges():
+    """ True if user is allowed to use cartridge management features """
+    customer = get_session_primary_customer()
+    print("====================================\n\n\n")
+    if customer is not None and customer.allow_unstored_cartridges:
         return True
     return False
 
