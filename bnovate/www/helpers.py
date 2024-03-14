@@ -165,7 +165,7 @@ def get_addresses():
 
 
 @frappe.whitelist()
-def create_address(address_line1, pincode, city, address_type="Shipping", company_name=None, address_line2=None, country="Switzerland", email_id=""):
+def create_address(address_line1, pincode, city, address_type="Shipping", company_name=None, address_line2=None, country="Switzerland", email_id="", commit=True):
     """ Add address on primary customer associated to this user """
     # fetch customers for this user
     customer = get_session_primary_customer()
@@ -187,7 +187,8 @@ def create_address(address_line1, pincode, city, address_type="Shipping", compan
     })
     
     new_address.insert(ignore_permissions=True)
-    frappe.db.commit()
+    if commit:
+        frappe.db.commit()
 
 
 @frappe.whitelist()
@@ -212,6 +213,11 @@ def delete_address(name):
     else:
         raise frappe.PermissionError("You are not allowed to delete this address.")
 
+@frappe.whitelist()
+def modify_address(name, address_line1, pincode, city, address_type="Shipping", company_name=None, address_line2=None, country="Switzerland", email_id="", commit=True):
+    """ Modify an address, by creating a new one and unlinking the existing one """
+    create_address(address_line1, pincode, city, address_type, company_name, address_line2, country, email_id, commit=False)
+    delete_address(name)
 
 @frappe.whitelist()
 def get_countries():

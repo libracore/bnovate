@@ -29,6 +29,7 @@
 <div class="row">
     <div class="col">
         <button id="new-address" class="btn btn-primary" style="margin-bottom: 10px">{{ _("New Address") }}</button>
+        <i id="loading" class="fa fa-cog fa-spin"></i>
     </div>
 </div>
 
@@ -37,12 +38,12 @@
     <div class="card">
         <div class="card-body">
             <div class="btn-group float-right">
-              <!-- <button type="button" class="btn btn-sm btn-primary"><i class="fa fa-pencil"></i></button> -->
+              <button type="button" class="btn btn-sm btn-primary edit-address" data-name="{{ addr.name }}" disabled><i class="fa fa-pencil"></i></button>
               <button type="button" class="btn btn-sm btn-danger delete-address" data-name="{{ addr.name }}"><i class="fa fa-trash"></i></button>
             </div>
             {{addr.display}}
             <p class="text-muted">
-                {{addr.email_id}}
+                {{ addr.email_id.split(",") | join("<br>") }}
             </p>
         </div>
     </div>
@@ -120,11 +121,29 @@
     frappe.require("/assets/bnovate/js/web_includes/translations.js")
     frappe.require("/assets/bnovate/js/web_includes/helpers.js")
     frappe.require("/assets/bnovate/js/web_includes/address_modal.js")
+    
+    const addresses = {};
+    bnovate.web.get_addresses()
+        .then( remote_addresses => {
+            remote_addresses.forEach(addr => addresses[addr.name] = addr);
+            hide_spinner();
+            bind_edit_buttons();
+        });
 
+    // Create new address
     async function save() {
         const data = new FormData(document.querySelector("#address-form"));
         const doc = Object.fromEntries(data);
         await bnovate.web.create_address(doc);
+        location.reload();
+    }
+
+    // Save new address and delete old one
+    async function edit(name) {
+        console.log("TODO: create new address and save old one, named.", name)
+        const data = new FormData(document.querySelector("#address-form"));
+        const doc = Object.fromEntries(data);
+        await bnovate.web.modify_address(name, doc);
         location.reload();
     }
 
@@ -151,7 +170,7 @@
         const emails = emailInput?.value;
         let emailValid = true;
         emails.split(',').forEach( (email) => {
-            if (!re.test(email.trim())) {
+            if ( email.trim().length > 0 && !re.test(email.trim())) {
                 emailValid = false;
                 emailInput.closest(".form-group").classList.add('has-error');
             };
@@ -163,6 +182,21 @@
         }
 
 		return valid;
+    }
+
+    function hide_spinner() {
+        document.getElementById("loading").style.display = "none";
+    }
+
+    function bind_edit_buttons() {
+        [...document.querySelectorAll(".edit-address")].map(el => {
+            el.removeAttribute("disabled");
+            el.addEventListener("click", async (e) => {
+                const contents = document.querySelector("#modal-body").content.cloneNode(true)
+                document.getElementById("edit-address-modal").show(contents, validate, () => edit(el.dataset.name), addresses[el.dataset.name] || {});
+                validate();
+            })
+        });
     }
 
     // Bind all buttons
@@ -177,5 +211,7 @@
             location.reload();
         }
     }));
+
+
 </script>
 {% endblock %}

@@ -6,21 +6,29 @@ frappe.provide("bnovate.web");
 // frappe.require("/assets/js/control.min.js");
 // frappe.require("/assets/js/dialog.min.js");
 
-bnovate.web.get_addresses = async function get_addresses() {
+bnovate.web.get_addresses = async function () {
     const resp = await frappe.call("bnovate.www.helpers.get_addresses")
     return resp.message;
 }
 
-bnovate.web.create_address = async function create_address(doc) {
+bnovate.web.create_address = async function (doc) {
     const resp = await frappe.call("bnovate.www.helpers.create_address", {
         ...doc
     })
     return resp.message;
 }
 
-bnovate.web.delete_address = async function delete_address(name) {
+bnovate.web.delete_address = async function (name) {
     const resp = await frappe.call("bnovate.www.helpers.delete_address", {
         name
+    })
+    return resp.message;
+}
+
+bnovate.web.modify_address = async function (name, doc) {
+    const resp = await frappe.call("bnovate.www.helpers.modify_address", {
+        name,
+        ...doc
     })
     return resp.message;
 }

@@ -14,6 +14,14 @@ body {
   --danger: #f38926;
 }
 
+@media (min-width: 992px) {
+  .container {
+    max-width: 1400px;
+  }
+}
+
+/* Modals */
+
 .modal-header {
     background-color: var(--completed-background-color);
     display: block; /* Override flex setting, allow buttons to move to right */
