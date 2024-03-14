@@ -141,6 +141,7 @@ def get_addresses():
             `tabAddress`.`country`,
             `tabAddress`.`is_primary_address`,
             `tabAddress`.`is_shipping_address`,
+            `tabAddress`.`email_id`,
             `tC1`.`link_name` AS `customer_docname`
         FROM `tabContact`
         JOIN `tabDynamic Link` AS `tC1` ON `tC1`.`parenttype` = "Contact" 
@@ -155,14 +156,17 @@ def get_addresses():
     """.format(user=frappe.session.user), as_dict=True)
 
     for addr in addresses:
-        addr.display = get_address_display(addr)
+        short_addr = addr.copy();
+        if 'email_id' in short_addr:
+            del short_addr['email_id']
+        addr.display = get_address_display(short_addr)
 
     
     return addresses
 
 
 @frappe.whitelist()
-def create_address(address_line1, pincode, city, address_type="Shipping", company_name=None, address_line2=None, country="Switzerland"):
+def create_address(address_line1, pincode, city, address_type="Shipping", company_name=None, address_line2=None, country="Switzerland", email_id=""):
     """ Add address on primary customer associated to this user """
     # fetch customers for this user
     customer = get_session_primary_customer()
@@ -179,7 +183,8 @@ def create_address(address_line1, pincode, city, address_type="Shipping", compan
         'pincode': pincode,
         'city': city,
         'country': country,
-        'links': customer_links
+        'links': customer_links,
+        'email_id': email_id,
     })
     
     new_address.insert(ignore_permissions=True)
