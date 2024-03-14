@@ -95,7 +95,6 @@ def has_cartridge_portal():
 def allow_unstored_cartridges():
     """ True if user is allowed to use cartridge management features """
     customer = get_session_primary_customer()
-    print("====================================\n\n\n")
     if customer is not None and customer.allow_unstored_cartridges:
         return True
     return False
@@ -200,7 +199,7 @@ def delete_address(name):
     permitted = False
     for l in address.links:
         for c in customers:
-            if l.link_name == c.customer_docname:
+            if l.link_name == c.docname:
                 permitted = True
     if permitted:
         # delete address: drop links
@@ -211,7 +210,7 @@ def delete_address(name):
         address.save(ignore_permissions=True)
         frappe.db.commit()
     else:
-        raise frappe.PermissionError
+        raise frappe.PermissionError("You are not allowed to delete this address.")
 
 
 @frappe.whitelist()
