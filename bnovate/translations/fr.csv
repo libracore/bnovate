@@ -230,3 +230,11 @@ apps/bnovate/bnovate/public/js/web_includes/helpers.js,Service: Due Date,Service
 apps/bnovate/bnovate/public/js/web_includes/helpers.js,Service: Wear Parts Lifetime Remaining,Service : Durée de vie pièces d'usure
 apps/bnovate/bnovate/www/instruments.html,GUI Relay,Relais GUI
 apps/bnovate/bnovate/www/scan.py,Health Scan,Scan Santé
+apps/bnovate/bnovate/bnovate/report/aggregate_invoicing/aggregate_invoicing.js,Ignore Stopped,Cacher contrats terminés
+apps/bnovate/bnovate/bnovate/report/connectivity_data_usage/connectivity_data_usage.py,Period Start,Début de la période
+apps/bnovate/bnovate/public/js/doctype_includes/contact.js,User ID is already associated with another contact:,L'ID de l'utilisateur est déjà associé à un autre contact :
+apps/bnovate/bnovate/www/cartridges.html,Shipped To,Expédié à
+apps/bnovate/bnovate/www/index.html,You do not have any BactoLinks.,Vous n'avez aucun BactoLink.
+apps/bnovate/bnovate/www/index.html,You have not requested any refills.,Vous n'avez fait aucune demande de remplissage.
+apps/bnovate/bnovate/www/my_addresses.html,Email Notifications,Email pour notifications
+apps/bnovate/bnovate/www/my_addresses.html,"Split addresses with comma: first@example.com, second@example.com","Séparez les adresses par une virgule: first@example.com, second@example.com"

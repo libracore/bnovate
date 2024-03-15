@@ -43,7 +43,9 @@
             </div>
             {{addr.display}}
             <p class="text-muted">
-                {{ addr.email_id.split(",") | join("<br>") }}
+                {% if addr.email_id %}
+                    {{ addr.email_id.split(",") | join("<br>") }}
+                {% endif %}
             </p>
         </div>
     </div>
