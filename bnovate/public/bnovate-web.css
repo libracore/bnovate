@@ -75,7 +75,13 @@ body {
   max-width: 400px;
 }
 
-/* Tables */
+/* Tables, bootstrap */
+
+tr:has(input[type=checkbox]:checked) {
+  background-color: var(--dt-header-cell-bg);
+}
+
+/* Tables (frappe datatable) */
 
 .dt-scrollable {
   /* Remove border below report table headers - spans too wide when embedded in Form */
@@ -86,6 +92,16 @@ body {
 .dt-row:last-child:not(.dt-row-filter) {
   /* Also hides an ugly line */
   border-bottom: none;
+}
+
+.dt-row:last-child:not(.dt-row-filter) {
+  /* Also hides an ugly line */
+  border-bottom: none;
+}
+
+.dt-cell__content:has(input[type=checkbox]) {
+  /* hides a weird artifact next to checkbox */
+  overflow: unset;
 }
 
 

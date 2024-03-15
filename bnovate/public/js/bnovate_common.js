@@ -30,6 +30,17 @@ bnovate.utils.sleep = function (ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+bnovate.utils.truncate = function (str, n) {
+  return (str.length > n) ? str.slice(0, n - 1) + '…' : str;
+};
+
+bnovate.utils.trim = function (str, token, n) {
+  if (str.indexOf(token) >= 0) {
+    return str.substring(0, str.indexOf(token));
+  }
+  return bnovate.utils.truncate(str, n);
+};
+
 bnovate.utils.confetti = function () {
 
   const pick_random_item = function (arr) {

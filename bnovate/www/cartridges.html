@@ -18,62 +18,11 @@
 </div>
 
 <div class="row">
-    <div class="col">
-        <table class="table table-condensed" style="border-bottom: 1px solid #d1d8dd; width:100%">
-            <thead>
-                <th></th>
-                <th>{{ _("Serial No") }}</th>
-                <th>{{ _("Location") }}</th>
-                <th>{{ _("Status") }}</th>
-                <th>{{ _("Since") }}</th>
-                <th>{{ _("Tracking No") }}</th>
-                <th>{{ _("Pending Request") }}</th>
-                <th>{{ _("Shipped To") }}</th>
-            </thead>
-            <tbody>
-                {% for row in cartridges %}
-                <tr>
-                    <td style="padding: 0px">
-                        <label for="check-{{ row.serial_no }}" style="padding: 12px; margin-bottom: 0px;">
-                            {% if (allow_unstored_cartridges or row.location == "bNovate") and not (row.refill_request
-                            or row.open_sales_order) %}
-                            <input name="select" id="check-{{ row.serial_no }}" class="serial-check" type="checkbox"
-                                data-serial="{{ row.serial_no }}" style="margin-right: 12px">
-                            {% endif %}
-                        </label>
-                    </td>
-                    <td>
-                        <label for="check-{{ row.serial_no }}" style="margin-bottom: 0px;">
-                            {{ row.serial_no }}
-                        </label>
-                    </td>
-                    <td>{{ _(row.location) }}</td>
-                    <td>{{ _(row.status) }}</td>
-                    <td>{{ frappe.format(row.posting_date, {'fieldtype': 'Date'}) }}</td>
-                    <td>
-                        {% if row.tracking_link %}
-                        {{ row.tracking_link }}
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if row.refill_request %}
-                        <a href="/requests/{{row.refill_request}}">{{ row.refill_request }}</a>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if row.shipping_address %}
-                        <span data-html="true" data-toggle="tooltip" data-container="body"
-                            title="{{ row.shipping_address }}">
-                            {{ row.shipping_address | truncate(20) }}
-                        </span>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <div class="col" id="table-container">
+    <i class="fa fa-cog fa-spin"></i>
     </div>
 </div>
+
 
 <wizard-modal id="build-fill-request"></wizard-modal>
 
@@ -86,7 +35,8 @@
 
     const env = {
         dt: null,
-        cartridges: [],
+        cartridges: [],    // sorted, iterable version
+        cartridge_idx: {}, // quick look up
         allow_unstored_cartridges: false,
     }
 
@@ -98,78 +48,77 @@
     .then( () => bnovate.translations.get_messages() )
     .then( () => bnovate.web.get_cartridges() )
     .then( (data) => {
+        prepare_data(data);
         env.cartridges = data.cartridges;
         env.allow_unstored_cartridges = data.allow_unstored_cartridges;
+        draw_datatable(data);
     })
+
+    function prepare_data(data) {
+        data.cartridges.forEach( row => {
+            env.cartridge_idx[row.serial_no] = row;
+
+            row.checked = false;
+
+            row.rr_link = row.refill_request ? `<a href="/requests/${row.refill_request}">${ row.refill_request }</a>` : ''
+
+            row.address_display = ""
+            if (row.shipping_address) {
+                row.address_display = `<span data-html="true" data-toggle="tooltip" data-container="body"
+                        title="${ row.shipping_address }">
+                        ${bnovate.utils.trim(row.shipping_address, "<br>", 20)}
+                    </span>`;
+            }
+
+            row.checkbox = ""
+            if ( (data.allow_unstored_cartridges || row.location == "bNovate") && !(row.refill_request || row.open_sales_order) ) {
+                row.checkbox = `<label for="check-${ row.serial_no }" style="padding: 12px; margin-bottom: 0px;">
+                        <input name="select" id="check-${ row.serial_no }" class="serial-check" type="checkbox"
+                                data-serial="${ row.serial_no }" style="margin-right: 12px" ${ row.checked ? "checked" : ""}>
+                    </label>`;
+            }
+        })
+    }
 
 
     function draw_datatable(data) {
-        return;
-        const columns = [{
-            id: 'checkbox_data',
-            name: "",
-            width: 20,
-            format: (data) => {
-                if ( data.show ) {
-                    return `<input name="select" id="check-${data.sn}" class="serial-check" type="checkbox" data-serial="${data.sn}">`;
-                } else {
-                    return ''
-                }
-            }
-        }, {
-            id: 'serial_no',
-            name: __('Serial No'),
-            width: 120,
-            align: 'left',
-        }, {
-            id: 'location',
-            name: __('Location'),
-            width: 180,
-            align: 'left',
-            format: (location) => __(location),
-        }, {
-            id: 'status',
-            name: __('Status'),
-            width: 200,
-            align: 'left',
-            format: (status) => __(status),
-        }, {
-            id: 'posting_date',
-            name: __('Since'),
-            width: 120,
-            align: 'right',
-            format: (d) => moment(d).format('DD-MM-YYYY'),
-        }, {
-            id: 'tracking_link',
-            name: __('Tracking No'),
-            width: 150,
-            align: 'left',
-        }, {
-            id: 'refill_request',
-            name: __('Pending Request'),
-            width: 180,
-            align: 'left',
-            format: (value) => value ? `<a href="/requests/${value}">${value}</a>` : '',
-        }, {
-            id: 'shipping_address',
-            name: __('Shipped To'),
-            width: 200,
-            align: 'left',
-            format: (addr) => {
-                if (!addr) return ""
-                return `<span data-html="true" data-toggle="tooltip" data-container="body"
-                            title="${addr}">
-                            ${addr}
-                        </span>`
-            }
-        }]
 
-        data.cartridges.forEach(row => {
-            row.checkbox_data = {
-                sn: row.serial_no,
-                show: (env.allow_unstored_cartridges || row.location == "bNovate") && !(row.refill_request || row.open_sales_order) 
-            }
-        })
+        const head = `
+        <table class="table table-responsive table-condensed" style="border-bottom: 1px solid #d1d8dd; width:100%">
+            <thead>
+                <th></th>
+                <th>{{ _("Serial No") }}</th>
+                <th>{{ _("Location") }}</th>
+                <th>{{ _("Status") }}</th>
+                <th>{{ _("Since") }}</th>
+                <th>{{ _("Tracking No") }}</th>
+                <th>{{ _("Pending Request") }}</th>
+                <th>{{ _("Shipped To") }}</th>
+            </thead>
+            <tbody>`
+
+        // Extra labels extend the clickable area of a checkbox
+        const rows = data.cartridges.map( row => `
+                <tr>
+                    <td style="padding: 0px">${ row.checkbox }</td>
+                    <td><label for="check-${ row.serial_no }" style="margin-bottom: 0px;">${ row.serial_no }</label></td>
+                    <td><label for="check-${ row.serial_no }" style="margin-bottom: 0px;">${ __(row.location) }</label></td>
+                    <td><label for="check-${ row.serial_no }" style="margin-bottom: 0px;">${ __(row.status) }</label></td>
+                    <td><label for="check-${ row.serial_no }" style="margin-bottom: 0px;">${ moment(row.posting_date).format('DD-MM-YYYY') }</label></td>
+                    <td>${ row.tracking_link ? row.tracking_link : "" }</td>
+                    <td>${ row.rr_link }</td>
+                    <td><label for="check-${ row.serial_no }" style="margin-bottom: 0px;">${ row.address_display }</label></td>
+                </tr> 
+        `)
+
+        const foot = `
+            </tbody>
+        </table>
+        `
+
+        document.getElementById('table-container').innerHTML = head + rows.join("\n") + foot;
+        enable_tooltips();
+        bind_table_elements();
     }
 
 
@@ -191,6 +140,31 @@
         location.pathname = `/requests/${new_doc.name}`;
     }
 
+    function bind_table_elements() {
+        // Enable button if any SNs are clicked.
+        [...document.querySelectorAll(".serial-check")].map( c => c.addEventListener("change", (e) => {
+            // Store state in order to remember before / after filter
+            env.cartridge_idx[e.srcElement.dataset.serial].checked = e.srcElement.checked;
+
+            const refill_btn = document.querySelector("#request-refill");
+            if ( get_selected().length > 0 ) {
+                refill_btn.disabled = false;
+            } else {
+                refill_btn.disabled = true;
+            }
+        }));
+
+        // [ ...document.querySelectorAll('#table-container tr')].map ( c => c.addEventListener("click", (e) => {
+        //    console.log(e)
+        // }));
+    }
+
+    function enable_tooltips() {
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip()
+        });
+    }
+
     document.querySelector("#request-refill").addEventListener("click", async () => {
         document.getElementById('build-fill-request').show(
             get_selected(),
@@ -199,21 +173,6 @@
         );
     });
 
-    // Enable button if any SNs are clicked.
-    [...document.querySelectorAll(".serial-check")].map( c => c.addEventListener("change", () => {
-        const refill_btn = document.querySelector("#request-refill");
-
-        if ( get_selected().length > 0 ) {
-            refill_btn.disabled = false;
-        } else {
-            refill_btn.disabled = true;
-        }
-    }))
-
-    // Enable tooltips
-    $(function () {
-        $('[data-toggle="tooltip"]').tooltip()
-    });
     
 </script>
 
