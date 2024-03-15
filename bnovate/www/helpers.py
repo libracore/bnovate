@@ -151,6 +151,7 @@ def get_addresses():
                                        AND `tA1`.`link_name` = `tC1`.`link_name`
         LEFT JOIN `tabAddress` ON `tabAddress`.`name` = `tA1`.`parent`
         WHERE `tabContact`.`user` = "{user}"
+            AND NOT `tabAddress`.`portal_hide`
         ORDER BY `tabAddress`.`company_name`, `tabAddress`.`address_line1`
     """.format(user=frappe.session.user), as_dict=True)
 
@@ -203,11 +204,7 @@ def delete_address(name):
             if l.link_name == c.docname:
                 permitted = True
     if permitted:
-        # delete address: drop links
-        for l in address.links:
-            address.remove(l)
-        # FIXME: current hack is to associate to a dummy customer to override a validation which automatically re-links
-        address.append('links', {'link_doctype': 'Customer', 'link_name': frappe.get_single('bNovate Settings').dummy_customer})
+        address.portal_hide = True
         address.save(ignore_permissions=True)
         frappe.db.commit()
     else:
@@ -216,7 +213,7 @@ def delete_address(name):
 @frappe.whitelist()
 def modify_address(name, address_line1, pincode, city, address_type="Shipping", company_name=None, address_line2=None, country="Switzerland", email_id="", commit=True):
     """ Modify an address, by creating a new one and unlinking the existing one """
-    create_address(address_line1, pincode, city, address_type, company_name, address_line2, country, email_id, commit=False)
+    create_address(address_line1, pincode, city, address_type, company_name, address_line2, country, email_id, commit=True)
     delete_address(name)
 
 @frappe.whitelist()

@@ -73,6 +73,7 @@ fixtures = [
             "Stock Entry-from_customer",
             "Stock Entry-from_customer_name",
             "Blanket Order-currency",
+            "Address-portal_hide",
             # Addresses
             "Address-company_name",
             # DN workflow
