@@ -26,6 +26,7 @@
                 <th>{{ _("Since") }}</th>
                 <th>{{ _("Tracking No") }}</th>
                 <th>{{ _("Pending Request") }}</th>
+                <th>{{ _("Shipped To") }}</th>
             </thead>
             <tbody>
                 {% for row in data %}
@@ -54,6 +55,13 @@
                     <td>
                         {% if row.refill_request %}
                         <a href="/requests/{{row.refill_request}}">{{ row.refill_request }}</a>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if row.shipping_address %}
+                            <span data-html="true" data-toggle="tooltip" data-container="body" title="{{ row.shipping_address }}">
+                            {{ row.shipping_address | truncate(20) }}
+                            </span>
                         {% endif %}
                     </td>
                 </tr>
@@ -111,6 +119,11 @@
             refill_btn.disabled = true;
         }
     }))
+
+    // Enable tooltips
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip()
+    });
     
 </script>
 

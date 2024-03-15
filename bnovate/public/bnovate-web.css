@@ -60,6 +60,15 @@ body {
   border-color: var(--danger);
 }
 
+/* Tooltips */
+
+
+.tooltip-inner {
+  text-align: left;
+  max-width: 400px;
+}
+
+
 /* flex copied from Frappe, needed for modals. */
 
 .flex {
