@@ -118,17 +118,20 @@
 
 {% block script %}
 <script>
-    frappe.require("/assets/bnovate/js/web_includes/translations.js")
-    frappe.require("/assets/bnovate/js/web_includes/helpers.js")
-    frappe.require("/assets/bnovate/js/web_includes/address_modal.js")
     
     const addresses = {};
-    bnovate.web.get_addresses()
-        .then( remote_addresses => {
-            remote_addresses.forEach(addr => addresses[addr.name] = addr);
-            hide_spinner();
-            bind_edit_buttons();
-        });
+    frappe.require([
+        "/assets/bnovate/js/web_includes/translations.js",
+        "/assets/bnovate/js/web_includes/helpers.js",
+        "/assets/bnovate/js/web_includes/address_modal.js",
+    ])
+    .then( () => bnovate.translations.get_messages() )
+    .then( () => bnovate.web.get_addresses())
+    .then( remote_addresses => {
+        remote_addresses.forEach(addr => addresses[addr.name] = addr);
+        hide_spinner();
+        bind_edit_buttons();
+    });
 
     // Create new address
     async function save() {

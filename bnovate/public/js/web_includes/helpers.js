@@ -6,6 +6,11 @@ frappe.provide("bnovate.web");
 // frappe.require("/assets/js/control.min.js");
 // frappe.require("/assets/js/dialog.min.js");
 
+bnovate.web.get_cartridges = async function () {
+    const resp = await frappe.call("bnovate.www.cartridges.get_cartridges")
+    return resp.message;
+}
+
 bnovate.web.get_addresses = async function () {
     const resp = await frappe.call("bnovate.www.helpers.get_addresses")
     return resp.message;

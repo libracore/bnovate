@@ -6,9 +6,11 @@
 
 <div class="row">
     <div class="col">
-        <button id="request-refill" class="btn btn-primary" style="margin-bottom: 10px" title="{{ _('Select cartridges') }}" disabled>{{ _("Request Refill") }}</button> <br/>
-        {% if data %}
-        <p><i>{{ _("Select the cartridges you wish to refill. If none of your cartridges are at bNovate, you cannot order a refill.") }}</i></p>
+        <button id="request-refill" class="btn btn-primary" style="margin-bottom: 10px"
+            title="{{ _('Select cartridges') }}" disabled>{{ _("Request Refill") }}</button> <br />
+        {% if cartridges %}
+        <p><i>{{ _("Select the cartridges you wish to refill. If none of your cartridges are at bNovate, you cannot
+                order a refill.") }}</i></p>
         {% else %}
         <p><i>{{ _("Nothing to display.") }}</i></p>
         {% endif %}
@@ -29,13 +31,14 @@
                 <th>{{ _("Shipped To") }}</th>
             </thead>
             <tbody>
-                {% for row in data %}
+                {% for row in cartridges %}
                 <tr>
                     <td style="padding: 0px">
                         <label for="check-{{ row.serial_no }}" style="padding: 12px; margin-bottom: 0px;">
-                            {% if (allow_unstored_cartridges or row.location == "bNovate") and not (row.refill_request or row.open_sales_order) %}
-                            <input name="select" id="check-{{ row.serial_no }}"class="serial-check" type="checkbox" data-serial="{{ row.serial_no }}"
-                                style="margin-right: 12px" >
+                            {% if (allow_unstored_cartridges or row.location == "bNovate") and not (row.refill_request
+                            or row.open_sales_order) %}
+                            <input name="select" id="check-{{ row.serial_no }}" class="serial-check" type="checkbox"
+                                data-serial="{{ row.serial_no }}" style="margin-right: 12px">
                             {% endif %}
                         </label>
                     </td>
@@ -59,9 +62,10 @@
                     </td>
                     <td>
                         {% if row.shipping_address %}
-                            <span data-html="true" data-toggle="tooltip" data-container="body" title="{{ row.shipping_address }}">
+                        <span data-html="true" data-toggle="tooltip" data-container="body"
+                            title="{{ row.shipping_address }}">
                             {{ row.shipping_address | truncate(20) }}
-                            </span>
+                        </span>
                         {% endif %}
                     </td>
                 </tr>
@@ -79,11 +83,97 @@
 {% block script %}
 
 <script>
-    frappe.require("/assets/bnovate/js/web_includes/translations.js")
-    frappe.require("/assets/bnovate/js/web_includes/helpers.js")
-    frappe.require("/assets/bnovate/js/web_includes/wizard_modal.js")
 
-    
+    const env = {
+        dt: null,
+        cartridges: [],
+        allow_unstored_cartridges: false,
+    }
+
+    frappe.require([
+        "/assets/bnovate/js/web_includes/translations.js",
+        "/assets/bnovate/js/web_includes/helpers.js",
+        "/assets/bnovate/js/web_includes/wizard_modal.js",
+    ])
+    .then( () => bnovate.translations.get_messages() )
+    .then( () => bnovate.web.get_cartridges() )
+    .then( (data) => {
+        env.cartridges = data.cartridges;
+        env.allow_unstored_cartridges = data.allow_unstored_cartridges;
+    })
+
+
+    function draw_datatable(data) {
+        return;
+        const columns = [{
+            id: 'checkbox_data',
+            name: "",
+            width: 20,
+            format: (data) => {
+                if ( data.show ) {
+                    return `<input name="select" id="check-${data.sn}" class="serial-check" type="checkbox" data-serial="${data.sn}">`;
+                } else {
+                    return ''
+                }
+            }
+        }, {
+            id: 'serial_no',
+            name: __('Serial No'),
+            width: 120,
+            align: 'left',
+        }, {
+            id: 'location',
+            name: __('Location'),
+            width: 180,
+            align: 'left',
+            format: (location) => __(location),
+        }, {
+            id: 'status',
+            name: __('Status'),
+            width: 200,
+            align: 'left',
+            format: (status) => __(status),
+        }, {
+            id: 'posting_date',
+            name: __('Since'),
+            width: 120,
+            align: 'right',
+            format: (d) => moment(d).format('DD-MM-YYYY'),
+        }, {
+            id: 'tracking_link',
+            name: __('Tracking No'),
+            width: 150,
+            align: 'left',
+        }, {
+            id: 'refill_request',
+            name: __('Pending Request'),
+            width: 180,
+            align: 'left',
+            format: (value) => value ? `<a href="/requests/${value}">${value}</a>` : '',
+        }, {
+            id: 'shipping_address',
+            name: __('Shipped To'),
+            width: 200,
+            align: 'left',
+            format: (addr) => {
+                if (!addr) return ""
+                return `<span data-html="true" data-toggle="tooltip" data-container="body"
+                            title="${addr}">
+                            ${addr}
+                        </span>`
+            }
+        }]
+
+        data.cartridges.forEach(row => {
+            row.checkbox_data = {
+                sn: row.serial_no,
+                show: (env.allow_unstored_cartridges || row.location == "bNovate") && !(row.refill_request || row.open_sales_order) 
+            }
+        })
+    }
+
+
+    // Return selected serial numbers
     function get_selected() {
         let serial_nos = [...document.querySelectorAll(".serial-check")]
         .filter(c => c.checked)
@@ -91,7 +181,7 @@
         
         return serial_nos;
     }
-    
+
     async function post_request(doc) {
         const resp = await frappe.call("bnovate.www.request.make_request", {
             doc
@@ -100,10 +190,10 @@
         const new_doc = resp.message
         location.pathname = `/requests/${new_doc.name}`;
     }
-    
+
     document.querySelector("#request-refill").addEventListener("click", async () => {
         document.getElementById('build-fill-request').show(
-            get_selected(), 
+            get_selected(),
             await bnovate.web.get_addresses(),
             post_request,
         );

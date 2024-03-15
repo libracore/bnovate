@@ -13,14 +13,14 @@
     ],
 
     "css/bnovate.min.css": [
-        "public/bnovate.css",
         "public/js/lib/leaflet/MarkerCluster.css",
-        "public/js/lib/leaflet/MarkerCluster.Default.css"
+        "public/js/lib/leaflet/MarkerCluster.Default.css",
+        "public/bnovate.css"
     ],
 
     "css/bnovate-web.min.css": [
-        "public/bnovate-web.css",
-        "public/js/lib/frappe-datatable/frappe-datatable.css"
+        "public/js/lib/frappe-datatable/frappe-datatable.css",
+        "public/bnovate-web.css"
     ]
 
 }
