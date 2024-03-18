@@ -16,10 +16,4 @@ def get_context(context):
     context.countries = get_countries()
     context.title = _("My Addresses")
 
-
-    print("\n\n\n============================================\n\n\n")
-    print(len(context.addresses))
-    for addr in context.addresses:
-        print(addr.name)
-    print("\n\n\n============================================\n\n\n")
     return context
