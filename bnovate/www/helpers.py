@@ -129,7 +129,7 @@ def build_sidebar(context, show=True):
 def get_addresses():
     """ Return addresses for the current contact """
     addresses = frappe.db.sql("""
-        SELECT 
+        SELECT DISTINCT -- avoid duplicates when address is linked to two customers.
             `tabAddress`.`name`,
             `tabAddress`.`company_name`,
             `tabAddress`.`address_type`,
@@ -140,8 +140,8 @@ def get_addresses():
             `tabAddress`.`country`,
             `tabAddress`.`is_primary_address`,
             `tabAddress`.`is_shipping_address`,
-            `tabAddress`.`email_id`,
-            `tC1`.`link_name` AS `customer_docname`
+            `tabAddress`.`email_id`
+            -- , `tC1`.`link_name` AS `customer_docname`
         FROM `tabContact`
         JOIN `tabDynamic Link` AS `tC1` ON `tC1`.`parenttype` = "Contact" 
                                        AND `tC1`.`link_doctype` = "Customer" 

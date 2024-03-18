@@ -100,10 +100,15 @@
         })
     }
 
+    // Marks rows as 'show' or not if condition matches any string in the row, or the translation of the string.
     function apply_filter(cartridges, condition) {
         condition = condition.toLowerCase();
         cartridges.forEach( row => {
-            const matching_cells = Object.values(row).filter( value => typeof(value) === 'string' && value.toLowerCase().indexOf(condition) >= 0);
+            const matching_cells = Object.values(row)
+                .filter( 
+                    value => typeof(value) === 'string' && 
+                    ( value.toLowerCase().indexOf(condition) >= 0 || __(value).toLowerCase().indexOf(condition) >= 0 )
+                );
             row.show = matching_cells.length > 0;
         })
     }
