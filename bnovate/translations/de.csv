@@ -162,12 +162,12 @@ apps/bnovate/bnovate/www/cartridges.html,Select cartridges,Kartuschen auswählen
 apps/bnovate/bnovate/www/cartridges.html,"Select the cartridges you wish to refill. If none of your cartridges are at bNovate, you cannot order a refill.","Wählen Sie die Kartuschen aus, die Sie nachfüllen möchten. Wenn keine Ihrer Kartuschen bei bNovate vorhanden ist, können Sie keine Nachfüllung bestellen."
 apps/bnovate/bnovate/www/connect.html,Configure BactoLink,BactoLink konfigurieren
 apps/bnovate/bnovate/www/connect.html,Configure BactoSense,BactoSense konfigurieren
-apps/bnovate/bnovate/www/connect.html,Connect,Verbinden Sie
+apps/bnovate/bnovate/www/connect.html,Connect,Verbinden
 apps/bnovate/bnovate/www/connect.html,Connect BactoLink,BactoLink verbinden
 apps/bnovate/bnovate/www/connect.html,Connect Hardware,Hardware anschließen
 apps/bnovate/bnovate/www/connect.html,Friendly Name,Freundlicher Name
 apps/bnovate/bnovate/www/connect.html,Serial Number,Seriennummer
-apps/bnovate/bnovate/www/connect.py,Detecting Instrument...,Erkennungsinstrument...
+apps/bnovate/bnovate/www/connect.py,Detecting Instrument...,Instrument erkennen...
 apps/bnovate/bnovate/www/connect.py,Detecting SN...,Erkennung von SN...
 apps/bnovate/bnovate/www/connect.py,HTTPS not available,HTTPS nicht verfügbar
 apps/bnovate/bnovate/www/connect.py,Link is Offline,Link ist offline
@@ -227,3 +227,11 @@ apps/bnovate/bnovate/public/js/web_includes/helpers.js,Service: Due Date,Dienstl
 apps/bnovate/bnovate/public/js/web_includes/helpers.js,Service: Wear Parts Lifetime Remaining,Service: Verbleibende Lebensdauer der Verschleißteile
 apps/bnovate/bnovate/www/instruments.html,GUI Relay,GUI-Relais
 apps/bnovate/bnovate/www/scan.py,Health Scan,Gesundheitsscan
+apps/bnovate/bnovate/bnovate/report/aggregate_invoicing/aggregate_invoicing.js,Ignore Stopped,Ignorieren Gestoppt
+apps/bnovate/bnovate/bnovate/report/connectivity_data_usage/connectivity_data_usage.py,Period Start,Zeitraum Beginn
+apps/bnovate/bnovate/public/js/doctype_includes/contact.js,User ID is already associated with another contact:,Die Benutzer-ID ist bereits mit einem anderen Kontakt verbunden:
+apps/bnovate/bnovate/www/cartridges.html,Shipped To,Versandt nach
+apps/bnovate/bnovate/www/index.html,You do not have any BactoLinks.,Sie haben keine BactoLinks.
+apps/bnovate/bnovate/www/index.html,You have not requested any refills.,Sie haben keine Nachfüllungen angefordert.
+apps/bnovate/bnovate/www/my_addresses.html,Email Notifications,E-Mail-Benachrichtigungen
+apps/bnovate/bnovate/www/my_addresses.html,"Split addresses with comma: first@example.com, second@example.com","Adressen mit Komma trennen: first@example.com, second@example.com"

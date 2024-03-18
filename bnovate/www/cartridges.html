@@ -6,62 +6,36 @@
 
 <div class="row">
     <div class="col">
-        <button id="request-refill" class="btn btn-primary" style="margin-bottom: 10px" title="{{ _('Select cartridges') }}" disabled>{{ _("Request Refill") }}</button> <br/>
-        {% if data %}
+        <button id="request-refill" class="btn btn-primary" style="margin-bottom: 10px"
+            title="{{ _('Select cartridges') }}" disabled>{{ _("Request Refill") }}</button> <br />
+        {% if cartridges %}
         <p><i>{{ _("Select the cartridges you wish to refill. If none of your cartridges are at bNovate, you cannot order a refill.") }}</i></p>
         {% else %}
         <p><i>{{ _("Nothing to display.") }}</i></p>
         {% endif %}
     </div>
 </div>
-
-<div class="row">
-    <div class="col">
-        <table class="table table-condensed" style="border-bottom: 1px solid #d1d8dd; width:100%">
-            <thead>
-                <th></th>
-                <th>{{ _("Serial No") }}</th>
-                <th>{{ _("Location") }}</th>
-                <th>{{ _("Status") }}</th>
-                <th>{{ _("Since") }}</th>
-                <th>{{ _("Tracking No") }}</th>
-                <th>{{ _("Pending Request") }}</th>
-            </thead>
-            <tbody>
-                {% for row in data %}
-                <tr>
-                    <td style="padding: 0px">
-                        <label for="check-{{ row.serial_no }}" style="padding: 12px; margin-bottom: 0px;">
-                            {% if row.location == "bNovate" and not row.refill_request %}
-                            <input name="select" id="check-{{ row.serial_no }}"class="serial-check" type="checkbox" data-serial="{{ row.serial_no }}"
-                                style="margin-right: 12px" >
-                            {% endif %}
-                        </label>
-                    </td>
-                    <td>
-                        <label for="check-{{ row.serial_no }}" style="margin-bottom: 0px;">
-                            {{ row.serial_no }}
-                        </label>
-                    </td>
-                    <td>{{ _(row.location) }}</td>
-                    <td>{{ _(row.status) }}</td>
-                    <td>{{ frappe.format(row.posting_date, {'fieldtype': 'Date'}) }}</td>
-                    <td>
-                        {% if row.tracking_link %}
-                        {{ row.tracking_link }}
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if row.refill_request %}
-                        <a href="/requests/{{row.refill_request}}">{{ row.refill_request }}</a>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<div class="row mb-2">
+    <div class="col padding">
+        <div id="form-container">
+            <!-- <form name="search-form" id="search-form"> -->
+                <div class="form-group">
+                    <label for="search" class="control-label">{{ _("Search") }}</label>
+                    <input type="text" class="form-control" name="search" access="false" id="search">
+                </div>
+            <!-- </form> -->
+        </div>
     </div>
 </div>
+
+<div class="row">
+    <div class="col" id="table-container">
+        <p>
+            <i class="fa fa-cog fa-spin"></i>
+        </p>
+    </div>
+</div>
+
 
 <wizard-modal id="build-fill-request"></wizard-modal>
 
@@ -71,19 +45,119 @@
 {% block script %}
 
 <script>
-    frappe.require("/assets/bnovate/js/web_includes/translations.js")
-    frappe.require("/assets/bnovate/js/web_includes/helpers.js")
-    frappe.require("/assets/bnovate/js/web_includes/wizard_modal.js")
 
-    
-    function get_selected() {
-        let serial_nos = [...document.querySelectorAll(".serial-check")]
-        .filter(c => c.checked)
-        .map(c => ({serial_no: c.dataset.serial}));
-        
-        return serial_nos;
+    const env = {
+        dt: null,
+        cartridges: [],    // sorted, iterable version
+        cartridge_idx: {}, // quick look up
+        allow_unstored_cartridges: false,
     }
-    
+
+    frappe.require([
+        "/assets/bnovate/js/web_includes/translations.js",
+        "/assets/bnovate/js/web_includes/helpers.js",
+        "/assets/bnovate/js/web_includes/wizard_modal.js",
+    ])
+    .then( () => bnovate.translations.get_messages() )
+    .then( () => bnovate.web.get_cartridges() )
+    .then( (data) => {
+        prepare_data(data);
+        env.cartridges = data.cartridges;
+        env.allow_unstored_cartridges = data.allow_unstored_cartridges;
+        draw_datatable(env);
+    })
+
+    function prepare_data(data) {
+        data.cartridges.forEach( row => {
+            env.cartridge_idx[row.serial_no] = row;
+
+            row.checked = false;
+            row.show = true;
+
+            row.rr_link = row.refill_request ? `<a href="/requests/${row.refill_request}">${ row.refill_request }</a>` : ''
+
+            row.address_display = ""
+            if (row.shipping_address) {
+                row.address_display = `<span data-html="true" data-toggle="tooltip" data-container="body"
+                        title="${ row.shipping_address }">
+                        ${bnovate.utils.trim(row.shipping_address, "<br>", 20)}
+                    </span>`;
+            }
+
+        })
+    }
+
+    // Set checkbox state when redrawing table
+    function check_uncheck_data(data) {
+        data.cartridges.forEach( row => {
+            row.checkbox = ""
+            if ( (data.allow_unstored_cartridges || row.location == "bNovate") && !(row.refill_request || row.open_sales_order) ) {
+                row.checkbox = `<label for="check-${ row.serial_no }" style="padding: 12px; margin-bottom: 0px;">
+                        <input name="select" id="check-${ row.serial_no }" class="serial-check" type="checkbox"
+                                data-serial="${ row.serial_no }" style="margin-right: 12px" ${ row.checked ? "checked" : ""}>
+                    </label>`;
+            }
+        })
+    }
+
+    function apply_filter(cartridges, condition) {
+        condition = condition.toLowerCase();
+        cartridges.forEach( row => {
+            const matching_cells = Object.values(row).filter( value => typeof(value) === 'string' && value.toLowerCase().indexOf(condition) >= 0);
+            row.show = matching_cells.length > 0;
+        })
+    }
+
+
+    function draw_datatable(data) {
+        check_uncheck_data(data);
+
+        const head = `
+        <table class="table table-responsive table-condensed" style="border-bottom: 1px solid #d1d8dd; width:100%">
+            <thead>
+                <th></th>
+                <th>{{ _("Serial No") }}</th>
+                <th>{{ _("Location") }}</th>
+                <th>{{ _("Status") }}</th>
+                <th>{{ _("Since") }}</th>
+                <th>{{ _("Tracking No") }}</th>
+                <th>{{ _("Pending Request") }}</th>
+                <th>{{ _("Shipped To") }}</th>
+            </thead>
+            <tbody>`
+
+        // Extra labels extend the clickable area of a checkbox
+        const rows = data.cartridges
+            .filter( row => row.show )
+            .map( row => `
+                <tr>
+                    <td style="padding: 0px">${ row.checkbox }</td>
+                    <td><label for="check-${ row.serial_no }" style="margin-bottom: 0px;">${ row.serial_no }</label></td>
+                    <td><label for="check-${ row.serial_no }" style="margin-bottom: 0px;">${ __(row.location) }</label></td>
+                    <td><label for="check-${ row.serial_no }" style="margin-bottom: 0px;">${ __(row.status) }</label></td>
+                    <td><label for="check-${ row.serial_no }" style="margin-bottom: 0px;">${ moment(row.posting_date).format('DD-MM-YYYY') }</label></td>
+                    <td>${ row.tracking_link ? row.tracking_link : "" }</td>
+                    <td>${ row.rr_link }</td>
+                    <td><label for="check-${ row.serial_no }" style="margin-bottom: 0px;">${ row.address_display }</label></td>
+                </tr> 
+        `)
+
+        const foot = `
+            </tbody>
+        </table>
+        `
+
+        document.getElementById('table-container').innerHTML = head + rows.join("\n") + foot;
+        enable_tooltips();
+        bind_table_elements();
+    }
+
+
+    // Return selected serial numbers
+    function get_selected() {
+        return env.cartridges.filter( row => row.checked )
+    }
+
     async function post_request(doc) {
         const resp = await frappe.call("bnovate.www.request.make_request", {
             doc
@@ -92,25 +166,45 @@
         const new_doc = resp.message
         location.pathname = `/requests/${new_doc.name}`;
     }
-    
+
+    function bind_table_elements() {
+        // Enable button if any SNs are clicked.
+        [...document.querySelectorAll(".serial-check")].map( c => c.addEventListener("change", (e) => {
+            // Store state in order to remember before / after filter
+            env.cartridge_idx[e.srcElement.dataset.serial].checked = e.srcElement.checked;
+
+            const refill_btn = document.querySelector("#request-refill");
+            if ( get_selected().length > 0 ) {
+                refill_btn.disabled = false;
+            } else {
+                refill_btn.disabled = true;
+            }
+        }));
+
+        // [ ...document.querySelectorAll('#table-container tr')].map ( c => c.addEventListener("click", (e) => {
+        //    console.log(e)
+        // }));
+    }
+
+    function enable_tooltips() {
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip()
+        });
+    }
+
     document.querySelector("#request-refill").addEventListener("click", async () => {
         document.getElementById('build-fill-request').show(
-            get_selected(), 
+            get_selected(),
             await bnovate.web.get_addresses(),
             post_request,
         );
     });
 
-    // Enable button if any SNs are clicked.
-    [...document.querySelectorAll(".serial-check")].map( c => c.addEventListener("change", () => {
-        const refill_btn = document.querySelector("#request-refill");
+    document.querySelector("#search").addEventListener("change", async (e) => {
+        apply_filter(env.cartridges, e.srcElement.value);
+        draw_datatable(env);
+    });
 
-        if ( get_selected().length > 0 ) {
-            refill_btn.disabled = false;
-        } else {
-            refill_btn.disabled = true;
-        }
-    }))
     
 </script>
 

@@ -19,6 +19,10 @@
             <div class="card-header">{{ _("Quick Connect") }}</div>
             <div class="card-body">
                 <dl class="card-text">
+                    {% if ( connected_instruments | selectattr("cp") | list | length ) == 0  %}
+                    {{ _("You do not have any BactoLinks.") }}
+                    {% endif %}
+
                     {% for instrument in connected_instruments if instrument.cp %}
                     <dt>
                         {% if customers | length > 1 %}
@@ -51,6 +55,9 @@
             <div class="card-header">{{ _("Refill Requests") }}</div>
             <div class="card-body">
                 <!-- <h5 class="card-title">Refill Requests</h5> -->
+                {% if ( requests | length ) == 0 %}
+                    <tr>{{ _("You have not requested any refills.") }}</tr>
+                {% else %}
                 <table class="table table-condensed" style="border-bottom: 1px solid #d1d8dd; width:100%">
                     <thead>
                         <th>{{ _("#") }}</th>
@@ -58,6 +65,7 @@
                         <th>{{ _("Tracking No") }}</th>
                     </thead>
                     <!-- <tbody> -->
+
                         {% for row in requests %}
                         <tr>
                             <td><a href="/requests/{{ row.name }}">{{ row.name }}</a></td>
@@ -85,6 +93,7 @@
                         {% endfor %}
                     </tbody>
                 </table>
+                {% endif %}
             </div>
         </div>
     </div>

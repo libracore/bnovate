@@ -98,10 +98,6 @@
 
 {% block script %}
 <script>
-    frappe.require("/assets/bnovate/js/web_includes/translations.js")
-    frappe.require("/assets/bnovate/js/iot.js");
-    frappe.require("/assets/bnovate/js/realtime.js")
-
     let buttons = [...document.querySelectorAll("button")];
     let remoteBtns = [...document.querySelectorAll(".open-remote")];
     remoteBtns.map(el => el.addEventListener("click", async (e) => {
@@ -136,8 +132,11 @@
 
     frappe.require([
         "/assets/bnovate/js/iot.js",
-        "/assets/bnovate/js/realtime.js"
-    ]).then(() => {
+        "/assets/bnovate/js/realtime.js",
+        "/assets/bnovate/js/web_includes/translations.js"
+    ])
+    .then( () => bnovate.translations.get_messages() )
+    .then(() => {
         // Load status
         [...document.querySelectorAll(".link-status")].map(async el => {
             const device = await portal_get_device(el.dataset.deviceId);

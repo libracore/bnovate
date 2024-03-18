@@ -50,6 +50,7 @@ def get_session_customers():
         SELECT 
             `tC1`.`link_name` AS `docname`,
             `tCus`.`enable_cartridge_portal`,
+            `tCus`.`allow_unstored_cartridges`,
             `tCus`.`customer_name`
         FROM `tabContact`
         JOIN `tabDynamic Link` AS `tC1` ON `tC1`.`parenttype` = "Contact" 
@@ -88,6 +89,13 @@ def has_cartridge_portal():
     """ True if user is allowed to use cartridge management features """
     customer = get_session_primary_customer()
     if customer is not None and customer.enable_cartridge_portal:
+        return True
+    return False
+
+def allow_unstored_cartridges():
+    """ True if user is allowed to use cartridge management features """
+    customer = get_session_primary_customer()
+    if customer is not None and customer.allow_unstored_cartridges:
         return True
     return False
 
@@ -132,6 +140,7 @@ def get_addresses():
             `tabAddress`.`country`,
             `tabAddress`.`is_primary_address`,
             `tabAddress`.`is_shipping_address`,
+            `tabAddress`.`email_id`,
             `tC1`.`link_name` AS `customer_docname`
         FROM `tabContact`
         JOIN `tabDynamic Link` AS `tC1` ON `tC1`.`parenttype` = "Contact" 
@@ -142,18 +151,22 @@ def get_addresses():
                                        AND `tA1`.`link_name` = `tC1`.`link_name`
         LEFT JOIN `tabAddress` ON `tabAddress`.`name` = `tA1`.`parent`
         WHERE `tabContact`.`user` = "{user}"
+            AND NOT `tabAddress`.`portal_hide`
         ORDER BY `tabAddress`.`company_name`, `tabAddress`.`address_line1`
     """.format(user=frappe.session.user), as_dict=True)
 
     for addr in addresses:
-        addr.display = get_address_display(addr)
+        short_addr = addr.copy();
+        if 'email_id' in short_addr:
+            del short_addr['email_id']
+        addr.display = get_address_display(short_addr)
 
     
     return addresses
 
 
 @frappe.whitelist()
-def create_address(address_line1, pincode, city, address_type="Shipping", company_name=None, address_line2=None, country="Switzerland"):
+def create_address(address_line1, pincode, city, address_type="Shipping", company_name=None, address_line2=None, country="Switzerland", email_id="", commit=True):
     """ Add address on primary customer associated to this user """
     # fetch customers for this user
     customer = get_session_primary_customer()
@@ -170,11 +183,13 @@ def create_address(address_line1, pincode, city, address_type="Shipping", compan
         'pincode': pincode,
         'city': city,
         'country': country,
-        'links': customer_links
+        'links': customer_links,
+        'email_id': email_id,
     })
     
     new_address.insert(ignore_permissions=True)
-    frappe.db.commit()
+    if commit:
+        frappe.db.commit()
 
 
 @frappe.whitelist()
@@ -186,19 +201,20 @@ def delete_address(name):
     permitted = False
     for l in address.links:
         for c in customers:
-            if l.link_name == c.customer_docname:
+            if l.link_name == c.docname:
                 permitted = True
     if permitted:
-        # delete address: drop links
-        for l in address.links:
-            address.remove(l)
-        # FIXME: current hack is to associate to a dummy customer to override a validation which automatically re-links
-        address.append('links', {'link_doctype': 'Customer', 'link_name': frappe.get_single('bNovate Settings').dummy_customer})
+        address.portal_hide = True
         address.save(ignore_permissions=True)
         frappe.db.commit()
     else:
-        raise frappe.PermissionError
+        raise frappe.PermissionError("You are not allowed to delete this address.")
 
+@frappe.whitelist()
+def modify_address(name, address_line1, pincode, city, address_type="Shipping", company_name=None, address_line2=None, country="Switzerland", email_id="", commit=True):
+    """ Modify an address, by creating a new one and unlinking the existing one """
+    create_address(address_line1, pincode, city, address_type, company_name, address_line2, country, email_id, commit=True)
+    delete_address(name)
 
 @frappe.whitelist()
 def get_countries():

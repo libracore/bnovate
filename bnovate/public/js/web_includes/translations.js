@@ -1,9 +1,10 @@
+frappe.provide("bnovate.translations");
 
-frappe.call("frappe.desk.page.setup_wizard.setup_wizard.load_languages")
-    .then((res) => {
-        const default_language = res.message.default_language;
-        return frappe.call("frappe.desk.page.setup_wizard.setup_wizard.load_messages", { language: default_language })
-    })
-    .then((res) => {
-        Object.assign(frappe._messages, res.__messages);
-    });
+bnovate.translations.get_messages = async function () {
+    let resp = await frappe.call("frappe.desk.page.setup_wizard.setup_wizard.load_languages")
+
+    const default_language = resp.message.default_language;
+    resp = await frappe.call("frappe.desk.page.setup_wizard.setup_wizard.load_messages", { language: default_language })
+
+    Object.assign(frappe._messages, resp.__messages);
+}

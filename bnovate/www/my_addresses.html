@@ -29,6 +29,7 @@
 <div class="row">
     <div class="col">
         <button id="new-address" class="btn btn-primary" style="margin-bottom: 10px">{{ _("New Address") }}</button>
+        <i id="loading" class="fa fa-cog fa-spin"></i>
     </div>
 </div>
 
@@ -37,10 +38,15 @@
     <div class="card">
         <div class="card-body">
             <div class="btn-group float-right">
-              <!-- <button type="button" class="btn btn-sm btn-primary"><i class="fa fa-pencil"></i></button> -->
+              <button type="button" class="btn btn-sm btn-primary edit-address" data-name="{{ addr.name }}" disabled><i class="fa fa-pencil"></i></button>
               <button type="button" class="btn btn-sm btn-danger delete-address" data-name="{{ addr.name }}"><i class="fa fa-trash"></i></button>
             </div>
             {{addr.display}}
+            <p class="text-muted">
+                {% if addr.email_id %}
+                    {{ addr.email_id.split(",") | join("<br>") }}
+                {% endif %}
+            </p>
         </div>
     </div>
     {% endfor %}
@@ -88,6 +94,11 @@
                                     {% endfor %}
                                 </select>
                             </div>
+                            <div class="form-group">
+                                <label for="email_id" class="control-label">{{ _("Email Notifications") }}</label>
+                                <input type="text" class="form-control" name="email_id" access="false" id="email_id">
+                                <p class="help-box small text-muted">{{ _("Split addresses with comma: first@example.com, second@example.com") }}</p>
+                            </div>
                         </form>
                     </div>
                     
@@ -109,14 +120,35 @@
 
 {% block script %}
 <script>
-    frappe.require("/assets/bnovate/js/web_includes/translations.js")
-    frappe.require("/assets/bnovate/js/web_includes/helpers.js")
-    frappe.require("/assets/bnovate/js/web_includes/address_modal.js")
+    
+    const addresses = {};
+    frappe.require([
+        "/assets/bnovate/js/web_includes/translations.js",
+        "/assets/bnovate/js/web_includes/helpers.js",
+        "/assets/bnovate/js/web_includes/address_modal.js",
+    ])
+    .then( () => bnovate.translations.get_messages() )
+    .then( () => bnovate.web.get_addresses())
+    .then( remote_addresses => {
+        remote_addresses.forEach(addr => addresses[addr.name] = addr);
+        hide_spinner();
+        bind_edit_buttons();
+    });
 
+    // Create new address
     async function save() {
         const data = new FormData(document.querySelector("#address-form"));
         const doc = Object.fromEntries(data);
         await bnovate.web.create_address(doc);
+        location.reload();
+    }
+
+    // Save new address and delete old one
+    async function edit(name) {
+        console.log("TODO: create new address and save old one, named.", name)
+        const data = new FormData(document.querySelector("#address-form"));
+        const doc = Object.fromEntries(data);
+        await bnovate.web.modify_address(name, doc);
         location.reload();
     }
 
@@ -132,7 +164,44 @@
 				input.closest(".form-group").classList.remove('has-error')
 			}
 		}
+
+        // Check emails
+        const emailInput = frm.querySelector("#email_id");
+        if (!emailInput) {
+            return valid;
+        }
+
+        const re = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i; // Match email format
+        const emails = emailInput?.value;
+        let emailValid = true;
+        emails.split(',').forEach( (email) => {
+            if ( email.trim().length > 0 && !re.test(email.trim())) {
+                emailValid = false;
+                emailInput.closest(".form-group").classList.add('has-error');
+            };
+        })
+        if (emailValid) {
+            emailInput.closest(".form-group").classList.remove('has-error');
+        } else {
+            valid = false;
+        }
+
 		return valid;
+    }
+
+    function hide_spinner() {
+        document.getElementById("loading").style.display = "none";
+    }
+
+    function bind_edit_buttons() {
+        [...document.querySelectorAll(".edit-address")].map(el => {
+            el.removeAttribute("disabled");
+            el.addEventListener("click", async (e) => {
+                const contents = document.querySelector("#modal-body").content.cloneNode(true)
+                document.getElementById("edit-address-modal").show(contents, validate, () => edit(el.dataset.name), addresses[el.dataset.name] || {});
+                validate();
+            })
+        });
     }
 
     // Bind all buttons
@@ -147,5 +216,7 @@
             location.reload();
         }
     }));
+
+
 </script>
 {% endblock %}

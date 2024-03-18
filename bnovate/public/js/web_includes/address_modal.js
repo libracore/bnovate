@@ -37,10 +37,19 @@ customElements.define('address-modal', class extends HTMLElement {
         });
     }
 
-    async show(contents, validate, confirm_callback) {
+    async show(contents, validate, confirm_callback, data = {}) {
         if (!this.shadowRoot) {
             this.draw(contents);
         }
+
+        // Populate modal. Keys in data are named the same as the input element IDs.
+        Object.keys(data).forEach(key => {
+            const input = this.modal.querySelector(`[name="${key}"]`);
+            if (input) {
+                input.value = data[key];
+            }
+        });
+
         this.confirm_callback = confirm_callback;
         this.validate = validate;
         $(this.modal).modal({ backdrop: 'static', keyboard: false });

@@ -12,7 +12,23 @@ body {
 
   --error-color: #ff5858;
   --danger: #f38926;
+
+  --dt-header-cell-bg: #ffecd4;
 }
+
+@media (min-width: 992px) {
+  .container {
+    max-width: 1800px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .container {
+    max-width: 1800px;
+  }
+}
+
+/* Modals */
 
 .modal-header {
     background-color: var(--completed-background-color);
@@ -51,6 +67,53 @@ body {
   background-color: var(--danger);
   border-color: var(--danger);
 }
+
+/* Tooltips */
+
+.tooltip-inner {
+  text-align: left;
+  max-width: 400px;
+}
+
+/* Tables, bootstrap */
+
+tr:has(input[type=checkbox]:checked) {
+  background-color: var(--dt-header-cell-bg);
+}
+
+/* Tables (frappe datatable) */
+
+.dt-scrollable {
+  /* Remove border below report table headers - spans too wide when embedded in Form */
+  border-top: 0px;
+  min-height: 500px;
+}
+
+.dt-row:last-child:not(.dt-row-filter) {
+  /* Also hides an ugly line */
+  border-bottom: none;
+}
+
+.dt-row:last-child:not(.dt-row-filter) {
+  /* Also hides an ugly line */
+  border-bottom: none;
+}
+
+.dt-cell__content:has(input[type=checkbox]) {
+  /* hides a weird artifact next to checkbox */
+  overflow: unset;
+}
+
+
+.dt-cell {
+  border-left: none;
+}
+
+.dt-cell__content:has(input[type=checkbox]) {
+  /* hides a weird artifact next to checkbox */
+  overflow: unset;
+}
+
 
 /* flex copied from Frappe, needed for modals. */
 

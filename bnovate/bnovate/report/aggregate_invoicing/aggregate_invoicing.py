@@ -261,7 +261,7 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
             NULL AS hours,
             ssi.qty AS qty,
             ssi.rate AS rate,
-            NULL AS price_list_rate,
+            ssi.price_list_rate AS price_list_rate,
             (IFNULL(ssi.qty, 1) * IFNULL(ssi.rate, 0)) AS amount,
             0 as additional_discount,
             ss.currency AS currency,
@@ -390,13 +390,14 @@ def create_invoice(from_date, to_date, customer, doctype):
             'qty': e.qty,
             'rate': e.rate,
             'description': e.description,
+            'price_list_rate': e.price_list_rate,
         }
         if e.rate == 0:
             item['discount_percentage'] = 100
         if e.dt == "Delivery Note":
             item['delivery_note'] = e.reference
             item['dn_detail'] = e.detail
-            item['price_list_rate'] = e.price_list_rate
+            # item['price_list_rate'] = e.price_list_rate
             if e.so_detail:
                 item['sales_order'] = e.sales_order
                 item['so_detail'] = e.so_detail
