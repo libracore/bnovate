@@ -15,6 +15,8 @@
   "renewal_reminder",
   "renewal_reminder_period",
   "column_main",
+  "amended_from",
+  "company",
   "enabled",
   "start_date",
   "planned_end_date",
@@ -59,8 +61,6 @@
   "tc_name",
   "terms",
   "sales_invoice",
-  "amended_from",
-  "company",
   "printing_details_section",
   "language"
  ],
@@ -470,7 +470,7 @@
   }
  ],
  "is_submittable": 1,
- "modified": "2024-03-08 17:01:16.489373",
+ "modified": "2024-03-22 15:10:52.906092",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Subscription Contract",
