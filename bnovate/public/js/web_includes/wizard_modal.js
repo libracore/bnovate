@@ -103,11 +103,11 @@ const template_page3 = `
 const template_page4 = `
 <div class="row">
     <div class="col-sm">
-        <h5>{{ __("Shipping Address") }}</h5>
+        <h5>{{ __("Shipping") }}</h5>
         {{doc.shipping_address_display}}
     </div>
     <div class="col-sm">
-        <h5>{{ __("Billing Address") }}</h5>
+        <h5>{{ __("Billing") }}</h5>
         {{doc.billing_address_display}}
     </div>
 </div>
