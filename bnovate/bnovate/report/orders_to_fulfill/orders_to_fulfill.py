@@ -102,6 +102,7 @@ def get_data(filters):
         soi.name,
         soi.name as detail_docname,
         WEEK(soi.delivery_date) as weeknum,
+        so.shipping_address_name,
         soi.parent as sales_order,
         so.customer as customer,
         so.customer_name as customer_name,
@@ -132,6 +133,7 @@ def get_data(filters):
         soi.name,
         pi.name as detail_docname,
         WEEK(soi.delivery_date) as weeknum,
+        so.shipping_address_name,
         soi.parent as sales_order,
         so.customer as customer,
         so.customer_name as customer_name,
@@ -189,6 +191,7 @@ def get_data(filters):
   GROUP BY o.detail_docname  -- to avoid one line per DN item
   ORDER BY 
     delivery_date ASC,
+    shipping_address_name,
     sales_order,
     idx,
     pidx;
@@ -373,6 +376,10 @@ ORDER BY week ASC
         "title": "Total items per week",
     }
     return chart
+
+@frappe.whitelist()
+def create_grouped_dn(SO_names, delivery_date, delivery_address_name):
+    """ Create a DN that consolidates several SO. """
     
     
 ### Helpers

@@ -91,7 +91,7 @@ frappe.query_reports["Orders to Fulfill"] = {
 				let [legend, colour] = delivery_note_indicator(data);
 				return ` <span class="indicator ${colour}">${value.split(" ").map(n => frappe.utils.get_form_link("Delivery Note", n, true))}, ${legend}</span> (${data.open_delivery_qty}/${data.remaining_qty})`;
 			} else {
-				return `<button class="btn btn-xs btn-primary create-dn" onclick="create_dn('${data.sales_order}')">Create DN</button>`;
+				return `<button class="btn btn-xs btn-primary create-dn" onclick="create_grouped_dn('${data.sales_order}', '${data.customer}', '${data.ship_date}', '${data.shipping_address_name}')">Create DN</button>`;
 
 			}
 		}
@@ -131,7 +131,64 @@ function cartridge_status_link(serial_nos) {
 		});
 }
 
-async function create_dn(so_docname) {
+async function create_grouped_dn(so_docname, customer, ship_date, shipping_address_name) {
+
+	const group_potential = frappe.query_report.data
+		.filter(row => (
+			row.customer == customer &&
+			row.ship_date == ship_date &&
+			row.shipping_address_name == shipping_address_name &&
+			row.indent == 0));
+
+	const sales_orders = new Set(group_potential.map(row => row.sales_order));
+	let group_orders = false;
+	if (sales_orders.size > 1) {
+		// Orders could be grouped
+		const msg_body = frappe.render_template(`
+			<p>Multiple sales orders can be shipped to the same address that day</p>
+			<table class="table table-condensed no-margin" style="border-bottom: 1px solid #d1d8dd">
+				<thead>
+				 	<th>SO</th>
+					<th>Qty</th>
+					<th>Item Name</th>
+				</thead>
+				<tbody>
+					{% for row in rows %}
+					<tr>
+						<td>{{ row.sales_order }}</td>
+						<td>{{ row.remaining_qty }}</td>
+						<td><b>{{ row.item_name }}</b></td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		`, { rows: group_potential });
+
+		const do_group = await bnovate.utils.prompt(
+			`Group orders?`,
+			[{
+				fieldname: 'description',
+				fieldtype: 'HTML',
+				options: msg_body,
+			}],
+			"Group Orders",
+			"Don't Group"
+		);
+
+		if (do_group) {
+			group_orders = true;
+		}
+	}
+
+	if (!group_orders) {
+		return create_dn(so_docname, customer, ship_date, shipping_address_name);
+	}
+
+	return;
+
+};
+
+async function create_dn(so_docname, customer, ship_date, shipping_address_name) {
 
 	const items = frappe.query_report.data
 		.filter(row => row.sales_order == so_docname && row.indent == 0 && !!row.serial_nos)  // keep only rows with SNs
