@@ -131,19 +131,27 @@ function cartridge_status_link(serial_nos) {
 		});
 }
 
+/*
+	- Check if multiple orders were planned for same day, same customer, and same address.
+	- If so, offer to group orders
+	- In all cases, show serial numbers that need to be packed
+	- Create draft DN and calculate appropriate shipping charge.
+*/
 async function create_grouped_dn(so_docname, customer, ship_date, shipping_address_name) {
 
-	// TODO: exclude rows that already have a draft DN
+
+	/* --------- OFFER GROUPING / SKIP IF IRRELEVANT --------------- */
 
 	const group_potential = frappe.query_report.data
 		.filter(row => (
 			row.customer == customer &&
 			row.ship_date == ship_date &&
 			row.shipping_address_name == shipping_address_name &&
-			row.indent == 0));
+			row.indent == 0 &&
+			row.open_delivery_notes == null
+		));
 
-	const item_detail_docnames = group_potential.map(row => row.detail_docname);
-	const so_docnames = new Set(group_potential.map(row => row.sales_order));
+	let so_docnames = new Set(group_potential.map(row => row.sales_order));
 
 	let group_orders = false;
 	if (so_docnames.size > 1) {
@@ -184,11 +192,65 @@ async function create_grouped_dn(so_docname, customer, ship_date, shipping_addre
 		}
 	}
 
+
+	let retained_rows = group_potential;
 	if (!group_orders) {
-		return create_dn(so_docname, customer, ship_date, shipping_address_name);
+		retained_rows = group_potential.filter(row => row.sales_order == so_docname);
+		so_docnames = [];
 	}
 
-	console.log("Item detail docnames", item_detail_docnames)
+	/* --------- DISPLAY ITEMS TO PREPARE --------------- */
+
+	const item_detail_docnames = retained_rows.map(row => row.detail_docname);
+	const display_rows = retained_rows
+		.filter(row => row.serial_nos)
+		.map(row => ({
+			...row,
+			serial_nos: row.serial_nos?.trim().split('\n') || []
+		}))
+
+	const msg_body = frappe.render_template(`
+		<table class="table table-condensed no-margin" style="border-bottom: 1px solid #d1d8dd">
+			<thead>
+				<th>SO</th>
+				<th>Qty</th>
+				<th>Item Name</th>
+			</thead>
+			<tbody>
+				{% for row in rows %}
+				<tr>
+					<td>{{ row.sales_order }}</td>
+					<td>{{ row.remaining_qty }}</td>
+					<td><b>{{ row.item_name }}</b>
+						<ul>
+						{% for sn in row.serial_nos %}
+							<li>{{ sn }}</li>
+						{% endfor %}
+						</ul>
+					</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	`, { rows: display_rows });
+
+	const ok = await bnovate.utils.prompt(
+		`Prepare Serial Numbers:`,
+		[{
+			fieldname: 'description',
+			fieldtype: 'HTML',
+			options: msg_body,
+		}],
+		"Create DN",
+		"Cancel"
+	);
+
+	if (!ok) {
+		return;
+	}
+
+
+	/* --------- CREATE AGGREGATE DN --------------- */
 
 	return frappe.model.open_mapped_doc({
 		method: "bnovate.bnovate.report.orders_to_fulfill.orders_to_fulfill.create_grouped_dn",
@@ -209,63 +271,3 @@ async function create_grouped_dn(so_docname, customer, ship_date, shipping_addre
 	});
 
 };
-
-async function create_dn(so_docname, customer, ship_date, shipping_address_name) {
-
-	const items = frappe.query_report.data
-		.filter(row => row.sales_order == so_docname && row.indent == 0 && !!row.serial_nos)  // keep only rows with SNs
-		.map(row => ({
-			...row,
-			serial_nos: row.serial_nos?.trim().split('\n') || [],
-		}));
-
-	const msg_body = frappe.render_template(`
-		<table class="table table-condensed no-margin" style="border-bottom: 1px solid #d1d8dd">
-			<thead>
-				<th>Qty</th>
-				<th>Item Name</th>
-			</thead>
-			<tbody>
-				{% for row in rows %}
-				<tr>
-					<td>{{ row.remaining_qty }}</td>
-					<td><b>{{ row.item_name }}</b>
-						<ul>
-						{% for sn in row.serial_nos %}
-							<li>{{ sn }}</li>
-						{% endfor %}
-						</ul>
-					</td>
-				</tr>
-				{% endfor %}
-			</tbody>
-		</table>
-	`, { rows: items })
-
-	const ok = await bnovate.utils.prompt(
-		`Create DN for ${so_docname}?`,
-		[{
-			fieldname: 'description',
-			fieldtype: 'HTML',
-			options: msg_body,
-		}],
-		"Create DN",
-		"Cancel"
-	);
-
-	if (!ok) {
-		return;
-	}
-
-	frappe.model.open_mapped_doc({
-		method: "erpnext.selling.doctype.sales_order.sales_order.make_delivery_note",
-		frm: {
-			doc: {
-				name: so_docname,
-			},
-			get_selected() {
-				return []
-			}
-		},
-	});
-}
