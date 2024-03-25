@@ -61,7 +61,7 @@ const template_page1 = `
         <tr>
             <td>{{ sn.serial_no }}</td>
             <td>
-                <select class="variant-select" name="variant-{{sn.serial_no}}" data-sn="{{sn.serial_no}}">
+                <select class="variant-select" name="variant-{{sn.serial_no}}" data-sn="{{sn.serial_no}}" data-last_shipped="{{sn.address_short}}">
                     <option value=""></option>
                     <option>TCC</option>
                     <option>ICC</option>
@@ -103,11 +103,11 @@ const template_page3 = `
 const template_page4 = `
 <div class="row">
     <div class="col-sm">
-        <h5>{{ __("Shipping Address") }}</h5>
+        <h5>{{ __("Shipping") }}</h5>
         {{doc.shipping_address_display}}
     </div>
     <div class="col-sm">
-        <h5>{{ __("Billing Address") }}</h5>
+        <h5>{{ __("Billing") }}</h5>
         {{doc.billing_address_display}}
     </div>
 </div>
@@ -119,12 +119,14 @@ const template_page4 = `
             <thead>
                 <th>{{ __("Serial No") }}</th>
                 <th>{{ __("Variant") }}</th>
+                <th>{{ __("Last Shipped To") }}</th>
             </thead>
             <tbody>
                 {% for it in doc.items %}
                 <tr>
                     <td>{{ it.serial_no }}</td>
                     <td>{{ it.type }}</td>
+                    <td>{{ it.last_shipped }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -311,6 +313,7 @@ customElements.define('wizard-modal', class extends HTMLElement {
     build_doc() {
         const items = [...this.modal.querySelectorAll(".variant-select")].map(el => ({
             serial_no: el.dataset.sn,
+            last_shipped: el.dataset.last_shipped,
             type: el.value,
         }));
         const shipping_address = this.modal.querySelector("input[name='shipping_address']:checked")?.value;

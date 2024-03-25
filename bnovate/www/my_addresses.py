@@ -15,4 +15,5 @@ def get_context(context):
     context.addresses = get_addresses()
     context.countries = get_countries()
     context.title = _("My Addresses")
+
     return context

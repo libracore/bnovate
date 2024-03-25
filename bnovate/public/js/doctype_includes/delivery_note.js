@@ -22,6 +22,16 @@ frappe.ui.form.on("Delivery Note", {
         frm.override_action_buttons()
     },
 
+    onload(frm) {
+        frm.set_query("custom_shipping_rule", () => {
+            return {
+                filters: {
+                    country: frm.doc.shipping_country,
+                }
+            }
+        })
+    },
+
     refresh(frm) {
         setTimeout(() => {
             frm.remove_custom_button(__("Subscription"), "Create")
@@ -36,6 +46,30 @@ frappe.ui.form.on("Delivery Note", {
         }, 500);
 
         frm.override_action_buttons()
+    },
+
+    custom_shipping_rule(frm) {
+
+        // Call Custom Shipping Rule instead of built-in one:
+        if (frm.doc.custom_shipping_rule) {
+            return frappe.call({
+                method: 'bnovate.bnovate.doctype.custom_shipping_rule.custom_shipping_rule.apply_rule',
+                args: {
+                    doc: frm.doc,
+                },
+                callback: (r) => {
+                    if (!r.exc) {
+                        frm.refresh_fields();
+                        frm.cscript.calculate_taxes_and_totals();
+                    }
+                },
+                error: () => frm.set_value('custom_shipping_rule', ''),
+            })
+        }
+        else {
+            frm.cscript.calculate_taxes_and_totals();
+        }
+
     },
 })
 

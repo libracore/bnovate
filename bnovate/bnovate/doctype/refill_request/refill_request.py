@@ -119,6 +119,10 @@ def make_sales_order(source_name, target_doc=None):
                 "blanket_order": get_blanket_order(item_code_icp),
             })
 
+        # force empty some fields so they get set from customer defaults
+        target.currency = None
+        target.selling_price_list = None
+        target.price_list_currency = None
         target.run_method("set_missing_values")
 
     doclist = get_mapped_doc("Refill Request", source_name, {

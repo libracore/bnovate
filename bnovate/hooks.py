@@ -85,10 +85,12 @@ fixtures = [
             "Delivery Note-packing_stage",
             # Custom shipping rules
             "Sales Taxes and Charges-hide_if_zero",
-            "Sales Order-custom_shipping_rule",
-            "Sales Order-shipping_country",
             "Quotation-custom_shipping_rule",
             "Quotation-shipping_country",
+            "Sales Order-custom_shipping_rule",
+            "Sales Order-shipping_country",
+            "Delivery Note-custom_shipping_rule",
+            "Delivery Note-shipping_country",
             # Stock management
             "Material Request Item-default_supplier",
             "Purchase Receipt-scan",

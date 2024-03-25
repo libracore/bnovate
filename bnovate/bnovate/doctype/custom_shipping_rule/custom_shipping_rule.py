@@ -43,7 +43,7 @@ class CustomShippingRule(ShippingRule):
         # convert to order currency
         if doc.currency != self.currency:
             # Apply long-term shipping rate
-            exchange_rate = get_fixed_exchange_rate(self.currency, doc.currency, doc.transaction_date)
+            exchange_rate = get_fixed_exchange_rate(self.currency, doc.currency, doc.get('transaction_date') or doc.get('posting_date'))
             if not exchange_rate:
                 throw(_("No 'Fixed Exchange Rate' from shipping list currency {0} to document currency {1}").format(self.currency, doc.currency), CurrencyExchangeMissingError)
 
@@ -51,6 +51,17 @@ class CustomShippingRule(ShippingRule):
 
         self.add_shipping_rule_to_tax_table(doc, shipping_amount)
 
+
+def apply_rule_inline(doc):
+    """ Applies custom shipping rule to an unsaved document """
+    if doc.custom_shipping_rule:
+        # Force recalculation of net weight
+        doc.calculate_taxes_and_totals()
+        shipping_rule = frappe.get_doc("Custom Shipping Rule", doc.custom_shipping_rule)
+        shipping_rule.apply(doc)
+
+        # Recalculate with new shipping amount
+        doc.calculate_taxes_and_totals()
 
 @frappe.whitelist()
 def apply_rule(doc):

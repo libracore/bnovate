@@ -41,6 +41,12 @@ bnovate.utils.trim = function (str, token, n) {
   return bnovate.utils.truncate(str, n);
 };
 
+// Remove HTML tags from a string
+bnovate.utils.striptags = function (html) {
+  let doc = new DOMParser().parseFromString(html, 'text/html');
+  return doc.body.textContent || "";
+}
+
 bnovate.utils.confetti = function () {
 
   const pick_random_item = function (arr) {

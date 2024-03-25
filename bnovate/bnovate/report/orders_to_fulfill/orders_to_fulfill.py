@@ -7,9 +7,11 @@ import textwrap
 import itertools
 from frappe import _
 
-from bnovate.bnovate.report.projected_stock import projected_stock
+from erpnext.selling.doctype.sales_order.sales_order import make_delivery_note
 
+from bnovate.bnovate.report.projected_stock import projected_stock
 from bnovate.bnovate.utils.enclosures import is_enclosure
+from bnovate.bnovate.doctype.custom_shipping_rule import custom_shipping_rule
 
 def execute(filters=None):
     columns = get_columns(filters)
@@ -102,6 +104,7 @@ def get_data(filters):
         soi.name,
         soi.name as detail_docname,
         WEEK(soi.delivery_date) as weeknum,
+        so.shipping_address_name,
         soi.parent as sales_order,
         so.customer as customer,
         so.customer_name as customer_name,
@@ -132,6 +135,7 @@ def get_data(filters):
         soi.name,
         pi.name as detail_docname,
         WEEK(soi.delivery_date) as weeknum,
+        so.shipping_address_name,
         soi.parent as sales_order,
         so.customer as customer,
         so.customer_name as customer_name,
@@ -189,6 +193,7 @@ def get_data(filters):
   GROUP BY o.detail_docname  -- to avoid one line per DN item
   ORDER BY 
     delivery_date ASC,
+    shipping_address_name,
     sales_order,
     idx,
     pidx;
@@ -373,7 +378,34 @@ ORDER BY week ASC
         "title": "Total items per week",
     }
     return chart
-    
+
+@frappe.whitelist()
+def create_grouped_dn(source_docname):
+    """ Create a DN that consolidates several SO. """
+    # args to frappe.model.open_mapped_doc are passed to frappe.flags.args
+    so_docnames = frappe.flags.args.so_docnames
+    item_detail_docnames = frappe.flags.args.item_detail_docnames
+    ship_date = frappe.flags.args.ship_date
+    shipping_address_name = frappe.flags.args.shipping_address_name
+
+    # Create DN for main SO 
+    target_doc = make_delivery_note(source_docname)
+
+    # Create all the separate DNs
+    for next_docname in [n for n in so_docnames if n != source_docname]:
+        target_doc = make_delivery_note(next_docname, target_doc=target_doc)
+
+    # Filter out items that don't match the delivery address or shipping date
+    for item in target_doc.items:
+        if item.so_detail not in item_detail_docnames:
+            target_doc.items.remove(item)
+
+    target_doc.packed_items = []
+
+    # Recalculate shipping
+    custom_shipping_rule.apply_rule_inline(target_doc)
+
+    return target_doc
     
 ### Helpers
 
