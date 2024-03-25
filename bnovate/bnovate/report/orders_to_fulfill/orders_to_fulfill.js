@@ -133,6 +133,8 @@ function cartridge_status_link(serial_nos) {
 
 async function create_grouped_dn(so_docname, customer, ship_date, shipping_address_name) {
 
+	// TODO: exclude rows that already have a draft DN
+
 	const group_potential = frappe.query_report.data
 		.filter(row => (
 			row.customer == customer &&
@@ -140,9 +142,11 @@ async function create_grouped_dn(so_docname, customer, ship_date, shipping_addre
 			row.shipping_address_name == shipping_address_name &&
 			row.indent == 0));
 
-	const sales_orders = new Set(group_potential.map(row => row.sales_order));
+	const item_detail_docnames = group_potential.map(row => row.detail_docname);
+	const so_docnames = new Set(group_potential.map(row => row.sales_order));
+
 	let group_orders = false;
-	if (sales_orders.size > 1) {
+	if (so_docnames.size > 1) {
 		// Orders could be grouped
 		const msg_body = frappe.render_template(`
 			<p>Multiple sales orders can be shipped to the same address that day</p>
@@ -184,7 +188,25 @@ async function create_grouped_dn(so_docname, customer, ship_date, shipping_addre
 		return create_dn(so_docname, customer, ship_date, shipping_address_name);
 	}
 
-	return;
+	console.log("Item detail docnames", item_detail_docnames)
+
+	return frappe.model.open_mapped_doc({
+		method: "bnovate.bnovate.report.orders_to_fulfill.orders_to_fulfill.create_grouped_dn",
+		frm: {
+			doc: {
+				name: so_docname,
+			},
+			get_selected() {
+				return []
+			}
+		},
+		args: {
+			so_docnames: Array.from(so_docnames),
+			item_detail_docnames,
+			ship_date,
+			shipping_address_name,
+		}
+	});
 
 };
 
