@@ -32,7 +32,7 @@ def get_columns(filters=None):
 def get_data(filters=None):
 	query_filters = ""
 	if filters.only_current_fy:
-		query_filters += "WHERE w.year = YEAR(CURDATE())"
+		query_filters += "AND w.year = YEAR(CURDATE())"
 	sql_query = """
 
 WITH so AS ( -- Data from SO
@@ -41,7 +41,6 @@ WITH so AS ( -- Data from SO
     so.company,
     so.transaction_date,
     YEAR(so.transaction_date) as year,
-    WEEK(so.transaction_date) as week_num,
     DATE_ADD(so.transaction_date, INTERVAL(-WEEKDAY(so.transaction_date)) DAY) as week_start,
     soi.qty,
     soi.item_code,
@@ -61,21 +60,91 @@ WITH so AS ( -- Data from SO
     AND so.docstatus = 1
   ORDER BY so.transaction_date DESC
 ),
+
+scp AS ( -- scp: Subscription Contract Period
+
+  WITH RECURSIVE bp AS ( -- bp: billing periods
+    SELECT
+        ss.name,
+        ss.company,
+        ssi.name AS ssi_docname,
+        ssi.idx AS ssi_index,
+        start_date,
+        -- Continue at most until end of current month / filter end date month. For yearly we still generate an invoice for entire year 
+        LEAST(IFNULL(ss.end_date, '2099-12-31'), CURDATE()) AS end_date,
+        ss.interval,
+        start_date as period_start,
+        CASE ss.interval
+            WHEN 'Yearly' THEN DATE_ADD(DATE_ADD(start_date, INTERVAL 1 YEAR), INTERVAL -1 DAY)
+            WHEN 'Monthly' THEN DATE_ADD(DATE_ADD(start_date, INTERVAL 1 MONTH), INTERVAL -1 DAY)
+        END AS period_end
+    FROM `tabSubscription Contract Item` ssi
+    JOIN `tabSubscription Contract` ss on ssi.parent = ss.name
+    WHERE ss.company = "{company}"
+      AND ss.docstatus = 1
+    UNION ALL
+    SELECT
+        name,
+        company,
+        ssi_docname,
+        ssi_index,
+        start_date,
+        end_date,
+        bp.interval,
+        CASE bp.interval
+            WHEN 'Yearly' THEN DATE_ADD(period_start, INTERVAL 1 YEAR) 
+            WHEN 'Monthly' THEN DATE_ADD(period_start, INTERVAL 1 MONTH)
+        END AS period_start,
+        CASE bp.interval
+            -- period_start is previous iteration -> add two intervals
+            WHEN 'Yearly' THEN DATE_ADD(DATE_ADD(period_start, INTERVAL 2 YEAR), INTERVAL -1 DAY)
+            WHEN 'Monthly' THEN DATE_ADD(DATE_ADD(period_start, INTERVAL 2 MONTH), INTERVAL -1 DAY)
+        END AS period_end
+    FROM bp
+    WHERE period_end < end_date -- note this is period_end from previous iteration!
+  )
+  SELECT
+      bp.name,
+      bp.company,
+      bp.period_start as transaction_date,
+      YEAR(bp.period_start) as year,
+      DATE_ADD(bp.period_start, INTERVAL(-WEEKDAY(bp.period_start)) DAY) as week_start,
+      ssi.qty,
+      ssi.item_code,
+      ssi.item_name,
+      ssi.base_net_amount,
+      "Service" as item_group,
+      "Service" as item_supergroup
+  FROM bp
+  JOIN `tabSubscription Contract Item` ssi ON ssi.name = bp.ssi_docname
+  ORDER BY period_start DESC, name
+),
+agg as ( -- combine Sales Orders and Subscription Contracts
+  SELECT 
+    *,
+    WEEK(so.week_start) as week_num
+	FROM so
+  UNION ALL
+  SELECT 
+    *,
+    WEEK(scp.week_start) as week_num
+	FROM scp
+),
 w as ( -- weekdata, sums grouped by week
   SELECT
-    so.year,
-    so.week_start,
-    so.week_num,
-  	so.transaction_date,
-    SUM(CASE WHEN so.item_group = "Instruments" THEN so.qty ELSE 0 END) as instrument_qty,
-    SUM(CASE WHEN so.item_supergroup = "Instruments & Fills" THEN so.base_net_amount ELSE 0 END) as instrument_amount,
-    SUM(CASE WHEN so.item_supergroup = "Refills" THEN so.base_net_amount ELSE 0 END) as cartridge_amount,
-    SUM(CASE WHEN so.item_supergroup = "Service" THEN so.base_net_amount ELSE 0 END) as service_amount,
-    SUM(CASE WHEN so.item_supergroup IN ("Instruments & Fills", "Refills", "Service") THEN so.base_net_amount ELSE 0 END) as total_amount,
-    SUM(CASE WHEN so.item_supergroup = "Other" THEN so.base_net_amount ELSE 0 END) as other_amount
-  FROM so
-  GROUP BY so.year, so.week_num
-  ORDER BY so.transaction_date DESC
+    agg.year,
+    agg.week_start,
+    agg.week_num,
+  	agg.transaction_date,
+    SUM(CASE WHEN agg.item_group = "Instruments" THEN agg.qty ELSE 0 END) as instrument_qty,
+    SUM(CASE WHEN agg.item_supergroup = "Instruments & Fills" THEN agg.base_net_amount ELSE 0 END) as instrument_amount,
+    SUM(CASE WHEN agg.item_supergroup = "Refills" THEN agg.base_net_amount ELSE 0 END) as cartridge_amount,
+    SUM(CASE WHEN agg.item_supergroup = "Service" THEN agg.base_net_amount ELSE 0 END) as service_amount,
+    SUM(CASE WHEN agg.item_supergroup IN ("Instruments & Fills", "Refills", "Service") THEN agg.base_net_amount ELSE 0 END) as total_amount,
+    SUM(CASE WHEN agg.item_supergroup = "Other" THEN agg.base_net_amount ELSE 0 END) as other_amount
+  FROM agg
+  GROUP BY agg.year, agg.week_num
+  ORDER BY agg.transaction_date DESC
 )
 
 -- Here we can apply cumsums
@@ -84,7 +153,8 @@ SELECT
 	SUM(w.instrument_qty) OVER (PARTITION BY w.year ORDER BY w.transaction_date) AS instrument_qty_cum,
 	SUM(w.total_amount) OVER (PARTITION BY w.year ORDER BY w.transaction_date) AS total_amount_cum
 FROM w
-{query_filters}
+WHERE w.week_start < CURDATE()
+  {query_filters}
 ORDER BY w.transaction_date DESC
 	""".format(company=filters.company, query_filters=query_filters)
 
