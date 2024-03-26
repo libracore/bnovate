@@ -71,7 +71,7 @@ w as ( -- weekdata, sums grouped by week
     SUM(CASE WHEN so.item_supergroup = "Instruments & Fills" THEN so.base_net_amount ELSE 0 END) as instrument_amount,
     SUM(CASE WHEN so.item_supergroup = "Refills" THEN so.base_net_amount ELSE 0 END) as cartridge_amount,
     SUM(CASE WHEN so.item_supergroup = "Service" THEN so.base_net_amount ELSE 0 END) as service_amount,
-    SUM(CASE WHEN so.item_supergroup IN ("Instruments", "Cartridges", "Service") THEN so.base_net_amount ELSE 0 END) as total_amount,
+    SUM(CASE WHEN so.item_supergroup IN ("Instruments & Fills", "Refills", "Service") THEN so.base_net_amount ELSE 0 END) as total_amount,
     SUM(CASE WHEN so.item_supergroup = "Other" THEN so.base_net_amount ELSE 0 END) as other_amount
   FROM so
   GROUP BY so.year, so.week_num
