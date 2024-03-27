@@ -27,6 +27,7 @@ frappe.ui.form.on("Delivery Note", {
             return {
                 filters: {
                     country: frm.doc.shipping_country,
+                    company: frm.doc.company,
                 }
             }
         })

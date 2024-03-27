@@ -18,6 +18,7 @@ frappe.ui.form.on("Quotation", {
             return {
                 filters: {
                     country: frm.doc.shipping_country,
+                    company: frm.doc.company,
                 }
             }
         })

@@ -24,6 +24,7 @@ frappe.ui.form.on("Sales Order", {
             return {
                 filters: {
                     country: frm.doc.shipping_country,
+                    company: frm.doc.company,
                 }
             }
         })
