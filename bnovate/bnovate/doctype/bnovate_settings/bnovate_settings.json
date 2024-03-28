@@ -19,6 +19,8 @@
   "combase_api_key",
   "rms_api_token",
   "rms_company_id",
+  "dhl_api_key",
+  "dhl_api_secret",
   "portal_section",
   "portal_home_page"
  ],
@@ -116,11 +118,21 @@
    "fieldname": "rms_company_id",
    "fieldtype": "Data",
    "label": "RMS Company ID"
+  },
+  {
+   "fieldname": "dhl_api_key",
+   "fieldtype": "Data",
+   "label": "DHL API Key"
+  },
+  {
+   "fieldname": "dhl_api_secret",
+   "fieldtype": "Data",
+   "label": "DHL API secret"
   }
  ],
  "issingle": 1,
- "modified": "2024-02-05 16:59:52.726080",
- "modified_by": "Administrator",
+ "modified": "2024-03-28 08:16:15.783176",
+ "modified_by": "douglas.watson@bnovate.com",
  "module": "bNovate",
  "name": "bNovate Settings",
  "owner": "Administrator",
