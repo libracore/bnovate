@@ -222,12 +222,11 @@ def create_shipment(shipment_docname):
         product_code = "N"
         local_product_code = "N"
 
+        # TODO: loop over parcels, one shipment per parcel, or create multiple shipments.
         if len(doc.shipment_parcel) > 1:
             raise DHLException("Domestic shipments only allow one parcel.")
 
-    # FIXME? Not specifying timezone, hopefully will use TZ from pickup address
-    pickup_datetime = datetime.datetime.combine(
-        doc.pickup_date, datetime.time()) + doc.pickup_from
+    pickup_datetime = datetime.datetime.combine(doc.pickup_date, datetime.time()) + doc.pickup_from
 
     pickup_address = build_address(
         doc.pickup_address_line1,
@@ -274,19 +273,19 @@ def create_shipment(shipment_docname):
             "shipperDetails": {
                 "postalAddress": pickup_address,
                 "contactInformation": {
-                    "phone": "+41 79 012 34 56",
-                    "companyName": "Shipper AG",
-                    "fullName": "Hans Shipper",
-                                "email": "Hans.Shipper@shipper.sh"
+                    "phone": doc.pickup_contact_phone,
+                    "companyName": doc.pickup_company_name,
+                    "fullName": doc.pickup_contact_display,
+                    "email": doc.pickup_contact_email,
                 }
             },
             "receiverDetails": {
                 "postalAddress": delivery_address,
                 "contactInformation": {
-                    "phone": "+41 79 456 78 90",
-                    "companyName": "Receiver AG",
-                    "fullName": "EXAMPLE DO NOT SHIP",
-                                "email": "Michael.receiver@receiver.ch"
+                    "phone": doc.delivery_contact_phone,
+                    "companyName": doc.delivery_company_name,
+                    "fullName": doc.delivery_contact_display,
+                    "email": doc.delivery_contact_email,
                 }
             }
         },
@@ -301,11 +300,11 @@ def create_shipment(shipment_docname):
                 "customerReferences": [
                     {
                         "value": "TODO DN-12335-Test2",
-                        "typeCode": "CU"
+                        "typeCode": "CU",
                     },
                     {
                         "value": "TODO CUSTOMER PO NUMBER",
-                        "typeCode": "AAO"
+                        "typeCode": "AAO",
                     }
                 ]
 
@@ -313,13 +312,13 @@ def create_shipment(shipment_docname):
             "isCustomsDeclarable": False,
             "description": doc.description_of_content,
             "incoterm": doc.incoterm,
-            "unitOfMeasurement": "metric"
+            "unitOfMeasurement": "metric",
         },
         "shipmentNotification": [
             {
                 "typeCode": "email",
-                "receiverId": "douglas.watson@bnovate.com",
-                "languageCode": "eng"
+                "receiverId": "douglas.watson+api_stuff@bnovate.com",
+                "languageCode": "eng",
             }
         ],
         "valueAddedServices": [
@@ -328,6 +327,10 @@ def create_shipment(shipment_docname):
             }
         ]
     }
+
+    print("\n\n\n================================\n\n\n")
+    print(body)
+    print("\n\n\n================================\n\n\n")
 
     resp = dhl_request("/shipments", 'POST', body=body, settings=settings)
 
