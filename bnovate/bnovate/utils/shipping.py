@@ -14,6 +14,8 @@ from json import JSONDecodeError
 from frappe import _
 from requests import request
 
+READ, WRITE = "read", "write"
+
 class DHLException(Exception):
     pass
 
@@ -44,3 +46,56 @@ def dhl_request(path, method='GET', params=None, body=None, settings=None, auth=
         json=body,
         auth=(settings.dhl_api_key, settings.dhl_api_secret),
     ).json()
+
+    return resp
+
+
+#######################
+# WRAPPERS
+#######################
+
+@frappe.whitelist()
+def get_price(shipment_docname):
+    settings = _get_settings()
+    doc = frappe.get_doc("Shipment", shipment_docname)
+
+    body = {
+        "productCode": "N",
+        "localProductCode": "N",
+        "customerDetails": {
+            "shipperDetails": {
+                "countryCode": "CH",
+                "cityName": "Lausanne",
+                "postalCode": "1015"
+            },
+            "receiverDetails": {
+        "countryCode": "CH",
+        "cityName": "Zurich",
+                "postalCode": "5000"
+            }
+        },
+        "accounts": [{
+            "typeCode": "shipper",
+            "number": settings.dhl_export_account,
+        }],
+        "packages": [{
+            "weight": 5,
+            "dimensions": {
+                "length": 15,
+                "width": 10,
+                "height": 5
+            }
+        }],
+        "plannedShippingDateAndTime": "2024-03-08T17:00:31GMT+01:00",
+        "isCustomsDeclarable": False,
+        "unitOfMeasurement": "metric"
+    }
+
+    resp = dhl_request("/rates", 'POST', body=body, settings=settings)
+
+    print("\n\n\n--------------------------------------------\n\n\n")
+    print("\n\n\n--------------------------------------------\n\n\n")
+    print(resp)
+    print("\n\n\n--------------------------------------------\n\n\n")
+    
+    return resp

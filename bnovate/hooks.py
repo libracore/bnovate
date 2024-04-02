@@ -149,6 +149,7 @@ doctype_js = {
     "Serial No": ["public/js/doctype_includes/serial_no.js"],
     "Work Order": ["public/js/doctype_includes/work_order.js"],
     "Material Request": ["public/js/doctype_includes/material_request.js"],
+    "Shipment": ["public/js/doctype_includes/shipment.js"],
 }
 doctype_list_js = {
     "Item": ["public/js/doctype_includes/item_list.js"],
