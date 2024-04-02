@@ -17,9 +17,13 @@ frappe.ui.form.on("Shipment", {
             frm.add_custom_button(__("Create Shipment"), () => create_shipment(frm));
         }
 
+        if (get_label_attachments(frm).length > 0) {
+            frm.add_custom_button(__('<i class="fa fa-print"></i> Labels'), () => print_labels(frm));
+        }
+
+
 
         // CLICKABLE URLS
-
         if (frm.doc.tracking_url) {
             $(frm.fields_dict.tracking_url_html.wrapper).html(
                 `<div class="form-group">
@@ -41,6 +45,8 @@ frappe.ui.form.on("Shipment", {
         } else {
             $(frm.fields_dict.cancel_pickup_url_html.wrapper).html("");
         }
+
+
     },
 })
 
@@ -89,4 +95,17 @@ async function create_shipment(frm) {
     console.log(resp.message);
     frm.reload_doc();
     return resp.message;
+}
+
+function get_label_attachments(frm) {
+    // Return attachments that have "label" in the name
+    const attachments = frappe.model.docinfo[frm.doc.doctype][frm.doc.name]?.attachments || [];
+    return attachments.filter(row => row.file_name.indexOf('label') >= 0);
+}
+
+
+function print_labels(frm) {
+    const attachments = get_label_attachments(frm);
+    attachments.forEach(att => bnovate.utils.print_url(att.file_url));
+    return;
 }

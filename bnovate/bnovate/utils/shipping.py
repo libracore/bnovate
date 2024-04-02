@@ -348,6 +348,7 @@ def create_shipment(shipment_docname):
             doc.name,
             decode=True,
             is_private=1,
+            df="shipping_label",  # TODO: how will this work with multiple shipments?
         )
 
     return resp
