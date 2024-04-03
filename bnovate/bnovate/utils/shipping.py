@@ -43,6 +43,27 @@ def _auth(ptype=WRITE):
 def _get_settings():
     return frappe.get_single("bNovate Settings")
 
+def get_country_code(country):
+    """ Return country code for country name """
+    if not country:
+        country = _get_settings().default_country_of_origin
+    country_doc = frappe.get_doc("Country", country)
+    return country_doc.code.upper()
+
+def get_unit_code(uom):
+    """ Return DHL unit code for given ERP unit.  """
+    unit_map = {
+        'Unit': 'PCS',
+        'Meter': 'M',
+        'Centimeter': '2GM',
+        'Liter': 'L',
+        'mL': '3L',
+    }
+
+    if uom in unit_map:
+        return unit_map[uom]
+    return 'X'  # 'unit not required'
+
 #######################
 # BASE API CONNECTIONS
 #######################
@@ -86,15 +107,12 @@ def dhl_request(path, method='GET', params=None, body=None, settings=None, auth=
 
 def build_address(address_line1, address_line2, city, pincode, country):
     """ Return dict of address formatted for DHL API """
-
-    country_doc = frappe.get_doc("Country", country)
-
     address = {
                 "addressLine1": address_line1,
                 "addressLine2": address_line2,
                 "cityName": city,
                 "postalCode": pincode,
-                "countryCode": country_doc.code.upper(),
+                "countryCode": get_country_code(country),
     }
     return frappe._dict({k: v for k, v in address.items() if v})
 
@@ -259,7 +277,7 @@ def create_shipment(shipment_docname):
         }]
     if doc.pickup_eori_number:
         pickup_registration += [{
-            "typeCode": "EORI",
+            "typeCode": "EOR",
             "number": doc.pickup_eori_number,
             "issuerCountryCode": pickup_address.countryCode,
         }]
@@ -273,7 +291,7 @@ def create_shipment(shipment_docname):
         }]
     if doc.delivery_eori_number:
         delivery_registration += [{
-            "typeCode": "EORI",
+            "typeCode": "EOR",
             "number": doc.delivery_eori_number,
             "issuerCountryCode": delivery_address.countryCode,
         }]
@@ -281,6 +299,17 @@ def create_shipment(shipment_docname):
     # Might be off +- 1 hour if request and delivery straddle DST change, shouldn't be an issue
     pickup_gmt_offset = validate_address(pickup_address, PICKUP)
     validate_address(delivery_address, DELIVERY)
+
+    # Commercial invoice no
+    invoice_no = doc.name
+    try:
+        invoice_no = doc.shipment_delivery_note[0].delivery_note
+    except IndexError:
+        pass
+
+    incoterm_place = doc.delivery_city
+    if doc.incoterm in ('EXW', 'FCA'):
+        incoterm_place = doc.pickup_city
 
     body = {
         "plannedShippingDateAndTime": "{0} GMT{1}".format(pickup_datetime.isoformat()[:19], pickup_gmt_offset),
@@ -298,12 +327,16 @@ def create_shipment(shipment_docname):
         ],
         "outputImageProperties": {
             "encodingFormat": "pdf",
-            "imageOptions": [
-                {
+            "imageOptions": [{
                     "typeCode": "label",
                     "templateName": "ECOM26_84_001"
-                },
-            ]
+                }, {
+                    "templateName": "COMMERCIAL_INVOICE_03",
+                    "invoiceType": "commercial",
+                    "languageCode": "eng",
+                    "isRequested": True,
+                    "typeCode": "invoice"
+            } ]
         },
         "customerDetails": {
             "shipperDetails": {
@@ -329,7 +362,7 @@ def create_shipment(shipment_docname):
         },
         "customerReferences": [
             {
-                "value": "TODO DN-12335-Test2",
+                "value": invoice_no,
                 "typeCode": "CU",
             },
             {
@@ -351,18 +384,47 @@ def create_shipment(shipment_docname):
                 },
 
             } for p in doc.shipment_parcel],
-            "isCustomsDeclarable": False,
+            "isCustomsDeclarable": True,
             "description": doc.description_of_content,
             "incoterm": doc.incoterm,
             "unitOfMeasurement": "metric",
+            "declaredValue": doc.value_of_goods,
+            "declaredValueCurrency": doc.value_currency,
+            "exportDeclaration": {
+                "lineItems": [{
+                    "number": i.idx,
+                    "commodityCodes": [{
+                        "value": i.customs_tariff_number or settings.default_customs_tariff_number,
+                        "typeCode": "outbound",
+                    }],
+                    "priceCurrency": i.currency,
+                    "quantity": {
+                        "value": round(i.qty), # Integer needed for PCS
+                        "unitOfMeasurement": get_unit_code(i.uom),
+                    },
+                    "price": i.amount if i.amount > 0 else 1, # TODO find better
+                    "description": i.item_name,
+                    "weight": {
+                        "netValue": i.total_weight,
+                        "grossValue": i.total_weight,
+                    },
+                    "exportReasonType": "permanent", # TODO: implement other types
+                    "manufacturerCountry": get_country_code(i.country_of_origin)
+                } for i in doc.shipment_delivery_note if i.total_weight > 0 ],
+                "invoice": {
+                    "date": doc.pickup_date.isoformat(),
+                    "number": invoice_no,
+                },
+                "placeOfIncoterm": incoterm_place,
+            },
         },
-        "shipmentNotification": [
-            {
-                "typeCode": "email",
-                "receiverId": "douglas.watson+api_stuff@bnovate.com",
-                "languageCode": "eng",
-            }
-        ],
+        # "shipmentNotification": [
+        #     {
+        #         "typeCode": "email",
+        #         "receiverId": "receiver@example.com",
+        #         "languageCode": "eng",
+        #     }
+        # ],
         "valueAddedServices": value_added_services,
         "getRateEstimates": True,
     }
@@ -411,6 +473,7 @@ def make_shipment_from_dn(source_name, target_doc=None):
     """ To be called from open_mapped_doc. """
     settings = _get_settings()
     def postprocess(source, target):
+        # TODO change to sales admin
         user = frappe.db.get_value("User", frappe.session.user, ['email', 'full_name', 'phone', 'mobile_no'], as_dict=1)
         target.pickup_contact_email = user.email
         pickup_contact_display = '{}'.format(user.full_name)
@@ -456,6 +519,7 @@ def make_shipment_from_dn(source_name, target_doc=None):
             "doctype": "Shipment",
             "field_map": {
                 "grand_total": "value_of_goods",
+                "currency": "value_currency",
                 "company": "pickup_company",
                 "company_address": "pickup_address_name",
                 "company_address_display": "pickup_address",

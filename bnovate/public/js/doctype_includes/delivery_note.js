@@ -19,7 +19,12 @@ frappe.ui.form.on("Delivery Note", {
         frm.override_action_buttons = () => override_action_buttons(frm);
         frm.assign = () => assign(frm);
 
-        frm.override_action_buttons()
+        frm.override_action_buttons();
+
+        frm.dashboard.add_transactions({
+            'items': ['Shipment'],
+            'label': 'Related',
+        });
     },
 
     onload(frm) {
