@@ -48,37 +48,21 @@ frappe.ui.form.on("Shipment", {
 
     },
 
-    // Get contacts in the case of a Customer address
-    async pickup_contact_name(frm) {
-        if (!frm.doc.pickup_contact_name)
-            return;
-        const deets = await get_contact_details(frm.doc.pickup_contact_name);
-        frm.set_value('pickup_contact_display', deets.contact_display);
-        frm.set_value('pickup_contact_email', deets.contact_email);
-        frm.set_value('pickup_contact_phone', deets.contact_phone);
-    },
+    /* Autofills depend on linked doctypes: Company, Customer, or Supplier */
+    pickup_customer: async (frm) => fill_from_pickup_business(frm),
+    pickup_company: async (frm) => fill_from_pickup_business(frm),
+    pickup_contact_name: async (frm) => fill_from_pickup_contact(frm),
+    pickup_contact_person: async (frm) => fill_from_pickup_contact(frm),
 
-    async delivery_contact_name(frm) {
-        if (!frm.doc.delivery_contact_name)
-            return;
-        const deets = await get_contact_details(frm.doc.delivery_contact_name);
-        frm.set_value('delivery_contact_display', deets.contact_display);
-        frm.set_value('delivery_contact_email', deets.contact_email);
-        frm.set_value('delivery_contact_phone', deets.contact_phone);
-    },
-
-    // Get contacts in the case of a Company address
-    async pickup_contact_person(frm) {
-        if (!frm.doc.pickup_contact_person)
-            return;
-
-        const deets = await get_company_contact_details(frm.doc.pickup_contact_person);
-        frm.set_value('pickup_contact_display', deets.contact_display);
-        frm.set_value('pickup_contact_email', deets.contact_email);
-        frm.set_value('pickup_contact_phone', deets.contact_phone);
-    },
-
+    delivery_customer: async (frm) => fill_from_delivery_business(frm),
+    delivery_company: async (frm) => fill_from_delivery_business(frm),
+    delivery_contact_name: async (frm) => fill_from_delivery_contact(frm),
+    // delivery_contact_person: Field doesn't exist!
 })
+
+/**********************************************
+ *  FORM COMPLETION HELPERS
+ *********************************************/
 
 function check_dirty(frm) {
     if (frm.is_dirty()) {
@@ -87,6 +71,158 @@ function check_dirty(frm) {
     }
     return false
 }
+
+// Get contact details based on **contact** docname
+async function get_contact_details(contact) {
+    const resp = await frappe.call({
+        method: "frappe.contacts.doctype.contact.contact.get_contact_details",
+        args: {
+            contact
+        },
+    });
+
+    return resp.message;
+}
+
+// Get contact details based on **username**
+async function get_company_contact_details(user) {
+    const resp = await frappe.call({
+        method: "erpnext.stock.doctype.shipment.shipment.get_company_contact",
+        args: {
+            user
+        },
+    });
+
+    console.log(resp);
+
+    const contact = resp.message;
+    return {
+        contact_display: [contact.first_name, contact.last_name].join(' ').trim(),
+        contact_email: contact.email,
+        contact_phone: contact.phone,
+    }
+}
+
+
+/************ PICKUP ****************/
+
+// Fill tax values either from linked Company, Customer, or Supplier
+async function fill_from_pickup_business(frm) {
+    let values = {
+        tax_id: null,
+        eori_number: null,
+    }
+
+    if (frm.doc.pickup_from_type == "Customer") {
+        if (!frm.doc.pickup_customer)
+            return;
+        values = await frappe.db.get_doc("Customer", frm.doc.pickup_customer);
+    } else if (frm.doc.pickup_from_type == "Company") {
+        if (!frm.doc.pickup_company)
+            return;
+        values = await frappe.db.get_doc("Company", frm.doc.pickup_company);
+    } else if (frm.doc.pickup_from_type == "Supplier") {
+        // Not needed at this time
+    }
+
+    frm.set_value('pickup_tax_id', values.tax_id);
+    frm.set_value('pickup_eori_number', values.eori_number);
+}
+
+// Fill contact information from linked Contact or User
+async function fill_from_pickup_contact(frm) {
+    // 
+    let values = {
+        contact_display: null,
+        contact_email: null,
+        contact_phone: null,
+    }
+
+    if (frm.doc.pickup_from_type == "Customer") {
+        if (!frm.doc.pickup_contact_name)
+            return;
+        values = await get_contact_details(frm.doc.pickup_contact_name);
+    } else if (frm.doc.pickup_from_type == "Company") {
+        if (!frm.doc.pickup_contact_person)
+            return;
+        values = await get_company_contact_details(frm.doc.pickup_contact_person);
+    } else if (frm.doc.pickup_from_type == "Supplier") {
+        // Not needed at this time
+    }
+
+    frm.set_value('pickup_contact_display', values.contact_display);
+    frm.set_value('pickup_contact_email_rw', values.contact_email);
+    frm.set_value('pickup_contact_phone', values.contact_phone);
+}
+
+/************ DELIVERY ****************/
+
+// Fill tax values either from linked Company, Customer, or Supplier
+async function fill_from_delivery_business(frm) {
+    let values = {
+        tax_id: null,
+        eori_number: null,
+    }
+
+    if (frm.doc.delivery_to_type == "Customer") {
+        if (!frm.doc.delivery_customer)
+            return;
+        values = await frappe.db.get_doc("Customer", frm.doc.delivery_customer);
+    } else if (frm.doc.delivery_to_type == "Company") {
+        if (!frm.doc.delivery_company)
+            return;
+        values = await frappe.db.get_doc("Company", frm.doc.delivery_company);
+    } else if (frm.doc.delivery_to_type == "Supplier") {
+        // Not needed at this time
+    }
+
+    frm.set_value('delivery_tax_id', values.tax_id);
+    frm.set_value('delivery_eori_number', values.eori_number);
+}
+
+// Fill contact information from linked Contact or User
+async function fill_from_delivery_contact(frm) {
+    // 
+    let values = {
+        contact_display: null,
+        contact_email: null,
+        contact_phone: null,
+    }
+
+    if (frm.doc.delivery_to_type == "Customer") {
+        if (!frm.doc.delivery_contact_name)
+            return;
+        values = await get_contact_details(frm.doc.delivery_contact_name);
+    } else if (frm.doc.delivery_to_type == "Company") {
+        if (!frm.doc.delivery_contact_person)
+            return;
+        values = await get_company_contact_details(frm.doc.delivery_contact_person);
+    } else if (frm.doc.delivery_to_type == "Supplier") {
+        // Not needed at this time
+    }
+
+    frm.set_value('delivery_contact_display', values.contact_display);
+    frm.set_value('delivery_contact_email_rw', values.contact_email);
+    frm.set_value('delivery_contact_phone', values.contact_phone);
+}
+
+/************ LABELS ****************/
+
+function get_label_attachments(frm) {
+    // Return attachments that have "label" in the name
+    const attachments = frappe.model.docinfo[frm.doc.doctype][frm.doc.name]?.attachments || [];
+    return attachments.filter(row => row.file_name.indexOf('label') >= 0);
+}
+
+function print_labels(frm) {
+    const attachments = get_label_attachments(frm);
+    attachments.forEach(att => bnovate.utils.print_url(att.file_url));
+    return;
+}
+
+/**********************************************
+ *  API FUNCTIONS
+ *********************************************/
 
 async function get_price(frm) {
 
@@ -124,46 +260,4 @@ async function create_shipment(frm) {
     console.log(resp.message);
     frm.reload_doc();
     return resp.message;
-}
-
-// Get details based on contact docname
-async function get_contact_details(contact) {
-    const resp = await frappe.call({
-        method: "frappe.contacts.doctype.contact.contact.get_contact_details",
-        args: {
-            contact
-        },
-    });
-
-    return resp.message;
-}
-
-async function get_company_contact_details(user) {
-    const resp = await frappe.call({
-        method: "erpnext.stock.doctype.shipment.shipment.get_company_contact",
-        args: {
-            user
-        },
-    });
-
-    const contact = resp.message;
-    return {
-        contact_display: [contact.first_name, contact.last_name].join(' ').trim(),
-        contact_email: contact.email,
-        contact_phone: contact.phone,
-    }
-}
-window.get_company_contact_details = get_company_contact_details;
-
-function get_label_attachments(frm) {
-    // Return attachments that have "label" in the name
-    const attachments = frappe.model.docinfo[frm.doc.doctype][frm.doc.name]?.attachments || [];
-    return attachments.filter(row => row.file_name.indexOf('label') >= 0);
-}
-
-
-function print_labels(frm) {
-    const attachments = get_label_attachments(frm);
-    attachments.forEach(att => bnovate.utils.print_url(att.file_url));
-    return;
 }

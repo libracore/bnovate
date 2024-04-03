@@ -68,12 +68,9 @@ def dhl_request(path, method='GET', params=None, body=None, settings=None, auth=
     try:
         resp.raise_for_status()
     except HTTPError as e:
-        print(str(e))
-
         try:
             data = frappe._dict(resp.json())
             if data.title:
-                print(data)
                 raise DHLException(
                     "<b>{0}</b><br>{1}<br>{2}<br>{3}".format(data.title, data.message, data.detail, data.additionalDetails))
         except TypeError:
@@ -125,8 +122,6 @@ def validate_address(address, address_type):
         "/address-validate",
         params=params
     )
-
-    print(resp)
 
     try:
         return resp['address'][0]['serviceArea']['GMTOffset']
@@ -210,7 +205,11 @@ def get_price(shipment_docname):
 
 @frappe.whitelist()
 def create_shipment(shipment_docname):
-    """ Create Shipment, receive shipping label and tracking number """
+    """ Create Shipment, receive shipping label and tracking number. 
+
+    Set validate_only to True to check deliverability etc.
+    
+    """
 
     settings = _get_settings()
     doc = frappe.get_doc("Shipment", shipment_docname)
@@ -231,7 +230,11 @@ def create_shipment(shipment_docname):
         if len(doc.shipment_parcel) > 1:
             raise DHLException("Domestic shipments only allow one parcel.")
 
-    pickup_datetime = datetime.datetime.combine(doc.pickup_date, datetime.time()) + doc.pickup_from
+    # Date and time can't be in the past, even by a second
+    if doc.pickup_date <= datetime.date.today():
+        pickup_datetime = datetime.datetime.now() + datetime.timedelta(minutes=10)
+    else:
+        pickup_datetime = datetime.datetime.combine(doc.pickup_date, datetime.time()) + doc.pickup_from
 
     pickup_address = build_address(
         doc.pickup_address_line1,
@@ -248,12 +251,40 @@ def create_shipment(shipment_docname):
         doc.delivery_country,
     )
 
+    pickup_registration = []
+    if doc.pickup_tax_id:
+        pickup_registration += [{
+            "typeCode": "VAT",
+            "number": doc.pickup_tax_id,
+            "issuerCountryCode": pickup_address.countryCode,
+        }]
+    if doc.pickup_eori_number:
+        pickup_registration += [{
+            "typeCode": "EORI",
+            "number": doc.pickup_eori_number,
+            "issuerCountryCode": pickup_address.countryCode,
+        }]
+
+    delivery_registration = []
+    if doc.delivery_tax_id:
+        delivery_registration += [{
+            "typeCode": "VAT",
+            "number": doc.delivery_tax_id,
+            "issuerCountryCode": delivery_address.countryCode,
+        }]
+    if doc.delivery_eori_number:
+        delivery_registration += [{
+            "typeCode": "EORI",
+            "number": doc.delivery_eori_number,
+            "issuerCountryCode": delivery_address.countryCode,
+        }]
+
     # Might be off +- 1 hour if request and delivery straddle DST change, shouldn't be an issue
     pickup_gmt_offset = validate_address(pickup_address, PICKUP)
     validate_address(delivery_address, DELIVERY)
 
     body = {
-        "plannedShippingDateAndTime": "{0} GMT{1}".format(pickup_datetime.isoformat(), pickup_gmt_offset),
+        "plannedShippingDateAndTime": "{0} GMT{1}".format(pickup_datetime.isoformat()[:19], pickup_gmt_offset),
         "pickup": {
             "isRequested": True,
             "closeTime": str(doc.pickup_to)[:5],
@@ -282,8 +313,9 @@ def create_shipment(shipment_docname):
                     "phone": doc.pickup_contact_phone,
                     "companyName": doc.pickup_company_name,
                     "fullName": doc.pickup_contact_display,
-                    "email": doc.pickup_contact_email,
-                }
+                    "email": doc.pickup_contact_email_rw,
+                },
+                "registrationNumbers": pickup_registration,
             },
             "receiverDetails": {
                 "postalAddress": delivery_address,
@@ -291,8 +323,9 @@ def create_shipment(shipment_docname):
                     "phone": doc.delivery_contact_phone,
                     "companyName": doc.delivery_company_name,
                     "fullName": doc.delivery_contact_display,
-                    "email": doc.delivery_contact_email,
-                }
+                    "email": doc.delivery_contact_email_rw,
+                },
+                "registrationNumbers": delivery_registration,
             }
         },
         "customerReferences": [
@@ -332,10 +365,12 @@ def create_shipment(shipment_docname):
             }
         ],
         "valueAddedServices": value_added_services,
+        "getRateEstimates": True,
     }
 
     print("\n\n\n================================\n\n\n")
-    print(body)
+    import pprint
+    pprint.pprint(body, compact=True)
     print("\n\n\n================================\n\n\n")
 
     resp = dhl_request("/shipments", 'POST', body=body, settings=settings)
@@ -349,6 +384,12 @@ def create_shipment(shipment_docname):
     doc.db_set("status", "Booked")
     # TODO: track piece by piece?
 
+    if 'shipmentCharges' in resp:
+        estimate = next((c for c in resp['shipmentCharges'] if 'priceCurrency' in c and c['priceCurrency'] == 'CHF'), None)
+        if estimate is not None and 'price' in estimate:
+            doc.db_set('shipment_amount', estimate['price'])
+
+
     for i, dhl_doc in enumerate(resp['documents']):
         frappe.utils.file_manager.save_file(
             "{0}-{1}-{2}.{3}".format(doc.name, dhl_doc['typeCode'], i, dhl_doc['imageFormat'].lower()),
@@ -357,7 +398,6 @@ def create_shipment(shipment_docname):
             doc.name,
             decode=True,
             is_private=1,
-            df="shipping_label",  # TODO: how will this work with multiple shipments?
         )
 
     return resp
