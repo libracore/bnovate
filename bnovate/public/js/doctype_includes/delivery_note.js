@@ -34,7 +34,7 @@ frappe.ui.form.on("Delivery Note", {
 
     refresh(frm) {
         setTimeout(() => {
-            frm.remove_custom_button(__("Subscription"), "Create")
+            frm.remove_custom_button(__("Subscription"), __("Create"));
             frm.add_custom_button(__("Aggregate Invoice"), async function () {
                 frappe.route_options = {
                     "customer": frm.doc.customer,
@@ -43,6 +43,10 @@ frappe.ui.form.on("Delivery Note", {
                 await frappe.set_route("query-report", "Aggregate Invoicing");
                 frappe.query_report.refresh();
             }, __("Create"));
+
+            // Override standard delivery creation
+            frm.remove_custom_button(__("Shipment"), __("Create"));
+            frm.add_custom_button(__("Shipment"), () => create_shipment(frm), __("Create"));
         }, 500);
 
         frm.override_action_buttons()
@@ -72,6 +76,13 @@ frappe.ui.form.on("Delivery Note", {
 
     },
 })
+
+function create_shipment(frm) {
+    frappe.model.open_mapped_doc({
+        method: "bnovate.bnovate.utils.shipping.make_shipment_from_dn",
+        frm
+    })
+}
 
 function override_action_buttons(frm) {
 
