@@ -237,21 +237,23 @@ def create_shipment(shipment_docname):
                 # Paperless trade
                 "serviceCode": "WY",
     }]
+    customs_declarable = True
 
     if doc.pickup_country == "Switzerland" and doc.delivery_country == "Switzerland":
         product_code = "N"
         local_product_code = "N"
         value_added_services = []
+        customs_declarable = False
 
         # TODO: loop over parcels, one shipment per parcel, or create multiple shipments.
         if len(doc.shipment_parcel) > 1:
             raise DHLException("Domestic shipments only allow one parcel.")
 
     # Date and time can't be in the past, even by a second
-    if doc.pickup_date <= datetime.date.today():
+    pickup_datetime = datetime.datetime.combine(doc.pickup_date, datetime.time()) + doc.pickup_from
+    if pickup_datetime <= datetime.datetime.now():
         pickup_datetime = datetime.datetime.now() + datetime.timedelta(minutes=10)
-    else:
-        pickup_datetime = datetime.datetime.combine(doc.pickup_date, datetime.time()) + doc.pickup_from
+
 
     pickup_address = build_address(
         doc.pickup_address_line1,
@@ -384,7 +386,7 @@ def create_shipment(shipment_docname):
                 },
 
             } for p in doc.shipment_parcel],
-            "isCustomsDeclarable": True,
+            "isCustomsDeclarable": customs_declarable,
             "description": doc.description_of_content,
             "incoterm": doc.incoterm,
             "unitOfMeasurement": "metric",
