@@ -217,10 +217,15 @@ def create_shipment(shipment_docname):
 
     product_code = "P"
     local_product_code = "S"
+    value_added_services = [{
+                # Paperless trade
+                "serviceCode": "WY",
+    }]
 
     if doc.pickup_country == "Switzerland" and doc.delivery_country == "Switzerland":
         product_code = "N"
         local_product_code = "N"
+        value_added_services = []
 
         # TODO: loop over parcels, one shipment per parcel, or create multiple shipments.
         if len(doc.shipment_parcel) > 1:
@@ -251,6 +256,7 @@ def create_shipment(shipment_docname):
         "plannedShippingDateAndTime": "{0} GMT{1}".format(pickup_datetime.isoformat(), pickup_gmt_offset),
         "pickup": {
             "isRequested": True,
+            "closeTime": str(doc.pickup_to)[:5],
         },
         "productCode": product_code,
         "localProductCode": local_product_code,
@@ -289,6 +295,20 @@ def create_shipment(shipment_docname):
                 }
             }
         },
+        "customerReferences": [
+            {
+                "value": "TODO DN-12335-Test2",
+                "typeCode": "CU",
+            },
+            {
+                "value": "TODO CUSTOMER PO NUMBER",
+                "typeCode": "CO", # "buyers order number"
+            },
+            {
+                "value": "TODO CUSTOMER PO NUMBER",
+                "typeCode": "AAO",  # "shipment reference number of receiver"
+            }
+        ],
         "content": {
             "packages": [{
                 "weight": p.weight,
@@ -297,16 +317,6 @@ def create_shipment(shipment_docname):
                     "width": p.width,
                     "height": p.height,
                 },
-                "customerReferences": [
-                    {
-                        "value": "TODO DN-12335-Test2",
-                        "typeCode": "CU",
-                    },
-                    {
-                        "value": "TODO CUSTOMER PO NUMBER",
-                        "typeCode": "AAO",
-                    }
-                ]
 
             } for p in doc.shipment_parcel],
             "isCustomsDeclarable": False,
@@ -321,11 +331,7 @@ def create_shipment(shipment_docname):
                 "languageCode": "eng",
             }
         ],
-        "valueAddedServices": [
-            {
-                "serviceCode": "PT"
-            }
-        ]
+        "valueAddedServices": value_added_services,
     }
 
     print("\n\n\n================================\n\n\n")
