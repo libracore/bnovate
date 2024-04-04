@@ -7,6 +7,8 @@
  * 
  */
 
+frappe.require("/assets/bnovate/js/realtime.js")
+
 frappe.ui.form.on("Shipment", {
 
     refresh(frm) {
@@ -58,6 +60,10 @@ frappe.ui.form.on("Shipment", {
     delivery_company: async (frm) => fill_from_delivery_business(frm),
     delivery_contact_name: async (frm) => fill_from_delivery_contact(frm),
     // delivery_contact_person: Field doesn't exist!
+
+    bill_customer: async (frm) => fill_from_bill_business(frm),
+    bill_company: async (frm) => fill_from_bill_business(frm),
+    bill_contact_name: async (frm) => fill_from_bill_contact(frm),
 })
 
 /**********************************************
@@ -92,8 +98,6 @@ async function get_company_contact_details(user) {
             user
         },
     });
-
-    console.log(resp);
 
     const contact = resp.message;
     return {
@@ -206,6 +210,57 @@ async function fill_from_delivery_contact(frm) {
     frm.set_value('delivery_contact_phone', values.contact_phone);
 }
 
+/************ BILL ****************/
+
+// Fill tax values either from linked Company, Customer, or Supplier
+async function fill_from_bill_business(frm) {
+    let values = {
+        tax_id: null,
+        eori_number: null,
+    }
+
+    if (frm.doc.bill_to_type == "Customer") {
+        if (!frm.doc.bill_customer)
+            return;
+        values = await frappe.db.get_doc("Customer", frm.doc.bill_customer);
+    } else if (frm.doc.bill_to_type == "Company") {
+        if (!frm.doc.bill_company)
+            return;
+        values = await frappe.db.get_doc("Company", frm.doc.bill_company);
+    } else if (frm.doc.bill_to_type == "Supplier") {
+        // Not needed at this time
+    }
+
+    frm.set_value('bill_tax_id', values.tax_id);
+    frm.set_value('bill_eori_number', values.eori_number);
+}
+
+// Fill contact information from linked Contact or User
+async function fill_from_bill_contact(frm) {
+    // 
+    let values = {
+        contact_display: null,
+        contact_email: null,
+        contact_phone: null,
+    }
+
+    if (frm.doc.bill_to_type == "Customer") {
+        if (!frm.doc.bill_contact_name)
+            return;
+        values = await get_contact_details(frm.doc.bill_contact_name);
+    } else if (frm.doc.bill_to_type == "Company") {
+        if (!frm.doc.bill_contact_person)
+            return;
+        values = await get_company_contact_details(frm.doc.bill_contact_person);
+    } else if (frm.doc.bill_to_type == "Supplier") {
+        // Not needed at this time
+    }
+
+    frm.set_value('bill_contact_display', values.contact_display);
+    frm.set_value('bill_contact_email_rw', values.contact_email);
+    frm.set_value('bill_contact_phone', values.contact_phone);
+}
+
 /************ LABELS ****************/
 
 function get_label_attachments(frm) {
@@ -250,10 +305,19 @@ async function create_shipment(frm) {
     if (check_dirty(frm))
         return;
 
-    const resp = await frappe.call({
+    const resp = await bnovate.realtime.call({
         method: "bnovate.bnovate.utils.shipping.create_shipment",
         args: {
             shipment_docname: frm.doc.name,
+        },
+        callback(status) {
+            console.log(status);
+            if (status.data.progress < 100) {
+                frappe.show_progress(__("Creating shipment..."), status.data.progress, 100, __(status.data.message));
+            }
+            if (status.code == 0) {
+                frappe.hide_progress();
+            }
         }
     });
 

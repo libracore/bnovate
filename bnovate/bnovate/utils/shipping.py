@@ -17,6 +17,8 @@ from requests.exceptions import HTTPError
 from frappe import _
 from frappe.model.mapper import get_mapped_doc
 
+from bnovate.bnovate.utils.realtime import set_status, STATUS_DONE
+
 READ, WRITE = "read", "write"
 PICKUP, DELIVERY = "pickup", "delivery"
 
@@ -30,6 +32,9 @@ class ProductNotFound(DHLException):
 
 class AddressError(DHLException):
     """ Error while validating postal adress """
+
+class DropShipImpossible(DHLException):
+    """ If delivery and billing country are different, for example"""
 
 #######################
 # HELPERS
@@ -221,12 +226,17 @@ def get_price(shipment_docname):
 
 
 @frappe.whitelist()
-def create_shipment(shipment_docname):
+def create_shipment(shipment_docname, task_id=None):
     """ Create Shipment, receive shipping label and tracking number. 
 
     Set validate_only to True to check deliverability etc.
     
     """
+
+    set_status({
+        "progress": 0,
+        "message": _("Initiating request..."),
+    }, task_id)
 
     settings = _get_settings()
     doc = frappe.get_doc("Shipment", shipment_docname)
@@ -238,6 +248,9 @@ def create_shipment(shipment_docname):
                 "serviceCode": "WY",
     }]
     customs_declarable = True
+
+    if doc.delivery_country != doc.bill_country:
+        raise DropShipImpossible(_("Delivery country must be the same as Bill country"))
 
     if doc.pickup_country == "Switzerland" and doc.delivery_country == "Switzerland":
         product_code = "N"
@@ -269,6 +282,13 @@ def create_shipment(shipment_docname):
         doc.delivery_pincode,
         doc.delivery_country,
     )
+    bill_address = build_address(
+        doc.bill_address_line1,
+        doc.bill_address_line2,
+        doc.bill_city,
+        doc.bill_pincode,
+        doc.bill_country,
+    )
 
     pickup_registration = []
     if doc.pickup_tax_id:
@@ -298,9 +318,29 @@ def create_shipment(shipment_docname):
             "issuerCountryCode": delivery_address.countryCode,
         }]
 
+    bill_registration = []
+    if doc.bill_tax_id:
+        bill_registration += [{
+            "typeCode": "VAT",
+            "number": doc.bill_tax_id,
+            "issuerCountryCode": bill_address.countryCode,
+        }]
+    if doc.bill_eori_number:
+        bill_registration += [{
+            "typeCode": "EOR",
+            "number": doc.bill_eori_number,
+            "issuerCountryCode": bill_address.countryCode,
+        }]
+
+    set_status({
+        "progress": 10,
+        "message": _("Checking addresses..."),
+    }, task_id)
+
     # Might be off +- 1 hour if request and delivery straddle DST change, shouldn't be an issue
     pickup_gmt_offset = validate_address(pickup_address, PICKUP)
     validate_address(delivery_address, DELIVERY)
+    validate_address(bill_address, DELIVERY)
 
     # Commercial invoice no
     invoice_no = doc.name
@@ -360,6 +400,16 @@ def create_shipment(shipment_docname):
                     "email": doc.delivery_contact_email_rw,
                 },
                 "registrationNumbers": delivery_registration,
+            },
+            "buyerDetails": {
+                "postalAddress": bill_address,
+                "contactInformation": {
+                    "phone": doc.bill_contact_phone,
+                    "companyName": doc.bill_company_name,
+                    "fullName": doc.bill_contact_display,
+                    "email": doc.bill_contact_email_rw,
+                },
+                "registrationNumbers": bill_registration,
             }
         },
         "customerReferences": [
@@ -436,6 +486,10 @@ def create_shipment(shipment_docname):
     pprint.pprint(body, compact=True)
     print("\n\n\n================================\n\n\n")
 
+    set_status({
+        "progress": 40,
+        "message": _("Declaring contents..."),
+    }, task_id)
     resp = dhl_request("/shipments", 'POST', body=body, settings=settings)
 
 
@@ -452,6 +506,10 @@ def create_shipment(shipment_docname):
         if estimate is not None and 'price' in estimate:
             doc.db_set('shipment_amount', estimate['price'])
 
+    set_status({
+        "progress": 80,
+        "message": _("Getting documents..."),
+    }, task_id)
 
     for i, dhl_doc in enumerate(resp['documents']):
         frappe.utils.file_manager.save_file(
@@ -462,6 +520,11 @@ def create_shipment(shipment_docname):
             decode=True,
             is_private=1,
         )
+
+    set_status({
+        "progress": 100,
+        "message": _("Done"),
+    }, task_id, STATUS_DONE)
 
     return resp
 
