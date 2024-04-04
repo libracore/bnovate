@@ -241,6 +241,10 @@ def create_shipment(shipment_docname, task_id=None):
     settings = _get_settings()
     doc = frappe.get_doc("Shipment", shipment_docname)
 
+    if doc.delivery_country != doc.bill_country:
+        raise DropShipImpossible(_("Delivery country must be the same as Bill country"))
+
+
     product_code = "P"
     local_product_code = "S"
     value_added_services = [{
@@ -248,9 +252,6 @@ def create_shipment(shipment_docname, task_id=None):
                 "serviceCode": "WY",
     }]
     customs_declarable = True
-
-    if doc.delivery_country != doc.bill_country:
-        raise DropShipImpossible(_("Delivery country must be the same as Bill country"))
 
     if doc.pickup_country == "Switzerland" and doc.delivery_country == "Switzerland":
         product_code = "N"
@@ -573,6 +574,8 @@ def make_shipment_from_dn(source_name, target_doc=None):
             target.delivery_address = source.address_display
 
         # Customisations
+        target.bill_customer = source.customer
+
         for row in target.shipment_delivery_note:
             row.currency = source.currency
         
@@ -591,6 +594,8 @@ def make_shipment_from_dn(source_name, target_doc=None):
                 "customer": "delivery_customer",
                 "contact_person": "delivery_contact_name",
                 "contact_email": "delivery_contact_email",
+
+                "customer_address": "bill_address_name",
                 "posting_date": "pickup_date",
             },
             "validation": {
