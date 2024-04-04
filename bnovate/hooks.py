@@ -91,6 +91,10 @@ fixtures = [
             "Sales Order-shipping_country",
             "Delivery Note-custom_shipping_rule",
             "Delivery Note-shipping_country",
+            "Quotation-incoterm",
+            "Sales Order-incoterm",
+            "Delivery Note-incoterm",
+            "Sales Invoice-incoterm",
             # Stock management
             "Material Request Item-default_supplier",
             "Purchase Receipt-scan",

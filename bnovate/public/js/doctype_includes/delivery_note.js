@@ -87,6 +87,8 @@ function create_shipment(frm) {
         method: "bnovate.bnovate.utils.shipping.make_shipment_from_dn",
         frm
     })
+    // ???
+    console.log(cur_frm.doc.doctype)
 }
 
 function override_action_buttons(frm) {

@@ -24,7 +24,6 @@ frappe.ui.form.on("Shipment", {
         }
 
 
-
         // CLICKABLE URLS
         if (frm.doc.tracking_url) {
             $(frm.fields_dict.tracking_url_html.wrapper).html(
@@ -50,6 +49,12 @@ frappe.ui.form.on("Shipment", {
 
     },
 
+    before_submit(frm) {
+        if (!(frm.doc.shipment_parcel?.length)) {
+            frappe.msgprint(__("Please specify parcels."));
+        }
+    },
+
     /* Autofills depend on linked doctypes: Company, Customer, or Supplier */
     pickup_customer: async (frm) => fill_from_pickup_business(frm),
     pickup_company: async (frm) => fill_from_pickup_business(frm),
@@ -64,6 +69,22 @@ frappe.ui.form.on("Shipment", {
     bill_customer: async (frm) => fill_from_bill_business(frm),
     bill_company: async (frm) => fill_from_bill_business(frm),
     bill_contact_name: async (frm) => fill_from_bill_contact(frm),
+
+    async fill_pickup_data(frm) {
+        await frm.call('get_invalid_links'); // Force trigger "fetch_from" methods
+        fill_from_pickup_business(frm);
+        fill_from_pickup_contact(frm);
+    },
+    async fill_delivery_data(frm) {
+        await frm.call('get_invalid_links'); // Force trigger "fetch_from" methods
+        fill_from_delivery_business(frm);
+        fill_from_delivery_contact(frm);
+    },
+    async fill_bill_data(frm) {
+        await frm.call('get_invalid_links'); // Force trigger "fetch_from" methods
+        fill_from_bill_business(frm);
+        fill_from_bill_contact(frm);
+    },
 })
 
 /**********************************************

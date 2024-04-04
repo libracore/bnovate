@@ -20,6 +20,7 @@
   "rms_api_token",
   "rms_company_id",
   "shipping_section",
+  "shipping_contact",
   "dhl_export_account",
   "dhl_api_key",
   "dhl_api_secret",
@@ -173,10 +174,17 @@
    "fieldtype": "Link",
    "label": "Default Country of Origin",
    "options": "Country"
+  },
+  {
+   "description": "Person who signs commercial invoices etc.",
+   "fieldname": "shipping_contact",
+   "fieldtype": "Link",
+   "label": "Shipping Contact",
+   "options": "User"
   }
  ],
  "issingle": 1,
- "modified": "2024-04-03 23:31:20.465268",
+ "modified": "2024-04-04 16:03:02.049159",
  "modified_by": "douglas.watson@bnovate.com",
  "module": "bNovate",
  "name": "bNovate Settings",

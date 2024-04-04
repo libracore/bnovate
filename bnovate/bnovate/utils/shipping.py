@@ -33,6 +33,9 @@ class ProductNotFound(DHLException):
 class AddressError(DHLException):
     """ Error while validating postal adress """
 
+class MissingParcelError(DHLException):
+    """ No parcels declared """
+
 class DropShipImpossible(DHLException):
     """ If delivery and billing country are different, for example"""
 
@@ -68,6 +71,29 @@ def get_unit_code(uom):
     if uom in unit_map:
         return unit_map[uom]
     return 'X'  # 'unit not required'
+
+def get_export_reason_type(reason):
+    """ Return DHL typecode for export reason """
+    reason_lookup = {
+        "Permanent": "permanent",
+        "Temporary": "temporary",
+        "Return": "return",
+        "Used exhibition goods to origin": "used_exhibition_goods_to_origin",
+        "Intercompany use": "intercompany_use",
+        "Commercial purpose or sale": "commercial_purpose_or_sale",
+        "Personal belongings or personal use": "personal_belongings_or_personal_use",
+        "Sample": "sample",
+        "Gift": "gift",
+        "Return to origin": "return_to_origin",
+        "Warranty replacement": "warranty_replacement",
+        "Diplomatic goods": "diplomatic_goods",
+        "Defence material": "defence_material",
+    }
+
+    if reason not in reason_lookup:
+        return "permanent"
+    else:
+        return reason_lookup[reason]
 
 #######################
 # BASE API CONNECTIONS
@@ -227,6 +253,16 @@ def get_price(shipment_docname):
 
 @frappe.whitelist()
 def create_shipment(shipment_docname, task_id=None):
+    try:
+        _create_shipment(shipment_docname, task_id)
+    except Exception as e:
+        set_status({
+            "progress": 100,
+            "message": _("Error"),
+        }, task_id, STATUS_DONE)
+
+        raise e
+def _create_shipment(shipment_docname, task_id=None):
     """ Create Shipment, receive shipping label and tracking number. 
 
     Set validate_only to True to check deliverability etc.
@@ -241,17 +277,23 @@ def create_shipment(shipment_docname, task_id=None):
     settings = _get_settings()
     doc = frappe.get_doc("Shipment", shipment_docname)
 
+    if len(doc.shipment_parcel) == 0:
+        raise MissingParcelError(_("Please specify types of parcel"))
     if doc.delivery_country != doc.bill_country:
         raise DropShipImpossible(_("Delivery country must be the same as Bill country"))
 
 
     product_code = "P"
     local_product_code = "S"
-    value_added_services = [{
-                # Paperless trade
-                "serviceCode": "WY",
-    }]
     customs_declarable = True
+    value_added_services = [{
+        # Paperless trade
+        "serviceCode": "WY",
+    }]
+    if doc.incoterm == "DDP":
+        value_added_services += [{
+            "serviceCode": "DD",  # Duty paid
+        }]
 
     if doc.pickup_country == "Switzerland" and doc.delivery_country == "Switzerland":
         product_code = "N"
@@ -343,7 +385,9 @@ def create_shipment(shipment_docname, task_id=None):
     validate_address(delivery_address, DELIVERY)
     validate_address(bill_address, DELIVERY)
 
-    # Commercial invoice no
+    # Commercial invoice data
+    invoice_contact = frappe.get_doc("User", settings.shipping_contact)
+    invoice_contact.full_name = ' '.join([invoice_contact.first_name, invoice_contact.last_name]).strip()
     invoice_no = doc.name
     try:
         invoice_no = doc.shipment_delivery_note[0].delivery_note
@@ -418,14 +462,6 @@ def create_shipment(shipment_docname, task_id=None):
                 "value": invoice_no,
                 "typeCode": "CU",
             },
-            {
-                "value": "TODO CUSTOMER PO NUMBER",
-                "typeCode": "CO", # "buyers order number"
-            },
-            {
-                "value": "TODO CUSTOMER PO NUMBER",
-                "typeCode": "AAO",  # "shipment reference number of receiver"
-            }
         ],
         "content": {
             "packages": [{
@@ -455,19 +491,25 @@ def create_shipment(shipment_docname, task_id=None):
                         "value": round(i.qty), # Integer needed for PCS
                         "unitOfMeasurement": get_unit_code(i.uom),
                     },
-                    "price": i.amount if i.amount > 0 else 1, # TODO find better
+                    "price": i.rate if i.rate > 0 else 1, # TODO find better
                     "description": i.item_name,
                     "weight": {
                         "netValue": i.total_weight,
                         "grossValue": i.total_weight,
                     },
-                    "exportReasonType": "permanent", # TODO: implement other types
+                    "exportReasonType": get_export_reason_type(doc.reason_for_export),
                     "manufacturerCountry": get_country_code(i.country_of_origin)
                 } for i in doc.shipment_delivery_note if i.total_weight > 0 ],
+                "recipientReference": doc.po_no,
                 "invoice": {
                     "date": doc.pickup_date.isoformat(),
                     "number": invoice_no,
+                    "signatureName": invoice_contact.full_name,
                 },
+                "additionalCharges": [{
+                    "value": doc.shipment_amount,
+                    "typeCode": "freight",
+                }],
                 "placeOfIncoterm": incoterm_place,
             },
         },
@@ -483,8 +525,8 @@ def create_shipment(shipment_docname, task_id=None):
     }
 
     print("\n\n\n================================\n\n\n")
-    import pprint
-    pprint.pprint(body, compact=True)
+    import json
+    print(json.dumps(body, indent=2))
     print("\n\n\n================================\n\n\n")
 
     set_status({
@@ -505,7 +547,7 @@ def create_shipment(shipment_docname, task_id=None):
     if 'shipmentCharges' in resp:
         estimate = next((c for c in resp['shipmentCharges'] if 'priceCurrency' in c and c['priceCurrency'] == 'CHF'), None)
         if estimate is not None and 'price' in estimate:
-            doc.db_set('shipment_amount', estimate['price'])
+            doc.db_set('shipment_cost', estimate['price'])
 
     set_status({
         "progress": 80,
@@ -539,8 +581,7 @@ def make_shipment_from_dn(source_name, target_doc=None):
     """ To be called from open_mapped_doc. """
     settings = _get_settings()
     def postprocess(source, target):
-        # TODO change to sales admin
-        user = frappe.db.get_value("User", frappe.session.user, ['email', 'full_name', 'phone', 'mobile_no'], as_dict=1)
+        user = frappe.db.get_value("User", settings.shipping_contact, ['email', 'full_name', 'phone', 'mobile_no'], as_dict=1)
         target.pickup_contact_email = user.email
         pickup_contact_display = '{}'.format(user.full_name)
         if user:
@@ -553,7 +594,7 @@ def make_shipment_from_dn(source_name, target_doc=None):
         target.pickup_contact = pickup_contact_display
 
         # As we are using session user details in the pickup_contact then pickup_contact_person will be session user
-        target.pickup_contact_person = frappe.session.user
+        target.pickup_contact_person = settings.shipping_contact
 
         contact = frappe.db.get_value("Contact", source.contact_person, ['email_id', 'phone', 'mobile_no'], as_dict=1)
         delivery_contact_display = '{}'.format(source.contact_display)
@@ -575,12 +616,20 @@ def make_shipment_from_dn(source_name, target_doc=None):
 
         # Customisations
         target.bill_customer = source.customer
+        target.bill_contact_name = source.contact_person
 
         for row in target.shipment_delivery_note:
             row.currency = source.currency
         
         target.pickup_from = settings.pickup_from  # Time is set to "now" somehow.
         target.pickup_to = settings.pickup_to
+
+        target.po_no = source.po_no if source.po_no else "NA"
+
+        shipping = next((t.tax_amount for t in source.taxes if t.account_head == settings.shipping_income_account), 0)
+        target.shipment_amount = shipping
+
+        target.get_invalid_links()  # Should fill 'fetch_from' values
 
     doclist = get_mapped_doc("Delivery Note", source_name, {
         "Delivery Note": {
