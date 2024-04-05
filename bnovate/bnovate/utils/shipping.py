@@ -9,6 +9,7 @@
 
 import frappe
 import datetime
+import itertools
 
 from json import JSONDecodeError
 from requests import request
@@ -465,16 +466,14 @@ def _create_shipment(shipment_docname, task_id=None):
             },
         ],
         "content": {
-            # TODO: handle package count
-            "packages": [{
-                "weight": p.weight,
-                "dimensions": {
-                    "length": p.length,
-                    "width": p.width,
-                    "height": p.height,
-                },
-
-            } for p in doc.shipment_parcel],
+            "packages": list(itertools.chain(*[[{
+                    "weight": p.weight,
+                    "dimensions": {
+                        "length": p.length,
+                        "width": p.width,
+                        "height": p.height,
+                    }, 
+            }] * p.count for p in doc.shipment_parcel])),
             "isCustomsDeclarable": customs_declarable,
             "description": doc.description_of_content,
             "incoterm": doc.incoterm,
