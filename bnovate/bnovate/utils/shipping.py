@@ -555,14 +555,25 @@ def _create_shipment(shipment_docname, task_id=None):
     }, task_id)
 
     for i, dhl_doc in enumerate(resp['documents']):
-        frappe.utils.file_manager.save_file(
+        df = None
+        if dhl_doc['typeCode'] == "label":
+            df = "shipping_label"
+        elif dhl_doc['typeCode'] == "invoice":
+            df = "commercial_invoice"
+
+        file = frappe.utils.file_manager.save_file(
             "{0}-{1}-{2}.{3}".format(doc.name, dhl_doc['typeCode'], i, dhl_doc['imageFormat'].lower()),
             dhl_doc['content'],
             doc.doctype,
             doc.name,
+            folder="Home", # TODO try Home
             decode=True,
             is_private=1,
+            df=df,
         )
+
+        if df is not None:
+            doc.db_set(df, file.file_url)
 
     set_status({
         "progress": 100,

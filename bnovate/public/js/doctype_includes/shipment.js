@@ -19,7 +19,7 @@ frappe.ui.form.on("Shipment", {
             frm.add_custom_button(__("Create Shipment"), () => create_shipment(frm));
         }
 
-        if (get_label_attachments(frm).length > 0) {
+        if (frm.doc.shipping_label) {
             frm.add_custom_button(__('<i class="fa fa-print"></i> Labels'), () => print_labels(frm));
         }
 
@@ -291,9 +291,9 @@ function get_label_attachments(frm) {
 }
 
 function print_labels(frm) {
-    const attachments = get_label_attachments(frm);
-    attachments.forEach(att => bnovate.utils.print_url(att.file_url));
-    return;
+    // const attachments = get_label_attachments(frm);
+    // attachments.forEach(att => bnovate.utils.print_url(att.file_url));
+    bnovate.utils.print_url(frm.doc.shipping_label);
 }
 
 /**********************************************
