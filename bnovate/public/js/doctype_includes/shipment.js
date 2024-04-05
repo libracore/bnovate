@@ -56,34 +56,14 @@ frappe.ui.form.on("Shipment", {
     },
 
     /* Autofills depend on linked doctypes: Company, Customer, or Supplier */
-    pickup_customer: async (frm) => fill_from_pickup_business(frm),
-    pickup_company: async (frm) => fill_from_pickup_business(frm),
-    pickup_contact_name: async (frm) => fill_from_pickup_contact(frm),
-    pickup_contact_person: async (frm) => fill_from_pickup_contact(frm),
-
-    delivery_customer: async (frm) => fill_from_delivery_business(frm),
-    delivery_company: async (frm) => fill_from_delivery_business(frm),
-    delivery_contact_name: async (frm) => fill_from_delivery_contact(frm),
-    // delivery_contact_person: Field doesn't exist!
-
-    bill_customer: async (frm) => fill_from_bill_business(frm),
-    bill_company: async (frm) => fill_from_bill_business(frm),
-    bill_contact_name: async (frm) => fill_from_bill_contact(frm),
-
     async fill_pickup_data(frm) {
-        await frm.call('get_invalid_links'); // Force trigger "fetch_from" methods
-        fill_from_pickup_business(frm);
-        fill_from_pickup_contact(frm);
+        await fill_address(frm, 'pickup');
     },
     async fill_delivery_data(frm) {
-        await frm.call('get_invalid_links'); // Force trigger "fetch_from" methods
-        fill_from_delivery_business(frm);
-        fill_from_delivery_contact(frm);
+        await fill_address(frm, 'delivery');
     },
     async fill_bill_data(frm) {
-        await frm.call('get_invalid_links'); // Force trigger "fetch_from" methods
-        fill_from_bill_business(frm);
-        fill_from_bill_contact(frm);
+        await fill_address(frm, 'bill');
     },
 })
 
@@ -131,156 +111,41 @@ async function get_company_contact_details(user) {
 
 /************ PICKUP ****************/
 
-// Fill tax values either from linked Company, Customer, or Supplier
-async function fill_from_pickup_business(frm) {
-    let values = {
-        tax_id: null,
-        eori_number: null,
+async function fill_address(frm, address_type) {
+
+    if (['pickup', 'delivery', 'bill'].indexOf(address_type) < 0) {
+        frappe.throw("address_type must be one of: ['pickup', 'delivery', 'bill']")
     }
 
-    if (frm.doc.pickup_from_type == "Customer") {
-        if (!frm.doc.pickup_customer)
-            return;
-        values = await frappe.db.get_doc("Customer", frm.doc.pickup_customer);
-    } else if (frm.doc.pickup_from_type == "Company") {
-        if (!frm.doc.pickup_company)
-            return;
-        values = await frappe.db.get_doc("Company", frm.doc.pickup_company);
-    } else if (frm.doc.pickup_from_type == "Supplier") {
-        // Not needed at this time
+    const args = {
+        address_type,
+        address_name: frm.doc[address_type + '_address_name'],
+    };
+    // business type field is the only one that isn't consistently named...!
+    // it can be pickup_from_type, delivery_to_type, or bill_to_type
+    const business_type = frm.doc[address_type + '_from_type'] || frm.doc[address_type + '_to_type'];
+
+    if (business_type === 'Company') {
+        args.company = frm.doc[address_type + '_company'];
+        args.contact = frm.doc[address_type + '_person'];
+    } else if (business_type === 'Customer') {
+        args.customer = frm.doc[address_type + '_customer'];
+        args.contact = frm.doc[address_type + '_contact_name'];
+    } else if (business_type === 'Supplier') {
+        args.company = frm.doc[address_type + '_supplier'];
     }
 
-    frm.set_value('pickup_tax_id', values.tax_id);
-    frm.set_value('pickup_eori_number', values.eori_number);
-}
+    console.log(args)
 
-// Fill contact information from linked Contact or User
-async function fill_from_pickup_contact(frm) {
-    // 
-    let values = {
-        contact_display: null,
-        contact_email: null,
-        contact_phone: null,
-    }
+    const resp = await frappe.call({
+        method: 'bnovate.bnovate.utils.shipping.fill_address_data',
+        args
+    })
+    const fields = resp.message;
 
-    if (frm.doc.pickup_from_type == "Customer") {
-        if (!frm.doc.pickup_contact_name)
-            return;
-        values = await get_contact_details(frm.doc.pickup_contact_name);
-    } else if (frm.doc.pickup_from_type == "Company") {
-        if (!frm.doc.pickup_contact_person)
-            return;
-        values = await get_company_contact_details(frm.doc.pickup_contact_person);
-    } else if (frm.doc.pickup_from_type == "Supplier") {
-        // Not needed at this time
-    }
-
-    frm.set_value('pickup_contact_display', values.contact_display);
-    frm.set_value('pickup_contact_email_rw', values.contact_email);
-    frm.set_value('pickup_contact_phone', values.contact_phone);
-}
-
-/************ DELIVERY ****************/
-
-// Fill tax values either from linked Company, Customer, or Supplier
-async function fill_from_delivery_business(frm) {
-    let values = {
-        tax_id: null,
-        eori_number: null,
-    }
-
-    if (frm.doc.delivery_to_type == "Customer") {
-        if (!frm.doc.delivery_customer)
-            return;
-        values = await frappe.db.get_doc("Customer", frm.doc.delivery_customer);
-    } else if (frm.doc.delivery_to_type == "Company") {
-        if (!frm.doc.delivery_company)
-            return;
-        values = await frappe.db.get_doc("Company", frm.doc.delivery_company);
-    } else if (frm.doc.delivery_to_type == "Supplier") {
-        // Not needed at this time
-    }
-
-    frm.set_value('delivery_tax_id', values.tax_id);
-    frm.set_value('delivery_eori_number', values.eori_number);
-}
-
-// Fill contact information from linked Contact or User
-async function fill_from_delivery_contact(frm) {
-    // 
-    let values = {
-        contact_display: null,
-        contact_email: null,
-        contact_phone: null,
-    }
-
-    if (frm.doc.delivery_to_type == "Customer") {
-        if (!frm.doc.delivery_contact_name)
-            return;
-        values = await get_contact_details(frm.doc.delivery_contact_name);
-    } else if (frm.doc.delivery_to_type == "Company") {
-        if (!frm.doc.delivery_contact_person)
-            return;
-        values = await get_company_contact_details(frm.doc.delivery_contact_person);
-    } else if (frm.doc.delivery_to_type == "Supplier") {
-        // Not needed at this time
-    }
-
-    frm.set_value('delivery_contact_display', values.contact_display);
-    frm.set_value('delivery_contact_email_rw', values.contact_email);
-    frm.set_value('delivery_contact_phone', values.contact_phone);
-}
-
-/************ BILL ****************/
-
-// Fill tax values either from linked Company, Customer, or Supplier
-async function fill_from_bill_business(frm) {
-    let values = {
-        tax_id: null,
-        eori_number: null,
-    }
-
-    if (frm.doc.bill_to_type == "Customer") {
-        if (!frm.doc.bill_customer)
-            return;
-        values = await frappe.db.get_doc("Customer", frm.doc.bill_customer);
-    } else if (frm.doc.bill_to_type == "Company") {
-        if (!frm.doc.bill_company)
-            return;
-        values = await frappe.db.get_doc("Company", frm.doc.bill_company);
-    } else if (frm.doc.bill_to_type == "Supplier") {
-        // Not needed at this time
-    }
-
-    frm.set_value('bill_tax_id', values.tax_id);
-    frm.set_value('bill_eori_number', values.eori_number);
-}
-
-// Fill contact information from linked Contact or User
-async function fill_from_bill_contact(frm) {
-    // 
-    let values = {
-        contact_display: null,
-        contact_email: null,
-        contact_phone: null,
-    }
-
-    if (frm.doc.bill_to_type == "Customer") {
-        if (!frm.doc.bill_contact_name)
-            return;
-        values = await get_contact_details(frm.doc.bill_contact_name);
-    } else if (frm.doc.bill_to_type == "Company") {
-        if (!frm.doc.bill_contact_person)
-            return;
-        values = await get_company_contact_details(frm.doc.bill_contact_person);
-    } else if (frm.doc.bill_to_type == "Supplier") {
-        // Not needed at this time
-    }
-
-    frm.set_value('bill_contact_display', values.contact_display);
-    frm.set_value('bill_contact_email_rw', values.contact_email);
-    frm.set_value('bill_contact_phone', values.contact_phone);
-}
+    Object.entries(fields).forEach(([k, v]) => frm.set_value(k, v));
+};
+window.fill_address = fill_address;
 
 /************ LABELS ****************/
 

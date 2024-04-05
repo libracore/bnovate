@@ -92,6 +92,10 @@ fixtures = [
             "Delivery Note-custom_shipping_rule",
             "Delivery Note-shipping_country",
             # Shipments (most fields are in exported customizations - shipment.json)
+            "Company-eori_number",
+            "Customer-eori_number",
+            "Supplier-eori_number",
+            "Delivery Note-eori_number",
             "Quotation-incoterm",
             "Sales Order-incoterm",
             "Delivery Note-incoterm",

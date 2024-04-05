@@ -16,6 +16,7 @@ from requests.exceptions import HTTPError
 
 from frappe import _
 from frappe.model.mapper import get_mapped_doc
+from frappe.contacts.doctype.contact.contact import get_contact_details
 
 from bnovate.bnovate.utils.realtime import set_status, STATUS_DONE
 
@@ -464,6 +465,7 @@ def _create_shipment(shipment_docname, task_id=None):
             },
         ],
         "content": {
+            # TODO: handle package count
             "packages": [{
                 "weight": p.weight,
                 "dimensions": {
@@ -584,63 +586,129 @@ def _create_shipment(shipment_docname, task_id=None):
 
 
 #######################################
-# Create Shipment from DN
+# EXTENSIONS TO SHIPMENT DOCTYPE
 #######################################
+
+@frappe.whitelist()
+def fill_address_data(address_type, address_name,  company=None, customer=None, supplier=None, contact=None, user=None):
+    """ Return address fields for given business / address / contact. 
+
+    Fills as much data as possible from the address.
+
+    Tax info is fetched from the business doctype (company, customer, or supplier).
+
+    If missing:
+    - company name is taken from business doctype
+    - name, email, phone are taken from the person doctype (contact or user)
+    
+    """
+
+    if address_type not in ('pickup', 'delivery', 'bill'):
+        raise ValueError("address_type must be one of ('pickup', 'delivery', 'bill')")
+
+    if company:
+        business_doc = frappe.get_doc("Company", company)
+        business_doc.company_name = business_doc.name
+    elif customer:
+        business_doc = frappe.get_doc("Customer", customer)
+        business_doc.company_name = business_doc.customer_name
+    elif supplier:
+        business_doc = frappe.get_doc("Supplier", supplier)
+        business_doc.company_name = business_doc.supplier_name
+    else:
+        raise ValueError("Please specify one of: company, customer, supplier")
+
+    address_doc = frappe.get_doc("Address", address_name)
+
+    if contact:
+        contact_doc = frappe.get_value("Contact", contact, ['first_name', 'last_name', 'email_id', 'phone', 'mobile_no'], as_dict=True)
+        contact_doc.contact_display = ' '.join([contact_doc.first_name, contact_doc.last_name]).strip()
+        contact_doc.email = contact_doc.email_id
+    elif user:
+        contact_doc = frappe.get_value("User", user, ['full_name', 'email', 'phone', 'mobile_no'], as_dict=True)
+        contact_doc.contact_display = contact_doc.full_name
+    else:
+        raise ValueError("Please specify one of: contact, user")
+    contact_doc.phone = contact_doc.phone or contact_doc.mobile_no
+
+    # DHL API doesn't support multiple emails, keep only the first one.
+    def trim_email(email_id):
+        return email_id.split(',')[0]
+
+    return {
+        address_type + "_company_name": address_doc.company_name or business_doc.company_name,
+        address_type + "_tax_id": business_doc.tax_id,
+        address_type + "_eori_number": business_doc.eori_number,
+        address_type + "_address_line1": address_doc.address_line1,
+        address_type + "_address_line2": address_doc.address_line2,
+        address_type + "_pincode": address_doc.pincode,
+        address_type + "_city": address_doc.city,
+        address_type + "_country": address_doc.country,
+        address_type + "_contact_display": address_doc.contact_name or contact_doc.contact_display, 
+        address_type + "_contact_email_rw": trim_email(address_doc.email_id or contact_doc.email),
+        address_type + "_contact_phone": address_doc.phone or contact_doc.phone,
+    }
+
 
 @frappe.whitelist()
 def make_shipment_from_dn(source_name, target_doc=None):
     """ To be called from open_mapped_doc. """
     settings = _get_settings()
     def postprocess(source, target):
-        user = frappe.db.get_value("User", settings.shipping_contact, ['email', 'full_name', 'phone', 'mobile_no'], as_dict=1)
-        target.pickup_contact_email = user.email
-        pickup_contact_display = '{}'.format(user.full_name)
-        if user:
-            if user.email:
-                pickup_contact_display += '<br>' + user.email
-            if user.phone:
-                pickup_contact_display += '<br>' + user.phone
-            if user.mobile_no and not user.phone:
-                pickup_contact_display += '<br>' + user.mobile_no
-        target.pickup_contact = pickup_contact_display
 
-        # As we are using session user details in the pickup_contact then pickup_contact_person will be session user
+        # PICKUP
+        target.pickup_from_type = "Company"
         target.pickup_contact_person = settings.shipping_contact
+        target.update(fill_address_data(
+            "pickup", 
+            target.pickup_address_name, 
+            company=target.pickup_company,
+            user=target.pickup_contact_person,
+        ))
 
-        contact = frappe.db.get_value("Contact", source.contact_person, ['email_id', 'phone', 'mobile_no'], as_dict=1)
-        delivery_contact_display = '{}'.format(source.contact_display)
-        if contact:
-            if contact.email_id:
-                delivery_contact_display += '<br>' + contact.email_id
-            if contact.phone:
-                delivery_contact_display += '<br>' + contact.phone
-            if contact.mobile_no and not contact.phone:
-                delivery_contact_display += '<br>' + contact.mobile_no
-        target.delivery_contact = delivery_contact_display
 
+        # DELIVERY
+        target.delivery_to_type = "Customer"
         if source.shipping_address_name:
             target.delivery_address_name = source.shipping_address_name
-            target.delivery_address = source.shipping_address
         elif source.customer_address:
+            # Default to billing address
             target.delivery_address_name = source.customer_address
-            target.delivery_address = source.address_display
 
-        # Customisations
+        target.update(fill_address_data(
+            "delivery", 
+            target.delivery_address_name, 
+            customer=target.delivery_customer,
+            contact=target.delivery_contact_name,
+        ))
+        
+        # BILL
+        target.bill_to_type = "Customer"
+
+        # field_map doesn't allow populating two target fields from same source.
         target.bill_customer = source.customer
         target.bill_contact_name = source.contact_person
+
+        target.update(fill_address_data(
+            "bill", 
+            target.bill_address_name, 
+            customer=target.bill_customer,
+            contact=target.bill_contact_name,
+        ))
+        
 
         for row in target.shipment_delivery_note:
             row.currency = source.currency
         
+        # TIMES
         target.pickup_from = settings.pickup_from  # Time is set to "now" somehow.
         target.pickup_to = settings.pickup_to
+
 
         target.po_no = source.po_no if source.po_no else "NA"
 
         shipping = next((t.tax_amount for t in source.taxes if t.account_head == settings.shipping_income_account), 0)
         target.shipment_amount = shipping
-
-        target.get_invalid_links()  # Should fill 'fetch_from' values
 
     doclist = get_mapped_doc("Delivery Note", source_name, {
         "Delivery Note": {
