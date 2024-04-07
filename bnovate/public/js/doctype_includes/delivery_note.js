@@ -51,7 +51,7 @@ frappe.ui.form.on("Delivery Note", {
 
             // Override standard delivery creation
             frm.remove_custom_button(__("Shipment"), __("Create"));
-            frm.add_custom_button(__("Shipment"), () => create_shipment(frm), __("Create"));
+            frm.add_custom_button(__("Shipment"), () => prompt_shipment(frm), __("Create"));
         }, 500);
 
         frm.override_action_buttons()
@@ -82,13 +82,63 @@ frappe.ui.form.on("Delivery Note", {
     },
 })
 
-function create_shipment(frm) {
+async function prompt_shipment(frm) {
+    console.log("Prompt ")
+    const data = await bnovate.utils.prompt(
+        "Confirm Data",
+        [{
+            label: __("Pickup Date"),
+            fieldname: "pickup_date",
+            fieldtype: "Date",
+            reqd: 1,
+            default: frm.doc.posting_date,
+        }, {
+            label: __("Parcels"),
+            fieldname: "parcels",
+            fieldtype: "Table",
+            reqd: 1,
+            get_data() {
+                return [];
+            },
+            fields: [{
+                label: __("Parcel type"),
+                fieldtype: "Link",
+                fieldname: "parcel_template_name",
+                options: "Shipment Parcel Template",
+                hidden: 0,
+                in_list_view: 1,
+            }, {
+                label: __('Count'),
+                fieldtype: "Int",
+                fieldname: "count",
+                default: 1,
+                read_only: 0,
+                in_list_view: 1,
+            }]
+
+            // label: __("Parcels"),
+            // fieldname: "parcels",
+            // fieldtype: "Table",
+            // options: "Shipment Parcel Quickentry",
+            // reqd: 1,
+        }],
+        "Send to DHL",
+        "Cancel",
+    )
+    if (data === null) {
+        console.log("Cancelled");
+        return
+    }
+
+    return create_shipment(frm, data);
+}
+
+function create_shipment(frm, args) {
     frappe.model.open_mapped_doc({
         method: "bnovate.bnovate.utils.shipping.make_shipment_from_dn",
-        frm
+        frm,
+        args,
     })
-    // ???
-    console.log(cur_frm.doc.doctype)
 }
 
 function override_action_buttons(frm) {

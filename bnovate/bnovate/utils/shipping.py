@@ -652,7 +652,19 @@ def fill_address_data(address_type, address_name,  company=None, customer=None, 
 @frappe.whitelist()
 def make_shipment_from_dn(source_name, target_doc=None):
     """ To be called from open_mapped_doc. """
+
+    # Args are passed through flags
+    args = frappe.flags.args
     settings = _get_settings()
+
+    # Fill in parcel data from template
+    for p in args.parcels:
+        template = frappe.get_doc("Shipment Parcel Template", p['parcel_template_name'])
+        p['width'] = template.width
+        p['length'] = template.length
+        p['height'] = template.height
+        p['weight'] = template.weight
+
     def postprocess(source, target):
 
         # PICKUP
@@ -700,14 +712,25 @@ def make_shipment_from_dn(source_name, target_doc=None):
             row.currency = source.currency
         
         # TIMES
+        if args.pickup_date:
+            target.pickup_date = args.pickup_date
+        target.pickup_date
         target.pickup_from = settings.pickup_from  # Time is set to "now" somehow.
         target.pickup_to = settings.pickup_to
 
-
-        target.po_no = source.po_no if source.po_no else "NA"
-
+        # SHIPPING DATA
         shipping = next((t.tax_amount for t in source.taxes if t.account_head == settings.shipping_income_account), 0)
         target.shipment_amount = shipping
+
+        target.shipment_parcel = [frappe.get_doc({
+            "doctype": "Shipment Parcel",
+            "length": p['length'],
+            "width": p['width'],
+            "height": p['height'],
+            "weight": p['weight'],
+            "count": p['count'],
+        }) for p in args.parcels]
+        print(target.shipment_parcel)
 
     doclist = get_mapped_doc("Delivery Note", source_name, {
         "Delivery Note": {
