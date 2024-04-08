@@ -57,6 +57,20 @@ frappe.ui.form.on("Delivery Note", {
         frm.override_action_buttons()
     },
 
+    add_template(frm) {
+        if (frm.doc.parcel_template) {
+            frappe.model.with_doc("Shipment Parcel Template", frm.doc.parcel_template, () => {
+                let parcel_template = frappe.model.get_doc("Shipment Parcel Template", frm.doc.parcel_template);
+                let row = frappe.model.add_child(frm.doc, "Shipment Parcel", "shipment_parcel");
+                row.length = parcel_template.length;
+                row.width = parcel_template.width;
+                row.height = parcel_template.height;
+                row.weight = parcel_template.weight;
+                frm.refresh_fields("shipment_parcel");
+            });
+        }
+    },
+
     custom_shipping_rule(frm) {
 
         // Call Custom Shipping Rule instead of built-in one:
@@ -92,35 +106,29 @@ async function prompt_shipment(frm) {
             fieldtype: "Date",
             reqd: 1,
             default: frm.doc.posting_date,
-        }, {
-            label: __("Parcels"),
-            fieldname: "parcels",
-            fieldtype: "Table",
-            reqd: 1,
-            get_data() {
-                return [];
-            },
-            fields: [{
-                label: __("Parcel type"),
-                fieldtype: "Link",
-                fieldname: "parcel_template_name",
-                options: "Shipment Parcel Template",
-                hidden: 0,
-                in_list_view: 1,
-            }, {
-                label: __('Count'),
-                fieldtype: "Int",
-                fieldname: "count",
-                default: 1,
-                read_only: 0,
-                in_list_view: 1,
-            }]
-
-            // label: __("Parcels"),
-            // fieldname: "parcels",
-            // fieldtype: "Table",
-            // options: "Shipment Parcel Quickentry",
-            // reqd: 1,
+            // }, {
+            //     label: __("Parcels"),
+            //     fieldname: "parcels",
+            //     fieldtype: "Table",
+            //     reqd: 1,
+            //     get_data() {
+            //         return [];
+            //     },
+            //     fields: [{
+            //         label: __("Parcel type"),
+            //         fieldtype: "Link",
+            //         fieldname: "parcel_template_name",
+            //         options: "Shipment Parcel Template",
+            //         hidden: 0,
+            //         in_list_view: 1,
+            //     }, {
+            //         label: __('Count'),
+            //         fieldtype: "Int",
+            //         fieldname: "count",
+            //         default: 1,
+            //         read_only: 0,
+            //         in_list_view: 1,
+            //     }]
         }],
         "Send to DHL",
         "Cancel",

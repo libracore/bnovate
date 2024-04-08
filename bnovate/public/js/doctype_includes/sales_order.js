@@ -6,6 +6,7 @@
  */
 
 frappe.require("/assets/bnovate/js/modals.js")  // provides bnovate.modals
+frappe.require("/assets/bnovate/js/shipping.js")  // provides bnovate.shipping
 
 frappe.ui.form.on("Sales Order", {
     async before_load(frm) {
@@ -88,6 +89,30 @@ frappe.ui.form.on("Sales Order", {
         bnovate.modals.attach_report_modal("projStockModal");
         if (!frm.doc.__islocal) {
             setTimeout(() => show_deliverability(frm), 500);
+        }
+    },
+
+    async before_submit(frm) {
+
+        // If incoterm requires that we ship, check deliverability:
+        if (frm.doc.incoterm === "DAP" || frm.doc.incoterm === "DDP") {
+            // BILLING
+            if (frm.doc.customer_address) {
+                let billing_valid = await bnovate.shipping.validate_address(frm.doc.customer_address, false);
+                if (!billing_valid) {
+                    frappe.msgprint(__("Billing address is not valid"));
+                    frappe.validated = false;
+                }
+            }
+
+            // SHIPPING
+            if (frm.doc.shipping_address_name) {
+                let shipping_valid = await bnovate.shipping.validate_address(frm.doc.shipping_address_name, false);
+                if (!shipping_valid) {
+                    frappe.msgprint(__("Shipping address is not valid"));
+                    frappe.validated = false;
+                }
+            }
         }
     },
 

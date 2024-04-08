@@ -101,6 +101,10 @@ fixtures = [
             "Delivery Note-incoterm",
             "Sales Invoice-incoterm",
             "Address-contact_name",
+            "Delivery Note-parcels",
+            "Delivery Note-shipment_parcel",
+            "Delivery Note-parcel_template",
+            "Delivery Note-add_template",
             # Stock management
             "Material Request Item-default_supplier",
             "Purchase Receipt-scan",
@@ -146,6 +150,7 @@ web_include_js = [
 
 # include js in doctype views
 doctype_js = {
+    "Address": ["public/js/doctype_includes/address.js"],
     "Blanket Order": ["public/js/doctype_includes/blanket_order.js"],
     "Contact": ["public/js/doctype_includes/contact.js"],
     "Customer": ["public/js/doctype_includes/customer.js"],

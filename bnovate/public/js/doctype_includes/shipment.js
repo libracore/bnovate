@@ -55,6 +55,30 @@ frappe.ui.form.on("Shipment", {
         }
     },
 
+    copy_delivery_data(frm) {
+        frm.set_value('bill_to_type', frm.doc.delivery_to_type);
+        frm.set_value('bill_company', frm.doc.delivery_company);
+        frm.set_value('bill_customer', frm.doc.delivery_customer);
+        frm.set_value('bill_supplier', frm.doc.delivery_supplier);
+        frm.set_value('bill_to', frm.doc.delivery_to);
+        frm.set_value('bill_address_name', frm.doc.delivery_address_name);
+        frm.set_value('bill_address', frm.doc.delivery_address);
+        frm.set_value('bill_contact_name', frm.doc.delivery_contact_name);
+        frm.set_value('bill_contact', frm.doc.delivery_contact);
+
+        frm.set_value('bill_company_name', frm.doc.delivery_company_name);
+        frm.set_value('bill_tax_id', frm.doc.delivery_tax_id);
+        frm.set_value('bill_eori_number', frm.doc.delivery_eori_number);
+        frm.set_value('bill_address_line1', frm.doc.delivery_address_line1);
+        frm.set_value('bill_address_line2', frm.doc.delivery_address_line2);
+        frm.set_value('bill_pincode', frm.doc.delivery_pincode);
+        frm.set_value('bill_city', frm.doc.delivery_city);
+        frm.set_value('bill_country', frm.doc.delivery_country);
+        frm.set_value('bill_contact_display', frm.doc.delivery_contact_display);
+        frm.set_value('bill_contact_email_rw', frm.doc.delivery_contact_email_rw);
+        frm.set_value('bill_contact_phone', frm.doc.delivery_contact_phone);
+    },
+
     /* Autofills depend on linked doctypes: Company, Customer, or Supplier */
     async fill_pickup_data(frm) {
         await fill_address(frm, 'pickup');
@@ -73,7 +97,7 @@ frappe.ui.form.on("Shipment", {
 
 function check_dirty(frm) {
     if (frm.is_dirty()) {
-        frappe.msgprint('Please save document first');
+        frappe.msgprint(__('Please save document first'));
         return true;
     }
     return false

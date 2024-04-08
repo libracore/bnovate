@@ -28,8 +28,22 @@ PICKUP, DELIVERY = "pickup", "delivery"
 class DHLException(Exception):
     pass
 
+class DHLBadRequestError(DHLException):
+    """ Missing or bad data in an API request """
+    def __init__(self, title, message, detail, additional_details):
+        self.title = title
+        self.message = message
+        self.detail = detail
+        self.additional_details = additional_details
 
-class ProductNotFound(DHLException):
+    def __str__(self):
+        return self.to_html()
+
+    def to_html(self):
+        return "<b>{0}</b><br>{1}<br>{2}<br>{3}".format(self.title, self.message or "", self.detail or "", self.additional_details or "") 
+
+
+class ProductNotFoundError(DHLException):
     """ Request product was not offered in API response """
 
 class AddressError(DHLException):
@@ -45,10 +59,8 @@ class DropShipImpossible(DHLException):
 # HELPERS
 #######################
 
-
 def _auth(ptype=WRITE):
     return frappe.has_permission("Shipment", ptype, throw=True)
-
 
 def _get_settings():
     return frappe.get_single("bNovate Settings")
@@ -124,9 +136,7 @@ def dhl_request(path, method='GET', params=None, body=None, settings=None, auth=
     except HTTPError as e:
         try:
             data = frappe._dict(resp.json())
-            if data.title:
-                raise DHLException(
-                    "<b>{0}</b><br>{1}<br>{2}<br>{3}".format(data.title, data.message, data.detail, data.additionalDetails))
+            raise DHLBadRequestError(data.title, data.message, data.detail, data.additionalDetails)
         except TypeError:
             # We can't convert body to JSON, raise generic error
             pass
@@ -141,11 +151,11 @@ def dhl_request(path, method='GET', params=None, body=None, settings=None, auth=
 def build_address(address_line1, address_line2, city, pincode, country):
     """ Return dict of address formatted for DHL API """
     address = {
-                "addressLine1": address_line1,
-                "addressLine2": address_line2,
-                "cityName": city,
-                "postalCode": pincode,
-                "countryCode": get_country_code(country),
+        "addressLine1": address_line1[:45] if address_line1 else None,
+        "addressLine2": address_line2[:45] if address_line2 else None,
+        "cityName": city,
+        "postalCode": pincode,
+        "countryCode": get_country_code(country),
     }
     return frappe._dict({k: v for k, v in address.items() if v})
 
@@ -154,8 +164,22 @@ def build_address(address_line1, address_line2, city, pincode, country):
 # WRAPPERS
 #######################
 
+@frappe.whitelist()
+def validate_address(name, throw_error=True):
+    """ Validate an address for delivery. For now we only look at postal code and country """
 
-def validate_address(address, address_type):
+    doc = frappe.get_doc("Address", name)
+    address = build_address(doc.address_line1, doc.address_line2, doc.city, doc.pincode, doc.country)
+
+    try:
+        return _validate_address(address, DELIVERY)
+    except AddressError:
+        if throw_error:
+            frappe.throw("Invalid postal code")
+        return False
+
+
+def _validate_address(address, address_type):
     """ Validates if DHL Express has got pickup/delivery capabilities at origin/destination
 
     address_type must be either 'pickup' or 'delivery'
@@ -169,15 +193,19 @@ def validate_address(address, address_type):
         "type": address_type,
     }
 
-    resp = dhl_request(
-        "/address-validate",
-        params=params
-    )
+    try:
+        resp = dhl_request(
+            "/address-validate",
+            params=params
+        )
+    except DHLBadRequestError as e:
+        address_display = "{0} // {1} // {2} // {3}".format(address.addressLine1, address.addressLine2, address.postalCode, address.countryCode)
+        raise AddressError("Could not validate address: '{0}'. Message: {1}".format(address_display, e.detail))
 
     try:
         return resp['address'][0]['serviceArea']['GMTOffset']
     except (KeyError, IndexError, TypeError) as e:
-        raise AddressError("Could not read Timezone from address")
+        raise DHLException("Could not read Timezone from address")
 
 
 
@@ -248,7 +276,7 @@ def get_price(shipment_docname):
     quote = next(
         (p for p in resp.products if p['productCode'] == product_code), None)
     if quote is None:
-        raise ProductNotFound()
+        raise ProductNotFoundError()
 
     return quote
 
@@ -383,9 +411,9 @@ def _create_shipment(shipment_docname, task_id=None):
     }, task_id)
 
     # Might be off +- 1 hour if request and delivery straddle DST change, shouldn't be an issue
-    pickup_gmt_offset = validate_address(pickup_address, PICKUP)
-    validate_address(delivery_address, DELIVERY)
-    validate_address(bill_address, DELIVERY)
+    pickup_gmt_offset = _validate_address(pickup_address, PICKUP)
+    _validate_address(delivery_address, DELIVERY)
+    _validate_address(bill_address, DELIVERY)
 
     # Commercial invoice data
     invoice_contact = frappe.get_doc("User", settings.shipping_contact)
@@ -495,12 +523,12 @@ def _create_shipment(shipment_docname, task_id=None):
                     "price": i.rate if i.rate > 0 else 1, # TODO find better
                     "description": i.item_name,
                     "weight": {
-                        "netValue": i.total_weight,
-                        "grossValue": i.total_weight,
+                        "netValue": i.total_weight or 1.0,
+                        "grossValue": i.total_weight or 1.0,
                     },
                     "exportReasonType": get_export_reason_type(doc.reason_for_export),
                     "manufacturerCountry": get_country_code(i.country_of_origin)
-                } for i in doc.shipment_delivery_note if i.total_weight > 0 ],
+                } for i in doc.shipment_delivery_note],
                 "recipientReference": doc.po_no,
                 "invoice": {
                     "date": doc.pickup_date.isoformat(),
@@ -510,17 +538,10 @@ def _create_shipment(shipment_docname, task_id=None):
                 "additionalCharges": [{
                     "value": doc.shipment_amount,
                     "typeCode": "freight",
-                }],
+                }] if doc.shipment_amount else [],
                 "placeOfIncoterm": incoterm_place,
             },
         },
-        # "shipmentNotification": [
-        #     {
-        #         "typeCode": "email",
-        #         "receiverId": "receiver@example.com",
-        #         "languageCode": "eng",
-        #     }
-        # ],
         "valueAddedServices": value_added_services,
         "getRateEstimates": True,
     }
@@ -657,14 +678,6 @@ def make_shipment_from_dn(source_name, target_doc=None):
     args = frappe.flags.args
     settings = _get_settings()
 
-    # Fill in parcel data from template
-    for p in args.parcels:
-        template = frappe.get_doc("Shipment Parcel Template", p['parcel_template_name'])
-        p['width'] = template.width
-        p['length'] = template.length
-        p['height'] = template.height
-        p['weight'] = template.weight
-
     def postprocess(source, target):
 
         # PICKUP
@@ -721,16 +734,6 @@ def make_shipment_from_dn(source_name, target_doc=None):
         # SHIPPING DATA
         shipping = next((t.tax_amount for t in source.taxes if t.account_head == settings.shipping_income_account), 0)
         target.shipment_amount = shipping
-
-        target.shipment_parcel = [frappe.get_doc({
-            "doctype": "Shipment Parcel",
-            "length": p['length'],
-            "width": p['width'],
-            "height": p['height'],
-            "weight": p['weight'],
-            "count": p['count'],
-        }) for p in args.parcels]
-        print(target.shipment_parcel)
 
     doclist = get_mapped_doc("Delivery Note", source_name, {
         "Delivery Note": {
