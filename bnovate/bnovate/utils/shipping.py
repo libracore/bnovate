@@ -282,9 +282,11 @@ def get_price(shipment_docname):
 
 
 @frappe.whitelist()
-def create_shipment(shipment_docname, task_id=None):
+def create_shipment(shipment_docname, pickup=False, task_id=None):
+    # Args are passed as text!
+    pickup = bool(int(pickup))
     try:
-        _create_shipment(shipment_docname, task_id)
+        return _create_shipment(shipment_docname, pickup, task_id)
     except Exception as e:
         set_status({
             "progress": 100,
@@ -292,13 +294,15 @@ def create_shipment(shipment_docname, task_id=None):
         }, task_id, STATUS_DONE)
 
         raise e
-def _create_shipment(shipment_docname, task_id=None):
+
+
+def _create_shipment(shipment_docname, pickup=False, task_id=None):
     """ Create Shipment, receive shipping label and tracking number. 
 
     Set validate_only to True to check deliverability etc.
     
     """
-
+    
     set_status({
         "progress": 0,
         "message": _("Initiating request..."),
@@ -306,6 +310,9 @@ def _create_shipment(shipment_docname, task_id=None):
 
     settings = _get_settings()
     doc = frappe.get_doc("Shipment", shipment_docname)
+
+    if doc.status != "Submitted":
+        raise DHLException("Can only create shipment if status is 'Submitted'")
 
     if len(doc.shipment_parcel) == 0:
         raise MissingParcelError(_("Please specify types of parcel"))
@@ -317,8 +324,9 @@ def _create_shipment(shipment_docname, task_id=None):
     local_product_code = "S"
     customs_declarable = True
     value_added_services = [{
-        # Paperless trade
-        "serviceCode": "WY",
+        "serviceCode": "WY", # Paperless trade
+    }, {
+        "serviceCode": "FD", # GOGREEN
     }]
     if doc.incoterm == "DDP":
         value_added_services += [{
@@ -431,7 +439,7 @@ def _create_shipment(shipment_docname, task_id=None):
     body = {
         "plannedShippingDateAndTime": "{0} GMT{1}".format(pickup_datetime.isoformat()[:19], pickup_gmt_offset),
         "pickup": {
-            "isRequested": True,
+            "isRequested": bool(pickup),
             "closeTime": str(doc.pickup_to)[:5],
         },
         "productCode": product_code,
@@ -506,7 +514,7 @@ def _create_shipment(shipment_docname, task_id=None):
             "description": doc.description_of_content,
             "incoterm": doc.incoterm,
             "unitOfMeasurement": "metric",
-            "declaredValue": doc.value_of_goods,
+            "declaredValue": doc.declared_value,
             "declaredValueCurrency": doc.value_currency,
             "exportDeclaration": {
                 "lineItems": [{
@@ -561,9 +569,11 @@ def _create_shipment(shipment_docname, task_id=None):
     doc.db_set("carrier", "DHL")
     doc.db_set("awb_number", resp['shipmentTrackingNumber'])
     doc.db_set("tracking_url", resp['trackingUrl'])
-    if 'cancelPickupUrl' in resp:
-        doc.db_set("cancel_pickup_url", resp['cancelPickupUrl'])
-    doc.db_set("status", "Booked")
+    doc.db_set("pickup_confirmation_number", resp['dispatchConfirmationNumber'] if 'cancelPickupUrl' in resp else None)
+    if pickup:
+        doc.db_set("status", "Completed")
+    else:
+        doc.db_set("status", "Registered")
     # TODO: track piece by piece?
 
     if 'shipmentCharges' in resp:
@@ -596,6 +606,114 @@ def _create_shipment(shipment_docname, task_id=None):
 
         if df is not None:
             doc.db_set(df, file.file_url)
+
+    set_status({
+        "progress": 100,
+        "message": _("Done"),
+    }, task_id, STATUS_DONE)
+
+    return resp
+
+
+@frappe.whitelist()
+def request_pickup(shipment_docname, task_id=None):
+    try:
+        return _request_pickup(shipment_docname, task_id=task_id)
+    except Exception as e:
+        set_status({
+            "progress": 100,
+            "message": _("Error"),
+        }, task_id, STATUS_DONE)
+
+        raise e
+
+def _request_pickup(shipment_docname, task_id=None):
+    """ Request pickup """
+    
+    doc = frappe.get_doc("Shipment", shipment_docname)
+    settings = _get_settings()
+
+    if doc.status != "Registered":
+        raise DHLException("Can only request pickup if status is 'Registered'")
+
+
+    product_code = "P"
+    customs_declarable = True
+    if doc.pickup_country == "Switzerland" and doc.delivery_country == "Switzerland":
+        product_code = "N"
+        customs_declarable = False
+
+    # Date and time can't be in the past, even by a second
+    pickup_datetime = datetime.datetime.combine(doc.pickup_date, datetime.time()) + doc.pickup_from
+    if pickup_datetime <= datetime.datetime.now():
+        pickup_datetime = datetime.datetime.now() + datetime.timedelta(minutes=10)
+
+    pickup_address = build_address(
+        doc.pickup_address_line1,
+        doc.pickup_address_line2,
+        doc.pickup_city,
+        doc.pickup_pincode,
+        doc.pickup_country
+    )
+    pickup_gmt_offset = _validate_address(pickup_address, PICKUP)
+
+    body = {
+        "plannedPickupDateAndTime": "{0} GMT{1}".format(pickup_datetime.isoformat()[:19], pickup_gmt_offset),
+        "accounts": [
+            {
+                "typeCode": "shipper",
+                "number": settings.dhl_export_account,
+            }
+        ],
+        "customerDetails": {
+            "shipperDetails": {
+                "postalAddress": pickup_address,
+                "contactInformation": {
+                    "phone": doc.pickup_contact_phone,
+                    "companyName": doc.pickup_company_name,
+                    "fullName": doc.pickup_contact_display,
+                    "email": doc.pickup_contact_email_rw,
+                },
+            },
+        },
+        "shipmentDetails": [{
+            "productCode": product_code,
+            "packages": list(itertools.chain(*[[{
+                    "weight": p.weight,
+                    "dimensions": {
+                        "length": p.length,
+                        "width": p.width,
+                        "height": p.height,
+                    }, 
+            }] * p.count for p in doc.shipment_parcel])),
+            "isCustomsDeclarable": customs_declarable,
+            "declaredValue": doc.declared_value,
+            "declaredValueCurrency": doc.value_currency,
+            "unitOfMeasurement": "metric",
+            "shipmentTrackingNumber": doc.awb_number,
+        }],
+    }
+
+
+    print("\n\n\n================================\n\n\n")
+    import json
+    print(json.dumps(body, indent=2))
+    print("\n\n\n================================\n\n\n")
+
+
+    set_status({
+        "progress": 40,
+        "message": _("Requesting pickup..."),
+    }, task_id)
+
+    resp = dhl_request("/pickups", 'POST', body=body, settings=settings)
+
+    doc.db_set("status", "Completed")
+    try:
+        doc.db_set("pickup_confirmation_number", resp['dispatchConfirmationNumbers'][0])
+    except (KeyError, IndexError, TypeError) as e:
+        # Too bad, can't get  the dispatch number
+        pass
 
     set_status({
         "progress": 100,
@@ -739,7 +857,7 @@ def make_shipment_from_dn(source_name, target_doc=None):
         "Delivery Note": {
             "doctype": "Shipment",
             "field_map": {
-                "grand_total": "value_of_goods",
+                "grand_total": "declared_value",
                 "currency": "value_currency",
                 "company": "pickup_company",
                 "company_address": "pickup_address_name",
@@ -750,6 +868,7 @@ def make_shipment_from_dn(source_name, target_doc=None):
 
                 "customer_address": "bill_address_name",
                 "posting_date": "pickup_date",
+                "po_no": "po_no",
             },
             "validation": {
                 "docstatus": ["=", 1]
@@ -760,9 +879,33 @@ def make_shipment_from_dn(source_name, target_doc=None):
             "field_map": {
                 "name": "dn_detail",
                 "parent": "prevdoc_docname",
-                "base_amount": "grand_total",
             }
         }
     }, target_doc, postprocess)
 
     return doclist
+
+
+@frappe.whitelist()
+def finalize_dn(shipment_docname):
+    """ Copy AWB number and other relevant information """
+
+    shipment = frappe.get_doc("Shipment", shipment_docname)
+
+    if len(shipment.shipment_delivery_note) < 1:
+        raise Exception("No DNs referenced in Shipment")
+
+    dn_docname = shipment.shipment_delivery_note[0].delivery_note
+
+    dn = frappe.get_doc("Delivery Note", dn_docname)
+
+    dn.db_set('tracking_no', shipment.awb_number)
+    dn.db_set('carrier', shipment.carrier)
+    dn.db_set('packing_stage', 'Shipped')
+
+    return {
+        "dn_docname": dn_docname,
+    }
+
+
+

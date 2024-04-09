@@ -15,8 +15,21 @@ frappe.ui.form.on("Shipment", {
         if (cur_frm.doc.docstatus <= 1) {
             frm.add_custom_button(__("Get Estimate"), () => get_price(frm));
 
-            // TODO: only create shipment if status is Submitted, not booked.
-            frm.add_custom_button(__("Create Shipment"), () => create_shipment(frm));
+        }
+
+        if (cur_frm.doc.docstatus == 1) {
+            if (cur_frm.doc.status == "Submitted") {
+                frm.add_custom_button(__("Create Shipment NO Pickup"), () => create_shipment(frm, false));
+                frm.add_custom_button(__("Create Shipment AND Pickup"), () => create_shipment(frm, true));
+            }
+
+            if (cur_frm.doc.status == "Registered") {
+                frm.add_custom_button(__("Request Pickup"), () => request_pickup(frm));
+            }
+
+            if (cur_frm.doc.status == "Completed") {
+                frm.add_custom_button(__("Finalize DN"), () => finalize_dn(frm));
+            }
         }
 
         if (frm.doc.shipping_label) {
@@ -89,7 +102,25 @@ frappe.ui.form.on("Shipment", {
     async fill_bill_data(frm) {
         await fill_address(frm, 'bill');
     },
+
+    shipment_amount(frm) {
+        calculate_total_value(frm);
+    }
 })
+
+frappe.ui.form.on('Shipment Delivery Note', {
+
+    qty(frm, cdt, cdn) {
+        calculate_row_total(frm, cdt, cdn);
+        calculate_total_value(frm);
+    },
+
+    rate(frm, cdt, cdn) {
+        calculate_row_total(frm, cdt, cdn);
+        calculate_total_value(frm);
+    },
+
+});
 
 /**********************************************
  *  FORM COMPLETION HELPERS
@@ -101,6 +132,33 @@ function check_dirty(frm) {
         return true;
     }
     return false
+}
+
+function calculate_row_total(frm, dt, dn) {
+    let row = locals[dt][dn];
+    let amount = 0
+    if (row.qty && row.rate) {
+        amount = row.qty * row.rate;
+    }
+    frappe.model.set_value(dt, dn, 'amount', amount);
+}
+
+function calculate_total_value(frm) {
+    const line_item_value = frm.doc.shipment_delivery_note.reduce((acc, row) => acc + row.amount, 0);
+    const total = line_item_value + frm.doc.shipment_amount;
+
+    frm.set_value('declared_value', total);
+}
+
+async function finalize_dn(frm) {
+    const resp = await frappe.call({
+        method: "bnovate.bnovate.utils.shipping.finalize_dn",
+        args: {
+            shipment_docname: frm.doc.name,
+        }
+    });
+
+    frappe.set_route("Form", "Delivery Note", resp.message.dn_docname)
 }
 
 // Get contact details based on **contact** docname
@@ -131,7 +189,6 @@ async function get_company_contact_details(user) {
         contact_phone: contact.phone,
     }
 }
-
 
 /************ PICKUP ****************/
 
@@ -210,7 +267,7 @@ async function get_price(frm) {
     return resp.message;
 }
 
-async function create_shipment(frm) {
+async function create_shipment(frm, pickup = false) {
 
     if (check_dirty(frm))
         return;
@@ -219,11 +276,37 @@ async function create_shipment(frm) {
         method: "bnovate.bnovate.utils.shipping.create_shipment",
         args: {
             shipment_docname: frm.doc.name,
+            pickup: Number(pickup),  // or it gets passed as the string 'true' or 'false'...
         },
         callback(status) {
             console.log(status);
             if (status.data.progress < 100) {
                 frappe.show_progress(__("Creating shipment..."), status.data.progress, 100, __(status.data.message));
+            }
+            if (status.code == 0) {
+                frappe.hide_progress();
+            }
+        }
+    });
+
+    console.log(resp.message);
+    frm.reload_doc();
+    return resp.message;
+}
+
+async function request_pickup(frm) {
+    if (check_dirty(frm))
+        return;
+
+    const resp = await bnovate.realtime.call({
+        method: "bnovate.bnovate.utils.shipping.request_pickup",
+        args: {
+            shipment_docname: frm.doc.name,
+        },
+        callback(status) {
+            console.log(status);
+            if (status.data.progress < 100) {
+                frappe.show_progress(__("Requesting pickup..."), status.data.progress, 100, __(status.data.message));
             }
             if (status.code == 0) {
                 frappe.hide_progress();
