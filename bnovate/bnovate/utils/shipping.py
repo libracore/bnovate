@@ -123,9 +123,13 @@ def dhl_request(path, method='GET', params=None, body=None, settings=None, auth=
         _auth(READ if method == 'GET' else WRITE)
     if settings is None:
         settings = _get_settings()
+
+    base_url = "https://express.api.dhl.com/mydhlapi/test"
+    if settings.use_live_api:
+        base_url = "https://express.api.dhl.com/mydhlapi" 
     resp = request(
         method,
-        "https://express.api.dhl.com/mydhlapi/test" + path,
+        base_url + path,
         params=params,
         json=body,
         auth=(settings.dhl_api_key, settings.dhl_api_secret),
