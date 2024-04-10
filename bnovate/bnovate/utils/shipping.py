@@ -225,6 +225,10 @@ def get_price(shipment_docname):
 
     product_code = "P"
     local_product_code = "S"
+    accounts = [{
+        "typeCode": "shipper",
+        "number": settings.dhl_export_account, 
+    }]
 
     if doc.pickup_country == "Switzerland" and doc.delivery_country == "Switzerland":
         product_code = "N"
@@ -257,10 +261,7 @@ def get_price(shipment_docname):
                 doc.delivery_country,
             ),
         },
-        "accounts": [{
-            "typeCode": "shipper",
-            "number": settings.dhl_export_account,
-        }],
+        "accounts": accounts,
         "packages": [{
             "weight": p.weight,
             "dimensions": {
@@ -332,16 +333,40 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
     }, {
         "serviceCode": "FD", # GOGREEN
     }]
+    accounts = [{
+        "typeCode": "shipper",
+        "number": settings.dhl_export_account, 
+    }]
     if doc.incoterm == "DDP":
         value_added_services += [{
             "serviceCode": "DD",  # Duty paid
         }]
+        accounts += [{
+            "typeCode": "duties-taxes",
+            "number": settings.dhl_export_account, 
+        }]
+
+    image_options = [{
+            "typeCode": "label",
+            "templateName": "ECOM26_84_001"
+        }, {
+            "templateName": "COMMERCIAL_INVOICE_03",
+            "invoiceType": "commercial",
+            "languageCode": "eng",
+            "isRequested": True,
+            "typeCode": "invoice"
+    }] 
 
     if doc.pickup_country == "Switzerland" and doc.delivery_country == "Switzerland":
         product_code = "N"
         local_product_code = "N"
         value_added_services = []
         customs_declarable = False
+
+        image_options = [{
+            "typeCode": "label",
+            "templateName": "ECOM26_84_001" 
+        }]
 
         # TODO: loop over parcels, one shipment per parcel, or create multiple shipments.
         if len(doc.shipment_parcel) > 1:
@@ -448,24 +473,10 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
         },
         "productCode": product_code,
         "localProductCode": local_product_code,
-        "accounts": [
-            {
-                "typeCode": "shipper",
-                "number": settings.dhl_export_account,
-            }
-        ],
+        "accounts": accounts,
         "outputImageProperties": {
             "encodingFormat": "pdf",
-            "imageOptions": [{
-                    "typeCode": "label",
-                    "templateName": "ECOM26_84_001"
-                }, {
-                    "templateName": "COMMERCIAL_INVOICE_03",
-                    "invoiceType": "commercial",
-                    "languageCode": "eng",
-                    "isRequested": True,
-                    "typeCode": "invoice"
-            } ]
+            "imageOptions": image_options,
         },
         "customerDetails": {
             "shipperDetails": {
