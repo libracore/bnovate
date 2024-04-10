@@ -905,11 +905,36 @@ def finalize_dn(shipment_docname):
 
     dn.db_set('tracking_no', shipment.awb_number)
     dn.db_set('carrier', shipment.carrier)
+    dn.db_set('shipping_label', shipment.shipping_label)
     dn.db_set('packing_stage', 'Shipped')
 
-    return {
-        "dn_docname": dn_docname,
-    }
+    return dn
 
+@frappe.whitelist()
+def ship_from_dn(dn_docname, pickup_date, task_id=None):
+    try:
+        return _ship_from_dn(dn_docname, pickup_date, task_id)
+    except Exception as e:
+        set_status({
+            "progress": 100,
+            "message": _("Error"),
+        }, task_id, STATUS_DONE)
+
+        raise e
+
+def _ship_from_dn(dn_docname, pickup_date, task_id=None):
+    """ Create Shipment doc, request DHL pickup, copy shipping data to DN """
+
+    frappe.flags.args = frappe._dict({
+        "pickup_date": pickup_date
+    })
+
+    shipment_doc = make_shipment_from_dn(dn_docname)
+    shipment_doc.submit() # Will not commit in case of error.
+
+    _create_shipment(shipment_doc.name, pickup=True, task_id=task_id)
+    dn = finalize_dn(shipment_doc.name)
+
+    return dn
 
 

@@ -27,6 +27,7 @@
   "dhl_api_secret",
   "column_break_20",
   "pickup_from",
+  "same_day_cutoff",
   "pickup_to",
   "default_customs_tariff_number",
   "default_country_of_origin",
@@ -189,10 +190,17 @@
    "fieldname": "use_live_api",
    "fieldtype": "Check",
    "label": "Use Live DHL API?"
+  },
+  {
+   "default": "17:00:00",
+   "description": "Beyond this time, pickup is scheduled for next day.",
+   "fieldname": "same_day_cutoff",
+   "fieldtype": "Time",
+   "label": "Same Day Cutoff"
   }
  ],
  "issingle": 1,
- "modified": "2024-04-09 17:59:35.439386",
+ "modified": "2024-04-10 17:50:50.056742",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "bNovate Settings",

@@ -38,6 +38,13 @@ frappe.ui.form.on("Delivery Note", {
     },
 
     refresh(frm) {
+
+        if (frm.doc.shipping_label) {
+            frm.add_custom_button(__('<i class="fa fa-print"></i> Shipping Label'), () => {
+                print_shipping_label(frm);
+            });
+        }
+
         setTimeout(() => {
             frm.remove_custom_button(__("Subscription"), __("Create"));
             frm.add_custom_button(__("Aggregate Invoice"), async function () {
@@ -51,7 +58,16 @@ frappe.ui.form.on("Delivery Note", {
 
             // Override standard delivery creation
             frm.remove_custom_button(__("Shipment"), __("Create"));
-            frm.add_custom_button(__("Shipment"), () => prompt_shipment(frm), __("Create"));
+            frm.add_custom_button(__("Shipment"), () => create_shipment(frm), __("Create"));
+
+            // Backup location for this function
+            if (frm.doc.packing_stage != "Shipped") {
+                frm.add_custom_button(__('Request DHL Pickup <i class="fa fa-truck"></i>'), () => {
+                    request_pickup(frm);
+                }, __("Create"));
+            }
+
+
         }, 500);
 
         frm.override_action_buttons()
@@ -96,57 +112,93 @@ frappe.ui.form.on("Delivery Note", {
     },
 })
 
+// Return next weekday date, starting 'days_from_now' from today
+// Setting days_from_now to 0 will return today if today is a weekday
+function next_weekday(days_from_now = 0) {
+    let d = frappe.datetime.add_days(frappe.datetime.now_date(), days_from_now);
+
+    while (moment(d).isoWeekday() > 5) {
+        d = frappe.datetime.add_days(d, 1)
+    }
+    return d;
+}
+
 async function prompt_shipment(frm) {
-    console.log("Prompt ")
+
+    // Pre-fill with next available pickup date
+    const cutoff_time = await bnovate.utils.get_setting('same_day_cutoff');
+    let pickup_date = frm.doc.posting_date;
+    if (pickup_date <= frappe.datetime.now_date()) {
+        if (frappe.datetime.now_time() < cutoff_time) {
+            pickup_date = next_weekday(0);
+        } else {
+            pickup_date = next_weekday(1);
+        }
+    }
+
     const data = await bnovate.utils.prompt(
-        "Confirm Data",
+        __("Confirm Pickup Date"),
         [{
             label: __("Pickup Date"),
             fieldname: "pickup_date",
             fieldtype: "Date",
             reqd: 1,
-            default: frm.doc.posting_date,
-            // }, {
-            //     label: __("Parcels"),
-            //     fieldname: "parcels",
-            //     fieldtype: "Table",
-            //     reqd: 1,
-            //     get_data() {
-            //         return [];
-            //     },
-            //     fields: [{
-            //         label: __("Parcel type"),
-            //         fieldtype: "Link",
-            //         fieldname: "parcel_template_name",
-            //         options: "Shipment Parcel Template",
-            //         hidden: 0,
-            //         in_list_view: 1,
-            //     }, {
-            //         label: __('Count'),
-            //         fieldtype: "Int",
-            //         fieldname: "count",
-            //         default: 1,
-            //         read_only: 0,
-            //         in_list_view: 1,
-            //     }]
+            default: pickup_date,
         }],
         "Send to DHL",
         "Cancel",
     )
-    if (data === null) {
+    return data;
+}
+
+async function create_shipment(frm) {
+    const args = await prompt_shipment(frm);
+
+    if (args === null) {
         console.log("Cancelled");
         return
     }
 
-    return create_shipment(frm, data);
-}
-
-function create_shipment(frm, args) {
     frappe.model.open_mapped_doc({
         method: "bnovate.bnovate.utils.shipping.make_shipment_from_dn",
         frm,
         args,
     })
+}
+
+// Creates shipment, get shipping label from carrier, and request actual pickup!
+async function request_pickup(frm) {
+    const args = await prompt_shipment(frm);
+
+    if (args === null) {
+        console.log("Cancelled");
+        return
+    }
+
+    const resp = await bnovate.realtime.call({
+        method: "bnovate.bnovate.utils.shipping.ship_from_dn",
+        args: {
+            dn_docname: frm.doc.name,
+            ...args,
+        },
+        callback(status) {
+            console.log(status);
+            if (status.data.progress < 100) {
+                frappe.show_progress(__("Creating shipment..."), status.data.progress, 100, __(status.data.message));
+            }
+            if (status.code == 0) {
+                frappe.hide_progress();
+            }
+        }
+    })
+
+    console.log(resp.message);
+    await frm.reload_doc();
+    await print_shipping_label(frm);
+}
+
+async function print_shipping_label(frm) {
+    await bnovate.utils.print_url(frm.doc.shipping_label);
 }
 
 function override_action_buttons(frm) {
@@ -159,12 +211,24 @@ function override_action_buttons(frm) {
         // Only override action button if form is submitted
         frm.page.clear_primary_action();
         if (frm.doc.packing_stage == "Packing") {
-            frm.page.set_primary_action(__("Request Pickup"), async () => {
-                // TODO: set tracking info and stage
-                frm.doc.packing_stage = 'Ready to Ship';
-                frm.save("Update");
-                await frm.assign();
-            })
+
+            // We organize shipping if incoterm is DAP or DDP
+            if (frm.doc.incoterm == "DAP" || frm.doc.incoterm == "DDP") {
+                frm.dashboard.add_comment(__("We organize shipping for this order") + ` (Incoterm ${frm.doc.incoterm})`);
+
+                frm.page.set_primary_action(__("Ship with DHL") + ' <i class="fa fa-truck"></i>', async () => {
+                    return await request_pickup(frm);
+                })
+
+            } else {
+                frm.dashboard.add_comment(__("The customer will organize shipping") + ` (Incoterm ${frm.doc.incoterm})`);
+                frm.page.set_primary_action(__("Request Pickup") + ' <i class="fa fa-paper-plane"></i>', async () => {
+                    await frm.set_value({ packing_stage: 'Ready to Ship' });
+                    frm.save("Update");
+                    await frm.assign();
+                })
+            }
+
         } else if (frm.doc.packing_stage == "Ready to Ship") {
             frm.page.set_primary_action(__("Confirm Shipment"), async () => {
                 const values = await bnovate.utils.prompt("Enter shipping details",

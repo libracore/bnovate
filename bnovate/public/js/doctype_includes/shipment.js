@@ -158,7 +158,7 @@ async function finalize_dn(frm) {
         }
     });
 
-    frappe.set_route("Form", "Delivery Note", resp.message.dn_docname)
+    frappe.set_route("Form", "Delivery Note", resp.message.name)
 }
 
 // Get contact details based on **contact** docname
