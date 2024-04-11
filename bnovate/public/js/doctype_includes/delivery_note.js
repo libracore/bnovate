@@ -212,22 +212,22 @@ function override_action_buttons(frm) {
         frm.page.clear_primary_action();
         if (frm.doc.packing_stage == "Packing") {
 
-            // We organize shipping if incoterm is DAP or DDP
-            if (frm.doc.incoterm == "DAP" || frm.doc.incoterm == "DDP") {
-                frm.dashboard.add_comment(__("We organize shipping for this order") + ` (Incoterm ${frm.doc.incoterm})`);
+            // // We organize shipping if incoterm is DAP or DDP
+            // if (frm.doc.incoterm == "DAP" || frm.doc.incoterm == "DDP") {
+            //     frm.dashboard.add_comment(__("We organize shipping for this order") + ` (Incoterm ${frm.doc.incoterm})`);
 
-                frm.page.set_primary_action(__("Ship with DHL") + ' <i class="fa fa-truck"></i>', async () => {
-                    return await request_pickup(frm);
-                })
+            //     frm.page.set_primary_action(__("Ship with DHL") + ' <i class="fa fa-truck"></i>', async () => {
+            //         return await request_pickup(frm);
+            //     })
 
-            } else {
-                frm.dashboard.add_comment(__("The customer will organize shipping") + ` (Incoterm ${frm.doc.incoterm})`);
-                frm.page.set_primary_action(__("Request Pickup") + ' <i class="fa fa-paper-plane"></i>', async () => {
-                    await frm.set_value({ packing_stage: 'Ready to Ship' });
-                    frm.save("Update");
-                    await frm.assign();
-                })
-            }
+            // } else {
+            // frm.dashboard.add_comment(__("The customer will organize shipping") + ` (Incoterm ${frm.doc.incoterm})`);
+            frm.page.set_primary_action(__("Request Pickup") + ' <i class="fa fa-paper-plane"></i>', async () => {
+                await frm.set_value({ packing_stage: 'Ready to Ship' });
+                frm.save("Update");
+                await frm.assign();
+            })
+            // }
 
         } else if (frm.doc.packing_stage == "Ready to Ship") {
             frm.page.set_primary_action(__("Confirm Shipment"), async () => {
