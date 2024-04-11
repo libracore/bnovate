@@ -262,14 +262,14 @@ def get_price(shipment_docname):
             ),
         },
         "accounts": accounts,
-        "packages": [{
+        "packages": list(itertools.chain(*[[{
             "weight": p.weight,
             "dimensions": {
                 "length": p.length,
                 "width": p.width,
                 "height": p.height,
-            }
-        } for p in doc.shipment_parcel],
+            }, 
+        }] * p.count for p in doc.shipment_parcel])),
         "plannedShippingDateAndTime": pickup_datetime.isoformat(),
         "isCustomsDeclarable": True,
         "unitOfMeasurement": "metric"
