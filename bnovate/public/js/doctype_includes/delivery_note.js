@@ -41,7 +41,7 @@ frappe.ui.form.on("Delivery Note", {
     refresh(frm) {
 
         if (frm.doc.shipping_label) {
-            frm.add_custom_button(__('<i class="fa fa-print"></i> Shipping Label'), () => {
+            frm.add_custom_button('<i class="fa fa-print"></i> ' + __('Shipping Label'), () => {
                 print_shipping_label(frm);
             });
         }
@@ -63,64 +63,64 @@ frappe.ui.form.on("Delivery Note", {
 
             // Backup location for this function
             if (frm.doc.packing_stage != "Shipped") {
-                frm.add_custom_button(__('Request DHL Pickup <i class="fa fa-truck"></i>'), () => {
+                frm.add_custom_button(__('Request DHL Pickup') + ' <i class="fa fa-truck"></i>'), () => {
                     request_pickup(frm);
                 }, __("Create"));
+    }
+
+
+}, 500);
+
+frm.override_action_buttons()
+    },
+
+add_template(frm) {
+    if (frm.doc.parcel_template) {
+        frappe.model.with_doc("Shipment Parcel Template", frm.doc.parcel_template, () => {
+            let parcel_template = frappe.model.get_doc("Shipment Parcel Template", frm.doc.parcel_template);
+
+            // if last row is empty, use that.
+            const lr = frm.doc.shipment_parcel?.slice(-1)[0];
+            let row = null
+            if (lr && !lr.length && !lr.width && !lr.height && !lr.weight) {
+                row = lr;
+            } else {
+                row = frappe.model.add_child(frm.doc, "Shipment Parcel", "shipment_parcel");
             }
 
+            row.parcel_template_name = parcel_template.parcel_template_name;
+            row.length = parcel_template.length;
+            row.width = parcel_template.width;
+            row.height = parcel_template.height;
+            row.weight = parcel_template.weight;
+            frm.refresh_fields("shipment_parcel");
+        });
+    }
+},
 
-        }, 500);
+custom_shipping_rule(frm) {
 
-        frm.override_action_buttons()
-    },
-
-    add_template(frm) {
-        if (frm.doc.parcel_template) {
-            frappe.model.with_doc("Shipment Parcel Template", frm.doc.parcel_template, () => {
-                let parcel_template = frappe.model.get_doc("Shipment Parcel Template", frm.doc.parcel_template);
-
-                // if last row is empty, use that.
-                const lr = frm.doc.shipment_parcel?.slice(-1)[0];
-                let row = null
-                if (lr && !lr.length && !lr.width && !lr.height && !lr.weight) {
-                    row = lr;
-                } else {
-                    row = frappe.model.add_child(frm.doc, "Shipment Parcel", "shipment_parcel");
+    // Call Custom Shipping Rule instead of built-in one:
+    if (frm.doc.custom_shipping_rule) {
+        return frappe.call({
+            method: 'bnovate.bnovate.doctype.custom_shipping_rule.custom_shipping_rule.apply_rule',
+            args: {
+                doc: frm.doc,
+            },
+            callback: (r) => {
+                if (!r.exc) {
+                    frm.refresh_fields();
+                    frm.cscript.calculate_taxes_and_totals();
                 }
+            },
+            error: () => frm.set_value('custom_shipping_rule', ''),
+        })
+    }
+    else {
+        frm.cscript.calculate_taxes_and_totals();
+    }
 
-                row.parcel_template_name = parcel_template.parcel_template_name;
-                row.length = parcel_template.length;
-                row.width = parcel_template.width;
-                row.height = parcel_template.height;
-                row.weight = parcel_template.weight;
-                frm.refresh_fields("shipment_parcel");
-            });
-        }
-    },
-
-    custom_shipping_rule(frm) {
-
-        // Call Custom Shipping Rule instead of built-in one:
-        if (frm.doc.custom_shipping_rule) {
-            return frappe.call({
-                method: 'bnovate.bnovate.doctype.custom_shipping_rule.custom_shipping_rule.apply_rule',
-                args: {
-                    doc: frm.doc,
-                },
-                callback: (r) => {
-                    if (!r.exc) {
-                        frm.refresh_fields();
-                        frm.cscript.calculate_taxes_and_totals();
-                    }
-                },
-                error: () => frm.set_value('custom_shipping_rule', ''),
-            })
-        }
-        else {
-            frm.cscript.calculate_taxes_and_totals();
-        }
-
-    },
+},
 })
 
 // Return next weekday date, starting 'days_from_now' from today

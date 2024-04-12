@@ -238,3 +238,49 @@ apps/bnovate/bnovate/www/index.html,You do not have any BactoLinks.,Vous n'avez 
 apps/bnovate/bnovate/www/index.html,You have not requested any refills.,Vous n'avez fait aucune demande de remplissage.
 apps/bnovate/bnovate/www/my_addresses.html,Email Notifications,Email pour notifications
 apps/bnovate/bnovate/www/my_addresses.html,"Split addresses with comma: first@example.com, second@example.com","Séparez les adresses par une virgule: first@example.com, second@example.com"
+apps/bnovate/bnovate/bnovate/report/connectivity_data_usage/connectivity_data_usage.py,Period Start,Début de la période
+apps/bnovate/bnovate/bnovate/report/weekly_sales/weekly_sales.js,Only current year,Uniquement année en cours
+apps/bnovate/bnovate/bnovate/report/weekly_sales/weekly_sales.py,Instrument Qty,Instrument Qté
+apps/bnovate/bnovate/bnovate/report/weekly_sales/weekly_sales.py,Instrument Qty YTD,Instrument Qté YTD
+apps/bnovate/bnovate/bnovate/report/weekly_sales/weekly_sales.py,Instruments & Cartridges {0},Instruments et cartouches {0}
+apps/bnovate/bnovate/bnovate/report/weekly_sales/weekly_sales.py,Refills {0},Recharges {0}
+apps/bnovate/bnovate/bnovate/report/weekly_sales/weekly_sales.py,Service {0},Service {0}
+apps/bnovate/bnovate/bnovate/report/weekly_sales/weekly_sales.py,Total {0},Total {0}
+apps/bnovate/bnovate/bnovate/report/weekly_sales/weekly_sales.py,Total {0} YTD,Total {0} YTD
+apps/bnovate/bnovate/bnovate/utils/shipping.py,Checking addresses...,Vérification des adresses...
+apps/bnovate/bnovate/bnovate/utils/shipping.py,Declaring contents...,Déclaration du contenu...
+apps/bnovate/bnovate/bnovate/utils/shipping.py,Delivery country must be the same as Bill country,Le pays de livraison doit être le même que le pays de facturation
+apps/bnovate/bnovate/bnovate/utils/shipping.py,Getting documents...,Téléchargement des documents...
+apps/bnovate/bnovate/bnovate/utils/shipping.py,Please specify types of parcel,Veuillez préciser les types de packets
+apps/bnovate/bnovate/bnovate/utils/shipping.py,Requesting pickup...,Demande de prise en charge...
+apps/bnovate/bnovate/public/js/doctype_includes/address.js,Check Address,Vérifier l'adresse
+apps/bnovate/bnovate/public/js/doctype_includes/address.js,Please save document first,Veuillez d'abord enregistrer le document
+apps/bnovate/bnovate/public/js/doctype_includes/contact.js,User ID is already associated with another contact:,L'ID de l'utilisateur est déjà associé à un autre contact :
+apps/bnovate/bnovate/public/js/doctype_includes/delivery_note.js,Confirm Pickup Date,Confirmer la date d'enlèvement
+apps/bnovate/bnovate/public/js/doctype_includes/delivery_note.js,Creating shipment...,Création de l'envoi
+apps/bnovate/bnovate/public/js/doctype_includes/delivery_note.js,Pickup Date,Date d'enlèvement
+apps/bnovate/bnovate/public/js/doctype_includes/delivery_note.js,Request DHL Pickup,Demande d'enlèvement DHL
+apps/bnovate/bnovate/public/js/doctype_includes/delivery_note.js,Ship with DHL,Expédier avec DHL
+apps/bnovate/bnovate/public/js/doctype_includes/delivery_note.js,Shipment,Expédition
+apps/bnovate/bnovate/public/js/doctype_includes/delivery_note.js,Shipping Label,Étiquette d'expédition
+apps/bnovate/bnovate/public/js/doctype_includes/delivery_note.js,The customer will organize shipping,Le client organisera l'expédition
+apps/bnovate/bnovate/public/js/doctype_includes/delivery_note.js,We organize shipping for this order,Nous organisons l'expédition de cette commande
+apps/bnovate/bnovate/public/js/doctype_includes/sales_order.js,Billing address is not valid,L'adresse de facturation n'est pas valide
+apps/bnovate/bnovate/public/js/doctype_includes/sales_order.js,Shipping address is not valid,L'adresse de livraison n'est pas valide
+apps/bnovate/bnovate/public/js/doctype_includes/shipment.js,Cancel pickup URL,Lien d'annulation d'enlèvement
+apps/bnovate/bnovate/public/js/doctype_includes/shipment.js,Create Shipment AND Pickup,Créer un envoi AVEC enlèvement
+apps/bnovate/bnovate/public/js/doctype_includes/shipment.js,Create Shipment NO Pickup,Créer un envoi SANS d'enlèvement
+apps/bnovate/bnovate/public/js/doctype_includes/shipment.js,Finalize DN,Finaliser DN
+apps/bnovate/bnovate/public/js/doctype_includes/shipment.js,Get Estimate,Obtenir un devis
+apps/bnovate/bnovate/public/js/doctype_includes/shipment.js,Labels,Étiquettes
+apps/bnovate/bnovate/public/js/doctype_includes/shipment.js,Please specify parcels.,Veuillez préciser les packets.
+apps/bnovate/bnovate/public/js/doctype_includes/shipment.js,Tracking URL,Lien de suivi
+apps/bnovate/bnovate/public/js/shipping.js,Address is deliverable,L'adresse est livrable
+apps/bnovate/bnovate/public/js/web_includes/wizard_modal.js,Last Shipped To,Dernier envoi à
+apps/bnovate/bnovate/www/cartridges.html,"If none of your cartridges are at bNovate, you cannot order a refill.","Si aucune de vos cartouches ne se trouve chez bNovate, vous ne pouvez pas commander de recharge."
+apps/bnovate/bnovate/www/cartridges.html,You may only select cartridges with no ongoing refill requests.,Vous ne pouvez sélectionner que des cartouches ne faisant pas l'objet d'une demande de recharge permanente.
+apps/bnovate/bnovate/www/helpers.py,Our carrier can't ship to this address. Please check Postal Code.,Notre transporteur ne peut pas livrer à cette adresse. Veuillez vérifier le code postal.
+apps/bnovate/bnovate/www/my_addresses.html,"You can only edit shipping addresses. To change your billing address, contact sales@bnovate.com.","Vous ne pouvez modifier que les adresses de livraison. Pour modifier votre adresse de facturation, contactez sales@bnovate.com."
+apps/bnovate/bnovate/www/request.html,A return shipping label is available.,Une étiquette de retour est disponible.
+apps/bnovate/bnovate/www/request.html,Print Return Label,Imprimer l'étiquette de retour
+apps/bnovate/bnovate/www/request.html,The request will be confirmed once all cartridges are received at bNovate,La demande sera confirmée une fois que toutes les cartouches auront été reçues par bNovate.

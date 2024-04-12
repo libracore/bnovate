@@ -33,7 +33,7 @@ frappe.ui.form.on("Shipment", {
         }
 
         if (frm.doc.shipping_label) {
-            frm.add_custom_button(__('<i class="fa fa-print"></i> Labels'), () => print_labels(frm));
+            frm.add_custom_button('<i class="fa fa-print"></i> ' + __('Labels'), () => print_labels(frm));
         }
 
 
