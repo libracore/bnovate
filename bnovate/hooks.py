@@ -91,6 +91,22 @@ fixtures = [
             "Sales Order-shipping_country",
             "Delivery Note-custom_shipping_rule",
             "Delivery Note-shipping_country",
+            # Shipments (most fields are in exported customizations - shipment.json)
+            "Company-eori_number",
+            "Customer-eori_number",
+            "Supplier-eori_number",
+            "Delivery Note-eori_number",
+            "Customer-default_incoterm",
+            "Quotation-incoterm",
+            "Sales Order-incoterm",
+            "Delivery Note-incoterm",
+            "Sales Invoice-incoterm",
+            "Address-contact_name",
+            "Delivery Note-parcels",
+            "Delivery Note-shipment_parcel",
+            "Delivery Note-parcel_template",
+            "Delivery Note-add_template",
+            "Delivery Note-shipping_label",
             # Stock management
             "Material Request Item-default_supplier",
             "Purchase Receipt-scan",
@@ -136,6 +152,7 @@ web_include_js = [
 
 # include js in doctype views
 doctype_js = {
+    "Address": ["public/js/doctype_includes/address.js"],
     "Blanket Order": ["public/js/doctype_includes/blanket_order.js"],
     "Contact": ["public/js/doctype_includes/contact.js"],
     "Customer": ["public/js/doctype_includes/customer.js"],
@@ -149,9 +166,11 @@ doctype_js = {
     "Serial No": ["public/js/doctype_includes/serial_no.js"],
     "Work Order": ["public/js/doctype_includes/work_order.js"],
     "Material Request": ["public/js/doctype_includes/material_request.js"],
+    "Shipment": ["public/js/doctype_includes/shipment.js"],
 }
 doctype_list_js = {
     "Item": ["public/js/doctype_includes/item_list.js"],
+    "Shipment": ["public/js/doctype_includes/shipment_list.js"],
 }
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
