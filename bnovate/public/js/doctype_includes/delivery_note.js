@@ -77,7 +77,17 @@ frappe.ui.form.on("Delivery Note", {
         if (frm.doc.parcel_template) {
             frappe.model.with_doc("Shipment Parcel Template", frm.doc.parcel_template, () => {
                 let parcel_template = frappe.model.get_doc("Shipment Parcel Template", frm.doc.parcel_template);
-                let row = frappe.model.add_child(frm.doc, "Shipment Parcel", "shipment_parcel");
+
+                // if last row is empty, use that.
+                const lr = frm.doc.shipment_parcel?.slice(-1)[0];
+                let row = null
+                if (lr && !lr.length && !lr.width && !lr.height && !lr.weight) {
+                    row = lr;
+                } else {
+                    row = frappe.model.add_child(frm.doc, "Shipment Parcel", "shipment_parcel");
+                }
+
+                row.parcel_template_name = parcel_template.parcel_template_name;
                 row.length = parcel_template.length;
                 row.width = parcel_template.width;
                 row.height = parcel_template.height;
@@ -145,7 +155,7 @@ async function prompt_shipment(frm) {
             reqd: 1,
             default: pickup_date,
         }],
-        "Send to DHL",
+        "Confirm",
         "Cancel",
     )
     return data;

@@ -103,12 +103,37 @@ frappe.ui.form.on("Shipment", {
         await fill_address(frm, 'bill');
     },
 
+    add_template_custom(frm) {
+        if (frm.doc.parcel_template) {
+            frappe.model.with_doc("Shipment Parcel Template", frm.doc.parcel_template, () => {
+                let parcel_template = frappe.model.get_doc("Shipment Parcel Template", frm.doc.parcel_template);
+
+
+                // if last row is empty, use that.
+                const lr = frm.doc.shipment_parcel?.slice(-1)[0];
+                let row = null
+                if (lr && !lr.length && !lr.width && !lr.height && !lr.weight) {
+                    row = lr;
+                } else {
+                    row = frappe.model.add_child(frm.doc, "Shipment Parcel", "shipment_parcel");
+                }
+
+                row.parcel_template_name = parcel_template.parcel_template_name;
+                row.length = parcel_template.length;
+                row.width = parcel_template.width;
+                row.height = parcel_template.height;
+                row.weight = parcel_template.weight;
+                frm.refresh_fields("shipment_parcel");
+            });
+        }
+    },
+
     shipment_amount(frm) {
         calculate_total_value(frm);
     }
 })
 
-frappe.ui.form.on('Shipment Delivery Note', {
+frappe.ui.form.on('Shipment Item', {
 
     qty(frm, cdt, cdn) {
         calculate_row_total(frm, cdt, cdn);
@@ -144,7 +169,7 @@ function calculate_row_total(frm, dt, dn) {
 }
 
 function calculate_total_value(frm) {
-    const line_item_value = frm.doc.shipment_delivery_note.reduce((acc, row) => acc + row.amount, 0);
+    const line_item_value = frm.doc.items.reduce((acc, row) => acc + row.amount, 0);
     const total = line_item_value + frm.doc.shipment_amount;
 
     frm.set_value('declared_value', total);

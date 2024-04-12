@@ -457,7 +457,7 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
     invoice_contact.full_name = ' '.join([invoice_contact.first_name, invoice_contact.last_name]).strip()
     invoice_no = doc.name
     try:
-        invoice_no = doc.shipment_delivery_note[0].delivery_note
+        invoice_no = doc.items[0].delivery_note
     except IndexError:
         pass
 
@@ -551,7 +551,7 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
                     },
                     "exportReasonType": get_export_reason_type(doc.reason_for_export),
                     "manufacturerCountry": get_country_code(i.country_of_origin)
-                } for i in doc.shipment_delivery_note],
+                } for i in doc.items],
                 "recipientReference": doc.po_no,
                 "invoice": {
                     "date": doc.pickup_date.isoformat(),
@@ -854,7 +854,7 @@ def make_shipment_from_dn(source_name, target_doc=None):
         ))
         
 
-        for row in target.shipment_delivery_note:
+        for row in target.items:
             row.currency = source.currency
         
         # TIMES
@@ -890,10 +890,10 @@ def make_shipment_from_dn(source_name, target_doc=None):
             }
         },
         "Delivery Note Item": {
-            "doctype": "Shipment Delivery Note",
+            "doctype": "Shipment Item",
             "field_map": {
                 "name": "dn_detail",
-                "parent": "prevdoc_docname",
+                # "parent": "prevdoc_docname",
             }
         }
     }, target_doc, postprocess)
@@ -907,10 +907,10 @@ def finalize_dn(shipment_docname):
 
     shipment = frappe.get_doc("Shipment", shipment_docname)
 
-    if len(shipment.shipment_delivery_note) < 1:
+    if len(shipment.items) < 1:
         raise Exception("No DNs referenced in Shipment")
 
-    dn_docname = shipment.shipment_delivery_note[0].delivery_note
+    dn_docname = shipment.items[0].delivery_note
 
     dn = frappe.get_doc("Delivery Note", dn_docname)
 
