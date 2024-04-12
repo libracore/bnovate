@@ -163,5 +163,6 @@ def update_status_from_delivery_note(delivery_note, method=None):
         return
 
     for so_name in list(set([it.against_sales_order for it in delivery_note.get("items")])):
-        so = frappe.get_doc("Sales Order", so_name)
-        update_status_from_sales_order(so, method='dn_update')
+        if so_name is not None:
+            so = frappe.get_doc("Sales Order", so_name)
+            update_status_from_sales_order(so, method='dn_update')

@@ -205,7 +205,10 @@ async function request_pickup(frm) {
 
     console.log(resp.message);
     await frm.reload_doc();
-    await print_shipping_label(frm);
+
+    // Print label directly from return doc to avoid race condition
+    const updated_dn = resp.message;
+    await print_shipping_label({ doc: updated_dn });
 }
 
 async function print_shipping_label(frm) {
