@@ -168,6 +168,26 @@ def build_address(address_line1, address_line2, city, pincode, country):
 # WRAPPERS
 #######################
 
+def quick_validate_address(pincode, country):
+    """ Validate deliverability of an address based on minimal params, for use with Portal.
+     
+    Raises AddressError if not valid, else is silent.
+    """
+    params = {
+        "countryCode": get_country_code(country),
+        "postalCode": pincode,
+        "type": DELIVERY,
+    }
+
+    try:
+        resp = dhl_request(
+            "/address-validate",
+            params=params,
+            auth=False
+        )
+    except DHLBadRequestError as e:
+        raise AddressError("Invalid Adddress. Check Postal Code.")
+
 @frappe.whitelist()
 def validate_address(name, throw_error=True):
     """ Validate an address for delivery. For now we only look at postal code and country """

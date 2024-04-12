@@ -4,9 +4,12 @@
 import frappe
 import urllib
 
+from bnovate.bnovate.utils.shipping import quick_validate_address, AddressError
+
 from frappe import _
 
 from frappe.contacts.doctype.address.address import get_address_display
+
 
 def auth(context):
     """ check login, throw exception if not logged in """
@@ -143,6 +146,7 @@ def get_addresses():
         SELECT DISTINCT -- avoid duplicates when address is linked to two customers.
             `tabAddress`.`name`,
             `tabAddress`.`company_name`,
+            `tabAddress`.`contact_name`,
             `tabAddress`.`address_type`,
             `tabAddress`.`address_line1`,
             `tabAddress`.`address_line2`,
@@ -151,6 +155,7 @@ def get_addresses():
             `tabAddress`.`country`,
             `tabAddress`.`is_primary_address`,
             `tabAddress`.`is_shipping_address`,
+            `tabAddress`.`phone`,
             `tabAddress`.`email_id`
             -- , `tC1`.`link_name` AS `customer_docname`
         FROM `tabContact`
@@ -197,8 +202,20 @@ def get_address_data():
 
 
 @frappe.whitelist()
-def create_address(address_line1, pincode, city, address_type="Shipping", company_name=None, address_line2=None, country="Switzerland", email_id="", commit=True):
+def create_address(address_line1, pincode, city, address_type="Shipping", company_name=None, contact_name=None, address_line2=None, country="Switzerland", phone="", email_id="", commit=True):
     """ Add address on primary customer associated to this user """
+
+    # Check deliverability
+    try:
+        quick_validate_address(pincode, country)
+    except AddressError:
+        frappe.msgprint(
+            msg=_("Our carrier can't ship to this address. Please check Postal Code."),
+            title="Error",
+            indicator="red",
+            raise_exception=AddressError,
+        )
+
     # fetch customers for this user
     customer = get_session_primary_customer()
     customer_links = [{'link_doctype': 'Customer', 'link_name': customer.docname}]
@@ -208,6 +225,7 @@ def create_address(address_line1, pincode, city, address_type="Shipping", compan
         'doctype': 'Address',
         'address_title': pure_name,
         'company_name': company_name,
+        'contact_name': contact_name,
         'address_type': address_type,
         'address_line1': address_line1,
         'address_line2': address_line2,
@@ -215,6 +233,7 @@ def create_address(address_line1, pincode, city, address_type="Shipping", compan
         'city': city,
         'country': country,
         'links': customer_links,
+        'phone': phone,
         'email_id': email_id,
     })
     
@@ -242,9 +261,9 @@ def delete_address(name):
         raise frappe.PermissionError("You are not allowed to delete this address.")
 
 @frappe.whitelist()
-def modify_address(name, address_line1, pincode, city, address_type="Shipping", company_name=None, address_line2=None, country="Switzerland", email_id="", commit=True):
+def modify_address(name, address_line1, pincode, city, address_type="Shipping", company_name=None, contact_name=None, address_line2=None, country="Switzerland", phone="", email_id="", commit=True):
     """ Modify an address, by creating a new one and unlinking the existing one """
-    create_address(address_line1, pincode, city, address_type, company_name, address_line2, country, email_id, commit=True)
+    create_address(address_line1, pincode, city, address_type, company_name, contact_name, address_line2, country, phone, email_id, commit=True)
     delete_address(name)
 
 @frappe.whitelist()
