@@ -5,17 +5,26 @@ import frappe
 
 from frappe import _
 from frappe.utils import today
+from frappe.exceptions import DoesNotExistError
 
-from .helpers import auth, get_session_primary_customer, get_session_contact, get_addresses
+from .helpers import auth, get_session_primary_customer, get_session_contact, get_addresses, allow_unstored_cartridges
 
 no_cache = 1
 
 
 def get_context(context):
     auth(context)
-    context.doc = get_request(frappe.form_dict.name)
+    docname = frappe.form_dict.name 
+    doc = get_request(docname) 
+
+    context.doc = doc
+    context.allow_unstored_cartridges = allow_unstored_cartridges()
+
+    if doc.shipping_label:
+        context.shipping_label_url = "/api/method/bnovate.www.request.get_label?name={name}".format(name=docname)
+
     context.form_dict = frappe.form_dict
-    context.name = frappe.form_dict.name
+    context.name = docname
     context.show_sidebar = True
     context.add_breadcrumbs = True
     context.parents = [
@@ -34,7 +43,22 @@ def get_request(name):
     if doc.customer != primary_customer.docname:
         return None
     doc.set_indicator()
+    doc.set_tracking_url()
     return doc
+
+@frappe.whitelist()
+def get_label(name):
+    """ Return shipping label for this Refill Request """
+    doc = get_request(name)
+
+    if doc is None or doc.shipping_label is None:
+        raise DoesNotExistError()
+
+    file_doc = frappe.get_doc("File", {"file_url": doc.shipping_label})
+
+    frappe.local.response.filename = "shipping_label_{name}.pdf".format(name=name)
+    frappe.local.response.filecontent = file_doc.get_content()
+    frappe.local.response.type = "pdf"
 
 
 @frappe.whitelist()

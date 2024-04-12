@@ -16,6 +16,11 @@ bnovate.web.get_addresses = async function () {
     return resp.message;
 }
 
+bnovate.web.get_address_data = async function () {
+    const resp = await frappe.call("bnovate.www.helpers.get_address_data")
+    return resp.message;
+}
+
 bnovate.web.create_address = async function (doc) {
     const resp = await frappe.call("bnovate.www.helpers.create_address", {
         ...doc

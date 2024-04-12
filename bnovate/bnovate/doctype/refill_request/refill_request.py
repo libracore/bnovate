@@ -65,6 +65,11 @@ class RefillRequest(Document):
         self.db_set("tracking_no", dn_doc.tracking_no)
         self.db_set("carrier", dn_doc.carrier)
 
+    def set_tracking_url(self):
+        self.tracking_url = None
+        if self.carrier == "DHL":
+            self.tracking_url = "https://www.dhl.com/ch-en/home/tracking/tracking-express.html?submit=1&tracking-id={0}".format(self.tracking_no)
+
 
 def get_context(context):
     context.title = "My title"
@@ -163,5 +168,6 @@ def update_status_from_delivery_note(delivery_note, method=None):
         return
 
     for so_name in list(set([it.against_sales_order for it in delivery_note.get("items")])):
-        so = frappe.get_doc("Sales Order", so_name)
-        update_status_from_sales_order(so, method='dn_update')
+        if so_name is not None:
+            so = frappe.get_doc("Sales Order", so_name)
+            update_status_from_sales_order(so, method='dn_update')

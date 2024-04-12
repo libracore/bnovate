@@ -77,8 +77,8 @@ customElements.define('address-modal', class extends HTMLElement {
         }))
     }
 
-    confirm() {
-        this.confirm_callback();
+    async confirm() {
+        await this.confirm_callback();
         this.hide();
     }
 })

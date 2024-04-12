@@ -1,0 +1,129 @@
+{
+ "creation": "2024-04-12 13:51:19.856390",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item_name",
+  "numbers",
+  "qty",
+  "uom",
+  "total_weight",
+  "column_break_6",
+  "rate",
+  "amount",
+  "currency",
+  "export_data",
+  "customs_tariff_number",
+  "country_of_origin",
+  "section_break_13",
+  "delivery_note",
+  "dn_detail",
+  "grand_total"
+ ],
+ "fields": [
+  {
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Item Name"
+  },
+  {
+   "fieldname": "numbers",
+   "fieldtype": "Section Break",
+   "label": "Numbers"
+  },
+  {
+   "fieldname": "qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Quantity"
+  },
+  {
+   "fieldname": "uom",
+   "fieldtype": "Link",
+   "label": "UOM",
+   "options": "UOM"
+  },
+  {
+   "fieldname": "total_weight",
+   "fieldtype": "Float",
+   "label": "Total Weight (kg)"
+  },
+  {
+   "fieldname": "column_break_6",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Unit Price",
+   "options": "currency"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Total Value",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency"
+  },
+  {
+   "fieldname": "export_data",
+   "fieldtype": "Section Break",
+   "label": "Export Data"
+  },
+  {
+   "fieldname": "customs_tariff_number",
+   "fieldtype": "Link",
+   "label": "Customs Tariff Number",
+   "options": "Customs Tariff Number"
+  },
+  {
+   "fieldname": "country_of_origin",
+   "fieldtype": "Link",
+   "label": "Country of Origin",
+   "options": "Country"
+  },
+  {
+   "fieldname": "section_break_13",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "delivery_note",
+   "fieldtype": "Link",
+   "label": "Delivery Note",
+   "options": "Delivery Note"
+  },
+  {
+   "fieldname": "dn_detail",
+   "fieldtype": "Data",
+   "label": "DN Detail"
+  },
+  {
+   "description": "Keeping this field for retrocompatibility with Shipment Delivery Note doctype",
+   "fieldname": "grand_total",
+   "fieldtype": "Currency",
+   "hidden": 1,
+   "label": "Value",
+   "read_only": 1
+  }
+ ],
+ "istable": 1,
+ "modified": "2024-04-12 13:54:18.893999",
+ "modified_by": "Administrator",
+ "module": "bNovate",
+ "name": "Shipment Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

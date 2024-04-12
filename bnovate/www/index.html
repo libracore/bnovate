@@ -79,14 +79,11 @@
                             </td>
                             <td>
                                 {% if row.tracking_no and row.status == "Shipped" %}
-                                    <a href="/requests/{{ row.name }}">
-                                    {% if row.carrier and row.carrier.strip() == "DHL" %}
-                                    <a target="_blank" href="https://www.dhl.com/ch-en/home/tracking/tracking-express.html?submit=1&tracking-id={{ row.tracking_no }}">{{
-                                        row.tracking_no }}</a>
+                                    {% if row.tracking_url %} 
+                                    <a target="_blank" href="{{ row.tracking_url }}">{{ row.tracking_no | truncate(20) }}</a>
                                     {% else %}
-                                    {{ row.tracking_no }} {{ row.carrier }}
+                                    {{ row.tracking_no | truncate(20) }} {{ row.carrier | truncate(20) }}
                                     {% endif %}
-                                    </a>
                                 {% endif %}
                             </td>
                         </tr>
