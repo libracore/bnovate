@@ -65,6 +65,11 @@ class RefillRequest(Document):
         self.db_set("tracking_no", dn_doc.tracking_no)
         self.db_set("carrier", dn_doc.carrier)
 
+    def set_tracking_url(self):
+        self.tracking_url = None
+        if self.carrier == "DHL":
+            self.tracking_url = "https://www.dhl.com/ch-en/home/tracking/tracking-express.html?submit=1&tracking-id={0}".format(self.tracking_no)
+
 
 def get_context(context):
     context.title = "My title"

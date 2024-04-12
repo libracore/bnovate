@@ -2,7 +2,7 @@ import frappe
 
 from frappe import _
 
-from .helpers import auth, get_session_customers, get_addresses, build_sidebar, has_cartridge_portal, allow_unstored_cartridges
+from .helpers import auth, get_session_customers, get_addresses, build_sidebar, has_cartridge_portal, allow_unstored_cartridges, fixed_billing_address
 
 from bnovate.bnovate.report.cartridge_status import cartridge_status
 
@@ -15,6 +15,7 @@ def get_context(context):
     data = get_cartridges()
     context.cartridges = data.cartridges
     context.allow_unstored_cartridges = data.allow_unstored_cartridges
+    context.fixed_billing_address = fixed_billing_address()
 
     build_sidebar(context)
     context.addresses = get_addresses()

@@ -122,6 +122,9 @@ ol.request-ribbon {
 {% endif %}
 
 <div class="row">
+{% if allow_unstored_cartridges and doc.status == "Requested" %}
+<p><i>{{ _("The request will be confirmed once all cartridges are received at bNovate") }}</i></p>
+{% endif %}
 {% if doc.expected_ship_date %}
     <div class="col-6">
         <b>{{ _("Expected Shipping Date") }}:</b> {{ frappe.utils.formatdate(doc.expected_ship_date, 'medium') }}
@@ -130,8 +133,8 @@ ol.request-ribbon {
 {% if doc.tracking_no and doc.status == "Shipped" %}
     <div class="col-6">
         <b>{{ _("Tracking No") }}:</b> 
-        {% if doc.carrier and doc.carrier.strip() == "DHL" %}
-            <a target="_blank" href="https://www.dhl.com/ch-en/home/tracking/tracking-express.html?submit=1&tracking-id={{ doc.tracking_no }}">{{ doc.tracking_no }}</a>
+        {% if doc.tracking_url %}
+            <a target="_blank" href="{{ doc.tracking_url }}"">{{ doc.tracking_no }}</a>
         {% else %}
             {{ doc.tracking_no }} {{ doc.carrier }}
         {% endif %}

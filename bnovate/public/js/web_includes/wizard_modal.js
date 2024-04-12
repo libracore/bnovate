@@ -76,10 +76,10 @@ const template_page1 = `
 
 const template_page2 = `
 <div class="card-group">
-    {% for addr in addresses %}
+    {% for addr in shipping_addresses %}
     <div class="card">
         <div class="card-body">
-            <input type="radio" name="shipping_address" id="ship-{{addr.name}}" value="{{addr.name}}" {% if addresses.length == 1 %}checked{% endif %}/>
+            <input type="radio" name="shipping_address" id="ship-{{addr.name}}" value="{{addr.name}}" {% if shipping_addresses.length == 1 %}checked{% endif %}/>
             <label for="ship-{{addr.name}}">{{addr.display}}</label>
         </div>
     </div>
@@ -89,10 +89,10 @@ const template_page2 = `
 
 const template_page3 = `
 <div class="card-group">
-    {% for addr in addresses %}
+    {% for addr in billing_addresses %}
     <div class="card">
         <div class="card-body">
-            <input type="radio" name="billing_address" id="bill-{{addr.name}}" value="{{addr.name}}" {% if addresses.length == 1 %}checked{% endif %}/>
+            <input type="radio" name="billing_address" id="bill-{{addr.name}}" value="{{addr.name}}" {% if billing_addresses.length == 1 %}checked{% endif %}/>
             <label for="bill-{{addr.name}}">{{addr.display}}</label>
         </div>
     </div>
@@ -185,10 +185,10 @@ customElements.define('wizard-modal', class extends HTMLElement {
                 serial_nos: this.serial_nos,
             });
             e.target.querySelector('.modal-body #page2').innerHTML = frappe.render_template(template_page2, {
-                addresses: this.addresses,
+                shipping_addresses: this.shipping_addresses,
             });
             e.target.querySelector('.modal-body #page3').innerHTML = frappe.render_template(template_page3, {
-                addresses: this.addresses,
+                billing_addresses: this.billing_addresses,
             });
 
             this.bind_listeners(e.target);
@@ -223,12 +223,14 @@ customElements.define('wizard-modal', class extends HTMLElement {
         });
     }
 
-    show(serial_nos, addresses, callback) {
+    show(serial_nos, address_data, callback) {
         if (!this.shadowRoot) {
             this.draw();
         }
         this.serial_nos = serial_nos;
-        this.addresses = addresses;
+        this.addresses = address_data.addresses;
+        this.shipping_addresses = address_data.shipping_addresses;
+        this.billing_addresses = address_data.billing_addresses;
         this.callback = callback;
         $(this.modal).modal({ backdrop: 'static', keyboard: false });
     }

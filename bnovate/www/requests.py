@@ -35,6 +35,7 @@ def get_requests():
 
     for doc in docs:
         RefillRequest.set_indicator(doc)
+        RefillRequest.set_tracking_url(doc)
 
     return docs
 

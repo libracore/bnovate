@@ -6,7 +6,7 @@ import frappe
 from frappe import _
 from frappe.utils import today
 
-from .helpers import auth, get_session_primary_customer, get_session_contact, get_addresses
+from .helpers import auth, get_session_primary_customer, get_session_contact, get_addresses, allow_unstored_cartridges
 
 no_cache = 1
 
@@ -14,6 +14,7 @@ no_cache = 1
 def get_context(context):
     auth(context)
     context.doc = get_request(frappe.form_dict.name)
+    context.allow_unstored_cartridges = allow_unstored_cartridges()
     context.form_dict = frappe.form_dict
     context.name = frappe.form_dict.name
     context.show_sidebar = True
@@ -34,6 +35,7 @@ def get_request(name):
     if doc.customer != primary_customer.docname:
         return None
     doc.set_indicator()
+    doc.set_tracking_url()
     return doc
 
 

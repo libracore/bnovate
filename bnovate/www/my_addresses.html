@@ -30,6 +30,9 @@
     <div class="col">
         <button id="new-address" class="btn btn-primary" style="margin-bottom: 10px">{{ _("New Address") }}</button>
         <i id="loading" class="fa fa-cog fa-spin"></i>
+        {% if fixed_billing_address %}
+        <p><i>{{ _("You can only edit shipping addresses. To change your billing address, contact sales@bnovate.com.") }} </i></p>
+        {% endif %}
     </div>
 </div>
 

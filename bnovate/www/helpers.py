@@ -51,7 +51,8 @@ def get_session_customers():
             `tC1`.`link_name` AS `docname`,
             `tCus`.`enable_cartridge_portal`,
             `tCus`.`allow_unstored_cartridges`,
-            `tCus`.`customer_name`
+            `tCus`.`customer_name`,
+            `tCus`.`portal_billing_address`
         FROM `tabContact`
         JOIN `tabDynamic Link` AS `tC1` ON `tC1`.`parenttype` = "Contact" 
                                        AND `tC1`.`link_doctype` = "Customer" 
@@ -98,6 +99,16 @@ def allow_unstored_cartridges():
     if customer is not None and customer.allow_unstored_cartridges:
         return True
     return False
+
+def fixed_billing_address():
+    """ Links to a billing address if customer CAN'T change his address """
+    # This is required by some key accounts: allow users to order cartridges to their 
+    # shipping address but not mess with invoicing data.
+
+    customer = get_session_primary_customer()
+    if customer is not None: 
+        return customer.portal_billing_address
+    return None
 
 
 def build_sidebar(context, show=True):
@@ -163,6 +174,26 @@ def get_addresses():
 
     
     return addresses
+
+@frappe.whitelist()
+def get_address_data():
+    """ Return list of addresses and dedicated billing address if relevant """
+    billing_address = fixed_billing_address()
+    all_addresses = get_addresses()
+    shipping_addresses = [a for a in all_addresses if a.name != billing_address]
+    
+    # Can be made fancier later:
+    if billing_address:
+        billing_addresses = [a for a in all_addresses if a.name == billing_address]
+    else:
+        billing_addresses = all_addresses
+
+    return frappe._dict({
+        "addresses": all_addresses,
+        "shipping_addresses": shipping_addresses,
+        "billing_addresses": billing_addresses,
+        "fixed_billing_address": billing_address,
+    })
 
 
 @frappe.whitelist()
