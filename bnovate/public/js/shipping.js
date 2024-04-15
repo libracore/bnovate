@@ -7,6 +7,14 @@ function sleep(ms) {
     return new Promise(r => setTimeout(r, ms));
 }
 
+// Return last possible time for same-day pickup
+bnovate.shipping.get_same_day_cutoff = async function () {
+    const resp = await frappe.call({
+        method: 'bnovate.bnovate.utils.shipping.get_same_day_cutoff',
+    })
+    return resp.message
+}
+
 bnovate.shipping.validate_address = async function (name, throw_error = true) {
     try {
         const resp = await frappe.call({

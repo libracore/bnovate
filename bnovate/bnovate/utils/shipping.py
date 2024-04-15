@@ -109,6 +109,12 @@ def get_export_reason_type(reason):
     else:
         return reason_lookup[reason]
 
+@frappe.whitelist()
+def get_same_day_cutoff():
+    """ Return last possible of day to request same-day pickup """
+    return _get_settings().same_day_cutoff
+
+
 #######################
 # BASE API CONNECTIONS
 #######################

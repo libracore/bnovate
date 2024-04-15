@@ -13,6 +13,8 @@
  *      - Once shipped, stage changes to 'Shipped' and tracking info is updated.
  */
 
+frappe.require("/assets/bnovate/js/shipping.js")  // provides bnovate.shipping
+
 frappe.ui.form.on("Delivery Note", {
 
     before_load(frm) {
@@ -25,6 +27,7 @@ frappe.ui.form.on("Delivery Note", {
             'items': ['Shipment'],
             'label': 'Related',
         });
+
     },
 
     onload(frm) {
@@ -34,6 +37,12 @@ frappe.ui.form.on("Delivery Note", {
                     country: frm.doc.shipping_country,
                     company: frm.doc.company,
                 }
+            }
+        })
+
+        frm.set_query('parcel_template', (doc) => {
+            return {
+                order_by: 'parcel_template_name',
             }
         })
     },
@@ -72,6 +81,12 @@ frappe.ui.form.on("Delivery Note", {
         }, 500);
 
         frm.override_action_buttons()
+    },
+
+    before_submit(frm) {
+        if (frm.doc.shipment_parcel === undefined || frm.doc.shipment_parcel.length <= 0) {
+            frappe.validated = false;
+        }
     },
 
     add_template(frm) {
@@ -137,7 +152,7 @@ function next_weekday(days_from_now = 0) {
 async function prompt_shipment(frm) {
 
     // Pre-fill with next available pickup date
-    const cutoff_time = await bnovate.utils.get_setting('same_day_cutoff');
+    const cutoff_time = await bnovate.shipping.get_same_day_cutoff();
     let pickup_date = frm.doc.posting_date;
     if (pickup_date <= frappe.datetime.now_date()) {
         if (frappe.datetime.now_time() < cutoff_time) {
