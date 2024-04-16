@@ -108,6 +108,9 @@ fixtures = [
             "Delivery Note-parcel_template",
             "Delivery Note-add_template",
             "Delivery Note-shipping_label",
+            "Delivery Note-pallets",
+            "Shipment Parcel Template-is_pallet",
+            "Shipment Parcel-is_pallet",
             # Stock management
             "Material Request Item-default_supplier",
             "Purchase Receipt-scan",
