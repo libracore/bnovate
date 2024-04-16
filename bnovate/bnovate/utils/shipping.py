@@ -869,7 +869,6 @@ def make_shipment_from_dn(source_name, target_doc=None):
             user=target.pickup_contact_person,
         ))
 
-
         # DELIVERY
         target.delivery_to_type = "Customer"
         if source.shipping_address_name:
