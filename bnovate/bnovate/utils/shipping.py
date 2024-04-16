@@ -768,7 +768,6 @@ def _request_pickup(shipment_docname, task_id=None):
 # EXTENSIONS TO SHIPMENT DOCTYPE
 #######################################
 
-# searches for leads which are not converted
 @frappe.whitelist()
 def parcel_query(doctype, txt, searchfield, start, page_len, filters):
     return frappe.db.sql("""
@@ -787,6 +786,20 @@ def parcel_query(doctype, txt, searchfield, start, page_len, filters):
         'start': start,
         'page_len': page_len
     })
+
+@frappe.whitelist()
+def set_pallets(doc, method=None):
+    """ Set pallet vs non-pallet status.
+     
+    Called on lifecycle hooks on DN and Shipment (see hooks.py)
+    """
+
+    if method not in ('before_save'):
+        return
+    
+    has_pallet = sum([p.is_pallet or 0 for p in doc.shipment_parcel], 0)
+    doc.db_set('pallets', 'Yes' if has_pallet else 'No')
+
 
 @frappe.whitelist()
 def fill_address_data(address_type, address_name,  company=None, customer=None, supplier=None, contact=None, user=None):
@@ -931,9 +944,9 @@ def make_shipment_from_dn(source_name, target_doc=None):
                 "posting_date": "pickup_date",
                 "po_no": "po_no",
             },
-            "validation": {
-                "docstatus": ["=", 1]
-            }
+            # "validation": {
+            #     "docstatus": ["=", 1]
+            # }
         },
         "Delivery Note Item": {
             "doctype": "Shipment Item",
