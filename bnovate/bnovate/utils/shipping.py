@@ -768,6 +768,26 @@ def _request_pickup(shipment_docname, task_id=None):
 # EXTENSIONS TO SHIPMENT DOCTYPE
 #######################################
 
+# searches for leads which are not converted
+@frappe.whitelist()
+def parcel_query(doctype, txt, searchfield, start, page_len, filters):
+    return frappe.db.sql("""
+        SELECT 
+            parcel_template_name, 
+            CONCAT(length, "x", width, "x", height, ", ", ROUND(weight), " kg") as dimensions
+        FROM `tabShipment Parcel Template`
+        WHERE {key} LIKE %(txt)s
+        ORDER BY parcel_template_name
+        LIMIT %(start)s, %(page_len)s
+    """.format(**{
+            'key': searchfield,
+        }), {
+        'txt': "%{}%".format(txt),
+        '_txt': txt.replace("%", ""),
+        'start': start,
+        'page_len': page_len
+    })
+
 @frappe.whitelist()
 def fill_address_data(address_type, address_name,  company=None, customer=None, supplier=None, contact=None, user=None):
     """ Return address fields for given business / address / contact. 

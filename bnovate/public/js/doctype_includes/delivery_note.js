@@ -42,7 +42,7 @@ frappe.ui.form.on("Delivery Note", {
 
         frm.set_query('parcel_template', (doc) => {
             return {
-                order_by: 'parcel_template_name',
+                query: 'bnovate.bnovate.utils.shipping.parcel_query',
             }
         })
     },
@@ -86,6 +86,11 @@ frappe.ui.form.on("Delivery Note", {
     before_submit(frm) {
         if (frm.doc.shipment_parcel === undefined || frm.doc.shipment_parcel.length <= 0) {
             frappe.validated = false;
+            frappe.msgprint({
+                indicator: 'red',
+                title: __('Error'),
+                message: __('Please enter dimensions and number of Parcels.'),
+            });
         }
     },
 
@@ -96,7 +101,7 @@ frappe.ui.form.on("Delivery Note", {
 
                 // if last row is empty, use that.
                 const lr = frm.doc.shipment_parcel?.slice(-1)[0];
-                let row = null
+                let row = null;
                 if (lr && !lr.length && !lr.width && !lr.height && !lr.weight) {
                     row = lr;
                 } else {
