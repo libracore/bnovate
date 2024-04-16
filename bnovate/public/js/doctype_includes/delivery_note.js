@@ -13,6 +13,8 @@
  *      - Once shipped, stage changes to 'Shipped' and tracking info is updated.
  */
 
+frappe.require("/assets/bnovate/js/shipping.js")  // provides bnovate.shipping
+
 frappe.ui.form.on("Delivery Note", {
 
     before_load(frm) {
@@ -25,6 +27,7 @@ frappe.ui.form.on("Delivery Note", {
             'items': ['Shipment'],
             'label': 'Related',
         });
+
     },
 
     onload(frm) {
@@ -34,6 +37,12 @@ frappe.ui.form.on("Delivery Note", {
                     country: frm.doc.shipping_country,
                     company: frm.doc.company,
                 }
+            }
+        })
+
+        frm.set_query('parcel_template', (doc) => {
+            return {
+                query: 'bnovate.bnovate.utils.shipping.parcel_query',
             }
         })
     },
@@ -60,9 +69,10 @@ frappe.ui.form.on("Delivery Note", {
             // Override standard delivery creation
             frm.remove_custom_button(__("Shipment"), __("Create"));
             frm.add_custom_button(__("Shipment"), () => create_shipment(frm), __("Create"));
+            // frm.add_custom_button(__("Return Shipment"), () => create_return_shipment(frm), __("Create"));
 
             // Backup location for this function
-            if (frm.doc.packing_stage != "Shipped") {
+            if (frm.doc.docstatus == 1 && frm.doc.packing_stage != "Shipped") {
                 frm.add_custom_button(__('Request DHL Pickup') + ' <i class="fa fa-truck"></i>', () => {
                     request_pickup(frm);
                 }, __("Create"));
@@ -74,6 +84,17 @@ frappe.ui.form.on("Delivery Note", {
         frm.override_action_buttons()
     },
 
+    before_submit(frm) {
+        if (frm.doc.shipment_parcel === undefined || frm.doc.shipment_parcel.length <= 0) {
+            frappe.validated = false;
+            frappe.msgprint({
+                indicator: 'red',
+                title: __('Error'),
+                message: __('Please enter dimensions and number of Parcels.'),
+            });
+        }
+    },
+
     add_template(frm) {
         if (frm.doc.parcel_template) {
             frappe.model.with_doc("Shipment Parcel Template", frm.doc.parcel_template, () => {
@@ -81,7 +102,7 @@ frappe.ui.form.on("Delivery Note", {
 
                 // if last row is empty, use that.
                 const lr = frm.doc.shipment_parcel?.slice(-1)[0];
-                let row = null
+                let row = null;
                 if (lr && !lr.length && !lr.width && !lr.height && !lr.weight) {
                     row = lr;
                 } else {
@@ -137,7 +158,7 @@ function next_weekday(days_from_now = 0) {
 async function prompt_shipment(frm) {
 
     // Pre-fill with next available pickup date
-    const cutoff_time = await bnovate.utils.get_setting('same_day_cutoff');
+    const cutoff_time = await bnovate.shipping.get_same_day_cutoff();
     let pickup_date = frm.doc.posting_date;
     if (pickup_date <= frappe.datetime.now_date()) {
         if (frappe.datetime.now_time() < cutoff_time) {
@@ -172,6 +193,21 @@ async function create_shipment(frm) {
 
     frappe.model.open_mapped_doc({
         method: "bnovate.bnovate.utils.shipping.make_shipment_from_dn",
+        frm,
+        args,
+    })
+}
+
+async function create_return_shipment(frm) {
+    const confirm = await bnovate.utils.confirm_dialog(__("Create return label?"));
+
+    if (confirm === false) {
+        console.log("Cancelled");
+        return
+    }
+
+    frappe.model.open_mapped_doc({
+        method: "bnovate.bnovate.utils.shipping.make_return_shipment_from_dn",
         frm,
         args,
     })

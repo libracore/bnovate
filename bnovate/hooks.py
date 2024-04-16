@@ -108,6 +108,9 @@ fixtures = [
             "Delivery Note-parcel_template",
             "Delivery Note-add_template",
             "Delivery Note-shipping_label",
+            "Delivery Note-pallets",
+            "Shipment Parcel Template-is_pallet",
+            "Shipment Parcel-is_pallet",
             # Stock management
             "Material Request Item-default_supplier",
             "Purchase Receipt-scan",
@@ -306,6 +309,9 @@ doc_events = {
         "on_change": "bnovate.bnovate.utils.enclosures.associate_so_serial_no",
     },
     "Delivery Note": {
+        "before_save": [
+            "bnovate.bnovate.utils.shipping.set_pallets",
+        ],
         "on_submit": [
             "bnovate.bnovate.utils.enclosures.set_owner_from_dn",
             "bnovate.bnovate.doctype.refill_request.refill_request.update_status_from_delivery_note",
@@ -316,6 +322,11 @@ doc_events = {
         "on_cancel": [
             "bnovate.bnovate.utils.enclosures.set_owner_from_dn",
             "bnovate.bnovate.doctype.refill_request.refill_request.update_status_from_delivery_note",
+        ],
+    },
+    "Shipment": {
+        "before_save": [
+            "bnovate.bnovate.utils.shipping.set_pallets",
         ],
     }
 }

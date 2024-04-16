@@ -204,7 +204,17 @@ bnovate.utils.html_dialog = function (title, body) {
       secondary_action() { resolve(null); },
     })
     d.show();
-  })
+  });
+}
+
+bnovate.utils.confirm_dialog = function (text) {
+  return new Promise((resolve, reject) => {
+    frappe.confirm(
+      text,
+      () => resolve(true),
+      () => resolve(false),
+    )
+  });
 }
 
 // Email dialog that picks all emails from the doc
