@@ -199,7 +199,7 @@ async function create_shipment(frm) {
 }
 
 async function create_return_shipment(frm) {
-    const confirm = await bnovate.utils.confirm_dialog("Create return label?");
+    const confirm = await bnovate.utils.confirm_dialog(__("Create return label?"));
 
     if (confirm === false) {
         console.log("Cancelled");
