@@ -114,6 +114,7 @@ frappe.ui.form.on("Delivery Note", {
                 row.width = parcel_template.width;
                 row.height = parcel_template.height;
                 row.weight = parcel_template.weight;
+                row.is_pallet = parcel_template.is_pallet;
                 frm.refresh_fields("shipment_parcel");
             });
         }

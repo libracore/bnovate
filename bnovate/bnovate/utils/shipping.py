@@ -800,6 +800,9 @@ def set_pallets(doc, method=None):
     has_pallet = sum([p.is_pallet or 0 for p in doc.shipment_parcel], 0)
     doc.db_set('pallets', 'Yes' if has_pallet else 'No')
 
+    # Also clear template to avoid keeping that link around:
+    doc.db_set('parcel_template', None)
+
 
 @frappe.whitelist()
 def fill_address_data(address_type, address_name,  company=None, customer=None, supplier=None, contact=None, user=None):
