@@ -327,7 +327,13 @@ doc_events = {
     "Shipment": {
         "before_save": [
             "bnovate.bnovate.utils.shipping.set_pallets",
+            "bnovate.bnovate.utils.shipping.set_totals",
+            "bnovate.bnovate.utils.shipping.set_missing_values",
         ],
+        "on_submit": [
+            "bnovate.bnovate.utils.shipping.set_totals",
+            "bnovate.bnovate.utils.shipping.set_missing_values",
+        ]
     }
 }
 

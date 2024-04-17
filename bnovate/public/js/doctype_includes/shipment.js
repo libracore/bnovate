@@ -169,6 +169,7 @@ function calculate_row_total(frm, dt, dn) {
     frappe.model.set_value(dt, dn, 'amount', amount);
 }
 
+// Keep this as indication only - recalculated server-side by a hook.
 function calculate_total_value(frm) {
     const line_item_value = frm.doc.items.reduce((acc, row) => acc + row.amount, 0);
     const total = line_item_value + frm.doc.shipment_amount;

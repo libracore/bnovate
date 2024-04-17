@@ -487,6 +487,10 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
     except IndexError:
         pass
 
+    if doc.pickup_from_type != "Company":
+        # Assume a return
+        invoice_no += " RETURN"
+
     incoterm_place = doc.delivery_city
     if doc.incoterm in ('EXW', 'FCA'):
         incoterm_place = doc.pickup_city
@@ -803,6 +807,22 @@ def set_pallets(doc, method=None):
     # Also clear template to avoid keeping that link around:
     doc.db_set('parcel_template', None)
 
+@frappe.whitelist()
+def set_totals(doc, method=None):
+    """ Calculate total declared value (items + shipping). Called by hooks.py """
+    for row in doc.items:
+        if row.qty and row.rate:
+            row.amount = row.qty * row.rate
+
+    line_item_value = sum([r.amount or 0 for r in doc.items], 0)
+    total = line_item_value + doc.shipment_amount
+    doc.declared_value = total
+
+def set_missing_values(doc, method=None):
+    """ Check all values before saving or submitting. Called by hooks.py """
+
+    if doc.is_return:
+        doc.incoterm = "DAP"
 
 @frappe.whitelist()
 def fill_address_data(address_type, address_name,  company=None, customer=None, supplier=None, contact=None, user=None):
@@ -864,71 +884,66 @@ def fill_address_data(address_type, address_name,  company=None, customer=None, 
         address_type + "_contact_phone": address_doc.phone or contact_doc.phone,
     }
 
-
-def _postprocess(source, target):
-    """ Completes a Shipment created from a DN """
-
-    # Args are passed through flags
-    args = frappe.flags.args
-    settings = _get_settings()
-
-    # PICKUP
-    target.pickup_from_type = "Company"
-    target.pickup_contact_person = settings.shipping_contact
-    target.update(fill_address_data(
-        "pickup", 
-        target.pickup_address_name, 
-        company=target.pickup_company,
-        user=target.pickup_contact_person,
-    ))
-
-    # DELIVERY
-    target.delivery_to_type = "Customer"
-    if source.shipping_address_name:
-        target.delivery_address_name = source.shipping_address_name
-    elif source.customer_address:
-        # Default to billing address
-        target.delivery_address_name = source.customer_address
-
-    target.update(fill_address_data(
-        "delivery", 
-        target.delivery_address_name, 
-        customer=target.delivery_customer,
-        contact=target.delivery_contact_name,
-    ))
-    
-    # BILL
-    target.bill_to_type = "Customer"
-
-    # field_map doesn't allow populating two target fields from same source.
-    target.bill_customer = target.delivery_customer
-    target.bill_contact_name = target.delivery_contact_name
-
-    target.update(fill_address_data(
-        "bill", 
-        target.bill_address_name, 
-        customer=target.bill_customer,
-        contact=target.bill_contact_name,
-    ))
-    
-
-    for row in target.items:
-        row.currency = source.currency
-    
-    # TIMES
-    if args.pickup_date:
-        target.pickup_date = args.pickup_date
-    target.pickup_date
-    target.pickup_from = settings.pickup_from  # Time is set to "now" somehow.
-    target.pickup_to = settings.pickup_to
-
-    # SHIPPING DATA
-    shipping = next((t.tax_amount for t in source.taxes if t.account_head == settings.shipping_income_account), 0)
-    target.shipment_amount = shipping
-
 @frappe.whitelist()
 def make_shipment_from_dn(source_name, target_doc=None):
     """ To be called from open_mapped_doc. """
+
+    def postprocess(source, target):
+        args = frappe.flags.args
+        settings = _get_settings()
+
+        # PICKUP
+        target.pickup_from_type = "Company"
+        target.pickup_contact_person = settings.shipping_contact
+        target.update(fill_address_data(
+            "pickup", 
+            target.pickup_address_name, 
+            company=target.pickup_company,
+            user=target.pickup_contact_person,
+        ))
+
+        # DELIVERY
+        target.delivery_to_type = "Customer"
+        if source.shipping_address_name:
+            target.delivery_address_name = source.shipping_address_name
+        elif source.customer_address:
+            # Default to billing address
+            target.delivery_address_name = source.customer_address
+
+        target.update(fill_address_data(
+            "delivery", 
+            target.delivery_address_name, 
+            customer=target.delivery_customer,
+            contact=target.delivery_contact_name,
+        ))
+        
+        # BILL
+        target.bill_to_type = "Customer"
+
+        # field_map doesn't allow populating two target fields from same source.
+        target.bill_customer = target.delivery_customer
+        target.bill_contact_name = target.delivery_contact_name
+
+        target.update(fill_address_data(
+            "bill", 
+            target.bill_address_name, 
+            customer=target.bill_customer,
+            contact=target.bill_contact_name,
+        ))
+
+        # TIMES
+        if args and args.pickup_date:
+            target.pickup_date = args.pickup_date
+        target.pickup_from = settings.pickup_from  # Time is set to "now" somehow.
+        target.pickup_to = settings.pickup_to
+
+        # FINANCIALS 
+        for row in target.items:
+            row.currency = source.currency
+
+        shipping = next((t.tax_amount for t in source.taxes if t.account_head == settings.shipping_income_account), 0)
+        target.shipment_amount = shipping
+        set_totals(target)
 
     doclist = get_mapped_doc("Delivery Note", source_name, {
         "Delivery Note": {
@@ -947,18 +962,17 @@ def make_shipment_from_dn(source_name, target_doc=None):
                 "posting_date": "pickup_date",
                 "po_no": "po_no",
             },
-            # "validation": {
-            #     "docstatus": ["=", 1]
-            # }
+            "validation": {
+                "docstatus": ["=", 1]
+            }
         },
         "Delivery Note Item": {
             "doctype": "Shipment Item",
             "field_map": {
                 "name": "dn_detail",
-                # "parent": "prevdoc_docname",
             }
         }
-    }, target_doc, _postprocess)
+    }, target_doc, postprocess)
 
     return doclist
 
@@ -966,35 +980,77 @@ def make_shipment_from_dn(source_name, target_doc=None):
 def make_return_shipment_from_dn(source_name, target_doc=None):
     """ To be called from open_mapped_doc. """
 
+    # TODO: add "is return" indication to Shipment, that selects correct DHL
+    # account and incoterm, maybe reason.
+
     def postprocess(source, target):
+        settings = _get_settings()
         target.pickup_from_type = "Customer"
         target.delivery_to_type = "Company"
         target.bill_to_type = "Company"
-        _postprocess(source, target)
 
-        # TODO: adapt reference number
+        # PICKUP
+        target.pickup_from_type = "Customer"
+        target.update(fill_address_data(
+            "pickup", 
+            target.pickup_address_name, 
+            customer=target.pickup_customer,
+            contact=target.pickup_contact_name,
+        ))
+
+        # DELIVERY
+        target.delivery_to_type = "Company"
+        target.delivery_user = settings.shipping_contact
+
+        target.update(fill_address_data(
+            "delivery", 
+            target.delivery_address_name, 
+            company=target.delivery_company,
+            user=target.delivery_user,
+        ))
+        
+        # BILL
+        # field_map doesn't allow populating two target fields from same source.
+        target.bill_to_type = "Company"
+        target.bill_company = target.delivery_company
+        target.bill_address_name = target.delivery_address_name
+        target.bill_contact_name = target.delivery_contact_name
+
+        target.update(fill_address_data(
+            "bill", 
+            target.bill_address_name, 
+            company=target.bill_company,
+            user=target.delivery_user,
+        ))
+
+        # FINANCIALS  ETC.
+        for row in target.items:
+            row.currency = source.currency
+
+        # Free return shipping
+        target.shipment_amount = 0
+        set_totals(target)
+        set_missing_values(target)
 
     doclist = get_mapped_doc("Delivery Note", source_name, {
         "Delivery Note": {
             "doctype": "Shipment",
             "field_map": {
-                "grand_total": "declared_value",
                 "currency": "value_currency",
 
                 "company": "delivery_company",
-                "company_address": "pickup_address_name",
+                "company_address": "delivery_address_name",
 
-                "customer": "delivery_customer",
-                "contact_person": "delivery_contact_name",
-                "contact_email": "delivery_contact_email",
-                "customer_address": "bill_address_name",
+                "customer": "pickup_customer",
+                "contact_person": "pickup_contact_name",
+                "shipping_address_name": "pickup_address_name",
 
                 "posting_date": "pickup_date",
                 "po_no": "po_no",
             },
-            "validation": {
-                "docstatus": ["=", 1]
-            }
+            # "validation": {
+            #     "docstatus": ["=", 1]
+            # }
         },
         "Delivery Note Item": {
             "doctype": "Shipment Item",

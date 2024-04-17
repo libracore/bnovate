@@ -69,7 +69,7 @@ frappe.ui.form.on("Delivery Note", {
             // Override standard delivery creation
             frm.remove_custom_button(__("Shipment"), __("Create"));
             frm.add_custom_button(__("Shipment"), () => create_shipment(frm), __("Create"));
-            // frm.add_custom_button(__("Return Shipment"), () => create_return_shipment(frm), __("Create"));
+            frm.add_custom_button(__("Return Shipment"), () => create_return_shipment(frm), __("Create"));
 
             // Backup location for this function
             if (frm.doc.docstatus == 1 && frm.doc.packing_stage != "Shipped") {
@@ -210,7 +210,6 @@ async function create_return_shipment(frm) {
     frappe.model.open_mapped_doc({
         method: "bnovate.bnovate.utils.shipping.make_return_shipment_from_dn",
         frm,
-        args,
     })
 }
 
