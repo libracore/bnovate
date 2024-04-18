@@ -159,7 +159,7 @@ function next_weekday(days_from_now = 0) {
 async function prompt_shipment(frm) {
 
     // Pre-fill with next available pickup date
-    const cutoff_time = await bnovate.shipping.get_same_day_cutoff();
+    const cutoff_time = await bnovate.shipping.get_same_day_cutoff(frm.doc.pallets);
     let pickup_date = frm.doc.posting_date;
     if (pickup_date <= frappe.datetime.now_date()) {
         if (frappe.datetime.now_time() < cutoff_time) {

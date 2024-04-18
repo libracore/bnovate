@@ -110,8 +110,11 @@ def get_export_reason_type(reason):
         return reason_lookup[reason]
 
 @frappe.whitelist()
-def get_same_day_cutoff():
+def get_same_day_cutoff(pallets='No'):
     """ Return last possible of day to request same-day pickup """
+    # Needed as a dedicated function to avoid fetching settings from front-end.
+    if pallets == 'Yes':
+        return _get_settings().pallet_same_day_cutoff
     return _get_settings().same_day_cutoff
 
 
@@ -253,12 +256,18 @@ def get_price(shipment_docname):
     local_product_code = "S"
     accounts = [{
         "typeCode": "shipper",
-        "number": settings.dhl_export_account, 
+        "number": settings.dhl_import_account if doc.is_return else settings.dhl_export_account, 
     }]
 
     if doc.pickup_country == "Switzerland" and doc.delivery_country == "Switzerland":
         product_code = "N"
         local_product_code = "N"
+
+        # Event returns use our standard 'export' account
+        accounts = [{
+            "typeCode": "shipper",
+            "number": settings.dhl_export_account, 
+        }]
 
         if len(doc.shipment_parcel) > 1:
             raise DHLException("Domestic shipments only allow one parcel.")
@@ -359,10 +368,12 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
     }, {
         "serviceCode": "FD", # GOGREEN
     }]
+
     accounts = [{
         "typeCode": "shipper",
-        "number": settings.dhl_export_account, 
+        "number": settings.dhl_import_account if doc.is_return else settings.dhl_export_account, 
     }]
+
     if doc.incoterm == "DDP":
         value_added_services += [{
             "serviceCode": "DD",  # Duty paid
@@ -392,6 +403,12 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
         image_options = [{
             "typeCode": "label",
             "templateName": "ECOM26_84_001" 
+        }]
+
+        # No import account, no duty paid, etc.
+        accounts = [{
+            "typeCode": "shipper",
+            "number": settings.dhl_export_account, 
         }]
 
         # TODO: loop over parcels, one shipment per parcel, or create multiple shipments.
@@ -613,7 +630,6 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
 
     doc.db_set("carrier", "DHL")
     doc.db_set("awb_number", resp['shipmentTrackingNumber'])
-    doc.db_set("tracking_url", resp['trackingUrl'])
     doc.db_set("pickup_confirmation_number", resp['dispatchConfirmationNumber'] if 'cancelPickupUrl' in resp else None)
     if pickup:
         doc.db_set("status", "Completed")
@@ -681,12 +697,21 @@ def _request_pickup(shipment_docname, task_id=None):
     if doc.status != "Registered":
         raise DHLException("Can only request pickup if status is 'Registered'")
 
+    accounts = [{
+        "typeCode": "shipper",
+        "number": settings.dhl_import_account if doc.is_return else settings.dhl_export_account, 
+    }]
 
     product_code = "P"
     customs_declarable = True
     if doc.pickup_country == "Switzerland" and doc.delivery_country == "Switzerland":
         product_code = "N"
         customs_declarable = False
+
+        accounts = [{
+            "typeCode": "shipper",
+            "number": settings.dhl_export_account, 
+        }]
 
     # Date and time can't be in the past, even by a second
     pickup_datetime = datetime.datetime.combine(doc.pickup_date, datetime.time()) + doc.pickup_from
@@ -704,12 +729,7 @@ def _request_pickup(shipment_docname, task_id=None):
 
     body = {
         "plannedPickupDateAndTime": "{0} GMT{1}".format(pickup_datetime.isoformat()[:19], pickup_gmt_offset),
-        "accounts": [
-            {
-                "typeCode": "shipper",
-                "number": settings.dhl_export_account,
-            }
-        ],
+        "accounts": accounts, 
         "customerDetails": {
             "shipperDetails": {
                 "postalAddress": pickup_address,
@@ -985,9 +1005,6 @@ def make_return_shipment_from_dn(source_name, target_doc=None):
 
     def postprocess(source, target):
         settings = _get_settings()
-        target.pickup_from_type = "Customer"
-        target.delivery_to_type = "Company"
-        target.bill_to_type = "Company"
 
         # PICKUP
         target.pickup_from_type = "Customer"
@@ -1024,6 +1041,7 @@ def make_return_shipment_from_dn(source_name, target_doc=None):
         ))
 
         # FINANCIALS  ETC.
+        target.is_return = True
         for row in target.items:
             row.currency = source.currency
 

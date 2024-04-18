@@ -3072,7 +3072,7 @@
   "doctype": "Custom Field",
   "dt": "Sales Order",
   "fetch_from": "customer.default_incoterm",
-  "fetch_if_empty": 0,
+  "fetch_if_empty": 1,
   "fieldname": "incoterm",
   "fieldtype": "Select",
   "hidden": 0,
