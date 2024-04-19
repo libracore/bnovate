@@ -253,7 +253,6 @@ def get_price(shipment_docname):
     doc = frappe.get_doc("Shipment", shipment_docname)
 
     product_code = "P"
-    local_product_code = "S"
     accounts = [{
         "typeCode": "shipper",
         "number": settings.dhl_import_account if doc.is_return else settings.dhl_export_account, 
@@ -261,7 +260,6 @@ def get_price(shipment_docname):
 
     if doc.pickup_country == "Switzerland" and doc.delivery_country == "Switzerland":
         product_code = "N"
-        local_product_code = "N"
 
         # Event returns use our standard 'export' account
         accounts = [{
@@ -277,8 +275,7 @@ def get_price(shipment_docname):
 
     body = {
         "productsAndServices": [{
-            "productCode": product_code,  # Domestic standard
-            "localProductCode": local_product_code,
+            "productCode": product_code,
         }],
         "customerDetails": {
             "shipperDetails": build_address(
@@ -361,7 +358,6 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
 
 
     product_code = "P"
-    local_product_code = "S"
     customs_declarable = True
     value_added_services = [{
         "serviceCode": "WY", # Paperless trade
@@ -396,7 +392,6 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
 
     if doc.pickup_country == "Switzerland" and doc.delivery_country == "Switzerland":
         product_code = "N"
-        local_product_code = "N"
         value_added_services = []
         customs_declarable = False
 
@@ -416,9 +411,11 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
             raise DHLException("Domestic shipments only allow one parcel.")
 
     # Date and time can't be in the past, even by a second
+    # Note that times in the doc are given as datetime.timedelta objects.
     pickup_datetime = datetime.datetime.combine(doc.pickup_date, datetime.time()) + doc.pickup_from
     if pickup_datetime <= datetime.datetime.now():
         pickup_datetime = datetime.datetime.now() + datetime.timedelta(minutes=10)
+    close_time = (datetime.datetime.min + doc.pickup_to).time()
 
 
     pickup_address = build_address(
@@ -516,10 +513,9 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
         "plannedShippingDateAndTime": "{0} GMT{1}".format(pickup_datetime.isoformat()[:19], pickup_gmt_offset),
         "pickup": {
             "isRequested": bool(pickup),
-            "closeTime": str(doc.pickup_to)[:5],
+            "closeTime": close_time.isoformat()[:5],
         },
         "productCode": product_code,
-        "localProductCode": local_product_code,
         "accounts": accounts,
         "outputImageProperties": {
             "encodingFormat": "pdf",
@@ -1039,6 +1035,12 @@ def make_return_shipment_from_dn(source_name, target_doc=None):
             company=target.bill_company,
             user=target.delivery_user,
         ))
+
+        # TIMES: best to specify, or they default to currenty time
+        # if args and args.pickup_date:
+        #     target.pickup_date = args.pickup_date
+        target.pickup_from = settings.pickup_from  # Time is set to "now" somehow.
+        target.pickup_to = settings.pickup_to
 
         # FINANCIALS  ETC.
         target.is_return = True
