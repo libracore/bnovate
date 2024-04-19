@@ -55,6 +55,12 @@ frappe.ui.form.on("Delivery Note", {
             });
         }
 
+        if (frm.doc.return_shipping_label) {
+            frm.add_custom_button('<i class="fa fa-print"></i> ' + __('Return Label'), () => {
+                print_return_shipping_label(frm);
+            });
+        }
+
         setTimeout(() => {
             frm.remove_custom_button(__("Subscription"), __("Create"));
             frm.add_custom_button(__("Aggregate Invoice"), async function () {
@@ -69,7 +75,13 @@ frappe.ui.form.on("Delivery Note", {
             // Override standard delivery creation
             frm.remove_custom_button(__("Shipment"), __("Create"));
             frm.add_custom_button(__("Shipment"), () => create_shipment(frm), __("Create"));
-            // frm.add_custom_button(__("Return Shipment"), () => create_return_shipment(frm), __("Create"));
+            frm.add_custom_button(__("Return Shipment"), () => create_return_shipment(frm), __("Create"));
+
+            if (frm.doc.docstatus == 1 && !frm.doc.return_shipping_label) {
+                frm.add_custom_button(__('Return Label') + ' <i class="fa fa-exchange"></i>', () => {
+                    request_return_label(frm);
+                }, __("Create"));
+            }
 
             // Backup location for this function
             if (frm.doc.docstatus == 1 && frm.doc.packing_stage != "Shipped") {
@@ -114,6 +126,7 @@ frappe.ui.form.on("Delivery Note", {
                 row.width = parcel_template.width;
                 row.height = parcel_template.height;
                 row.weight = parcel_template.weight;
+                row.is_pallet = parcel_template.is_pallet;
                 frm.refresh_fields("shipment_parcel");
             });
         }
@@ -158,7 +171,7 @@ function next_weekday(days_from_now = 0) {
 async function prompt_shipment(frm) {
 
     // Pre-fill with next available pickup date
-    const cutoff_time = await bnovate.shipping.get_same_day_cutoff();
+    const cutoff_time = await bnovate.shipping.get_same_day_cutoff(frm.doc.pallets);
     let pickup_date = frm.doc.posting_date;
     if (pickup_date <= frappe.datetime.now_date()) {
         if (frappe.datetime.now_time() < cutoff_time) {
@@ -199,19 +212,12 @@ async function create_shipment(frm) {
 }
 
 async function create_return_shipment(frm) {
-    const confirm = await bnovate.utils.confirm_dialog(__("Create return label?"));
-
-    if (confirm === false) {
-        console.log("Cancelled");
-        return
-    }
-
     frappe.model.open_mapped_doc({
         method: "bnovate.bnovate.utils.shipping.make_return_shipment_from_dn",
         frm,
-        args,
     })
 }
+
 
 // Creates shipment, get shipping label from carrier, and request actual pickup!
 async function request_pickup(frm) {
@@ -238,6 +244,7 @@ async function request_pickup(frm) {
             }
         }
     })
+    frappe.hide_progress()
 
     console.log(resp.message);
     await frm.reload_doc();
@@ -247,8 +254,47 @@ async function request_pickup(frm) {
     await print_shipping_label({ doc: updated_dn });
 }
 
+// Creates shipment, get shipping label from carrier, DON'T request pickup - leave it to the customer
+async function request_return_label(frm) {
+    const confirm = await bnovate.utils.confirm_dialog(__("Create return label?"));
+
+    if (confirm === false) {
+        console.log("Cancelled");
+        return
+    }
+
+    const resp = await bnovate.realtime.call({
+        method: "bnovate.bnovate.utils.shipping.get_return_label_from_dn",
+        args: {
+            dn_docname: frm.doc.name,
+        },
+        callback(status) {
+            console.log(status);
+            if (status.data.progress < 100) {
+                frappe.show_progress(__("Creating shipment..."), status.data.progress, 100, __(status.data.message));
+            }
+            if (status.code == 0) {
+                frappe.hide_progress();
+            }
+        }
+    })
+    frappe.hide_progress();
+
+    console.log(resp.message);
+    await frm.reload_doc();
+
+    // Print label directly from return doc to avoid race condition
+    const updated_dn = resp.message;
+    await print_return_shipping_label({ doc: updated_dn });
+}
+
+
 async function print_shipping_label(frm) {
     await bnovate.utils.print_url(frm.doc.shipping_label);
+}
+
+async function print_return_shipping_label(frm) {
+    await bnovate.utils.print_url(frm.doc.return_shipping_label);
 }
 
 function override_action_buttons(frm) {

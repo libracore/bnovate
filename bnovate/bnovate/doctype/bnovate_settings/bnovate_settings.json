@@ -23,11 +23,13 @@
   "use_live_api",
   "shipping_contact",
   "dhl_export_account",
+  "dhl_import_account",
   "dhl_api_key",
   "dhl_api_secret",
   "column_break_20",
   "pickup_from",
   "same_day_cutoff",
+  "pallet_same_day_cutoff",
   "pickup_to",
   "default_customs_tariff_number",
   "default_country_of_origin",
@@ -197,10 +199,21 @@
    "fieldname": "same_day_cutoff",
    "fieldtype": "Time",
    "label": "Same Day Cutoff"
+  },
+  {
+   "fieldname": "dhl_import_account",
+   "fieldtype": "Data",
+   "label": "DHL Account for Imports"
+  },
+  {
+   "description": "Beyond this time, pickup <b>of pallets</b> is scheduled for next day.",
+   "fieldname": "pallet_same_day_cutoff",
+   "fieldtype": "Data",
+   "label": "Pallet Same Day Cutoff"
   }
  ],
  "issingle": 1,
- "modified": "2024-04-10 17:50:50.056742",
+ "modified": "2024-04-18 08:46:36.094526",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "bNovate Settings",

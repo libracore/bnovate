@@ -123,6 +123,7 @@ frappe.ui.form.on("Shipment", {
                 row.width = parcel_template.width;
                 row.height = parcel_template.height;
                 row.weight = parcel_template.weight;
+                row.is_pallet = parcel_template.is_pallet;
                 frm.refresh_fields("shipment_parcel");
             });
         }
@@ -168,6 +169,7 @@ function calculate_row_total(frm, dt, dn) {
     frappe.model.set_value(dt, dn, 'amount', amount);
 }
 
+// Keep this as indication only - recalculated server-side by a hook.
 function calculate_total_value(frm) {
     const line_item_value = frm.doc.items.reduce((acc, row) => acc + row.amount, 0);
     const total = line_item_value + frm.doc.shipment_amount;

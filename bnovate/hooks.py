@@ -108,6 +108,9 @@ fixtures = [
             "Delivery Note-parcel_template",
             "Delivery Note-add_template",
             "Delivery Note-shipping_label",
+            "Delivery Note-pickup_confirmation_number",
+            "Delivery Note-return_tracking_no",
+            "Delivery Note-return_shipping_label",
             "Delivery Note-pallets",
             "Shipment Parcel Template-is_pallet",
             "Shipment Parcel-is_pallet",
@@ -327,7 +330,13 @@ doc_events = {
     "Shipment": {
         "before_save": [
             "bnovate.bnovate.utils.shipping.set_pallets",
+            "bnovate.bnovate.utils.shipping.set_totals",
+            "bnovate.bnovate.utils.shipping.set_missing_values",
         ],
+        "on_submit": [
+            "bnovate.bnovate.utils.shipping.set_totals",
+            "bnovate.bnovate.utils.shipping.set_missing_values",
+        ]
     }
 }
 
