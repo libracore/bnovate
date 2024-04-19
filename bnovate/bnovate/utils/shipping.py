@@ -1068,6 +1068,7 @@ def make_return_shipment_from_dn(source_name, target_doc=None):
                 "posting_date": "pickup_date",
                 "po_no": "po_no",
             },
+            "field_no_map": ['shipping_label'],
             # "validation": {
             #     "docstatus": ["=", 1]
             # }
@@ -1096,15 +1097,23 @@ def finalize_dn(shipment_docname):
 
     dn = frappe.get_doc("Delivery Note", dn_docname)
 
-    dn.db_set('tracking_no', shipment.awb_number)
-    dn.db_set('carrier', shipment.carrier)
-    dn.db_set('shipping_label', shipment.shipping_label)
-    dn.db_set('packing_stage', 'Shipped')
+    if shipment.is_return:
+        dn.db_set('return_tracking_no', shipment.awb_number)
+        dn.db_set('return_shipping_label', shipment.shipping_label)
+    else:
+        dn.db_set('tracking_no', shipment.awb_number)
+        dn.db_set('pickup_confirmation_number', shipment.pickup_confirmation_number)
+        dn.db_set('carrier', shipment.carrier)
+        dn.db_set('shipping_label', shipment.shipping_label)
+        dn.db_set('packing_stage', 'Shipped')
+    
 
     return dn
 
+
 @frappe.whitelist()
 def ship_from_dn(dn_docname, pickup_date, task_id=None):
+    """ Create Shipment doc, request DHL pickup, copy shipping data to DN """
     try:
         return _ship_from_dn(dn_docname, pickup_date, task_id)
     except Exception as e:
@@ -1114,6 +1123,7 @@ def ship_from_dn(dn_docname, pickup_date, task_id=None):
         }, task_id, STATUS_DONE)
 
         raise e
+
 
 def _ship_from_dn(dn_docname, pickup_date, task_id=None):
     """ Create Shipment doc, request DHL pickup, copy shipping data to DN """
@@ -1130,4 +1140,26 @@ def _ship_from_dn(dn_docname, pickup_date, task_id=None):
 
     return dn
 
+
+@frappe.whitelist()
+def get_return_label_from_dn(dn_docname, task_id=None):
+    """ Create Shipment doc, request shipping label, copy data back to DN """
+    try:
+        return _get_return_label_from_dn(dn_docname, task_id)
+    except Exception as e:
+        set_status({
+            "progress": 100,
+            "message": _("Error"),
+        }, task_id, STATUS_DONE)
+
+        raise e
+
+
+def _get_return_label_from_dn(dn_docname, task_id=None):
+    shipment_doc = make_return_shipment_from_dn(dn_docname)
+    shipment_doc.submit() # Will not commit in case of error.
+
+    _create_shipment(shipment_doc.name, pickup=False, task_id=task_id)
+    dn = finalize_dn(shipment_doc.name)
+    return dn
 

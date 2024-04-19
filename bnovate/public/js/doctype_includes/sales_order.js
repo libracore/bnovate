@@ -117,6 +117,16 @@ frappe.ui.form.on("Sales Order", {
         }
     },
 
+    async customer(frm) {
+        // Fetch default terms from customer group
+        const customer_doc = await frappe.model.with_doc("Customer", frm.doc.customer);
+        const customer_group = await frappe.model.with_doc("Customer Group", customer_doc.customer_group);
+
+        setTimeout(() => {
+            frm.set_value('taxes_and_charges', customer_group.taxes_and_charges_template);
+        }, 500)
+    },
+
     custom_shipping_rule(frm) {
         // Call Custom Shipping Rule instead of built-in one:
 
