@@ -410,6 +410,11 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
         if len(doc.shipment_parcel) > 1:
             raise DHLException("Domestic shipments only allow one parcel.")
 
+    if doc.is_return:
+        value_added_services += [{
+            "serviceCode": "PT",  # 3 month data staging
+        }]
+
     # Date and time can't be in the past, even by a second
     # Note that times in the doc are given as datetime.timedelta objects.
     pickup_datetime = datetime.datetime.combine(doc.pickup_date, datetime.time()) + doc.pickup_from
@@ -1044,6 +1049,7 @@ def make_return_shipment_from_dn(source_name, target_doc=None):
 
         # FINANCIALS  ETC.
         target.is_return = True
+        target.reason_for_export = 'Return'
         for row in target.items:
             row.currency = source.currency
 

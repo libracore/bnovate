@@ -77,11 +77,11 @@ frappe.ui.form.on("Delivery Note", {
             frm.add_custom_button(__("Shipment"), () => create_shipment(frm), __("Create"));
             frm.add_custom_button(__("Return Shipment"), () => create_return_shipment(frm), __("Create"));
 
-            // if (frm.doc.docstatus == 1 && !frm.doc.return_shipping_label) {
-            frm.add_custom_button(__('Return Label') + ' <i class="fa fa-exchange"></i>', () => {
-                request_return_label(frm);
-            }, __("Create"));
-            // }
+            if (frm.doc.docstatus == 1 && !frm.doc.return_shipping_label) {
+                frm.add_custom_button(__('Return Label') + ' <i class="fa fa-exchange"></i>', () => {
+                    request_return_label(frm);
+                }, __("Create"));
+            }
 
             // Backup location for this function
             if (frm.doc.docstatus == 1 && frm.doc.packing_stage != "Shipped") {
