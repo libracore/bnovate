@@ -355,6 +355,8 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
         raise MissingParcelError(_("Please specify types of parcel"))
     if doc.delivery_country != doc.bill_country:
         raise DropShipImpossible(_("Delivery country must be the same as Bill country"))
+    if doc.is_return and doc.delivery_country != "Switzerland":
+        raise DHLException(_("Only returns to Switzerland are supported at this stage"))
 
 
     product_code = "P"
@@ -367,10 +369,19 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
 
     accounts = [{
         "typeCode": "shipper",
-        "number": settings.dhl_import_account if doc.is_return else settings.dhl_export_account, 
+        "number": settings.dhl_export_account, 
     }]
 
-    if doc.incoterm == "DDP":
+    if doc.is_return:
+        # In case of domestic shipment, accounts are reset later.
+        accounts = [{
+            "typeCode": "shipper",
+            "number": settings.dhl_import_account, 
+        }, {
+            "typeCode": "duties-taxes",
+            "number": settings.dhl_import_account, 
+        }]
+    elif doc.incoterm == "DDP":
         value_added_services += [{
             "serviceCode": "DD",  # Duty paid
         }]
@@ -414,6 +425,7 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
         value_added_services += [{
             "serviceCode": "PT",  # 3 month data staging
         }]
+
 
     # Date and time can't be in the past, even by a second
     # Note that times in the doc are given as datetime.timedelta objects.
@@ -836,7 +848,7 @@ def set_totals(doc, method=None):
             row.amount = row.qty * row.rate
 
     line_item_value = sum([r.amount or 0 for r in doc.items], 0)
-    total = line_item_value + doc.shipment_amount
+    total = line_item_value + (doc.shipment_amount or 0)
     doc.declared_value = total
 
 def set_missing_values(doc, method=None):
