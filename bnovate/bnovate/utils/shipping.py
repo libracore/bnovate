@@ -118,6 +118,9 @@ def get_same_day_cutoff(pallets='No'):
     return _get_settings().same_day_cutoff
 
 
+def strip(s):
+    return s.strip() if type(s) == str else s
+
 #######################
 # BASE API CONNECTIONS
 #######################
@@ -164,11 +167,11 @@ def dhl_request(path, method='GET', params=None, body=None, settings=None, auth=
 def build_address(address_line1, address_line2, city, pincode, country):
     """ Return dict of address formatted for DHL API """
     address = {
-        "addressLine1": address_line1[:45] if address_line1 else None,
-        "addressLine2": address_line2[:45] if address_line2 else None,
-        "cityName": city,
-        "postalCode": pincode,
-        "countryCode": get_country_code(country),
+        "addressLine1": strip(address_line1[:45] if address_line1 else None),
+        "addressLine2": strip(address_line2[:45] if address_line2 else None),
+        "cityName": strip(city),
+        "postalCode": strip(pincode),
+        "countryCode": strip(get_country_code(country)),
     }
     return frappe._dict({k: v for k, v in address.items() if v})
 
@@ -901,20 +904,20 @@ def fill_address_data(address_type, address_name,  company=None, customer=None, 
 
     # DHL API doesn't support multiple emails, keep only the first one.
     def trim_email(email_id):
-        return email_id.split(',')[0]
+        return email_id.split(',')[0].strip()
 
     return {
-        address_type + "_company_name": address_doc.company_name or business_doc.company_name,
-        address_type + "_tax_id": business_doc.tax_id,
-        address_type + "_eori_number": business_doc.eori_number,
-        address_type + "_address_line1": address_doc.address_line1,
-        address_type + "_address_line2": address_doc.address_line2,
-        address_type + "_pincode": address_doc.pincode,
-        address_type + "_city": address_doc.city,
-        address_type + "_country": address_doc.country,
-        address_type + "_contact_display": address_doc.contact_name or contact_doc.contact_display, 
-        address_type + "_contact_email_rw": trim_email(address_doc.email_id or contact_doc.email),
-        address_type + "_contact_phone": address_doc.phone or contact_doc.phone,
+        address_type + "_company_name": strip(address_doc.company_name or business_doc.company_name),
+        address_type + "_tax_id": strip(business_doc.tax_id),
+        address_type + "_eori_number": strip(business_doc.eori_number),
+        address_type + "_address_line1": strip(address_doc.address_line1),
+        address_type + "_address_line2": strip(address_doc.address_line2),
+        address_type + "_pincode": strip(address_doc.pincode),
+        address_type + "_city": strip(address_doc.city),
+        address_type + "_country": strip(address_doc.country),
+        address_type + "_contact_display": strip(address_doc.contact_name or contact_doc.contact_display), 
+        address_type + "_contact_email_rw": trim_email(address_doc.email_id or contact_doc.email or ''),
+        address_type + "_contact_phone": strip(address_doc.phone or contact_doc.phone),
     }
 
 @frappe.whitelist()
