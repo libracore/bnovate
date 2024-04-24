@@ -371,27 +371,24 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
         "serviceCode": "FD", # GOGREEN
     }]
 
+    # In case of domestic shipment, accounts are reset later.
     accounts = [{
         "typeCode": "shipper",
         "number": settings.dhl_export_account, 
     }]
 
-    if doc.is_return:
-        # In case of domestic shipment, accounts are reset later.
+    if doc.incoterm == "DDP":
+        accounts += [{
+            "typeCode": "duties-taxes",
+            "number": settings.dhl_export_account, 
+        }]
+    elif doc.is_return:
         accounts = [{
             "typeCode": "shipper",
             "number": settings.dhl_import_account, 
         }, {
             "typeCode": "duties-taxes",
             "number": settings.dhl_import_account, 
-        }]
-    elif doc.incoterm == "DDP":
-        value_added_services += [{
-            "serviceCode": "DD",  # Duty paid
-        }]
-        accounts += [{
-            "typeCode": "duties-taxes",
-            "number": settings.dhl_export_account, 
         }]
 
     image_options = [{
