@@ -40,3 +40,13 @@ bnovate.shipping.validate_address = async function (name, throw_error = true) {
     // If no error raised, Address is shippable
     frappe.msgprint(__("Address is deliverable"))
 }
+
+bnovate.shipping.validate_sales_order = async function (name) {
+    const resp = await frappe.call({
+        method: 'bnovate.bnovate.utils.shipping.validate_sales_order',
+        args: {
+            name,
+        }
+    });
+    return resp.message
+}

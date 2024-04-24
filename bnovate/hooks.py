@@ -56,6 +56,7 @@ fixtures = [
             "Serial No-owned_by_name",
             "Serial No-owner_set_by",
             # Refill requests
+            "Customer-portal_settings",
             "Customer-enable_cartridge_portal",
             "Customer-allow_unstored_cartridges",
             "Customer-portal_billing_address",
@@ -94,9 +95,10 @@ fixtures = [
             "Delivery Note-shipping_country",
             # Shipments (most fields are in exported customizations - shipment.json)
             "Company-eori_number",
-            "Customer-eori_number",
+            "Company-default_address",
             "Supplier-eori_number",
             "Delivery Note-eori_number",
+            "Customer-eori_number",
             "Customer-default_incoterm",
             "Quotation-incoterm",
             "Sales Order-incoterm",
@@ -161,6 +163,7 @@ web_include_js = [
 doctype_js = {
     "Address": ["public/js/doctype_includes/address.js"],
     "Blanket Order": ["public/js/doctype_includes/blanket_order.js"],
+    "Company": ["public/js/doctype_includes/company.js"],
     "Contact": ["public/js/doctype_includes/contact.js"],
     "Customer": ["public/js/doctype_includes/customer.js"],
     "Delivery Note": ["public/js/doctype_includes/delivery_note.js"],

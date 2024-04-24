@@ -48,6 +48,11 @@ class ProductNotFoundError(DHLException):
 
 class AddressError(DHLException):
     """ Error while validating postal adress """
+    def __init__(self, message):
+        self.message = message
+    
+    def __str__(self):
+        return self.message
 
 class MissingParcelError(DHLException):
     """ No parcels declared """
@@ -118,6 +123,9 @@ def get_same_day_cutoff(pallets='No'):
     return _get_settings().same_day_cutoff
 
 
+def strip(s):
+    return s.strip() if type(s) == str else s
+
 #######################
 # BASE API CONNECTIONS
 #######################
@@ -164,11 +172,11 @@ def dhl_request(path, method='GET', params=None, body=None, settings=None, auth=
 def build_address(address_line1, address_line2, city, pincode, country):
     """ Return dict of address formatted for DHL API """
     address = {
-        "addressLine1": address_line1[:45] if address_line1 else None,
-        "addressLine2": address_line2[:45] if address_line2 else None,
-        "cityName": city,
-        "postalCode": pincode,
-        "countryCode": get_country_code(country),
+        "addressLine1": strip(address_line1[:45] if address_line1 else None),
+        "addressLine2": strip(address_line2[:45] if address_line2 else None),
+        "cityName": strip(city),
+        "postalCode": strip(pincode),
+        "countryCode": strip(get_country_code(country)),
     }
     return frappe._dict({k: v for k, v in address.items() if v})
 
@@ -197,8 +205,7 @@ def quick_validate_address(pincode, country):
     except DHLBadRequestError as e:
         raise AddressError("Invalid Adddress. Check Postal Code.")
 
-@frappe.whitelist()
-def validate_address(name, throw_error=True):
+def validate_address(name):
     """ Validate an address for delivery. For now we only look at postal code and country """
 
     doc = frappe.get_doc("Address", name)
@@ -207,10 +214,7 @@ def validate_address(name, throw_error=True):
     try:
         return _validate_address(address, DELIVERY)
     except AddressError:
-        if throw_error:
-            frappe.throw("Invalid postal code")
-        return False
-
+        raise AddressError("Check Postal Code")
 
 def _validate_address(address, address_type):
     """ Validates if DHL Express has got pickup/delivery capabilities at origin/destination
@@ -355,6 +359,8 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
         raise MissingParcelError(_("Please specify types of parcel"))
     if doc.delivery_country != doc.bill_country:
         raise DropShipImpossible(_("Delivery country must be the same as Bill country"))
+    if doc.is_return and doc.delivery_country != "Switzerland":
+        raise DHLException(_("Only returns to Switzerland are supported at this stage"))
 
 
     product_code = "P"
@@ -365,18 +371,24 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
         "serviceCode": "FD", # GOGREEN
     }]
 
+    # In case of domestic shipment, accounts are reset later.
     accounts = [{
         "typeCode": "shipper",
-        "number": settings.dhl_import_account if doc.is_return else settings.dhl_export_account, 
+        "number": settings.dhl_export_account, 
     }]
 
     if doc.incoterm == "DDP":
-        value_added_services += [{
-            "serviceCode": "DD",  # Duty paid
-        }]
         accounts += [{
             "typeCode": "duties-taxes",
             "number": settings.dhl_export_account, 
+        }]
+    elif doc.is_return:
+        accounts = [{
+            "typeCode": "shipper",
+            "number": settings.dhl_import_account, 
+        }, {
+            "typeCode": "duties-taxes",
+            "number": settings.dhl_import_account, 
         }]
 
     image_options = [{
@@ -414,6 +426,7 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
         value_added_services += [{
             "serviceCode": "PT",  # 3 month data staging
         }]
+
 
     # Date and time can't be in the past, even by a second
     # Note that times in the doc are given as datetime.timedelta objects.
@@ -501,13 +514,15 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
     invoice_contact = frappe.get_doc("User", settings.shipping_contact)
     invoice_contact.full_name = ' '.join([invoice_contact.first_name, invoice_contact.last_name]).strip()
     invoice_no = doc.name
-    try:
-        invoice_no = doc.items[0].delivery_note
-    except IndexError:
-        pass
+    if len(doc.items) >= 1:
+        invoice_no = (
+            doc.items[0].delivery_note
+            or doc.items[0].sales_order 
+            or doc.items[0].refill_request 
+            or invoice_no
+        )
 
-    if doc.pickup_from_type != "Company":
-        # Assume a return
+    if doc.is_return:
         invoice_no += " RETURN"
 
     incoterm_place = doc.delivery_city
@@ -519,6 +534,9 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
         "pickup": {
             "isRequested": bool(pickup),
             "closeTime": close_time.isoformat()[:5],
+            "specialInstructions": [{
+                "value": doc.pickup_comment[:75],
+            }] if doc.pickup_comment else [],
         },
         "productCode": product_code,
         "accounts": accounts,
@@ -660,7 +678,7 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
             dhl_doc['content'],
             doc.doctype,
             doc.name,
-            folder="Home", # TODO try Home
+            folder="Home",
             decode=True,
             is_private=1,
             df=df,
@@ -731,6 +749,9 @@ def _request_pickup(shipment_docname, task_id=None):
     body = {
         "plannedPickupDateAndTime": "{0} GMT{1}".format(pickup_datetime.isoformat()[:19], pickup_gmt_offset),
         "accounts": accounts, 
+        "specialInstructions": [{
+            "value": doc.pickup_comment[:80],
+        }] if doc.pickup_comment else [],
         "customerDetails": {
             "shipperDetails": {
                 "postalAddress": pickup_address,
@@ -789,6 +810,51 @@ def _request_pickup(shipment_docname, task_id=None):
     return resp
 
 
+@frappe.whitelist()
+def cancel_pickup(shipment_docname, reason, task_id=None):
+    """ Cancel a pickup request. Resets doc status to 'Registered' """
+    try:
+        return _cancel_pickup(shipment_docname, reason, task_id=task_id)
+    except Exception as e:
+        set_status({
+            "progress": 100,
+            "message": _("Error"),
+        }, task_id, STATUS_DONE)
+
+        raise e 
+
+def _cancel_pickup(shipment_docname, reason, task_id=None):
+    doc = frappe.get_doc("Shipment", shipment_docname)
+
+    if not doc.pickup_confirmation_number:
+        frappe.throw("This shipment does not have a Pickup Confirmation Number")
+    
+
+    set_status({
+        "progress": 40,
+        "message": _("Cancelling pickup..."),
+    }, task_id)
+
+    resp = dhl_request(
+        "/pickups/{0}".format(doc.pickup_confirmation_number),
+        "DELETE",
+        params={
+            "reason": reason,
+            "requestorName": frappe.get_user().doc.full_name,
+        }
+    )
+
+    doc.db_set('status', 'Registered')
+    doc.db_set('pickup_confirmation_number', None)
+
+    set_status({
+        "progress": 100,
+        "message": _("Done"),
+    }, task_id, STATUS_DONE)
+
+    return resp
+
+
 #######################################
 # EXTENSIONS TO SHIPMENT DOCTYPE
 #######################################
@@ -825,6 +891,9 @@ def set_pallets(doc, method=None):
     has_pallet = sum([p.is_pallet or 0 for p in doc.shipment_parcel], 0)
     doc.db_set('pallets', 'Yes' if has_pallet else 'No')
 
+    if has_pallet and not doc.pickup_comment:
+        doc.db_set('pickup_comment', _get_settings().pallet_pickup_comment)
+
     # Also clear template to avoid keeping that link around:
     doc.db_set('parcel_template', None)
 
@@ -836,7 +905,7 @@ def set_totals(doc, method=None):
             row.amount = row.qty * row.rate
 
     line_item_value = sum([r.amount or 0 for r in doc.items], 0)
-    total = line_item_value + doc.shipment_amount
+    total = line_item_value + (doc.shipment_amount or 0)
     doc.declared_value = total
 
 def set_missing_values(doc, method=None):
@@ -846,16 +915,19 @@ def set_missing_values(doc, method=None):
         doc.incoterm = "DAP"
 
 @frappe.whitelist()
-def fill_address_data(address_type, address_name,  company=None, customer=None, supplier=None, contact=None, user=None):
+def fill_address_data(address_type, address_name,  company=None, customer=None, supplier=None, contact=None, 
+                      user=None, validate=False):
     """ Return address fields for given business / address / contact. 
 
     Fills as much data as possible from the address.
 
     Tax info is fetched from the business doctype (company, customer, or supplier).
 
-    If missing:
+    If missing from address:
     - company name is taken from business doctype
     - name, email, phone are taken from the person doctype (contact or user)
+
+    If validate = True, raises AddressError if required fields are missing
     
     """
 
@@ -863,12 +935,15 @@ def fill_address_data(address_type, address_name,  company=None, customer=None, 
         raise ValueError("address_type must be one of ('pickup', 'delivery', 'bill')")
 
     if company:
+        business_type = "Company"
         business_doc = frappe.get_doc("Company", company)
         business_doc.company_name = business_doc.name
     elif customer:
+        business_type = "Customer"
         business_doc = frappe.get_doc("Customer", customer)
         business_doc.company_name = business_doc.customer_name
     elif supplier:
+        business_type = "Supplier"
         business_doc = frappe.get_doc("Supplier", supplier)
         business_doc.company_name = business_doc.supplier_name
     else:
@@ -889,21 +964,39 @@ def fill_address_data(address_type, address_name,  company=None, customer=None, 
 
     # DHL API doesn't support multiple emails, keep only the first one.
     def trim_email(email_id):
-        return email_id.split(',')[0]
+        return email_id.split(',')[0].strip()
 
-    return {
-        address_type + "_company_name": address_doc.company_name or business_doc.company_name,
-        address_type + "_tax_id": business_doc.tax_id,
-        address_type + "_eori_number": business_doc.eori_number,
-        address_type + "_address_line1": address_doc.address_line1,
-        address_type + "_address_line2": address_doc.address_line2,
-        address_type + "_pincode": address_doc.pincode,
-        address_type + "_city": address_doc.city,
-        address_type + "_country": address_doc.country,
-        address_type + "_contact_display": address_doc.contact_name or contact_doc.contact_display, 
-        address_type + "_contact_email_rw": trim_email(address_doc.email_id or contact_doc.email),
-        address_type + "_contact_phone": address_doc.phone or contact_doc.phone,
+    def val(field, msg):
+        if validate_address and not fields[field]:
+            raise AddressError(msg)
+
+    fields = {
+        address_type + "_company_name": strip(address_doc.company_name or business_doc.company_name),
+        address_type + "_tax_id": strip(business_doc.tax_id),
+        address_type + "_eori_number": strip(business_doc.eori_number),
+        address_type + "_address_line1": strip(address_doc.address_line1),
+        address_type + "_address_line2": strip(address_doc.address_line2),
+        address_type + "_pincode": strip(address_doc.pincode),
+        address_type + "_city": strip(address_doc.city),
+        address_type + "_country": strip(address_doc.country),
+        address_type + "_contact_display": strip(address_doc.contact_name or contact_doc.contact_display), 
+        address_type + "_contact_email_rw": trim_email(address_doc.email_id or contact_doc.email or ''),
+        address_type + "_contact_phone": strip(address_doc.phone or contact_doc.phone),
     }
+
+    val(address_type + "_company_name", "Specify company name in the Address or {0}".format(business_type))
+    val(address_type + "_tax_id", "Specify Tax ID in {0}".format(business_type))
+    if (address_doc.country != "Switzerland"):
+        val(address_type + "_eori_number", "Specify EORI number in {0}".format(business_type))
+    val(address_type + "_address_line1", "Specify address line 1 in Address")
+    val(address_type + "_pincode", "Specify Postal Code in Address")
+    val(address_type + "_city", "Specify City in Address")
+    val(address_type + "_country", "Specify Country in Address")
+    val(address_type + "_contact_display", "Specify Contact Name in Address or a full name in Contact")
+    val(address_type + "_contact_email_rw", "Specify Email address in Address or in Contact (check 'Is Primary')")
+    val(address_type + "_contact_phone", "Specify Phone in Address or Contact (check 'Is Primary Phone')")
+
+    return fields
 
 @frappe.whitelist()
 def make_shipment_from_dn(source_name, target_doc=None):
@@ -1000,9 +1093,6 @@ def make_shipment_from_dn(source_name, target_doc=None):
 @frappe.whitelist()
 def make_return_shipment_from_dn(source_name, target_doc=None):
     """ To be called from open_mapped_doc. """
-
-    # TODO: add "is return" indication to Shipment, that selects correct DHL
-    # account and incoterm, maybe reason.
 
     def postprocess(source, target):
         settings = _get_settings()
@@ -1169,3 +1259,160 @@ def _get_return_label_from_dn(dn_docname, task_id=None):
     dn = finalize_dn(shipment_doc.name)
     return dn
 
+
+@frappe.whitelist()
+def validate_sales_order(name):
+    """ Check deliverability of a sales order.
+
+    Return nothing if valid, {error: '', message: ''} otherwise.
+     
+    """
+
+    so_doc = frappe.get_doc("Sales Order", name)
+    settings = _get_settings()
+
+    # Check mandatary fields are filled
+    try:
+        fill_address_data(
+                "pickup", 
+                so_doc.company_address, 
+                company=so_doc.company,
+                user=settings.shipping_contact,
+                validate=True
+            )
+    except AddressError as e:
+        return {
+            "error": "Our own address is not valid",
+            "message": e.message,
+        }
+
+    try:
+        fill_address_data(
+                "delivery", 
+                so_doc.shipping_address_name, 
+                customer=so_doc.customer,
+                contact=so_doc.contact_person,
+                validate=True
+            )
+        validate_address(so_doc.shipping_address_name)
+    except AddressError as e:
+        return {
+            "error": "Shipping address is not valid",
+            "message": e.message,
+        }
+
+    try:
+        fill_address_data(
+                "bill", 
+                so_doc.customer_address, 
+                customer=so_doc.customer,
+                contact=so_doc.contact_person,
+                validate=True
+            )
+        validate_address(so_doc.customer_address)
+    except AddressError as e:
+        return {
+            "error": "Billing address is not valid",
+            "message": e.message,
+        }
+
+    return {
+        "error": None,
+        "message": "",
+    }
+    
+
+
+@frappe.whitelist()
+def make_return_shipment_from_so(source_name, target_doc=None):
+    """ To be called from open_mapped_doc. """
+
+    def postprocess(source, target):
+        settings = _get_settings()
+
+        # PICKUP
+        target.pickup_from_type = "Customer"
+        target.update(fill_address_data(
+            "pickup", 
+            target.pickup_address_name, 
+            customer=target.pickup_customer,
+            contact=target.pickup_contact_name,
+        ))
+
+        # DELIVERY
+        target.delivery_to_type = "Company"
+        target.delivery_user = settings.shipping_contact
+
+        target.update(fill_address_data(
+            "delivery", 
+            target.delivery_address_name, 
+            company=target.delivery_company,
+            user=target.delivery_user,
+        ))
+
+        # BILL
+        # field_map doesn't allow populating two target fields from same source.
+        target.bill_to_type = "Company"
+        target.bill_company = target.delivery_company
+        target.bill_address_name = target.delivery_address_name
+        target.bill_contact_name = target.delivery_contact_name
+
+        target.update(fill_address_data(
+            "bill", 
+            target.bill_address_name, 
+            company=target.bill_company,
+            user=target.delivery_user,
+        ))
+
+        # BUILD ITEMS
+        so_item_lookup = {i.name: i for i in source.items}
+        target.items = [i for i in target.items if so_item_lookup[i.so_detail].price_list_rate]
+        for item in target.items:
+            item_master = frappe.get_doc("Item", so_item_lookup[item.so_detail].item_code)
+            if item_master.return_value:
+                item.rate = item_master.return_value
+            item.customs_tariff_number = item_master.customs_tariff_number
+            item.country_of_origin = item_master.country_of_origin
+
+        # TIMES: best to specify, or they default to currenty time
+        # if args and args.pickup_date:
+        target.pickup_date = datetime.date.today()  # Doesn't matter at this point.
+        target.pickup_from = settings.pickup_from  # Time is set to "now" somehow.
+        target.pickup_to = settings.pickup_to
+
+        # FINANCIALS  ETC.
+        target.is_return = True
+        target.reason_for_export = 'Return'
+
+        # Free return shipping
+        target.shipment_amount = 0
+        set_totals(target)
+        set_missing_values(target)
+
+
+    doclist = get_mapped_doc("Sales Order", source_name, {
+        "Sales Order": {
+            "doctype": "Shipment",
+            "field_map": {
+                "currency": "value_currency",
+
+                "company": "delivery_company",
+                "company_address": "delivery_address_name",
+
+                "customer": "pickup_customer",
+                "contact_person": "pickup_contact_name",
+                "shipping_address_name": "pickup_address_name",
+
+                "posting_date": "pickup_date",
+                "po_no": "po_no",
+            },
+        },
+        "Sales Order Item": {
+            "doctype": "Shipment Item",
+            "field_map": {
+                "name": "so_detail",
+            }
+        }
+    }, target_doc, postprocess)
+
+    return doclist
