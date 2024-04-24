@@ -48,6 +48,11 @@ class ProductNotFoundError(DHLException):
 
 class AddressError(DHLException):
     """ Error while validating postal adress """
+    def __init__(self, message):
+        self.message = message
+    
+    def __str__(self):
+        return self.message
 
 class MissingParcelError(DHLException):
     """ No parcels declared """
@@ -200,8 +205,7 @@ def quick_validate_address(pincode, country):
     except DHLBadRequestError as e:
         raise AddressError("Invalid Adddress. Check Postal Code.")
 
-@frappe.whitelist()
-def validate_address(name, throw_error=True):
+def validate_address(name):
     """ Validate an address for delivery. For now we only look at postal code and country """
 
     doc = frappe.get_doc("Address", name)
@@ -210,10 +214,7 @@ def validate_address(name, throw_error=True):
     try:
         return _validate_address(address, DELIVERY)
     except AddressError:
-        if throw_error:
-            frappe.throw("Invalid postal code")
-        return False
-
+        raise AddressError("Check Postal Code")
 
 def _validate_address(address, address_type):
     """ Validates if DHL Express has got pickup/delivery capabilities at origin/destination
@@ -861,16 +862,19 @@ def set_missing_values(doc, method=None):
         doc.incoterm = "DAP"
 
 @frappe.whitelist()
-def fill_address_data(address_type, address_name,  company=None, customer=None, supplier=None, contact=None, user=None):
+def fill_address_data(address_type, address_name,  company=None, customer=None, supplier=None, contact=None, 
+                      user=None, validate=False):
     """ Return address fields for given business / address / contact. 
 
     Fills as much data as possible from the address.
 
     Tax info is fetched from the business doctype (company, customer, or supplier).
 
-    If missing:
+    If missing from address:
     - company name is taken from business doctype
     - name, email, phone are taken from the person doctype (contact or user)
+
+    If validate = True, raises AddressError if required fields are missing
     
     """
 
@@ -878,12 +882,15 @@ def fill_address_data(address_type, address_name,  company=None, customer=None, 
         raise ValueError("address_type must be one of ('pickup', 'delivery', 'bill')")
 
     if company:
+        business_type = "Company"
         business_doc = frappe.get_doc("Company", company)
         business_doc.company_name = business_doc.name
     elif customer:
+        business_type = "Customer"
         business_doc = frappe.get_doc("Customer", customer)
         business_doc.company_name = business_doc.customer_name
     elif supplier:
+        business_type = "Supplier"
         business_doc = frappe.get_doc("Supplier", supplier)
         business_doc.company_name = business_doc.supplier_name
     else:
@@ -906,7 +913,11 @@ def fill_address_data(address_type, address_name,  company=None, customer=None, 
     def trim_email(email_id):
         return email_id.split(',')[0].strip()
 
-    return {
+    def val(field, msg):
+        if validate_address and not fields[field]:
+            raise AddressError(msg)
+
+    fields = {
         address_type + "_company_name": strip(address_doc.company_name or business_doc.company_name),
         address_type + "_tax_id": strip(business_doc.tax_id),
         address_type + "_eori_number": strip(business_doc.eori_number),
@@ -919,6 +930,19 @@ def fill_address_data(address_type, address_name,  company=None, customer=None, 
         address_type + "_contact_email_rw": trim_email(address_doc.email_id or contact_doc.email or ''),
         address_type + "_contact_phone": strip(address_doc.phone or contact_doc.phone),
     }
+
+    val(address_type + "_company_name", "Specify company name in the Address or {0}".format(business_type))
+    val(address_type + "_tax_id", "Specify Tax ID in {0}".format(business_type))
+    val(address_type + "_eori_number", "Specify EORI number in {0}".format(business_type))
+    val(address_type + "_address_line1", "Specify address line 1 in Address")
+    val(address_type + "_pincode", "Specify Postal Code in Address")
+    val(address_type + "_city", "Specify City in Address")
+    val(address_type + "_country", "Specify Country in Address")
+    val(address_type + "_contact_display", "Specify Contact Name in Address or a full name in Contact")
+    val(address_type + "_contact_email_rw", "Specify Email address in Address or in Contact (check 'Is Primary')")
+    val(address_type + "_contact_phone", "Specify Phone in Address or Contact (check 'Is Primary Phone')")
+
+    return fields
 
 @frappe.whitelist()
 def make_shipment_from_dn(source_name, target_doc=None):
@@ -1184,3 +1208,65 @@ def _get_return_label_from_dn(dn_docname, task_id=None):
     dn = finalize_dn(shipment_doc.name)
     return dn
 
+
+@frappe.whitelist()
+def validate_sales_order(name):
+    """ Check deliverability of a sales order.
+
+    Return nothing if valid, {error: '', message: ''} otherwise.
+     
+    """
+
+    so_doc = frappe.get_doc("Sales Order", name)
+    settings = _get_settings()
+
+    # Check mandatary fields are filled
+    try:
+        fill_address_data(
+                "pickup", 
+                so_doc.company_address, 
+                company=so_doc.company,
+                user=settings.shipping_contact,
+                validate=True
+            )
+    except AddressError as e:
+        return {
+            "error": "Our own address is not valid",
+            "message": e.message,
+        }
+
+    try:
+        fill_address_data(
+                "delivery", 
+                so_doc.shipping_address_name, 
+                customer=so_doc.customer,
+                contact=so_doc.contact_person,
+                validate=True
+            )
+        validate_address(so_doc.shipping_address_name)
+    except AddressError as e:
+        return {
+            "error": "Shipping address is not valid",
+            "message": e.message,
+        }
+
+    try:
+        fill_address_data(
+                "bill", 
+                so_doc.customer_address, 
+                customer=so_doc.customer,
+                contact=so_doc.contact_person,
+                validate=True
+            )
+        validate_address(so_doc.customer_address)
+    except AddressError as e:
+        return {
+            "error": "Billing address is not valid",
+            "message": e.message,
+        }
+
+    return {
+        "error": None,
+        "message": "",
+    }
+    

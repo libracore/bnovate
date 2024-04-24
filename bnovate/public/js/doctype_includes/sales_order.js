@@ -97,22 +97,10 @@ frappe.ui.form.on("Sales Order", {
 
         // If incoterm requires that we ship, check deliverability:
         if (frm.doc.incoterm === "DAP" || frm.doc.incoterm === "DDP") {
-            // BILLING
-            if (frm.doc.customer_address) {
-                let billing_valid = await bnovate.shipping.validate_address(frm.doc.customer_address, false);
-                if (!billing_valid) {
-                    frappe.msgprint(__("Billing address is not valid"));
-                    frappe.validated = false;
-                }
-            }
-
-            // SHIPPING
-            if (frm.doc.shipping_address_name) {
-                let shipping_valid = await bnovate.shipping.validate_address(frm.doc.shipping_address_name, false);
-                if (!shipping_valid) {
-                    frappe.msgprint(__("Shipping address is not valid"));
-                    frappe.validated = false;
-                }
+            const err = await bnovate.shipping.validate_sales_order(frm.doc.name);
+            if (err.error) {
+                frappe.msgprint(err.error + ":<br><br>" + err.message);
+                frappe.validated = false;
             }
         }
     },
