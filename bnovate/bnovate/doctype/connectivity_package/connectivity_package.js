@@ -14,7 +14,6 @@ frappe.ui.form.on('Connectivity Package', {
 				}
 			}
 		});
-
 	},
 
 	async refresh(frm) {

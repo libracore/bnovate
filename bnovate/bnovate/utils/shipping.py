@@ -514,13 +514,15 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
     invoice_contact = frappe.get_doc("User", settings.shipping_contact)
     invoice_contact.full_name = ' '.join([invoice_contact.first_name, invoice_contact.last_name]).strip()
     invoice_no = doc.name
-    try:
-        invoice_no = doc.items[0].delivery_note
-    except IndexError:
-        pass
+    if len(doc.items) >= 1:
+        invoice_no = (
+            doc.items[0].delivery_note
+            or doc.items[0].sales_order 
+            or doc.items[0].refill_request 
+            or invoice_no
+        )
 
-    if doc.pickup_from_type != "Company":
-        # Assume a return
+    if doc.is_return:
         invoice_no += " RETURN"
 
     incoterm_place = doc.delivery_city
@@ -532,6 +534,9 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
         "pickup": {
             "isRequested": bool(pickup),
             "closeTime": close_time.isoformat()[:5],
+            "specialInstructions": [{
+                "value": doc.pickup_comment[:75],
+            }] if doc.pickup_comment else [],
         },
         "productCode": product_code,
         "accounts": accounts,
@@ -673,7 +678,7 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
             dhl_doc['content'],
             doc.doctype,
             doc.name,
-            folder="Home", # TODO try Home
+            folder="Home",
             decode=True,
             is_private=1,
             df=df,
@@ -744,6 +749,9 @@ def _request_pickup(shipment_docname, task_id=None):
     body = {
         "plannedPickupDateAndTime": "{0} GMT{1}".format(pickup_datetime.isoformat()[:19], pickup_gmt_offset),
         "accounts": accounts, 
+        "specialInstructions": [{
+            "value": doc.pickup_comment[:80],
+        }] if doc.pickup_comment else [],
         "customerDetails": {
             "shipperDetails": {
                 "postalAddress": pickup_address,
@@ -816,8 +824,6 @@ def cancel_pickup(shipment_docname, reason, task_id=None):
         raise e 
 
 def _cancel_pickup(shipment_docname, reason, task_id=None):
-    # TODO: get name from logged in user
-
     doc = frappe.get_doc("Shipment", shipment_docname)
 
     if not doc.pickup_confirmation_number:
@@ -884,6 +890,9 @@ def set_pallets(doc, method=None):
     
     has_pallet = sum([p.is_pallet or 0 for p in doc.shipment_parcel], 0)
     doc.db_set('pallets', 'Yes' if has_pallet else 'No')
+
+    if has_pallet and not doc.pickup_comment:
+        doc.db_set('pickup_comment', _get_settings().pallet_pickup_comment)
 
     # Also clear template to avoid keeping that link around:
     doc.db_set('parcel_template', None)
@@ -977,7 +986,8 @@ def fill_address_data(address_type, address_name,  company=None, customer=None, 
 
     val(address_type + "_company_name", "Specify company name in the Address or {0}".format(business_type))
     val(address_type + "_tax_id", "Specify Tax ID in {0}".format(business_type))
-    val(address_type + "_eori_number", "Specify EORI number in {0}".format(business_type))
+    if (address_doc.country != "Switzerland"):
+        val(address_type + "_eori_number", "Specify EORI number in {0}".format(business_type))
     val(address_type + "_address_line1", "Specify address line 1 in Address")
     val(address_type + "_pincode", "Specify Postal Code in Address")
     val(address_type + "_city", "Specify City in Address")
@@ -1083,9 +1093,6 @@ def make_shipment_from_dn(source_name, target_doc=None):
 @frappe.whitelist()
 def make_return_shipment_from_dn(source_name, target_doc=None):
     """ To be called from open_mapped_doc. """
-
-    # TODO: add "is return" indication to Shipment, that selects correct DHL
-    # account and incoterm, maybe reason.
 
     def postprocess(source, target):
         settings = _get_settings()
@@ -1314,3 +1321,98 @@ def validate_sales_order(name):
         "message": "",
     }
     
+
+
+@frappe.whitelist()
+def make_return_shipment_from_so(source_name, target_doc=None):
+    """ To be called from open_mapped_doc. """
+
+    def postprocess(source, target):
+        settings = _get_settings()
+
+        # PICKUP
+        target.pickup_from_type = "Customer"
+        target.update(fill_address_data(
+            "pickup", 
+            target.pickup_address_name, 
+            customer=target.pickup_customer,
+            contact=target.pickup_contact_name,
+        ))
+
+        # DELIVERY
+        target.delivery_to_type = "Company"
+        target.delivery_user = settings.shipping_contact
+
+        target.update(fill_address_data(
+            "delivery", 
+            target.delivery_address_name, 
+            company=target.delivery_company,
+            user=target.delivery_user,
+        ))
+
+        # BILL
+        # field_map doesn't allow populating two target fields from same source.
+        target.bill_to_type = "Company"
+        target.bill_company = target.delivery_company
+        target.bill_address_name = target.delivery_address_name
+        target.bill_contact_name = target.delivery_contact_name
+
+        target.update(fill_address_data(
+            "bill", 
+            target.bill_address_name, 
+            company=target.bill_company,
+            user=target.delivery_user,
+        ))
+
+        # BUILD ITEMS
+        so_item_lookup = {i.name: i for i in source.items}
+        target.items = [i for i in target.items if so_item_lookup[i.so_detail].price_list_rate]
+        for item in target.items:
+            item_master = frappe.get_doc("Item", so_item_lookup[item.so_detail].item_code)
+            if item_master.return_value:
+                item.rate = item_master.return_value
+            item.customs_tariff_number = item_master.customs_tariff_number
+            item.country_of_origin = item_master.country_of_origin
+
+        # TIMES: best to specify, or they default to currenty time
+        # if args and args.pickup_date:
+        target.pickup_date = datetime.date.today()  # Doesn't matter at this point.
+        target.pickup_from = settings.pickup_from  # Time is set to "now" somehow.
+        target.pickup_to = settings.pickup_to
+
+        # FINANCIALS  ETC.
+        target.is_return = True
+        target.reason_for_export = 'Return'
+
+        # Free return shipping
+        target.shipment_amount = 0
+        set_totals(target)
+        set_missing_values(target)
+
+
+    doclist = get_mapped_doc("Sales Order", source_name, {
+        "Sales Order": {
+            "doctype": "Shipment",
+            "field_map": {
+                "currency": "value_currency",
+
+                "company": "delivery_company",
+                "company_address": "delivery_address_name",
+
+                "customer": "pickup_customer",
+                "contact_person": "pickup_contact_name",
+                "shipping_address_name": "pickup_address_name",
+
+                "posting_date": "pickup_date",
+                "po_no": "po_no",
+            },
+        },
+        "Sales Order Item": {
+            "doctype": "Shipment Item",
+            "field_map": {
+                "name": "so_detail",
+            }
+        }
+    }, target_doc, postprocess)
+
+    return doclist

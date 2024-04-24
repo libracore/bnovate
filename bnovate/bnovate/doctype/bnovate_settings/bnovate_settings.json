@@ -31,6 +31,7 @@
   "same_day_cutoff",
   "pallet_same_day_cutoff",
   "pickup_to",
+  "pallet_pickup_comment",
   "default_customs_tariff_number",
   "default_country_of_origin",
   "portal_section",
@@ -210,10 +211,15 @@
    "fieldname": "pallet_same_day_cutoff",
    "fieldtype": "Data",
    "label": "Pallet Same Day Cutoff"
+  },
+  {
+   "fieldname": "pallet_pickup_comment",
+   "fieldtype": "Small Text",
+   "label": "Pallet Pickup Comment"
   }
  ],
  "issingle": 1,
- "modified": "2024-04-18 08:46:36.094526",
+ "modified": "2024-04-24 18:13:14.968861",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "bNovate Settings",

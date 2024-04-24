@@ -47,7 +47,7 @@ frappe.ui.form.on("Sales Order", {
 
     async refresh(frm) {
         setTimeout(() => {
-            frm.remove_custom_button("Subscription", "Create")
+            frm.remove_custom_button(__("Subscription"), __("Create"));
         }, 500);
 
         if (frm.doc.docstatus === 0) {
@@ -72,7 +72,10 @@ frappe.ui.form.on("Sales Order", {
                         }
                     })
                 }, __("Get items from"));
+
         }
+
+        frm.add_custom_button(__('Return Shipment'), () => create_return_shipment(frm), __("Create"));
 
         // Show cartridges owned by this customer in a modal
         bnovate.modals.attach_report_modal("cartStatusModal");
@@ -189,4 +192,11 @@ async function show_deliverability(frm) {
         }
         indicator.classList.add(colour);
     }
+}
+
+async function create_return_shipment(frm) {
+    frappe.model.open_mapped_doc({
+        method: "bnovate.bnovate.utils.shipping.make_return_shipment_from_so",
+        frm,
+    })
 }
