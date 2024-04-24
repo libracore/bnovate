@@ -29,6 +29,8 @@ frappe.ui.form.on("Shipment", {
 
             if (cur_frm.doc.status == "Completed") {
                 frm.add_custom_button(__("Finalize DN"), () => finalize_dn(frm));
+                frm.add_custom_button(__("Cancel Pickup"), () => cancel_pickup(frm));
+
             }
         }
 
@@ -217,8 +219,6 @@ async function get_company_contact_details(user) {
     }
 }
 
-/************ PICKUP ****************/
-
 async function fill_address(frm, address_type) {
 
     if (['pickup', 'delivery', 'bill'].indexOf(address_type) < 0) {
@@ -254,6 +254,11 @@ async function fill_address(frm, address_type) {
     Object.entries(fields).forEach(([k, v]) => frm.set_value(k, v));
 };
 window.fill_address = fill_address;
+
+/************ PICKUP ****************/
+
+
+
 
 /************ LABELS ****************/
 
@@ -334,6 +339,47 @@ async function request_pickup(frm) {
             console.log(status);
             if (status.data.progress < 100) {
                 frappe.show_progress(__("Requesting pickup..."), status.data.progress, 100, __(status.data.message));
+            }
+            if (status.code == 0) {
+                frappe.hide_progress();
+            }
+        }
+    });
+
+    console.log(resp.message);
+    frm.reload_doc();
+    return resp.message;
+}
+
+async function cancel_pickup(frm) {
+    if (check_dirty(frm))
+        return;
+
+    const data = await bnovate.utils.prompt(
+        __("Confirm Cancellation"),
+        [{
+            label: __("Reason"),
+            fieldname: "reason",
+            fieldtype: "Data",
+            reqd: 1,
+        }],
+        __("Cancel Pickup"),
+        __("Do not cancel"),
+    )
+
+    if (!data)
+        return;
+
+    const resp = await bnovate.realtime.call({
+        method: "bnovate.bnovate.utils.shipping.cancel_pickup",
+        args: {
+            shipment_docname: frm.doc.name,
+            reason: data.reason,
+        },
+        callback(status) {
+            console.log(status);
+            if (status.data.progress < 100) {
+                frappe.show_progress(__("Cancelling pickup..."), status.data.progress, 100, __(status.data.message));
             }
             if (status.code == 0) {
                 frappe.hide_progress();

@@ -802,6 +802,53 @@ def _request_pickup(shipment_docname, task_id=None):
     return resp
 
 
+@frappe.whitelist()
+def cancel_pickup(shipment_docname, reason, task_id=None):
+    """ Cancel a pickup request. Resets doc status to 'Registered' """
+    try:
+        return _cancel_pickup(shipment_docname, reason, task_id=task_id)
+    except Exception as e:
+        set_status({
+            "progress": 100,
+            "message": _("Error"),
+        }, task_id, STATUS_DONE)
+
+        raise e 
+
+def _cancel_pickup(shipment_docname, reason, task_id=None):
+    # TODO: get name from logged in user
+
+    doc = frappe.get_doc("Shipment", shipment_docname)
+
+    if not doc.pickup_confirmation_number:
+        frappe.throw("This shipment does not have a Pickup Confirmation Number")
+    
+
+    set_status({
+        "progress": 40,
+        "message": _("Cancelling pickup..."),
+    }, task_id)
+
+    resp = dhl_request(
+        "/pickups/{0}".format(doc.pickup_confirmation_number),
+        "DELETE",
+        params={
+            "reason": reason,
+            "requestorName": frappe.get_user().doc.full_name,
+        }
+    )
+
+    doc.db_set('status', 'Registered')
+    doc.db_set('pickup_confirmation_number', None)
+
+    set_status({
+        "progress": 100,
+        "message": _("Done"),
+    }, task_id, STATUS_DONE)
+
+    return resp
+
+
 #######################################
 # EXTENSIONS TO SHIPMENT DOCTYPE
 #######################################
