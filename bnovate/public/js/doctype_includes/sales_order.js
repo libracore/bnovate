@@ -48,6 +48,11 @@ frappe.ui.form.on("Sales Order", {
             }
         });
 
+        if (frm.doc.tc_name && !frm.doc.terms) {
+            // Trigger copying of template
+            frm.trigger('tc_name');
+        }
+
     },
 
     async refresh(frm) {

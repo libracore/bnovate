@@ -391,9 +391,13 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
             "number": settings.dhl_import_account, 
         }]
 
+    label_format = "ECOM26_84_001"  # Matches DHL printer
+    if doc.is_return:
+        label_format = "ECOM26_84_A4_001"  # A4
+
     image_options = [{
             "typeCode": "label",
-            "templateName": "ECOM26_84_001"
+            "templateName": label_format
         }, {
             "templateName": "COMMERCIAL_INVOICE_03",
             "invoiceType": "commercial",
@@ -409,7 +413,7 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
 
         image_options = [{
             "typeCode": "label",
-            "templateName": "ECOM26_84_001" 
+            "templateName": label_format,
         }]
 
         # No import account, no duty paid, etc.
