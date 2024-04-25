@@ -114,13 +114,18 @@ def get_export_reason_type(reason):
     else:
         return reason_lookup[reason]
 
+
 @frappe.whitelist()
-def get_same_day_cutoff(pallets='No'):
+def get_default_times(pallets='No'):
     """ Return last possible of day to request same-day pickup """
     # Needed as a dedicated function to avoid fetching settings from front-end.
-    if pallets == 'Yes':
-        return _get_settings().pallet_same_day_cutoff
-    return _get_settings().same_day_cutoff
+    settings = _get_settings()
+    same_day_cutoff = settings.pallet_same_day_cutoff if pallets == 'Yes' else settings.same_day_cutoff
+    return {
+        "same_day_cutoff": same_day_cutoff,
+        "pickup_from": settings.pickup_from,
+        "pickup_to": settings.pickup_to,
+    }
 
 
 def strip(s):
@@ -1052,7 +1057,9 @@ def make_shipment_from_dn(source_name, target_doc=None):
         # TIMES
         if args and args.pickup_date:
             target.pickup_date = args.pickup_date
-        target.pickup_from = settings.pickup_from  # Time is set to "now" somehow.
+        target.pickup_from = settings.pickup_from
+        if args and args.pickup_from:
+            target.pickup_from = args.pickup_from
         target.pickup_to = settings.pickup_to
 
         # FINANCIALS 
@@ -1210,10 +1217,10 @@ def finalize_dn(shipment_docname):
 
 
 @frappe.whitelist()
-def ship_from_dn(dn_docname, pickup_date, task_id=None):
+def ship_from_dn(dn_docname, pickup_date, pickup_from, task_id=None):
     """ Create Shipment doc, request DHL pickup, copy shipping data to DN """
     try:
-        return _ship_from_dn(dn_docname, pickup_date, task_id)
+        return _ship_from_dn(dn_docname, pickup_date, pickup_from, task_id)
     except Exception as e:
         set_status({
             "progress": 100,
@@ -1223,11 +1230,12 @@ def ship_from_dn(dn_docname, pickup_date, task_id=None):
         raise e
 
 
-def _ship_from_dn(dn_docname, pickup_date, task_id=None):
+def _ship_from_dn(dn_docname, pickup_date, pickup_from, task_id=None):
     """ Create Shipment doc, request DHL pickup, copy shipping data to DN """
 
     frappe.flags.args = frappe._dict({
-        "pickup_date": pickup_date
+        "pickup_date": pickup_date,
+        "pickup_from": pickup_from,
     })
 
     shipment_doc = make_shipment_from_dn(dn_docname)

@@ -134,10 +134,6 @@ def make_sales_order(source_name, target_doc=None):
                 "total_weight": len(icp_sns) * deets.weight_per_unit,
             })
 
-        ###############
-        import json
-        print(json.dumps(target.as_dict(), indent=2))
-        ##################
 
         # force empty some fields so they get set from customer defaults
         target.currency = None
