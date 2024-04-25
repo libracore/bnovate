@@ -15,6 +15,11 @@ frappe.ui.form.on("Sales Order", {
             'label': 'Reference',
         });
 
+        frm.dashboard.add_transactions({
+            'items': ['Shipment'],
+            'label': 'Fulfillment',
+        });
+
         // Hijack formatter, we'll set colours according to deliverability later.
         frm.set_indicator_formatter('item_code', (doc) => "");
     },
@@ -195,6 +200,14 @@ async function show_deliverability(frm) {
 }
 
 async function create_return_shipment(frm) {
+
+    // Since we allow this on draft, we haven't yet validated the SO for delivery creation
+    const err = await bnovate.shipping.validate_sales_order(frm.doc.name);
+    if (err.error) {
+        frappe.msgprint(err.error + ":<br><br>" + err.message);
+        return
+    }
+
     frappe.model.open_mapped_doc({
         method: "bnovate.bnovate.utils.shipping.make_return_shipment_from_so",
         frm,

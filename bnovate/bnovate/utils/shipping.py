@@ -1186,11 +1186,9 @@ def finalize_dn(shipment_docname):
 
     shipment = frappe.get_doc("Shipment", shipment_docname)
 
-    if len(shipment.items) < 1:
+    dn_docname = next((i.delivery_note for i in shipment.items if i.delivery_note), None)
+    if dn_docname is None:
         raise Exception("No DNs referenced in Shipment")
-
-    dn_docname = shipment.items[0].delivery_note
-
     dn = frappe.get_doc("Delivery Note", dn_docname)
 
     if shipment.is_return:
@@ -1416,3 +1414,18 @@ def make_return_shipment_from_so(source_name, target_doc=None):
     }, target_doc, postprocess)
 
     return doclist
+
+@frappe.whitelist()
+def copy_to_rr(shipment_docname):
+    """ Copy AWB number and other relevant information """
+
+    shipment = frappe.get_doc("Shipment", shipment_docname)
+
+    rr_docname = next((i.refill_request for i in shipment.items if i.refill_request), None)
+    if rr_docname is None:
+        raise Exception("No RRs referenced in Shipment")
+
+    rr = frappe.get_doc("Refill Request", rr_docname)
+    rr.db_set('shipping_label', shipment.shipping_label);
+
+    return rr

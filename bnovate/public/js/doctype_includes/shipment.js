@@ -12,25 +12,30 @@ frappe.require("/assets/bnovate/js/realtime.js")
 frappe.ui.form.on("Shipment", {
 
     refresh(frm) {
-        if (cur_frm.doc.docstatus <= 1) {
+        if (frm.doc.docstatus <= 1) {
             frm.add_custom_button(__("Get Estimate"), () => get_price(frm));
 
         }
 
-        if (cur_frm.doc.docstatus == 1) {
-            if (cur_frm.doc.status == "Submitted") {
+        if (frm.doc.docstatus == 1) {
+            if (frm.doc.status == "Submitted") {
                 frm.add_custom_button(__("Create Shipment NO Pickup"), () => create_shipment(frm, false));
                 frm.add_custom_button(__("Create Shipment AND Pickup"), () => create_shipment(frm, true));
             }
 
-            if (cur_frm.doc.status == "Registered") {
+            if (frm.doc.status == "Registered") {
                 frm.add_custom_button(__("Request Pickup"), () => request_pickup(frm));
+
+                if (frm.doc.items.findIndex(i => i.refill_request) >= 0) {
+                    frm.add_custom_button(__("Copy to RR"), () => copy_to_rr(frm));
+                }
             }
 
-            if (cur_frm.doc.status == "Completed") {
-                frm.add_custom_button(__("Finalize DN"), () => finalize_dn(frm));
+            if (frm.doc.status == "Completed") {
+                if (frm.doc.items.findIndex(i => i.delivery_note) >= 0) {
+                    frm.add_custom_button(__("Finalize DN"), () => finalize_dn(frm));
+                }
                 frm.add_custom_button(__("Cancel Pickup"), () => cancel_pickup(frm));
-
             }
         }
 
@@ -188,6 +193,17 @@ async function finalize_dn(frm) {
     });
 
     frappe.set_route("Form", "Delivery Note", resp.message.name)
+}
+
+async function copy_to_rr(frm) {
+    const resp = await frappe.call({
+        method: "bnovate.bnovate.utils.shipping.copy_to_rr",
+        args: {
+            shipment_docname: frm.doc.name,
+        }
+    });
+
+    frappe.set_route("Form", "Refill Request", resp.message.name)
 }
 
 // Get contact details based on **contact** docname
