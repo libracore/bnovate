@@ -214,6 +214,12 @@ website_route_rules = [
             "parents": [{"label": _("Refill Requests"), "route": "requests"}]
         }
     }, {
+        "from_route": "/pickup/<name>", 
+        "to_route": "pickup",
+    }, {
+        "from_route": "/requests/<name>/pickup", 
+        "to_route": "pickup",
+    }, {
         "from_route": "/connect/<serial_no>", 
         "to_route": "connect",
     }, {
