@@ -30,7 +30,9 @@
   "remarks",
   "printing_details",
   "language",
-  "shipping_label"
+  "column_break_25",
+  "shipping_label",
+  "shipment"
  ],
  "fields": [
   {
@@ -188,11 +190,21 @@
    "fieldname": "shipping_label",
    "fieldtype": "Attach",
    "label": "Shipping Label"
+  },
+  {
+   "fieldname": "column_break_25",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "shipment",
+   "fieldtype": "Link",
+   "label": "Shipment",
+   "options": "Shipment"
   }
  ],
  "is_submittable": 1,
- "modified": "2024-04-12 17:55:37.640457",
- "modified_by": "douglas.watson@bnovate.com",
+ "modified": "2024-04-30 18:18:40.935852",
+ "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Refill Request",
  "owner": "Administrator",

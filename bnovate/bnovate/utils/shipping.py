@@ -1439,5 +1439,6 @@ def copy_to_rr(shipment_docname):
 
     rr = frappe.get_doc("Refill Request", rr_docname)
     rr.db_set('shipping_label', shipment.shipping_label);
+    rr.db_set('shipment', shipment_docname);
 
     return rr

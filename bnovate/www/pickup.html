@@ -19,10 +19,8 @@
 	{% include "templates/includes/breadcrumbs.html" %}
 {% endblock %}
 
-<!-- {% block title %}{{ doc.name }}{% endblock %} -->
-
 {% block header %}
-    <h1>{{ _("Organize Return") }} for {{ doc.name }}</h1>
+    <h1>{{ _("Organize Return") }} for {{ rr_doc.name }}</h1>
 {% endblock %}
 
 
@@ -43,7 +41,13 @@
 <div class="row border rounded my-2 p-4">
     <div class="row">
         <div class="col">
-            <h3>{{ _("Schedule pickup") }}</h3>
+            <h3>{{ _("Organize Pickup") }}</h3>
+
+            {% if pickup_status == AVAILABLE %}
+                <button id="schedule-pickup" class="btn btn-primary" style="margin-bottom: 10px; float:none">{{ _("Schedule Pickup") }}</button>
+            {% elif pickup_status == SCHEDULED %}
+                <button id="cancel-pickup" class="btn btn-primary" style="margin-bottom: 10px; float:none">{{ _("Cancel / Re-schedule Pickup") }}</button>
+            {% endif %}
         </div>
     </div>
 </div>

@@ -11,17 +11,30 @@ from .helpers import auth, get_session_primary_customer, get_session_contact, ge
 
 no_cache = 1
 
+AVAILABLE, SCHEDULED = 'available', 'scheduled'
+
 
 def get_context(context):
     auth(context)
     docname = frappe.form_dict.name 
-    doc = get_request(docname) 
+    rr_doc, shipment_doc = get_request(docname) 
 
-    context.doc = doc
+    context.AVAILABLE, context.SCHEDULED = AVAILABLE, SCHEDULED
+
+    context.rr_doc = rr_doc
+    context.shipment_doc = shipment_doc
+
     context.allow_unstored_cartridges = allow_unstored_cartridges()
 
-    if doc.shipping_label:
+    if rr_doc.shipping_label:
         context.shipping_label_url = "/api/method/bnovate.www.request.get_label?name={name}".format(name=docname)
+
+    context.pickup_status = None
+    if shipment_doc.status == 'Registered':
+        context.pickup_status = AVAILABLE
+    elif shipment_doc.status == 'Completed':
+        context.pickup_status = SCHEDULED
+        context.pickup_date = shipment_doc.pickup_date
 
     context.form_dict = frappe.form_dict
     context.name = docname
@@ -40,12 +53,17 @@ def get_request(name):
     primary_customer = get_session_primary_customer()
 
 
-    doc = frappe.get_doc("Refill Request", name)
-    if doc.customer != primary_customer.docname:
+    rr_doc = frappe.get_doc("Refill Request", name)
+    if rr_doc.customer != primary_customer.docname:
         return None
-    doc.set_indicator()
-    doc.set_tracking_url()
-    return doc
+    rr_doc.set_indicator()
+    rr_doc.set_tracking_url()
+
+    # get shipment info
+    if rr_doc.shipment:
+        shipment_doc = frappe.get_doc("Shipment", rr_doc.shipment)
+
+    return rr_doc, shipment_doc
 
 @frappe.whitelist()
 def get_label(name):
@@ -61,37 +79,3 @@ def get_label(name):
     frappe.local.response.filecontent = file_doc.get_content()
     frappe.local.response.type = "pdf"
 
-
-@frappe.whitelist()
-def make_request(doc):
-    """ Create a refill request """
-
-    doc = frappe._dict(json.loads(doc))
-
-    # Check that user does own the addresses
-    valid_names = [a.name for a in get_addresses()]
-    if not doc['shipping_address'] in valid_names:
-        frappe.throw(_("You cannot order to this shipping address"), frappe.PermissionError)
-    if not doc['billing_address'] in valid_names:
-        frappe.throw(_("You cannot order to this billing address"), frappe.PermissionError)
-
-
-    new_request = frappe.get_doc({
-        'doctype': 'Refill Request',
-        'customer': get_session_primary_customer().docname,
-        'contact_person': get_session_contact(),
-        'transaction_date': today(),
-        'shipping_address': doc['shipping_address'],
-        'billing_address': doc['billing_address'],
-        'shipping_address_display': doc['shipping_address_display'],
-        'billing_address_display': doc['billing_address_display'],
-        'items': doc['items'],  # using data.items calls the built-in dict function...
-        'remarks': doc['remarks'],
-        'language': frappe.session.data.lang,
-        'docstatus': 1,
-    })
-
-    new_request.insert(ignore_permissions=True)
-    frappe.db.commit()
-
-    return new_request
