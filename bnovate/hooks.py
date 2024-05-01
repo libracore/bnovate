@@ -114,6 +114,7 @@ fixtures = [
             "Delivery Note-return_tracking_no",
             "Delivery Note-return_shipping_label",
             "Delivery Note-pallets",
+            "Delivery Note-pickup_comment",
             "Shipment Parcel Template-is_pallet",
             "Shipment Parcel-is_pallet",
             # Stock management

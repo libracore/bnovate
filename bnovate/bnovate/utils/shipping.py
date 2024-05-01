@@ -210,6 +210,7 @@ def quick_validate_address(pincode, country):
     except DHLBadRequestError as e:
         raise AddressError("Invalid Adddress. Check Postal Code.")
 
+@frappe.whitelist()
 def validate_address(name):
     """ Validate an address for delivery. For now we only look at postal code and country """
 
@@ -517,7 +518,7 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
     # Might be off +- 1 hour if request and delivery straddle DST change, shouldn't be an issue
     pickup_gmt_offset = _validate_address(pickup_address, PICKUP)
     _validate_address(delivery_address, DELIVERY)
-    _validate_address(bill_address, DELIVERY)
+    # _validate_address(bill_address, DELIVERY)  # No need to validate billing with DHL since we don't ship there...
 
     # Commercial invoice data
     invoice_contact = frappe.get_doc("User", settings.shipping_contact)
@@ -1311,20 +1312,21 @@ def validate_sales_order(name):
             "message": e.message,
         }
 
-    try:
-        fill_address_data(
-                "bill", 
-                so_doc.customer_address, 
-                customer=so_doc.customer,
-                contact=so_doc.contact_person,
-                validate=True
-            )
-        validate_address(so_doc.customer_address)
-    except AddressError as e:
-        return {
-            "error": "Billing address is not valid",
-            "message": e.message,
-        }
+    ## For now we stop validating billing address - only pickup and delivery need to be reachable by DHL
+    # try:
+    #     fill_address_data(
+    #             "bill", 
+    #             so_doc.customer_address, 
+    #             customer=so_doc.customer,
+    #             contact=so_doc.contact_person,
+    #             validate=True
+    #         )
+    #     validate_address(so_doc.customer_address)
+    # except AddressError as e:
+    #     return {
+    #         "error": "Billing address is not valid",
+    #         "message": e.message,
+    #     }
 
     return {
         "error": None,

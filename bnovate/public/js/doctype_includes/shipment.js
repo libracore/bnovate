@@ -45,27 +45,27 @@ frappe.ui.form.on("Shipment", {
 
 
         // CLICKABLE URLS
-        if (frm.doc.tracking_url) {
-            $(frm.fields_dict.tracking_url_html.wrapper).html(
-                `<div class="form-group">
-                    <div class="clearfix"><label class="control-label" style="padding-right: 0px;">${__("Tracking URL")}</label></div>
-                    <div class="control-value"><a href="${frm.doc.tracking_url}">${frm.doc.tracking_url}</a></div>
-                </div>`
-            );
-        } else {
-            $(frm.fields_dict.tracking_url_html.wrapper).html("");
-        }
+        // if (frm.doc.tracking_url) {
+        //     $(frm.fields_dict.tracking_url_html.wrapper).html(
+        //         `<div class="form-group">
+        //             <div class="clearfix"><label class="control-label" style="padding-right: 0px;">${__("Tracking URL")}</label></div>
+        //             <div class="control-value"><a href="${frm.doc.tracking_url}">${frm.doc.tracking_url}</a></div>
+        //         </div>`
+        //     );
+        // } else {
+        //     $(frm.fields_dict.tracking_url_html.wrapper).html("");
+        // }
 
-        if (frm.doc.cancel_pickup_url) {
-            $(frm.fields_dict.cancel_pickup_url_html.wrapper).html(
-                `<div class="form-group">
-                    <div class="clearfix"><label class="control-label" style="padding-right: 0px;">${__("Cancel pickup URL")}</label></div>
-                    <div class="control-value"><a href="${frm.doc.cancel_pickup_url}">${frm.doc.cancel_pickup_url}</a></div>
-                </div>`
-            );
-        } else {
-            $(frm.fields_dict.cancel_pickup_url_html.wrapper).html("");
-        }
+        // if (frm.doc.cancel_pickup_url) {
+        //     $(frm.fields_dict.cancel_pickup_url_html.wrapper).html(
+        //         `<div class="form-group">
+        //             <div class="clearfix"><label class="control-label" style="padding-right: 0px;">${__("Cancel pickup URL")}</label></div>
+        //             <div class="control-value"><a href="${frm.doc.cancel_pickup_url}">${frm.doc.cancel_pickup_url}</a></div>
+        //         </div>`
+        //     );
+        // } else {
+        //     $(frm.fields_dict.cancel_pickup_url_html.wrapper).html("");
+        // }
 
     },
 
