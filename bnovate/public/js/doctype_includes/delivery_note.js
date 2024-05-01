@@ -171,11 +171,12 @@ function next_weekday(days_from_now = 0) {
 async function prompt_shipment(frm) {
 
     // Pre-fill with next available pickup date
-    const cutoff_time = await bnovate.shipping.get_same_day_cutoff(frm.doc.pallets);
+    let { same_day_cutoff, pickup_from } = await bnovate.shipping.get_default_times(frm.doc.pallets);
     let pickup_date = frm.doc.posting_date;
     if (pickup_date <= frappe.datetime.now_date()) {
-        if (frappe.datetime.now_time() < cutoff_time) {
+        if (frappe.datetime.now_time() < same_day_cutoff) {
             pickup_date = next_weekday(0);
+            pickup_from = moment().add(10, 'minutes').format('HH:mm:ss');
         } else {
             pickup_date = next_weekday(1);
         }
@@ -189,6 +190,12 @@ async function prompt_shipment(frm) {
             fieldtype: "Date",
             reqd: 1,
             default: pickup_date,
+        }, {
+            label: __("Pickup From"),
+            fieldname: "pickup_from",
+            fieldtype: "Time",
+            reqd: 1,
+            default: pickup_from,
         }],
         "Confirm",
         "Cancel",

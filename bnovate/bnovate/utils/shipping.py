@@ -114,13 +114,18 @@ def get_export_reason_type(reason):
     else:
         return reason_lookup[reason]
 
+
 @frappe.whitelist()
-def get_same_day_cutoff(pallets='No'):
+def get_default_times(pallets='No'):
     """ Return last possible of day to request same-day pickup """
     # Needed as a dedicated function to avoid fetching settings from front-end.
-    if pallets == 'Yes':
-        return _get_settings().pallet_same_day_cutoff
-    return _get_settings().same_day_cutoff
+    settings = _get_settings()
+    same_day_cutoff = settings.pallet_same_day_cutoff if pallets == 'Yes' else settings.same_day_cutoff
+    return {
+        "same_day_cutoff": same_day_cutoff,
+        "pickup_from": settings.pickup_from,
+        "pickup_to": settings.pickup_to,
+    }
 
 
 def strip(s):
@@ -205,6 +210,7 @@ def quick_validate_address(pincode, country):
     except DHLBadRequestError as e:
         raise AddressError("Invalid Adddress. Check Postal Code.")
 
+@frappe.whitelist()
 def validate_address(name):
     """ Validate an address for delivery. For now we only look at postal code and country """
 
@@ -391,9 +397,13 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
             "number": settings.dhl_import_account, 
         }]
 
+    label_format = "ECOM26_84_001"  # Matches DHL printer
+    if doc.is_return:
+        label_format = "ECOM26_84_A4_001"  # A4
+
     image_options = [{
             "typeCode": "label",
-            "templateName": "ECOM26_84_001"
+            "templateName": label_format
         }, {
             "templateName": "COMMERCIAL_INVOICE_03",
             "invoiceType": "commercial",
@@ -409,7 +419,7 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
 
         image_options = [{
             "typeCode": "label",
-            "templateName": "ECOM26_84_001" 
+            "templateName": label_format,
         }]
 
         # No import account, no duty paid, etc.
@@ -508,7 +518,7 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
     # Might be off +- 1 hour if request and delivery straddle DST change, shouldn't be an issue
     pickup_gmt_offset = _validate_address(pickup_address, PICKUP)
     _validate_address(delivery_address, DELIVERY)
-    _validate_address(bill_address, DELIVERY)
+    # _validate_address(bill_address, DELIVERY)  # No need to validate billing with DHL since we don't ship there...
 
     # Commercial invoice data
     invoice_contact = frappe.get_doc("User", settings.shipping_contact)
@@ -1048,7 +1058,9 @@ def make_shipment_from_dn(source_name, target_doc=None):
         # TIMES
         if args and args.pickup_date:
             target.pickup_date = args.pickup_date
-        target.pickup_from = settings.pickup_from  # Time is set to "now" somehow.
+        target.pickup_from = settings.pickup_from
+        if args and args.pickup_from:
+            target.pickup_from = args.pickup_from
         target.pickup_to = settings.pickup_to
 
         # FINANCIALS 
@@ -1186,11 +1198,9 @@ def finalize_dn(shipment_docname):
 
     shipment = frappe.get_doc("Shipment", shipment_docname)
 
-    if len(shipment.items) < 1:
+    dn_docname = next((i.delivery_note for i in shipment.items if i.delivery_note), None)
+    if dn_docname is None:
         raise Exception("No DNs referenced in Shipment")
-
-    dn_docname = shipment.items[0].delivery_note
-
     dn = frappe.get_doc("Delivery Note", dn_docname)
 
     if shipment.is_return:
@@ -1208,10 +1218,10 @@ def finalize_dn(shipment_docname):
 
 
 @frappe.whitelist()
-def ship_from_dn(dn_docname, pickup_date, task_id=None):
+def ship_from_dn(dn_docname, pickup_date, pickup_from, task_id=None):
     """ Create Shipment doc, request DHL pickup, copy shipping data to DN """
     try:
-        return _ship_from_dn(dn_docname, pickup_date, task_id)
+        return _ship_from_dn(dn_docname, pickup_date, pickup_from, task_id)
     except Exception as e:
         set_status({
             "progress": 100,
@@ -1221,11 +1231,12 @@ def ship_from_dn(dn_docname, pickup_date, task_id=None):
         raise e
 
 
-def _ship_from_dn(dn_docname, pickup_date, task_id=None):
+def _ship_from_dn(dn_docname, pickup_date, pickup_from, task_id=None):
     """ Create Shipment doc, request DHL pickup, copy shipping data to DN """
 
     frappe.flags.args = frappe._dict({
-        "pickup_date": pickup_date
+        "pickup_date": pickup_date,
+        "pickup_from": pickup_from,
     })
 
     shipment_doc = make_shipment_from_dn(dn_docname)
@@ -1301,20 +1312,21 @@ def validate_sales_order(name):
             "message": e.message,
         }
 
-    try:
-        fill_address_data(
-                "bill", 
-                so_doc.customer_address, 
-                customer=so_doc.customer,
-                contact=so_doc.contact_person,
-                validate=True
-            )
-        validate_address(so_doc.customer_address)
-    except AddressError as e:
-        return {
-            "error": "Billing address is not valid",
-            "message": e.message,
-        }
+    ## For now we stop validating billing address - only pickup and delivery need to be reachable by DHL
+    # try:
+    #     fill_address_data(
+    #             "bill", 
+    #             so_doc.customer_address, 
+    #             customer=so_doc.customer,
+    #             contact=so_doc.contact_person,
+    #             validate=True
+    #         )
+    #     validate_address(so_doc.customer_address)
+    # except AddressError as e:
+    #     return {
+    #         "error": "Billing address is not valid",
+    #         "message": e.message,
+    #     }
 
     return {
         "error": None,
@@ -1416,3 +1428,19 @@ def make_return_shipment_from_so(source_name, target_doc=None):
     }, target_doc, postprocess)
 
     return doclist
+
+@frappe.whitelist()
+def copy_to_rr(shipment_docname):
+    """ Copy AWB number and other relevant information """
+
+    shipment = frappe.get_doc("Shipment", shipment_docname)
+
+    rr_docname = next((i.refill_request for i in shipment.items if i.refill_request), None)
+    if rr_docname is None:
+        raise Exception("No RRs referenced in Shipment")
+
+    rr = frappe.get_doc("Refill Request", rr_docname)
+    rr.db_set('shipping_label', shipment.shipping_label);
+    rr.db_set('shipment', shipment_docname);
+
+    return rr

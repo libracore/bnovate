@@ -85,23 +85,21 @@ bnovate.utils.confetti = function () {
  *  *********************** */
 
 function print_url(url) {
-  let finished = false;
-  frappe.show_progress("Preparing...", 10, 100);
-  setTimeout(() => !finished && frappe.show_progress("Preparing...", 60, 100), 500);
-  setTimeout(() => !finished && frappe.show_progress("Preparing...", 80, 100), 900);
-  setTimeout(() => frappe.hide_progress(), 1000);
+  let progress = frappe.show_progress("Preparing...", 10, 100);
+  setTimeout(() => !!progress && frappe.show_progress("Preparing...", 60, 100), 500);
+  setTimeout(() => !!progress && frappe.show_progress("Preparing...", 80, 100), 900);
   let iframe = document.createElement('iframe');
   iframe.style.display = 'none';
   document.body.append(iframe);
 
   iframe.addEventListener('load', () => {
-    setTimeout(() => {
-      finished = true;
-      frappe.hide_progress();
+    setTimeout(() => {  // Give progress dialog time to show
+      progress.hide();
+      progress = null;
       iframe.focus();
       iframe.contentWindow.print();
       // I cannot find a way get afterprint event working in order to destroy the iframe...
-    }, 1);
+    }, 400)
   });
 
   iframe.src = url;

@@ -114,6 +114,7 @@ fixtures = [
             "Delivery Note-return_tracking_no",
             "Delivery Note-return_shipping_label",
             "Delivery Note-pallets",
+            "Delivery Note-pickup_comment",
             "Shipment Parcel Template-is_pallet",
             "Shipment Parcel-is_pallet",
             # Stock management
@@ -152,7 +153,7 @@ web_include_js = [
     "/assets/js/control.min.js",
     "/assets/js/dialog.min.js",
     "/assets/js/bnovate-web.min.js",
-
+    "/assets/bnovate/js/lib/jsconfetti/js-confetti.browser.js",
     "/assets/bnovate/js/web_includes/login_redirect.js",
 ]
 
@@ -213,6 +214,12 @@ website_route_rules = [
         "defaults": {
             "parents": [{"label": _("Refill Requests"), "route": "requests"}]
         }
+    }, {
+        "from_route": "/pickup/<name>", 
+        "to_route": "pickup",
+    }, {
+        "from_route": "/requests/<name>/pickup", 
+        "to_route": "pickup",
     }, {
         "from_route": "/connect/<serial_no>", 
         "to_route": "connect",

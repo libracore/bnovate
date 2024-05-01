@@ -91,43 +91,55 @@ def make_sales_order(source_name, target_doc=None):
         item_code_icp = '200141.02'
 
         target_copy = target.as_dict()
-        def get_blanket_order(item_code):
-            deets = get_item_details(args=target_copy.update({
+        def get_item_deets(item_code):
+            return get_item_details(args=target_copy.update({
                 'item_code': item_code,
                 'transaction_date': getdate(),
             }))
-            return deets.blanket_order
-
 
         if tcc_sns:
+            deets = get_item_deets(item_code_tcc)
             target.append("items", {
                 "item_code": item_code_tcc,
                 "serial_nos": "\n".join(tcc_sns),
                 "qty": len(tcc_sns),
                 "refill_request": source.name,
-                "blanket_order": get_blanket_order(item_code_tcc),
+                "blanket_order": deets.blanket_order,
+                "rate": deets.blanket_order_rate,
+                "weight_per_unit": deets.weight_per_unit,
+                "total_weight": len(tcc_sns) * deets.weight_per_unit,
             })
         if icc_sns:
+            deets = get_item_deets(item_code_icc)
             target.append("items", {
                 "item_code": item_code_icc,
                 "serial_nos": "\n".join(icc_sns),
                 "qty": len(icc_sns),
                 "refill_request": source.name,
-                "blanket_order": get_blanket_order(item_code_icc),
+                "blanket_order": deets.blanket_order,
+                "rate": deets.blanket_order_rate,
+                "weight_per_unit": deets.weight_per_unit,
+                "total_weight": len(icc_sns) * deets.weight_per_unit,
             })
         if icp_sns:
+            deets = get_item_deets(item_code_icp)
             target.append("items", {
                 "item_code": item_code_icp,
                 "serial_nos": "\n".join(icp_sns),
                 "qty": len(icp_sns),
                 "refill_request": source.name,
-                "blanket_order": get_blanket_order(item_code_icp),
+                "blanket_order": deets.blanket_order,
+                "rate": deets.blanket_order_rate,
+                "weight_per_unit": deets.weight_per_unit,
+                "total_weight": len(icp_sns) * deets.weight_per_unit,
             })
+
 
         # force empty some fields so they get set from customer defaults
         target.currency = None
         target.selling_price_list = None
         target.price_list_currency = None
+        target.total_net_weight = sum([item.total_weight for item in target.items])
         target.run_method("set_missing_values")
 
     doclist = get_mapped_doc("Refill Request", source_name, {

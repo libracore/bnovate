@@ -8,9 +8,9 @@ function sleep(ms) {
 }
 
 // Return last possible time for same-day pickup
-bnovate.shipping.get_same_day_cutoff = async function (pallets) {
+bnovate.shipping.get_default_times = async function (pallets) {
     const resp = await frappe.call({
-        method: 'bnovate.bnovate.utils.shipping.get_same_day_cutoff',
+        method: 'bnovate.bnovate.utils.shipping.get_default_times',
         args: {
             pallets
         }
