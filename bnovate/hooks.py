@@ -152,7 +152,7 @@ web_include_js = [
     "/assets/js/control.min.js",
     "/assets/js/dialog.min.js",
     "/assets/js/bnovate-web.min.js",
-
+    "/assets/bnovate/js/lib/jsconfetti/js-confetti.browser.js",
     "/assets/bnovate/js/web_includes/login_redirect.js",
 ]
 

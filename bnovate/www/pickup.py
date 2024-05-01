@@ -7,7 +7,8 @@ from frappe import _
 from frappe.utils import today
 from frappe.exceptions import DoesNotExistError
 
-from .helpers import auth, get_session_primary_customer, get_session_contact, get_addresses, allow_unstored_cartridges
+from .helpers import auth, get_session_primary_customer, allow_unstored_cartridges
+from frappe.contacts.doctype.address.address import get_address_display
 
 no_cache = 1
 
@@ -23,6 +24,8 @@ def get_context(context):
 
     context.rr_doc = rr_doc
     context.shipment_doc = shipment_doc
+    context.pickup_address_display = build_address_display(shipment_doc)
+    context.parcel_count = len(shipment_doc.shipment_parcel)
 
     context.allow_unstored_cartridges = allow_unstored_cartridges()
 
@@ -35,6 +38,9 @@ def get_context(context):
     elif shipment_doc.status == 'Completed':
         context.pickup_status = SCHEDULED
         context.pickup_date = shipment_doc.pickup_date
+    context.today = frappe.utils.today()
+    context.min_time = "10:15"
+    context.max_time = "18:15"
 
     context.form_dict = frappe.form_dict
     context.name = docname
@@ -64,6 +70,20 @@ def get_request(name):
         shipment_doc = frappe.get_doc("Shipment", rr_doc.shipment)
 
     return rr_doc, shipment_doc
+
+def build_address_display(shipment_doc):
+    """ Return formatted address for display, matching exact values of shipment """
+    return get_address_display({
+        "contact_name": shipment_doc.pickup_contact_display,
+        "company_name": shipment_doc.pickup_company_name,
+        "address_line1": shipment_doc.pickup_address_line1,
+        "address_line2": shipment_doc.pickup_address_line2,
+        "pincode": shipment_doc.pickup_pincode,
+        "city": shipment_doc.pickup_city,
+        "country": shipment_doc.pickup_country,
+        "phone": shipment_doc.pickup_contact_phone,
+        "email_id": shipment_doc.pickup_contact_email_rw,
+    })
 
 @frappe.whitelist()
 def get_label(name):
