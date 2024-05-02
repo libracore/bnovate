@@ -6,9 +6,10 @@ import frappe
 from frappe import _
 from frappe.utils import today
 from frappe.exceptions import DoesNotExistError
+from frappe.contacts.doctype.address.address import get_address_display
 
 from .helpers import auth, get_session_primary_customer, allow_unstored_cartridges
-from frappe.contacts.doctype.address.address import get_address_display
+from bnovate.bnovate.utils.shipping import _get_price
 
 no_cache = 1
 
@@ -35,12 +36,15 @@ def get_context(context):
     context.pickup_status = None
     if shipment_doc.status == 'Registered':
         context.pickup_status = AVAILABLE
+        context.pickup_date = frappe.utils.today()
+        context.min_time = "10:15"
+        context.max_time = "18:15"
     elif shipment_doc.status == 'Completed':
         context.pickup_status = SCHEDULED
         context.pickup_date = shipment_doc.pickup_date
-    context.today = frappe.utils.today()
-    context.min_time = "10:15"
-    context.max_time = "18:15"
+        context.min_time = shipment_doc.pickup_from
+        context.max_time = shipment_doc.pickup_to
+
 
     context.form_dict = frappe.form_dict
     context.name = docname
@@ -61,13 +65,15 @@ def get_request(name):
 
     rr_doc = frappe.get_doc("Refill Request", name)
     if rr_doc.customer != primary_customer.docname:
-        return None
+        frappe.throw(_("Not Permitted"), frappe.PermissionError)
     rr_doc.set_indicator()
     rr_doc.set_tracking_url()
 
     # get shipment info
     if rr_doc.shipment:
         shipment_doc = frappe.get_doc("Shipment", rr_doc.shipment)
+    else:
+        raise DoesNotExistError("Pickup is not possible at this time")
 
     return rr_doc, shipment_doc
 
@@ -88,7 +94,9 @@ def build_address_display(shipment_doc):
 @frappe.whitelist()
 def get_label(name):
     """ Return shipping label for this Refill Request """
-    doc = get_request(name)
+
+    # Checks permissions too
+    doc, _ = get_request(name)
 
     if doc is None or doc.shipping_label is None:
         raise DoesNotExistError()
@@ -99,3 +107,17 @@ def get_label(name):
     frappe.local.response.filecontent = file_doc.get_content()
     frappe.local.response.type = "pdf"
 
+
+@frappe.whitelist()
+def get_pickup_capabilities(name):
+    """ Get pickup capabilities for a refill request """
+
+    # Checks permissions too
+    rr_doc, _ = get_request(name)
+
+    quote = _get_price(rr_doc.shipment, auth=False)
+
+    if 'pickupCapabilities' not in quote:
+        frappe.throw("No Pickup Possible")
+
+    return quote['pickupCapabilities']

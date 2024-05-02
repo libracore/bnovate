@@ -254,10 +254,18 @@ def _validate_address(address, address_type):
 
 @frappe.whitelist()
 def get_price(shipment_docname):
+    return _get_price(shipment_docname, auth=True)
+
+def _get_price(shipment_docname, auth=True):
     """ Return price quote for a Shipment Doc. 
 
     Includes pickup and delivery date estimates.
+
+    If auth=False if you have checked authorization separately (through portal for example)
     """
+
+    if auth:
+        _auth(READ)
 
     settings = _get_settings()
     doc = frappe.get_doc("Shipment", shipment_docname)
@@ -282,6 +290,8 @@ def get_price(shipment_docname):
 
     pickup_datetime = datetime.datetime.combine(
         doc.pickup_date, datetime.time()) + doc.pickup_from
+    if pickup_datetime <= datetime.datetime.now():
+        pickup_datetime = datetime.datetime.now()
 
     body = {
         "productsAndServices": [{
@@ -317,7 +327,8 @@ def get_price(shipment_docname):
         "unitOfMeasurement": "metric"
     }
 
-    resp = dhl_request("/rates", 'POST', body=body, settings=settings)
+    # Authorized earlier
+    resp = dhl_request("/rates", 'POST', body=body, settings=settings, auth=False)
 
     # Find matching product
     quote = next(

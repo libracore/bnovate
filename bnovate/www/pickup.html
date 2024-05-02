@@ -17,6 +17,7 @@
         max-width: 300px;
         margin: 0 auto;
     }
+
     label {
         display: block;
         margin-bottom: 5px;
@@ -34,6 +35,10 @@
     .timegroup {
         display: inline-block;
         width: calc(50% - 5px);
+    }
+
+    fieldset {
+        display: contents;
     }
 </style>
 {% endblock %}
@@ -76,31 +81,35 @@
         <h3>{{ _("Organize Pickup") }}</h3>
 
         {% if pickup_status == AVAILABLE %}
+            <button id="get-capabilities" class="btn btn-primary" style="margin-bottom: 10px; float:none">{{ _("Get Availability") }}</button>
+            <i id="loading" class="fa fa-cog fa-spin" hidden></i>
             <form id="schedule-form" onsubmit="return false">
-                <p>I confirm the package will be available on</p>
-                <label for="pickup_date" display="hidden" hidden>Date</label>
-                <input type="date" name="pickup_date" value="{{ today }}" min="{{ today }}">
+                <fieldset id="fields" disabled>
+                    <p>I confirm the package will be available on</p>
+                    <label for="pickup_date" display="hidden" hidden>Date</label>
+                    <input type="date" name="pickup_date" value="{{ pickup_date }}" min="{{ pickup_date }}" required>
 
-                <div class="timegroup">
-                    <label for="pickup_from">{{ _("Between") }}</label>
-                    <input type="time" name="pickup_from" value="{{ min_time }}" min="{{ min_time }}">
-                </div>
+                    <div class="timegroup">
+                        <label for="pickup_from">{{ _("Between") }}</label>
+                        <input type="time" name="pickup_from" value="{{ min_time }}" min="{{ min_time }}" required>
+                    </div>
 
-                <div class="timegroup">
-                    <label for="pickup_to">{{ _("And") }}</label>
-                    <input type="time" name="pickup_to" value="{{ max_time }}" max="{{ max_time }}">
-                </div>
+                    <div class="timegroup">
+                        <label for="pickup_to">{{ _("And") }}</label>
+                        <input type="time" name="pickup_to" value="{{ max_time }}" min="{{ min_time }}" max="{{ max_time }}" required>
+                    </div>
 
-                <label for="pickup_comment">Special Instructions</label>
-                <input type="text" name="pickup_comment" maxlength="75">
+                    <label for="pickup_comment">Special Instructions</label>
+                    <input type="text" name="pickup_comment" maxlength="75">
 
-                <div class="form-errors alert alert-danger" hidden>
-                </div>
+                    <div class="form-errors alert alert-danger" hidden>
+                    </div>
 
-                <input type="submit" id="schedule-pickup" class="btn btn-primary" style="margin-bottom: 10px; float:none" value="{{ _("Schedule Pickup") }}">
+                    <input type="submit" id="schedule-pickup" class="btn btn-primary" style="margin-bottom: 10px; float:none" value="{{ _("Schedule Pickup") }}">
+                </fieldset>
             </form>
         {% elif pickup_status == SCHEDULED %}
-            <button id="cancel-pickup" class="btn btn-primary" style="margin-bottom: 10px; float:none">{{ _("Cancel / Re-schedule Pickup") }}</button>
+            <button id="cancel-pickup" class="btn btn-danger" style="margin-bottom: 10px; float:none">{{ _("Cancel / Re-schedule Pickup") }}</button>
         {% endif %}
     </div>
 </div>
@@ -109,32 +118,37 @@
 
 {% block script %}
 <script>
-    const min_date = "{{ today }}";
+    const min_date = "{{ pickup_date }}";
     const min_time = "{{ min_time }}";
     const max_time = "{{ max_time }}";
 
+    const pickup_date = document.querySelector('input[name="pickup_date"]')
+    const pickup_from = document.querySelector('input[name="pickup_from"]')
+    const pickup_to = document.querySelector('input[name="pickup_to"]')
+    const get_capabilities = document.querySelector('#get-capabilities')
+    const fields = document.querySelector('fieldset');
+
     function validate() {
         let valid = true;
-        const form = document.querySelector("#schedule-form");
-        const error_div = document.querySelector(".form-errors");
-
         return form.checkValidity();
 
-        const errors = [];
-        const data = Object.fromEntries(new FormData(form));
+        // const form = document.querySelector("#schedule-form");
+        // const error_div = document.querySelector(".form-errors");
+        // const errors = [];
+        // const data = Object.fromEntries(new FormData(form));
 
-        if (errors.length) {
-            error_div.innerHTML = `
-                <ul>
-                ${errors.map(err => `<li>${err}</li>`).join("\n")} 
-                </ul>
-            `;
-            error_div.hidden = false;
-        } else {
-            error_div.hidden = true;
-        }
+        // if (errors.length) {
+        //     error_div.innerHTML = `
+        //         <ul>
+        //         ${errors.map(err => `<li>${err}</li>`).join("\n")} 
+        //         </ul>
+        //     `;
+        //     error_div.hidden = false;
+        // } else {
+        //     error_div.hidden = true;
+        // }
 
-        return valid;
+        // return valid;
     };
 
     document.querySelector('#print-label').addEventListener('click', () => {
@@ -142,10 +156,50 @@
         bnovate.utils.print_url('{{ shipping_label_url }}');
     });
 
+    get_capabilities.addEventListener('click', async () => {
+
+        const spinner = document.querySelector('#loading');
+        spinner.hidden = false;
+        get_capabilities.disabled = true;
+        
+        // WARNING: javascript generated by Jinja...
+        let quote = null;
+        try {
+            quote = await bnovate.web.get_pickup_capabilities('{{ rr_doc.name }}');
+        } catch (e) {
+            // Frappe shows the error message in all cases
+        }
+        spinner.hidden = true;
+
+        if (!quote) {
+            get_capabilities.disabled = false;
+            return;
+        }
+
+        // TODO: force check from today, not time in Shipment.
+        // TODO: how to determine minimum pickup window?
+
+        pickup_date.value = quote.localCutoffDateAndTime.slice(0, 10);
+        pickup_date.min = quote.localCutoffDateAndTime.slice(0, 10);
+        pickup_from.value = quote.pickupEarliest.slice(0, 5);
+        pickup_from.min = quote.pickupEarliest.slice(0, 5);
+        pickup_to.min = quote.pickupEarliest.slice(0, 5);
+        pickup_to.value = quote.pickupLatest.slice(0, 5);
+        pickup_to.max = quote.pickupLatest.slice(0, 5);
+        fields.disabled = false;
+
+        console.log(quote);
+    });
+
+    pickup_from.addEventListener('change', () => {
+        pickup_to.min = pickup_from.value;
+    })
+
     document.querySelector('#schedule-pickup')?.addEventListener('click', () => {
         if (!validate()) 
             return;
 
+        // TODO: How to handle errors (declared after cutoff, too small window...)
         bnovate.utils.confetti();
     });
 </script>

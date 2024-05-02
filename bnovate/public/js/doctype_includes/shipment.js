@@ -26,9 +26,10 @@ frappe.ui.form.on("Shipment", {
             if (frm.doc.status == "Registered") {
                 frm.add_custom_button(__("Request Pickup"), () => request_pickup(frm));
 
-                if (frm.doc.items.findIndex(i => i.refill_request) >= 0) {
-                    frm.add_custom_button(__("Copy to RR"), () => copy_to_rr(frm));
-                }
+            }
+
+            if (frm.doc.items.findIndex(i => i.refill_request) >= 0) {
+                frm.add_custom_button(__("Copy to RR"), () => copy_to_rr(frm));
             }
 
             if (frm.doc.status == "Completed") {
@@ -310,6 +311,7 @@ async function get_price(frm) {
     const estimatedDelivery = frappe.datetime.str_to_user(resp.message.deliveryCapabilities?.estimatedDeliveryDateAndTime);
     const priceEstimate = resp.message.totalPrice?.[0].price;
     const currency = resp.message.totalPrice?.[0].priceCurrency;
+    console.log(resp.message);
 
     frappe.msgprint(`<b>Pickup until</b>: ${estimatedPickup}<br><b>Delivery estimated on</b>: ${estimatedDelivery}<br><b>Cost estimate</b>: ${priceEstimate} ${currency}`);
     return resp.message;

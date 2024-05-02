@@ -48,6 +48,14 @@ bnovate.web.get_countries = async function get_countries() {
     return resp.message;
 }
 
+// Return DHL pickup date and time for a given Refill Request name
+bnovate.web.get_pickup_capabilities = async function (name) {
+    const resp = await frappe.call("bnovate.www.pickup.get_pickup_capabilities", {
+        name
+    })
+    return resp.message;
+}
+
 // Return FA icon corresponding to signal strength
 bnovate.web.signal_icon = function (strength) {
     if (strength > -65) {
