@@ -197,8 +197,6 @@
             return;
         }
 
-        // TODO: how to determine minimum pickup window?
-
 
         let date_earliest = quote.pickupDate.slice(0, 10)
         let pickup_earliest = quote.pickupEarliest.slice(0, 5); // str in 08:00 format
@@ -235,7 +233,6 @@
         spinner.hidden = false;
 
         try {
-            // TODO: How to handle errors (declared after cutoff, too small window...)
             let resp = await bnovate.web.request_pickup('{{ rr_doc.name }}', 
                 pickup_date.value,
                 pickup_from.value,
