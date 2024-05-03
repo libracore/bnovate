@@ -10,7 +10,7 @@ from frappe.exceptions import DoesNotExistError
 from frappe.contacts.doctype.address.address import get_address_display
 
 from .helpers import auth, get_session_primary_customer, allow_unstored_cartridges
-from bnovate.bnovate.utils.shipping import _get_price, _request_pickup, _cancel_pickup
+from bnovate.bnovate.utils.shipping import _get_price, _request_pickup, _cancel_pickup, DateUnavailableError
 
 no_cache = 1
 
@@ -38,14 +38,17 @@ def get_context(context):
     if shipment_doc.status == 'Registered':
         context.pickup_status = AVAILABLE
         context.pickup_date = frappe.utils.today()
-        context.min_time = "10:15"
-        context.max_time = "18:15"
+
+        context.pickup_from = "10:15"
+        context.pickup_to = "18:15"
+
     elif shipment_doc.status == 'Completed':
         context.pickup_status = SCHEDULED
         context.pickup_date = shipment_doc.pickup_date
-        # Remember frappe returns times as time detlas...
-        context.min_time = str(datetime.datetime.combine(datetime.date.today(), datetime.time()) + shipment_doc.pickup_from)[-8:-3]
-        context.max_time = str(datetime.datetime.combine(datetime.date.today(), datetime.time()) + shipment_doc.pickup_to)[-8:-3]
+
+        # Remember frappe returns times as time deltas...some effort required to convert to 08:00 string format
+        context.pickup_from = str(datetime.datetime.combine(datetime.date.today(), datetime.time()) + shipment_doc.pickup_from)[-8:-3]
+        context.pickup_to = str(datetime.datetime.combine(datetime.date.today(), datetime.time()) + shipment_doc.pickup_to )[-8:-3]
 
     context.form_dict = frappe.form_dict
     context.name = docname
@@ -110,18 +113,41 @@ def get_label(name):
 
 
 @frappe.whitelist()
-def get_pickup_capabilities(name):
+def get_pickup_capabilities(name, date=None, iterations=0):
     """ Get pickup capabilities for a refill request """
 
-    # Checks permissions too
-    rr_doc, _ = get_request(name)
+    if iterations > 20:
+        frappe.throw(_("Could not find any pickup dates"))
 
-    quote = _get_price(rr_doc.shipment, auth=False)
+    # Checks permissions too
+    rr_doc, shipment_doc = get_request(name)
+
+    if date == None:
+        # First iteration: we want to check if pickup is possible now
+        date = datetime.datetime.now()
+
+    # Iteratively try dates until we get a valid one
+    try:
+        quote = _get_price(shipment_doc.name, pickup_datetime=date, auth=False)
+    except DateUnavailableError:
+        if iterations == 0:
+            # Reset time to 00:00
+            date = datetime.datetime.combine(datetime.date.today(), datetime.time())
+        return get_pickup_capabilities(name,  date + datetime.timedelta(days=1), iterations + 1)
 
     if 'pickupCapabilities' not in quote:
-        frappe.throw("No Pickup Possible")
+        frappe.throw(_("No Pickup Possible"))
 
-    return quote['pickupCapabilities']
+
+    pickup_capabilities = quote['pickupCapabilities']
+
+    # If we are within X minutes or passed the cutoff, try tomorrow:
+    cutoff_datetime = datetime.datetime.fromisoformat(pickup_capabilities['localCutoffDateAndTime'])
+    if datetime.datetime.now() + datetime.timedelta(minutes=10) >= cutoff_datetime:
+        return get_pickup_capabilities(name, date + datetime.timedelta(days=1), iterations + 1)
+
+    pickup_capabilities['pickupDate'] = date
+    return pickup_capabilities
 
 @frappe.whitelist()
 def request_pickup(name, pickup_date, pickup_from, pickup_to, pickup_comment):

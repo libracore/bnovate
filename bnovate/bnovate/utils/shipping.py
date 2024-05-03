@@ -46,6 +46,9 @@ class DHLBadRequestError(DHLException):
 class ProductNotFoundError(DHLException):
     """ Request product was not offered in API response """
 
+class DateUnavailableError(DHLException):
+    """ Raised when shipment is not possible that day. """
+
 class AddressError(DHLException):
     """ Error while validating postal adress """
     def __init__(self, message):
@@ -162,6 +165,15 @@ def dhl_request(path, method='GET', params=None, body=None, settings=None, auth=
     except HTTPError as e:
         try:
             data = frappe._dict(resp.json())
+            print("================================")
+            print(data.title)
+            print(data.message)
+            print(data.detail, type(data.detail))
+            print(data.additionalDetails, type(data.additionalDetails))
+            print("================================")
+            if data.detail.startswith('996:'):
+                raise DateUnavailableError(data.title, data.message, data.detail, data.additionalDetails)
+
             raise DHLBadRequestError(data.title, data.message, data.detail, data.additionalDetails)
         except TypeError:
             # We can't convert body to JSON, raise generic error
@@ -258,12 +270,13 @@ def _validate_address(address, address_type, auth=True):
 def get_price(shipment_docname):
     return _get_price(shipment_docname, auth=True)
 
-def _get_price(shipment_docname, now=False, auth=True):
+def _get_price(shipment_docname, pickup_datetime=None, auth=True):
     """ Return price quote for a Shipment Doc. 
 
     Includes pickup and delivery date estimates.
 
-    Set now=True to check price and capabilities for current date, instead of date in doc.
+    Set pickup_datetime to override date and times from document. 
+
     Use auth=False if you have checked authorization separately (through portal for example).
     """
 
@@ -291,10 +304,12 @@ def _get_price(shipment_docname, now=False, auth=True):
         if len(doc.shipment_parcel) > 1:
             raise DHLException("Domestic shipments only allow one parcel.")
 
-    pickup_datetime = datetime.datetime.combine(
-        doc.pickup_date, datetime.time()) + doc.pickup_from
-    if pickup_datetime <= datetime.datetime.now() or now:
-        pickup_datetime = datetime.datetime.now()
+    if not pickup_datetime:
+        # Use date and pickup_from in document (or now if it's in the past)
+        pickup_datetime = datetime.datetime.combine(
+            doc.pickup_date, datetime.time()) + doc.pickup_from
+        if pickup_datetime <= datetime.datetime.now():
+            pickup_datetime = datetime.datetime.now()
 
     body = {
         "productsAndServices": [{
@@ -329,6 +344,11 @@ def _get_price(shipment_docname, now=False, auth=True):
         "isCustomsDeclarable": True,
         "unitOfMeasurement": "metric"
     }
+
+    print("\n\n\n================================\n\n\n")
+    import json
+    print(json.dumps(body, indent=2))
+    print("\n\n\n================================\n\n\n")
 
     # Authorized earlier
     resp = dhl_request("/rates", 'POST', body=body, settings=settings, auth=False)
@@ -374,6 +394,15 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
 
     if doc.status != "Submitted":
         raise DHLException("Can only create shipment if status is 'Submitted'")
+
+    
+    pickup_string = ", no pickup."
+    if pickup:
+        pickup_string = ", pickup on {0} between {1} and {2}. Comment: {3}.".format(
+            doc.pickup_date, doc.pickup_from, doc.pickup_to, doc.pickup_comment
+        )
+
+    doc.add_comment(text="Requested shipping label" + pickup_string)
 
     if len(doc.shipment_parcel) == 0:
         raise MissingParcelError(_("Please specify types of parcel"))
@@ -740,6 +769,11 @@ def _request_pickup(shipment_docname, auth=True, task_id=None):
     if doc.status != "Registered":
         raise DHLException("Can only request pickup if status is 'Registered'")
 
+
+    doc.add_comment(text="Requested pickup for {0} between {1} and {2}. Comment: {3}".format(
+        doc.pickup_date, doc.pickup_from, doc.pickup_to, doc.pickup_comment
+    ))
+
     accounts = [{
         "typeCode": "shipper",
         "number": settings.dhl_import_account if doc.is_return else settings.dhl_export_account, 
@@ -842,6 +876,10 @@ def cancel_pickup(shipment_docname, reason, task_id=None):
 
 def _cancel_pickup(shipment_docname, reason, auth=True, task_id=None):
     doc = frappe.get_doc("Shipment", shipment_docname)
+
+    doc.add_comment(text="Cancelled Pickup. Reason: {0}".format(
+        reason
+    ))
 
     if not doc.pickup_confirmation_number:
         frappe.throw("This shipment does not have a Pickup Confirmation Number")

@@ -6,11 +6,12 @@
         width: 50px;
         height: 50px;
         border-radius: 50%;
-        border: 2px solid #666;
-        background: #fff;
+        border: 2px solid var(--line-color) ;
         color: #666;
         text-align: center;
-        font: 32px Arial, sans-serif;
+        font-size: 32px;
+        display: inline-block;
+        padding-top: 5px;
     }
 
     form {
@@ -40,6 +41,11 @@
     fieldset {
         display: contents;
     }
+
+    .btn {
+        display: block;
+        margin: 20px auto;
+    }
 </style>
 {% endblock %}
 
@@ -57,7 +63,12 @@
 
 <div class="row">
     <div class="col border rounded m-1 p-4">
-        <h3>{{ _("Verify information") }}</h3>
+
+
+        <h3>
+            <div class="circle">1</div>
+            {{ _("Verify information") }}
+        </h3>
         <p><b>{{ _("Number of parcels") }}</b>: {{ parcel_count }}</p>
         <p><b>{{ _("Pickup Address") }}</b>:</p>
         <div class="border my-3 p-2 text-secondary ">{{ pickup_address_display }}</div>
@@ -66,58 +77,64 @@
     </div>
 
     <div class="col border rounded m-1 p-4">
-        <h3>{{ _("Finish and identify parcel") }}</h3>
+        <h3>
+            <div class="circle">2</div>
+            {{ _("Identify parcel(s)") }}
+        </h3>
         <ul>
             <li>{{ _("Print the label") }}</li>
             <li>{{ _("Tape it to the parcel") }}</li>
             <li>{{ _("One label per parcel") }}</li>
         </ul>
         <p>
-            <button id="print-label" class="btn btn-primary" style="margin-bottom: 10px; float:none">{{ _("Print Label") }}</button>
+            <button id="print-label" class="btn btn-primary">{{ _("Print Label") }}</button>
         </p>
     </div>
 
     <div class="col border rounded m-1 p-4">
-        <h3>{{ _("Organize Pickup") }}</h3>
+        <h3>
+            <div class="circle">3</div>
+            {{ _("Organize Pickup") }}
+        </h3>
 
-            <button id="get-capabilities" class="btn btn-primary" style="margin-bottom: 10px; float:none" 
-                {% if pickup_status == SCHEDULED %} hidden {% endif %}>{{ _("Get Availability") }}</button>
+        <button id="get-capabilities" class="btn btn-primary" 
+            {% if pickup_status == SCHEDULED %} hidden {% endif %}>{{ _("Get Availability") }}</button>
 
-            <i id="loading" class="fa fa-cog fa-spin" hidden></i>
-            <form id="schedule-form" onsubmit="return false">
+        <i id="loading" class="fa fa-cog fa-spin" hidden></i>
+        <form id="schedule-form" onsubmit="return false">
+            {% if pickup_status == AVAILABLE %}
+                        <p>I confirm the package will be available on</p>
+            {% elif pickup_status == SCHEDULED %}
+                        <p>Pickup is scheduled on</p>
+            {% endif %}
+            <fieldset id="fields" disabled>
+                <label for="pickup_date" display="hidden" hidden>Date</label>
+                <input type="date" name="pickup_date" value="{{ pickup_date }}" min="{{ pickup_date }}" required>
+
+                <div class="timegroup">
+                    <label for="pickup_from">{{ _("Between") }}</label>
+                    <input type="time" name="pickup_from" value="{{ pickup_from }}" required>
+                </div>
+
+                <div class="timegroup">
+                    <label for="pickup_to">{{ _("And") }}</label>
+                    <input type="time" name="pickup_to" value="{{ pickup_to }}" required>
+                </div>
+
+                <label for="pickup_comment">{{ _("Special Instructions") }}</label>
+                <input type="text" name="pickup_comment" maxlength="75">
+
+                <div class="form-errors alert alert-danger" hidden>
+                </div>
+
                 {% if pickup_status == AVAILABLE %}
-                            <p>I confirm the package will be available on</p>
-                {% elif pickup_status == SCHEDULED %}
-                            <p>Pickup is scheduled on</p>
+                    <input type="submit" id="schedule-pickup" class="btn btn-primary" style="margin-bottom: 10px; float:none" value="{{ _("Schedule Pickup") }}">
                 {% endif %}
-                <fieldset id="fields" disabled>
-                    <label for="pickup_date" display="hidden" hidden>Date</label>
-                    <input type="date" name="pickup_date" value="{{ pickup_date }}" min="{{ pickup_date }}" required>
-
-                    <div class="timegroup">
-                        <label for="pickup_from">{{ _("Between") }}</label>
-                        <input type="time" name="pickup_from" value="{{ min_time }}" min="{{ min_time }}" required>
-                    </div>
-
-                    <div class="timegroup">
-                        <label for="pickup_to">{{ _("And") }}</label>
-                        <input type="time" name="pickup_to" value="{{ max_time }}" min="{{ min_time }}" max="{{ max_time }}" required>
-                    </div>
-
-                    <label for="pickup_comment">{{ _("Special Instructions") }}</label>
-                    <input type="text" name="pickup_comment" maxlength="75">
-
-                    <div class="form-errors alert alert-danger" hidden>
-                    </div>
-
-                    {% if pickup_status == AVAILABLE %}
-                        <input type="submit" id="schedule-pickup" class="btn btn-primary" style="margin-bottom: 10px; float:none" value="{{ _("Schedule Pickup") }}">
-                    {% endif %}
-                </fieldset>
-            </form>
-        {% if pickup_status == SCHEDULED %}
-            <button id="cancel-pickup" class="btn btn-danger" style="margin-bottom: 10px; float:none">{{ _("Cancel / Re-schedule Pickup") }}</button>
-        {% endif %}
+            </fieldset>
+        </form>
+    {% if pickup_status == SCHEDULED %}
+        <button id="cancel-pickup" class="btn btn-danger" style="margin-bottom: 10px; float:none">{{ _("Cancel / Re-schedule Pickup") }}</button>
+    {% endif %}
     </div>
 </div>
 
@@ -125,9 +142,6 @@
 
 {% block script %}
 <script>
-    const min_date = "{{ pickup_date }}";
-    const min_time = "{{ min_time }}";
-    const max_time = "{{ max_time }}";
 
     const form = document.querySelector("#schedule-form");
     const fields = document.querySelector('fieldset');
@@ -140,26 +154,23 @@
     const cancel_pickup = document.querySelector('#cancel-pickup')
     const spinner = document.querySelector('#loading');
 
+    function add_hours(time, hours) {
+        return moment(time, 'HH:mm').add(hours, 'hours').format('HH:mm');
+    }
+
     function validate() {
         let valid = true;
-        return form.checkValidity();
 
-        // const error_div = document.querySelector(".form-errors");
-        // const errors = [];
-        // const data = Object.fromEntries(new FormData(form));
-
-        // if (errors.length) {
-        //     error_div.innerHTML = `
-        //         <ul>
-        //         ${errors.map(err => `<li>${err}</li>`).join("\n")} 
-        //         </ul>
-        //     `;
-        //     error_div.hidden = false;
-        // } else {
-        //     error_div.hidden = true;
-        // }
-
-        // return valid;
+        let window_duration = (moment(pickup_to.value, 'HH:mm') - moment(pickup_from.value, 'HH:mm')) / 60 / 1000;  // minutes
+        if ( window_duration < 120 ) {
+            pickup_from.setCustomValidity(__("Please allow at least a 2h window"));
+            pickup_to.setCustomValidity(__("Please allow at least a 2h window"));
+            valid = false;
+        } else {
+            pickup_from.setCustomValidity('');
+            pickup_to.setCustomValidity('');
+        }
+        return valid && form.checkValidity();
     };
 
     document.querySelector('#print-label').addEventListener('click', () => {
@@ -172,9 +183,9 @@
         spinner.hidden = false;
         get_capabilities.disabled = true;
         
-        // WARNING: javascript generated by Jinja...
         let quote = null;
         try {
+            // WARNING: javascript generated by Jinja...
             quote = await bnovate.web.get_pickup_capabilities('{{ rr_doc.name }}');
         } catch (e) {
             // Frappe shows the error message in all cases
@@ -186,24 +197,35 @@
             return;
         }
 
-        // TODO: force check from today, not time in Shipment.
         // TODO: how to determine minimum pickup window?
 
-        pickup_date.value = quote.localCutoffDateAndTime.slice(0, 10);
-        pickup_date.min = quote.localCutoffDateAndTime.slice(0, 10);
-        pickup_from.value = quote.pickupEarliest.slice(0, 5);
-        pickup_from.min = quote.pickupEarliest.slice(0, 5);
-        pickup_to.min = quote.pickupEarliest.slice(0, 5);
-        pickup_to.value = quote.pickupLatest.slice(0, 5);
-        pickup_to.max = quote.pickupLatest.slice(0, 5);
+
+        let date_earliest = quote.pickupDate.slice(0, 10)
+        let pickup_earliest = quote.pickupEarliest.slice(0, 5); // str in 08:00 format
+        let pickup_latest = quote.pickupLatest.slice(0, 5); // str in 08:00 format
+
+        pickup_date.value = date_earliest;
+        pickup_date.min = date_earliest;
+
+        pickup_from.value = pickup_earliest;
+        pickup_from.min = pickup_earliest;
+
+        pickup_to.value = pickup_latest;
+        pickup_to.max = pickup_latest;
+
         fields.disabled = false;
 
         console.log(quote);
     });
 
-    pickup_from.addEventListener('change', () => {
-        pickup_to.min = pickup_from.value;
+    [...document.querySelectorAll('input')].forEach( input => {
+        input.addEventListener('change', () => {
+            if (!validate()) {
+                form.reportValidity();
+            }
+        });
     })
+
 
     schedule_pickup?.addEventListener('click', async () => {
         if (!validate()) 
