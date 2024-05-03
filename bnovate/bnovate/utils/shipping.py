@@ -686,6 +686,13 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
         },
         "valueAddedServices": value_added_services,
         "getRateEstimates": True,
+        "shipmentNotification": [
+            {
+                "typeCode": "email",
+                "receiverId": invoice_contact.email,
+                "languageCode": "eng"
+            }
+        ],
     }
 
     print("\n\n\n================================\n\n\n")
