@@ -56,6 +56,28 @@ bnovate.web.get_pickup_capabilities = async function (name) {
     return resp.message;
 }
 
+// Schedule DHL pickup from an RR
+bnovate.web.request_pickup = async function (name, pickup_date, pickup_from, pickup_to, pickup_comment) {
+    const resp = await frappe.call("bnovate.www.pickup.request_pickup", {
+        name,
+        pickup_date,
+        pickup_from,
+        pickup_to,
+        pickup_comment
+    })
+    return resp.message;
+}
+
+// Cancel a pickup request from a RR
+bnovate.web.cancel_pickup = async function (name, reason) {
+    const resp = await frappe.call("bnovate.www.pickup.cancel_pickup", {
+        name,
+        reason,
+    })
+    return resp.message;
+}
+
+
 // Return FA icon corresponding to signal strength
 bnovate.web.signal_icon = function (strength) {
     if (strength > -65) {

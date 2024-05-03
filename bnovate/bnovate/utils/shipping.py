@@ -222,12 +222,13 @@ def validate_address(name):
     except AddressError:
         raise AddressError("Check Postal Code")
 
-def _validate_address(address, address_type):
+def _validate_address(address, address_type, auth=True):
     """ Validates if DHL Express has got pickup/delivery capabilities at origin/destination
 
     address_type must be either 'pickup' or 'delivery'
 
     Returns GMT Timezone offset for the destination (str)
+
     """
 
     params = {
@@ -239,7 +240,8 @@ def _validate_address(address, address_type):
     try:
         resp = dhl_request(
             "/address-validate",
-            params=params
+            params=params,
+            auth=auth,
         )
     except DHLBadRequestError as e:
         address_display = "{0} // {1} // {2} // {3}".format(address.addressLine1, address.addressLine2, address.postalCode, address.countryCode)
@@ -256,12 +258,13 @@ def _validate_address(address, address_type):
 def get_price(shipment_docname):
     return _get_price(shipment_docname, auth=True)
 
-def _get_price(shipment_docname, auth=True):
+def _get_price(shipment_docname, now=False, auth=True):
     """ Return price quote for a Shipment Doc. 
 
     Includes pickup and delivery date estimates.
 
-    If auth=False if you have checked authorization separately (through portal for example)
+    Set now=True to check price and capabilities for current date, instead of date in doc.
+    Use auth=False if you have checked authorization separately (through portal for example).
     """
 
     if auth:
@@ -290,7 +293,7 @@ def _get_price(shipment_docname, auth=True):
 
     pickup_datetime = datetime.datetime.combine(
         doc.pickup_date, datetime.time()) + doc.pickup_from
-    if pickup_datetime <= datetime.datetime.now():
+    if pickup_datetime <= datetime.datetime.now() or now:
         pickup_datetime = datetime.datetime.now()
 
     body = {
@@ -719,7 +722,7 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
 @frappe.whitelist()
 def request_pickup(shipment_docname, task_id=None):
     try:
-        return _request_pickup(shipment_docname, task_id=task_id)
+        return _request_pickup(shipment_docname, auth=True, task_id=task_id)
     except Exception as e:
         set_status({
             "progress": 100,
@@ -728,7 +731,7 @@ def request_pickup(shipment_docname, task_id=None):
 
         raise e
 
-def _request_pickup(shipment_docname, task_id=None):
+def _request_pickup(shipment_docname, auth=True, task_id=None):
     """ Request pickup """
     
     doc = frappe.get_doc("Shipment", shipment_docname)
@@ -765,7 +768,7 @@ def _request_pickup(shipment_docname, task_id=None):
         doc.pickup_pincode,
         doc.pickup_country
     )
-    pickup_gmt_offset = _validate_address(pickup_address, PICKUP)
+    pickup_gmt_offset = _validate_address(pickup_address, PICKUP, auth=auth)
 
     body = {
         "plannedPickupDateAndTime": "{0} GMT{1}".format(pickup_datetime.isoformat()[:19], pickup_gmt_offset),
@@ -802,19 +805,12 @@ def _request_pickup(shipment_docname, task_id=None):
         }],
     }
 
-
-    print("\n\n\n================================\n\n\n")
-    import json
-    print(json.dumps(body, indent=2))
-    print("\n\n\n================================\n\n\n")
-
-
     set_status({
         "progress": 40,
         "message": _("Requesting pickup..."),
     }, task_id)
 
-    resp = dhl_request("/pickups", 'POST', body=body, settings=settings)
+    resp = dhl_request("/pickups", 'POST', body=body, settings=settings, auth=auth)
 
     doc.db_set("status", "Completed")
     try:
@@ -844,7 +840,7 @@ def cancel_pickup(shipment_docname, reason, task_id=None):
 
         raise e 
 
-def _cancel_pickup(shipment_docname, reason, task_id=None):
+def _cancel_pickup(shipment_docname, reason, auth=True, task_id=None):
     doc = frappe.get_doc("Shipment", shipment_docname)
 
     if not doc.pickup_confirmation_number:
@@ -862,7 +858,8 @@ def _cancel_pickup(shipment_docname, reason, task_id=None):
         params={
             "reason": reason,
             "requestorName": frappe.get_user().doc.full_name,
-        }
+        },
+        auth=auth,
     )
 
     doc.db_set('status', 'Registered')

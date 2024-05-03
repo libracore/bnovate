@@ -1,15 +1,16 @@
 # Allow customer to schedule his pickup
 
 import json
-import frappe
+import datetime
 
+import frappe
 from frappe import _
 from frappe.utils import today
 from frappe.exceptions import DoesNotExistError
 from frappe.contacts.doctype.address.address import get_address_display
 
 from .helpers import auth, get_session_primary_customer, allow_unstored_cartridges
-from bnovate.bnovate.utils.shipping import _get_price
+from bnovate.bnovate.utils.shipping import _get_price, _request_pickup, _cancel_pickup
 
 no_cache = 1
 
@@ -42,9 +43,9 @@ def get_context(context):
     elif shipment_doc.status == 'Completed':
         context.pickup_status = SCHEDULED
         context.pickup_date = shipment_doc.pickup_date
-        context.min_time = shipment_doc.pickup_from
-        context.max_time = shipment_doc.pickup_to
-
+        # Remember frappe returns times as time detlas...
+        context.min_time = str(datetime.datetime.combine(datetime.date.today(), datetime.time()) + shipment_doc.pickup_from)[-8:-3]
+        context.max_time = str(datetime.datetime.combine(datetime.date.today(), datetime.time()) + shipment_doc.pickup_to)[-8:-3]
 
     context.form_dict = frappe.form_dict
     context.name = docname
@@ -121,3 +122,26 @@ def get_pickup_capabilities(name):
         frappe.throw("No Pickup Possible")
 
     return quote['pickupCapabilities']
+
+@frappe.whitelist()
+def request_pickup(name, pickup_date, pickup_from, pickup_to, pickup_comment):
+    """ Request pickup with DHL """
+
+    # Checks permissions as well
+    _, shipment_doc = get_request(name)
+
+    shipment_doc.db_set('pickup_date', pickup_date)
+    shipment_doc.db_set('pickup_from', pickup_from)
+    shipment_doc.db_set('pickup_to', pickup_to)
+    shipment_doc.db_set('pickup_comment', pickup_comment)
+
+    return _request_pickup(shipment_doc.name, auth=False)
+
+@frappe.whitelist()
+def cancel_pickup(name, reason):
+    """ Cancel a pickup """
+
+    # Checks permissions as well
+    _, shipment_doc = get_request(name)
+
+    return _cancel_pickup(shipment_doc.name, reason, auth=False)

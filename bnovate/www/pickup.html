@@ -80,12 +80,17 @@
     <div class="col border rounded m-1 p-4">
         <h3>{{ _("Organize Pickup") }}</h3>
 
-        {% if pickup_status == AVAILABLE %}
-            <button id="get-capabilities" class="btn btn-primary" style="margin-bottom: 10px; float:none">{{ _("Get Availability") }}</button>
+            <button id="get-capabilities" class="btn btn-primary" style="margin-bottom: 10px; float:none" 
+                {% if pickup_status == SCHEDULED %} hidden {% endif %}>{{ _("Get Availability") }}</button>
+
             <i id="loading" class="fa fa-cog fa-spin" hidden></i>
             <form id="schedule-form" onsubmit="return false">
+                {% if pickup_status == AVAILABLE %}
+                            <p>I confirm the package will be available on</p>
+                {% elif pickup_status == SCHEDULED %}
+                            <p>Pickup is scheduled on</p>
+                {% endif %}
                 <fieldset id="fields" disabled>
-                    <p>I confirm the package will be available on</p>
                     <label for="pickup_date" display="hidden" hidden>Date</label>
                     <input type="date" name="pickup_date" value="{{ pickup_date }}" min="{{ pickup_date }}" required>
 
@@ -99,16 +104,18 @@
                         <input type="time" name="pickup_to" value="{{ max_time }}" min="{{ min_time }}" max="{{ max_time }}" required>
                     </div>
 
-                    <label for="pickup_comment">Special Instructions</label>
+                    <label for="pickup_comment">{{ _("Special Instructions") }}</label>
                     <input type="text" name="pickup_comment" maxlength="75">
 
                     <div class="form-errors alert alert-danger" hidden>
                     </div>
 
-                    <input type="submit" id="schedule-pickup" class="btn btn-primary" style="margin-bottom: 10px; float:none" value="{{ _("Schedule Pickup") }}">
+                    {% if pickup_status == AVAILABLE %}
+                        <input type="submit" id="schedule-pickup" class="btn btn-primary" style="margin-bottom: 10px; float:none" value="{{ _("Schedule Pickup") }}">
+                    {% endif %}
                 </fieldset>
             </form>
-        {% elif pickup_status == SCHEDULED %}
+        {% if pickup_status == SCHEDULED %}
             <button id="cancel-pickup" class="btn btn-danger" style="margin-bottom: 10px; float:none">{{ _("Cancel / Re-schedule Pickup") }}</button>
         {% endif %}
     </div>
@@ -122,17 +129,21 @@
     const min_time = "{{ min_time }}";
     const max_time = "{{ max_time }}";
 
+    const form = document.querySelector("#schedule-form");
+    const fields = document.querySelector('fieldset');
     const pickup_date = document.querySelector('input[name="pickup_date"]')
     const pickup_from = document.querySelector('input[name="pickup_from"]')
     const pickup_to = document.querySelector('input[name="pickup_to"]')
+    const pickup_comment = document.querySelector('input[name="pickup_comment"]')
     const get_capabilities = document.querySelector('#get-capabilities')
-    const fields = document.querySelector('fieldset');
+    const schedule_pickup = document.querySelector('#schedule-pickup')
+    const cancel_pickup = document.querySelector('#cancel-pickup')
+    const spinner = document.querySelector('#loading');
 
     function validate() {
         let valid = true;
         return form.checkValidity();
 
-        // const form = document.querySelector("#schedule-form");
         // const error_div = document.querySelector(".form-errors");
         // const errors = [];
         // const data = Object.fromEntries(new FormData(form));
@@ -156,9 +167,8 @@
         bnovate.utils.print_url('{{ shipping_label_url }}');
     });
 
-    get_capabilities.addEventListener('click', async () => {
+    get_capabilities?.addEventListener('click', async () => {
 
-        const spinner = document.querySelector('#loading');
         spinner.hidden = false;
         get_capabilities.disabled = true;
         
@@ -195,12 +205,44 @@
         pickup_to.min = pickup_from.value;
     })
 
-    document.querySelector('#schedule-pickup')?.addEventListener('click', () => {
+    schedule_pickup?.addEventListener('click', async () => {
         if (!validate()) 
             return;
 
-        // TODO: How to handle errors (declared after cutoff, too small window...)
+        schedule_pickup.disabled = true;
+        spinner.hidden = false;
+
+        try {
+            // TODO: How to handle errors (declared after cutoff, too small window...)
+            let resp = await bnovate.web.request_pickup('{{ rr_doc.name }}', 
+                pickup_date.value,
+                pickup_from.value,
+                pickup_to.value,
+                pickup_comment.value,
+            )
+            console.log(resp);
+        } catch(e) {
+            spinner.hidden = true;
+            return;
+        }
+
+        spinner.hidden = true;
         bnovate.utils.confetti();
+        setTimeout(() => location.reload(), 500);
     });
+
+    cancel_pickup?.addEventListener('click', async () => {
+        spinner.hidden = false;
+        cancel_pickup.disabled = true;
+        try {
+            let resp = await bnovate.web.cancel_pickup('{{ rr_doc.name }}', "Customer cancelled pickup") ;
+            console.log("Cancel pickup");
+            console.log(resp);
+        } catch (e) {
+            spinner.hidden = true;
+            return;
+        }
+        location.reload();
+    })
 </script>
 {% endblock %}
