@@ -1,14 +1,16 @@
 # Allow customer to schedule his pickup
 
 import json
-import frappe
+import datetime
 
+import frappe
 from frappe import _
 from frappe.utils import today
 from frappe.exceptions import DoesNotExistError
+from frappe.contacts.doctype.address.address import get_address_display
 
 from .helpers import auth, get_session_primary_customer, allow_unstored_cartridges
-from frappe.contacts.doctype.address.address import get_address_display
+from bnovate.bnovate.utils.shipping import _get_price, _request_pickup, _cancel_pickup, DateUnavailableError
 
 no_cache = 1
 
@@ -35,12 +37,18 @@ def get_context(context):
     context.pickup_status = None
     if shipment_doc.status == 'Registered':
         context.pickup_status = AVAILABLE
+        context.pickup_date = frappe.utils.today()
+
+        context.pickup_from = "10:15"
+        context.pickup_to = "18:15"
+
     elif shipment_doc.status == 'Completed':
         context.pickup_status = SCHEDULED
         context.pickup_date = shipment_doc.pickup_date
-    context.today = frappe.utils.today()
-    context.min_time = "10:15"
-    context.max_time = "18:15"
+
+        # Remember frappe returns times as time deltas...some effort required to convert to 08:00 string format
+        context.pickup_from = str(datetime.datetime.combine(datetime.date.today(), datetime.time()) + shipment_doc.pickup_from)[-8:-3]
+        context.pickup_to = str(datetime.datetime.combine(datetime.date.today(), datetime.time()) + shipment_doc.pickup_to )[-8:-3]
 
     context.form_dict = frappe.form_dict
     context.name = docname
@@ -61,13 +69,15 @@ def get_request(name):
 
     rr_doc = frappe.get_doc("Refill Request", name)
     if rr_doc.customer != primary_customer.docname:
-        return None
+        frappe.throw(_("Not Permitted"), frappe.PermissionError)
     rr_doc.set_indicator()
     rr_doc.set_tracking_url()
 
     # get shipment info
     if rr_doc.shipment:
         shipment_doc = frappe.get_doc("Shipment", rr_doc.shipment)
+    else:
+        raise DoesNotExistError("Pickup is not possible at this time")
 
     return rr_doc, shipment_doc
 
@@ -88,7 +98,9 @@ def build_address_display(shipment_doc):
 @frappe.whitelist()
 def get_label(name):
     """ Return shipping label for this Refill Request """
-    doc = get_request(name)
+
+    # Checks permissions too
+    doc, _ = get_request(name)
 
     if doc is None or doc.shipping_label is None:
         raise DoesNotExistError()
@@ -99,3 +111,63 @@ def get_label(name):
     frappe.local.response.filecontent = file_doc.get_content()
     frappe.local.response.type = "pdf"
 
+
+@frappe.whitelist()
+def get_pickup_capabilities(name, date=None, iterations=0):
+    """ Get pickup capabilities for a refill request """
+
+    if iterations > 20:
+        frappe.throw(_("Could not find any pickup dates"))
+
+    # Checks permissions too
+    rr_doc, shipment_doc = get_request(name)
+
+    if date == None:
+        # First iteration: we want to check if pickup is possible now
+        date = datetime.datetime.now()
+
+    # Iteratively try dates until we get a valid one
+    try:
+        quote = _get_price(shipment_doc.name, pickup_datetime=date, auth=False)
+    except DateUnavailableError:
+        if iterations == 0:
+            # Reset time to 00:00
+            date = datetime.datetime.combine(datetime.date.today(), datetime.time())
+        return get_pickup_capabilities(name,  date + datetime.timedelta(days=1), iterations + 1)
+
+    if 'pickupCapabilities' not in quote:
+        frappe.throw(_("No Pickup Possible"))
+
+
+    pickup_capabilities = quote['pickupCapabilities']
+
+    # If we are within X minutes or passed the cutoff, try tomorrow:
+    cutoff_datetime = datetime.datetime.fromisoformat(pickup_capabilities['localCutoffDateAndTime'])
+    if datetime.datetime.now() + datetime.timedelta(minutes=10) >= cutoff_datetime:
+        return get_pickup_capabilities(name, date + datetime.timedelta(days=1), iterations + 1)
+
+    pickup_capabilities['pickupDate'] = date
+    return pickup_capabilities
+
+@frappe.whitelist()
+def request_pickup(name, pickup_date, pickup_from, pickup_to, pickup_comment):
+    """ Request pickup with DHL """
+
+    # Checks permissions as well
+    _, shipment_doc = get_request(name)
+
+    shipment_doc.db_set('pickup_date', pickup_date)
+    shipment_doc.db_set('pickup_from', pickup_from)
+    shipment_doc.db_set('pickup_to', pickup_to)
+    shipment_doc.db_set('pickup_comment', pickup_comment)
+
+    return _request_pickup(shipment_doc.name, auth=False)
+
+@frappe.whitelist()
+def cancel_pickup(name, reason):
+    """ Cancel a pickup """
+
+    # Checks permissions as well
+    _, shipment_doc = get_request(name)
+
+    return _cancel_pickup(shipment_doc.name, reason, auth=False)

@@ -46,6 +46,9 @@ class DHLBadRequestError(DHLException):
 class ProductNotFoundError(DHLException):
     """ Request product was not offered in API response """
 
+class DateUnavailableError(DHLException):
+    """ Raised when shipment is not possible that day. """
+
 class AddressError(DHLException):
     """ Error while validating postal adress """
     def __init__(self, message):
@@ -162,6 +165,15 @@ def dhl_request(path, method='GET', params=None, body=None, settings=None, auth=
     except HTTPError as e:
         try:
             data = frappe._dict(resp.json())
+            print("================================")
+            print(data.title)
+            print(data.message)
+            print(data.detail, type(data.detail))
+            print(data.additionalDetails, type(data.additionalDetails))
+            print("================================")
+            if data.detail.startswith('996:'):
+                raise DateUnavailableError(data.title, data.message, data.detail, data.additionalDetails)
+
             raise DHLBadRequestError(data.title, data.message, data.detail, data.additionalDetails)
         except TypeError:
             # We can't convert body to JSON, raise generic error
@@ -222,12 +234,13 @@ def validate_address(name):
     except AddressError:
         raise AddressError("Check Postal Code")
 
-def _validate_address(address, address_type):
+def _validate_address(address, address_type, auth=True):
     """ Validates if DHL Express has got pickup/delivery capabilities at origin/destination
 
     address_type must be either 'pickup' or 'delivery'
 
     Returns GMT Timezone offset for the destination (str)
+
     """
 
     params = {
@@ -239,7 +252,8 @@ def _validate_address(address, address_type):
     try:
         resp = dhl_request(
             "/address-validate",
-            params=params
+            params=params,
+            auth=auth,
         )
     except DHLBadRequestError as e:
         address_display = "{0} // {1} // {2} // {3}".format(address.addressLine1, address.addressLine2, address.postalCode, address.countryCode)
@@ -254,10 +268,20 @@ def _validate_address(address, address_type):
 
 @frappe.whitelist()
 def get_price(shipment_docname):
+    return _get_price(shipment_docname, auth=True)
+
+def _get_price(shipment_docname, pickup_datetime=None, auth=True):
     """ Return price quote for a Shipment Doc. 
 
     Includes pickup and delivery date estimates.
+
+    Set pickup_datetime to override date and times from document. 
+
+    Use auth=False if you have checked authorization separately (through portal for example).
     """
+
+    if auth:
+        _auth(READ)
 
     settings = _get_settings()
     doc = frappe.get_doc("Shipment", shipment_docname)
@@ -280,8 +304,12 @@ def get_price(shipment_docname):
         if len(doc.shipment_parcel) > 1:
             raise DHLException("Domestic shipments only allow one parcel.")
 
-    pickup_datetime = datetime.datetime.combine(
-        doc.pickup_date, datetime.time()) + doc.pickup_from
+    if not pickup_datetime:
+        # Use date and pickup_from in document (or now if it's in the past)
+        pickup_datetime = datetime.datetime.combine(
+            doc.pickup_date, datetime.time()) + doc.pickup_from
+        if pickup_datetime <= datetime.datetime.now():
+            pickup_datetime = datetime.datetime.now()
 
     body = {
         "productsAndServices": [{
@@ -317,7 +345,13 @@ def get_price(shipment_docname):
         "unitOfMeasurement": "metric"
     }
 
-    resp = dhl_request("/rates", 'POST', body=body, settings=settings)
+    print("\n\n\n================================\n\n\n")
+    import json
+    print(json.dumps(body, indent=2))
+    print("\n\n\n================================\n\n\n")
+
+    # Authorized earlier
+    resp = dhl_request("/rates", 'POST', body=body, settings=settings, auth=False)
 
     # Find matching product
     quote = next(
@@ -360,6 +394,15 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
 
     if doc.status != "Submitted":
         raise DHLException("Can only create shipment if status is 'Submitted'")
+
+    
+    pickup_string = ", no pickup."
+    if pickup:
+        pickup_string = ", pickup on {0} between {1} and {2}. Comment: {3}.".format(
+            doc.pickup_date, doc.pickup_from, doc.pickup_to, doc.pickup_comment
+        )
+
+    doc.add_comment(text="Requested shipping label" + pickup_string)
 
     if len(doc.shipment_parcel) == 0:
         raise MissingParcelError(_("Please specify types of parcel"))
@@ -643,6 +686,13 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
         },
         "valueAddedServices": value_added_services,
         "getRateEstimates": True,
+        "shipmentNotification": [
+            {
+                "typeCode": "email",
+                "receiverId": invoice_contact.email,
+                "languageCode": "eng"
+            }
+        ],
     }
 
     print("\n\n\n================================\n\n\n")
@@ -708,7 +758,7 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
 @frappe.whitelist()
 def request_pickup(shipment_docname, task_id=None):
     try:
-        return _request_pickup(shipment_docname, task_id=task_id)
+        return _request_pickup(shipment_docname, auth=True, task_id=task_id)
     except Exception as e:
         set_status({
             "progress": 100,
@@ -717,7 +767,7 @@ def request_pickup(shipment_docname, task_id=None):
 
         raise e
 
-def _request_pickup(shipment_docname, task_id=None):
+def _request_pickup(shipment_docname, auth=True, task_id=None):
     """ Request pickup """
     
     doc = frappe.get_doc("Shipment", shipment_docname)
@@ -725,6 +775,11 @@ def _request_pickup(shipment_docname, task_id=None):
 
     if doc.status != "Registered":
         raise DHLException("Can only request pickup if status is 'Registered'")
+
+
+    doc.add_comment(text="Requested pickup for {0} between {1} and {2}. Comment: {3}".format(
+        doc.pickup_date, doc.pickup_from, doc.pickup_to, doc.pickup_comment
+    ))
 
     accounts = [{
         "typeCode": "shipper",
@@ -754,7 +809,7 @@ def _request_pickup(shipment_docname, task_id=None):
         doc.pickup_pincode,
         doc.pickup_country
     )
-    pickup_gmt_offset = _validate_address(pickup_address, PICKUP)
+    pickup_gmt_offset = _validate_address(pickup_address, PICKUP, auth=auth)
 
     body = {
         "plannedPickupDateAndTime": "{0} GMT{1}".format(pickup_datetime.isoformat()[:19], pickup_gmt_offset),
@@ -791,19 +846,12 @@ def _request_pickup(shipment_docname, task_id=None):
         }],
     }
 
-
-    print("\n\n\n================================\n\n\n")
-    import json
-    print(json.dumps(body, indent=2))
-    print("\n\n\n================================\n\n\n")
-
-
     set_status({
         "progress": 40,
         "message": _("Requesting pickup..."),
     }, task_id)
 
-    resp = dhl_request("/pickups", 'POST', body=body, settings=settings)
+    resp = dhl_request("/pickups", 'POST', body=body, settings=settings, auth=auth)
 
     doc.db_set("status", "Completed")
     try:
@@ -833,8 +881,12 @@ def cancel_pickup(shipment_docname, reason, task_id=None):
 
         raise e 
 
-def _cancel_pickup(shipment_docname, reason, task_id=None):
+def _cancel_pickup(shipment_docname, reason, auth=True, task_id=None):
     doc = frappe.get_doc("Shipment", shipment_docname)
+
+    doc.add_comment(text="Cancelled Pickup. Reason: {0}".format(
+        reason
+    ))
 
     if not doc.pickup_confirmation_number:
         frappe.throw("This shipment does not have a Pickup Confirmation Number")
@@ -851,7 +903,8 @@ def _cancel_pickup(shipment_docname, reason, task_id=None):
         params={
             "reason": reason,
             "requestorName": frappe.get_user().doc.full_name,
-        }
+        },
+        auth=auth,
     )
 
     doc.db_set('status', 'Registered')
