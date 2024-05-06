@@ -165,12 +165,6 @@ def dhl_request(path, method='GET', params=None, body=None, settings=None, auth=
     except HTTPError as e:
         try:
             data = frappe._dict(resp.json())
-            print("================================")
-            print(data.title)
-            print(data.message)
-            print(data.detail, type(data.detail))
-            print(data.additionalDetails, type(data.additionalDetails))
-            print("================================")
             if data.detail.startswith('996:'):
                 raise DateUnavailableError(data.title, data.message, data.detail, data.additionalDetails)
 
@@ -342,7 +336,8 @@ def _get_price(shipment_docname, pickup_datetime=None, auth=True):
         }] * p.count for p in doc.shipment_parcel])),
         "plannedShippingDateAndTime": pickup_datetime.isoformat(),
         "isCustomsDeclarable": True,
-        "unitOfMeasurement": "metric"
+        "unitOfMeasurement": "metric",
+        "nextBusinessDay": True,  # Return next available pickup
     }
 
     print("\n\n\n================================\n\n\n")

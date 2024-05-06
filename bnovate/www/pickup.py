@@ -113,40 +113,31 @@ def get_label(name):
 
 
 @frappe.whitelist()
-def get_pickup_capabilities(name, date=None, iterations=0):
+def get_pickup_capabilities(name):
+    return _get_pickup_capabilities(name)
+
+def _get_pickup_capabilities(name, pickup_datetime=None, iterations=0):
     """ Get pickup capabilities for a refill request """
 
-    if iterations > 20:
-        frappe.throw(_("Could not find any pickup dates"))
+    if iterations > 1:
+        frappe.throw(_("No pickup date found"))
 
     # Checks permissions too
     rr_doc, shipment_doc = get_request(name)
 
-    if date == None:
-        # First iteration: we want to check if pickup is possible now
-        date = datetime.datetime.now()
-
-    # Iteratively try dates until we get a valid one
-    try:
-        quote = _get_price(shipment_doc.name, pickup_datetime=date, auth=False)
-    except DateUnavailableError:
-        if iterations == 0:
-            # Reset time to 00:00
-            date = datetime.datetime.combine(datetime.date.today(), datetime.time())
-        return get_pickup_capabilities(name,  date + datetime.timedelta(days=1), iterations + 1)
+    quote = _get_price(shipment_doc.name, pickup_datetime=pickup_datetime, auth=False)
 
     if 'pickupCapabilities' not in quote:
-        frappe.throw(_("No Pickup Possible"))
-
+        frappe.throw(_("No pickup possible"))
 
     pickup_capabilities = quote['pickupCapabilities']
 
     # If we are within X minutes or passed the cutoff, try tomorrow:
     cutoff_datetime = datetime.datetime.fromisoformat(pickup_capabilities['localCutoffDateAndTime'])
     if datetime.datetime.now() + datetime.timedelta(minutes=10) >= cutoff_datetime:
-        return get_pickup_capabilities(name, date + datetime.timedelta(days=1), iterations + 1)
+        return _get_pickup_capabilities(name, datetime.datetime.now() + datetime.timedelta(days=1), iterations + 1)
 
-    pickup_capabilities['pickupDate'] = date
+    pickup_capabilities['pickupDate'] = pickup_capabilities['localCutoffDateAndTime'][:10]
     return pickup_capabilities
 
 @frappe.whitelist()
