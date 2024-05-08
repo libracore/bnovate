@@ -261,8 +261,6 @@ async function fill_address(frm, address_type) {
         args.company = frm.doc[address_type + '_supplier'];
     }
 
-    console.log(args)
-
     const resp = await frappe.call({
         method: 'bnovate.bnovate.utils.shipping.fill_address_data',
         args
@@ -330,7 +328,6 @@ async function create_shipment(frm, pickup = false) {
             pickup: Number(pickup),  // or it gets passed as the string 'true' or 'false'...
         },
         callback(status) {
-            console.log(status);
             if (status.data.progress < 100) {
                 frappe.show_progress(__("Creating shipment..."), status.data.progress, 100, __(status.data.message));
             }
@@ -355,7 +352,6 @@ async function request_pickup(frm) {
             shipment_docname: frm.doc.name,
         },
         callback(status) {
-            console.log(status);
             if (status.data.progress < 100) {
                 frappe.show_progress(__("Requesting pickup..."), status.data.progress, 100, __(status.data.message));
             }
@@ -396,7 +392,6 @@ async function cancel_pickup(frm) {
             reason: data.reason,
         },
         callback(status) {
-            console.log(status);
             if (status.data.progress < 100) {
                 frappe.show_progress(__("Cancelling pickup..."), status.data.progress, 100, __(status.data.message));
             }

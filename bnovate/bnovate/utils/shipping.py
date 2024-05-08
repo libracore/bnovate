@@ -193,17 +193,27 @@ def build_address(address_line1, address_line2, city, pincode, country):
     }
     return frappe._dict({k: v for k, v in address.items() if v})
 
-def track_shipments(tracking_numbers):
 
+def track_shipments(tracking_numbers):
+    """ Return tracking data for each shipment.
+
+    Returns dict of tracking_nubmer -> tracking data. 
+    
+    """
     settings = _get_settings()
     if settings.use_live_api:
-        return dhl_request(
+        resp = dhl_request(
             "/tracking", 
             params={"shipmentTrackingNumber": tracking_numbers.join(',')}
         )
     else:
-        # TODO: support multiple numbers and different statuses
-        return get_mock_tracking(tracking_numbers[0])
+        resp = get_mock_tracking(tracking_numbers)
+
+    if 'shipments' not in resp:
+        raise DHLException("Tracking data not found")
+
+
+    return { s['shipmentTrackingNumber']: s for s in resp['shipments'] }
         
 
 #######################
@@ -354,10 +364,10 @@ def _get_price(shipment_docname, pickup_datetime=None, auth=True):
         "nextBusinessDay": True,  # Return next available pickup
     }
 
-    print("\n\n\n================================\n\n\n")
-    import json
-    print(json.dumps(body, indent=2))
-    print("\n\n\n================================\n\n\n")
+    # print("\n\n\n================================\n\n\n")
+    # import json
+    # print(json.dumps(body, indent=2))
+    # print("\n\n\n================================\n\n\n")
 
     # Authorized earlier
     resp = dhl_request("/rates", 'POST', body=body, settings=settings, auth=False)
@@ -704,10 +714,10 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
         ],
     }
 
-    print("\n\n\n================================\n\n\n")
-    import json
-    print(json.dumps(body, indent=2))
-    print("\n\n\n================================\n\n\n")
+    # print("\n\n\n================================\n\n\n")
+    # import json
+    # print(json.dumps(body, indent=2))
+    # print("\n\n\n================================\n\n\n")
 
     set_status({
         "progress": 40,
@@ -928,15 +938,28 @@ def _cancel_pickup(shipment_docname, reason, auth=True, task_id=None):
 
 @frappe.whitelist()
 def update_tracking(shipment_docname):
-    """ Populates shipment events """
-    doc = frappe.get_doc("Shipment", shipment_docname)
+    return _update_tracking(shipment_docname)
 
-    resp = track_shipments([doc.awb_number])
-    tracking = next(( s for s in resp['shipments'] if s['shipmentTrackingNumber'] == doc.awb_number), None)
-    if tracking is None:
-        raise DHLException("Tracking data not found")
+def _update_tracking(shipment_docname, doc=None, tracking_data=None):
+    """ Populates shipment events and sets Shipment Stage
 
-    for row in tracking['events']:
+    If tracking data is not specified, fetches it from API.
+    If doc is not specified, fetches it from DB.
+    """
+    if not doc:
+        doc = frappe.get_doc("Shipment", shipment_docname)
+
+
+    if tracking_data is None:
+        resp = track_shipments([doc.awb_number])
+        if doc.awb_number not in resp:
+            frappe.throw("No tracking data found for {0}, AWB no {1}".format(shipment_docname, doc.awb_number))
+
+        tracking_data = resp[doc.awb_number]
+
+    existing_ids = set(e.id for e in doc.tracking_events)
+
+    for row in tracking_data['events']:
         event = frappe._dict({
             'date': row['date'],
             'time': row['time'],
@@ -948,10 +971,7 @@ def update_tracking(shipment_docname):
             event.service_area_code = row['serviceArea'][0]['code']
             event.service_area = row['serviceArea'][0]['description']
 
-        # Check for duplicates. If date, time, and type_code are the same, we consier it a duplicate
-        exists = next((e for e in doc.tracking_events if event.id == getattr(e, 'id', None)), False)
-
-        if not exists:
+        if not event.id in existing_ids:
             doc.append('tracking_events', event)
 
     # Tracking Stage goes None -> Awaiting Pickup -> In Transit -> Delivered
@@ -968,6 +988,46 @@ def update_tracking(shipment_docname):
                 doc.tracking_stage = 'Delivered'
 
     doc.save()
+
+
+@frappe.whitelist()
+def update_tracking_undelivered(task_id=None):
+    try:
+        _update_tracking_undelivered(task_id)
+    except Exception as e:
+        set_status({
+            "progress": 100,
+            "message": _("Error"),
+        }, task_id, STATUS_DONE)
+
+        raise e
+
+def _update_tracking_undelivered(task_id=None):
+    """ Runs update_tracking for undelivered shipments """
+
+    # Find undelivered shipments
+    results = frappe.db.get_list("Shipment", filters={"status": "Completed", "tracking_stage": ["!=", "Delivered"]}, fields=['name', 'awb_number'])
+    docs = [frappe.get_doc("Shipment", res.name) for res in results if res.awb_number]
+
+    # Get tracking data
+    all_tracking_data = track_shipments([d.awb_number for d in docs])
+
+    for i, doc in enumerate(docs):
+        # Some docs might be too old for tracking data
+        if doc.awb_number not in all_tracking_data:
+            continue
+
+        set_status({
+            "progress": int((i + 1) / len(docs)) * 100,
+            "message": _("Updating..."),
+        }, task_id)
+
+        _update_tracking(doc.name, doc, all_tracking_data[doc.awb_number])
+
+    set_status({
+        "progress": 100,
+        "message": _("Done"),
+    }, task_id, STATUS_DONE)
 
 
 #######################################
