@@ -6,9 +6,10 @@ frappe.listview_settings['Shipment'] = {
         /* CUSTOM STATUSES
 
         - Registered: Shipment data has been registered with the carrier (shipment "created" on their platform)
-        - Pickup Confirmed: Pickup has been requested
+        - Completed: Pickup has been requested -- our work is done.
 
         */
+
         if (doc.status == 'Booked') {
             return [__("Booked"), "orange"];
         }

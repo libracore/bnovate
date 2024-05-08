@@ -10,7 +10,8 @@
   "description",
   "service_area_code",
   "service_area",
-  "signed_by"
+  "signed_by",
+  "id"
  ],
  "fields": [
   {
@@ -53,10 +54,17 @@
    "fieldname": "signed_by",
    "fieldtype": "Data",
    "label": "Signed By"
+  },
+  {
+   "description": "Used to detect duplicates",
+   "fieldname": "id",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "id"
   }
  ],
  "istable": 1,
- "modified": "2024-05-08 09:25:26.460849",
+ "modified": "2024-05-08 14:39:16.687378",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Shipment Event",

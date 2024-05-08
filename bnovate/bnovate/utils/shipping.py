@@ -932,28 +932,41 @@ def update_tracking(shipment_docname):
     doc = frappe.get_doc("Shipment", shipment_docname)
 
     resp = track_shipments([doc.awb_number])
-    # TODO filter out the correct awb
-    tracking = resp['shipments'][0]
-    
-
-    print("=============================")
-    print(tracking)
-    print("=============================")
+    tracking = next(( s for s in resp['shipments'] if s['shipmentTrackingNumber'] == doc.awb_number), None)
+    if tracking is None:
+        raise DHLException("Tracking data not found")
 
     for row in tracking['events']:
-        # TODO: check for duplicates
-        event = {
+        event = frappe._dict({
             'date': row['date'],
             'time': row['time'],
             'type_code': row['typeCode'],
             'description': row['description'],
-        }
+            'id': '{}T{}-{}'.format(row['date'], row['time'], row['typeCode']),
+        })
         if 'serviceArea' in row and row['serviceArea']:
-            event['service_area_code'] = row['serviceArea'][0]['code']
-            event['service_area'] = row['serviceArea'][0]['description']
+            event.service_area_code = row['serviceArea'][0]['code']
+            event.service_area = row['serviceArea'][0]['description']
 
-        doc.append('tracking_events', event)
-    
+        # Check for duplicates. If date, time, and type_code are the same, we consier it a duplicate
+        exists = next((e for e in doc.tracking_events if event.id == getattr(e, 'id', None)), False)
+
+        if not exists:
+            doc.append('tracking_events', event)
+
+    # Tracking Stage goes None -> Awaiting Pickup -> In Transit -> Delivered
+    if len(doc.tracking_events) == 0:
+        doc.tracking_stage = 'Awaiting Pickup'
+    else:
+        for event in doc.tracking_events:
+            if event.type_code == 'PU':
+                # This should be the first event in the list
+                doc.tracking_stage = 'In Transit'
+
+            elif event.type_code == 'OK':
+                # This should be the last event in the list
+                doc.tracking_stage = 'Delivered'
+
     doc.save()
 
 
