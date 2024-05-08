@@ -253,7 +253,7 @@ async function fill_address(frm, address_type) {
 
     if (business_type === 'Company') {
         args.company = frm.doc[address_type + '_company'];
-        args.contact = frm.doc[address_type + '_person'];
+        args.user = frm.doc[address_type + '_contact_person'];
     } else if (business_type === 'Customer') {
         args.customer = frm.doc[address_type + '_customer'];
         args.contact = frm.doc[address_type + '_contact_name'];
