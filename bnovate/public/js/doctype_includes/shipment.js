@@ -37,6 +37,7 @@ frappe.ui.form.on("Shipment", {
                     frm.add_custom_button(__("Finalize DN"), () => finalize_dn(frm));
                 }
                 frm.add_custom_button(__("Cancel Pickup"), () => cancel_pickup(frm));
+                frm.add_custom_button(__("Update Tracking"), () => update_tracking(frm));
             }
         }
 
@@ -252,15 +253,13 @@ async function fill_address(frm, address_type) {
 
     if (business_type === 'Company') {
         args.company = frm.doc[address_type + '_company'];
-        args.contact = frm.doc[address_type + '_person'];
+        args.user = frm.doc[address_type + '_contact_person'];
     } else if (business_type === 'Customer') {
         args.customer = frm.doc[address_type + '_customer'];
         args.contact = frm.doc[address_type + '_contact_name'];
     } else if (business_type === 'Supplier') {
         args.company = frm.doc[address_type + '_supplier'];
     }
-
-    console.log(args)
 
     const resp = await frappe.call({
         method: 'bnovate.bnovate.utils.shipping.fill_address_data',
@@ -329,7 +328,6 @@ async function create_shipment(frm, pickup = false) {
             pickup: Number(pickup),  // or it gets passed as the string 'true' or 'false'...
         },
         callback(status) {
-            console.log(status);
             if (status.data.progress < 100) {
                 frappe.show_progress(__("Creating shipment..."), status.data.progress, 100, __(status.data.message));
             }
@@ -354,7 +352,6 @@ async function request_pickup(frm) {
             shipment_docname: frm.doc.name,
         },
         callback(status) {
-            console.log(status);
             if (status.data.progress < 100) {
                 frappe.show_progress(__("Requesting pickup..."), status.data.progress, 100, __(status.data.message));
             }
@@ -395,7 +392,6 @@ async function cancel_pickup(frm) {
             reason: data.reason,
         },
         callback(status) {
-            console.log(status);
             if (status.data.progress < 100) {
                 frappe.show_progress(__("Cancelling pickup..."), status.data.progress, 100, __(status.data.message));
             }
@@ -408,4 +404,15 @@ async function cancel_pickup(frm) {
     console.log(resp.message);
     frm.reload_doc();
     return resp.message;
+}
+
+async function update_tracking(frm) {
+    const resp = await frappe.call({
+        method: "bnovate.bnovate.utils.shipping.update_tracking",
+        args: {
+            shipment_docname: frm.doc.name,
+        }
+    })
+    console.log(resp.message);
+    frm.reload_doc();
 }
