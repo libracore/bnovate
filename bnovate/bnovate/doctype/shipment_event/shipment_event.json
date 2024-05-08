@@ -1,0 +1,69 @@
+{
+ "creation": "2024-05-08 08:22:09.114219",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "date",
+  "time",
+  "type_code",
+  "description",
+  "service_area_code",
+  "service_area",
+  "signed_by"
+ ],
+ "fields": [
+  {
+   "columns": 2,
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Date"
+  },
+  {
+   "columns": 2,
+   "fieldname": "time",
+   "fieldtype": "Time",
+   "in_list_view": 1,
+   "label": "Time"
+  },
+  {
+   "fieldname": "type_code",
+   "fieldtype": "Data",
+   "label": "Type Code"
+  },
+  {
+   "columns": 5,
+   "fieldname": "description",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Description"
+  },
+  {
+   "fieldname": "service_area_code",
+   "fieldtype": "Data",
+   "label": "Service Area Code"
+  },
+  {
+   "fieldname": "service_area",
+   "fieldtype": "Data",
+   "label": "Service Area"
+  },
+  {
+   "fieldname": "signed_by",
+   "fieldtype": "Data",
+   "label": "Signed By"
+  }
+ ],
+ "istable": 1,
+ "modified": "2024-05-08 09:25:26.460849",
+ "modified_by": "Administrator",
+ "module": "bNovate",
+ "name": "Shipment Event",
+ "owner": "Administrator",
+ "permissions": [],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

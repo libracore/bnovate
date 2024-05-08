@@ -21,6 +21,8 @@ from frappe.contacts.doctype.contact.contact import get_contact_details
 
 from bnovate.bnovate.utils.realtime import set_status, STATUS_DONE
 
+from .shipping_mock import get_mock_tracking
+
 READ, WRITE = "read", "write"
 PICKUP, DELIVERY = "pickup", "delivery"
 
@@ -191,6 +193,18 @@ def build_address(address_line1, address_line2, city, pincode, country):
     }
     return frappe._dict({k: v for k, v in address.items() if v})
 
+def track_shipments(tracking_numbers):
+
+    settings = _get_settings()
+    if settings.use_live_api:
+        return dhl_request(
+            "/tracking", 
+            params={"shipmentTrackingNumber": tracking_numbers.join(',')}
+        )
+    else:
+        # TODO: support multiple numbers and different statuses
+        return get_mock_tracking(tracking_numbers[0])
+        
 
 #######################
 # WRAPPERS
@@ -911,6 +925,36 @@ def _cancel_pickup(shipment_docname, reason, auth=True, task_id=None):
     }, task_id, STATUS_DONE)
 
     return resp
+
+@frappe.whitelist()
+def update_tracking(shipment_docname):
+    """ Populates shipment events """
+    doc = frappe.get_doc("Shipment", shipment_docname)
+
+    resp = track_shipments([doc.awb_number])
+    # TODO filter out the correct awb
+    tracking = resp['shipments'][0]
+    
+
+    print("=============================")
+    print(tracking)
+    print("=============================")
+
+    for row in tracking['events']:
+        # TODO: check for duplicates
+        event = {
+            'date': row['date'],
+            'time': row['time'],
+            'type_code': row['typeCode'],
+            'description': row['description'],
+        }
+        if 'serviceArea' in row and row['serviceArea']:
+            event['service_area_code'] = row['serviceArea'][0]['code']
+            event['service_area'] = row['serviceArea'][0]['description']
+
+        doc.append('tracking_events', event)
+    
+    doc.save()
 
 
 #######################################

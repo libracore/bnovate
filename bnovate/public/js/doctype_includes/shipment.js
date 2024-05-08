@@ -37,6 +37,7 @@ frappe.ui.form.on("Shipment", {
                     frm.add_custom_button(__("Finalize DN"), () => finalize_dn(frm));
                 }
                 frm.add_custom_button(__("Cancel Pickup"), () => cancel_pickup(frm));
+                frm.add_custom_button(__("Update Tracking"), () => update_tracking(frm));
             }
         }
 
@@ -408,4 +409,15 @@ async function cancel_pickup(frm) {
     console.log(resp.message);
     frm.reload_doc();
     return resp.message;
+}
+
+async function update_tracking(frm) {
+    const resp = await frappe.call({
+        method: "bnovate.bnovate.utils.shipping.update_tracking",
+        args: {
+            shipment_docname: frm.doc.name,
+        }
+    })
+    console.log(resp.message);
+    frm.reload_doc();
 }

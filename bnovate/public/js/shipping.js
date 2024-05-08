@@ -1,5 +1,4 @@
 // (C) 2023, bnovate
-// Simulate realtime update from the server.
 
 frappe.provide('bnovate.shipping');
 
@@ -50,3 +49,4 @@ bnovate.shipping.validate_sales_order = async function (name) {
     });
     return resp.message
 }
+
