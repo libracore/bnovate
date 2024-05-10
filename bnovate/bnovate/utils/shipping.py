@@ -204,7 +204,7 @@ def track_shipments(tracking_numbers):
     if settings.use_live_api:
         resp = dhl_request(
             "/tracking", 
-            params={"shipmentTrackingNumber": tracking_numbers.join(',')}
+            params={"shipmentTrackingNumber": ','.join(tracking_numbers)}
         )
     else:
         resp = get_mock_tracking(tracking_numbers)
