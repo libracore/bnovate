@@ -460,7 +460,7 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
         }]
 
     label_format = "ECOM26_84_001"  # Matches DHL printer
-    if doc.is_return:
+    if doc.label_format == "A4":
         label_format = "ECOM26_84_A4_001"  # A4
 
     image_options = [{
@@ -1236,6 +1236,9 @@ def make_shipment_from_dn(source_name, target_doc=None):
         target.shipment_amount = shipping
         set_totals(target)
 
+        if args and args.label_format:
+            target.label_format = args.label_format
+
     doclist = get_mapped_doc("Delivery Note", source_name, {
         "Delivery Note": {
             "doctype": "Shipment",
@@ -1272,6 +1275,7 @@ def make_return_shipment_from_dn(source_name, target_doc=None):
     """ To be called from open_mapped_doc. """
 
     def postprocess(source, target):
+        args = frappe.flags.args
         settings = _get_settings()
 
         # PICKUP
@@ -1324,6 +1328,9 @@ def make_return_shipment_from_dn(source_name, target_doc=None):
         target.shipment_amount = 0
         set_totals(target)
         set_missing_values(target)
+
+        if args and args.label_format:
+            target.label_format = args.label_format
 
     doclist = get_mapped_doc("Delivery Note", source_name, {
         "Delivery Note": {
@@ -1505,6 +1512,7 @@ def make_return_shipment_from_so(source_name, target_doc=None):
     """ To be called from open_mapped_doc. """
 
     def postprocess(source, target):
+        args = frappe.flags.args
         settings = _get_settings()
 
         # PICKUP
@@ -1565,6 +1573,9 @@ def make_return_shipment_from_so(source_name, target_doc=None):
         target.shipment_amount = 0
         set_totals(target)
         set_missing_values(target)
+
+        if args and args.label_format:
+            target.label_format = args.label_format
 
 
     doclist = get_mapped_doc("Sales Order", source_name, {
