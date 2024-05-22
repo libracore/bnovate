@@ -133,7 +133,8 @@ def _get_pickup_capabilities(name, pickup_datetime=None, iterations=0):
     pickup_capabilities = quote['pickupCapabilities']
 
     # If we are within X minutes or passed the cutoff, try tomorrow:
-    cutoff_datetime = datetime.datetime.fromisoformat(pickup_capabilities['localCutoffDateAndTime'])
+    date_format = "%Y-%m-%dT%H:%M:%S" 
+    cutoff_datetime = datetime.datetime.strptime(pickup_capabilities['localCutoffDateAndTime'], date_format)
     if datetime.datetime.now() + datetime.timedelta(minutes=10) >= cutoff_datetime:
         return _get_pickup_capabilities(name, datetime.datetime.now() + datetime.timedelta(days=1), iterations + 1)
 
