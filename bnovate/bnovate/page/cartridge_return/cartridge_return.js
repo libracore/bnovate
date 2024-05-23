@@ -162,12 +162,34 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 				customer = dn_doc.customer;
 				customer_name = dn_doc.customer_name;
 			}
+
+			// Find serial number of valve
+			let valve_sn = null;
+			const query = await frappe.db.get_list("Stock Entry", {
+				filters: {
+					"stock_entry_type": "Manufacture",
+					"serial_no": serial_no
+				},
+				order_by: "posting_date DESC",
+				limit: 1
+			});
+			console.log(query)
+			if (query.length > 0) {
+				const { name } = query[0];
+				const ste_doc = await frappe.db.get_doc("Stock Entry", name);
+				console.log(ste_doc);
+
+				// TODO: find valve SN
+				// TODO: if it exists, find suffix and increment. If no suffix, add one.
+			}
+
 			return {
 				warehouse: sn_doc.warehouse,
 				customer: customer,
 				customer_name: customer_name,
 				open_sales_order: sn_doc.open_sales_order,
 				error: error,
+				valve_sn: valve_sn,
 			}
 		} catch (err) {
 			console.log(err);
