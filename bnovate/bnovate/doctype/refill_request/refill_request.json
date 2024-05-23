@@ -196,14 +196,16 @@
    "fieldtype": "Column Break"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "shipment",
    "fieldtype": "Link",
    "label": "Shipment",
-   "options": "Shipment"
+   "options": "Shipment",
+   "read_only": 1
   }
  ],
  "is_submittable": 1,
- "modified": "2024-04-30 18:18:40.935852",
+ "modified": "2024-05-22 13:38:58.505993",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Refill Request",

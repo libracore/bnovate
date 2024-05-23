@@ -204,7 +204,30 @@ async function show_deliverability(frm) {
     }
 }
 
+
+async function prompt_label_format(frm) {
+    const data = await bnovate.utils.prompt(
+        __("Confirm Label Format"),
+        [{
+            label: __("Label Size"),
+            fieldname: "label_format",
+            fieldtype: "Select",
+            options: "8x4 inch\nA4",
+            default: "8x4 inch",
+            reqd: 1,
+        }],
+        "Confirm",
+        "Cancel",
+    )
+    return data;
+}
+
 async function create_return_shipment(frm) {
+
+    const args = await prompt_label_format(frm);
+    if (args === null) {
+        return
+    }
 
     // Since we allow this on draft, we haven't yet validated the SO for delivery creation
     const err = await bnovate.shipping.validate_sales_order(frm.doc.name);
@@ -216,5 +239,6 @@ async function create_return_shipment(frm) {
     frappe.model.open_mapped_doc({
         method: "bnovate.bnovate.utils.shipping.make_return_shipment_from_so",
         frm,
+        args,
     })
 }

@@ -196,6 +196,30 @@ async function prompt_shipment(frm) {
             fieldtype: "Time",
             reqd: 1,
             default: pickup_from,
+        }, {
+            label: __("Label Size"),
+            fieldname: "label_format",
+            fieldtype: "Select",
+            options: "8x4 inch\nA4",
+            default: "8x4 inch",
+            reqd: 1,
+        }],
+        "Confirm",
+        "Cancel",
+    )
+    return data;
+}
+
+async function prompt_label_format(frm) {
+    const data = await bnovate.utils.prompt(
+        __("Confirm Label Format"),
+        [{
+            label: __("Label Size"),
+            fieldname: "label_format",
+            fieldtype: "Select",
+            options: "8x4 inch\nA4",
+            default: "8x4 inch",
+            reqd: 1,
         }],
         "Confirm",
         "Cancel",
@@ -219,9 +243,16 @@ async function create_shipment(frm) {
 }
 
 async function create_return_shipment(frm) {
+    const args = await prompt_label_format(frm);
+
+    if (args === null) {
+        return
+    }
+
     frappe.model.open_mapped_doc({
         method: "bnovate.bnovate.utils.shipping.make_return_shipment_from_dn",
         frm,
+        args,
     })
 }
 
