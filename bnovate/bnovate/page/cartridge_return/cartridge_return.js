@@ -154,42 +154,47 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 			if (item_code != '100146') {
 				error = 'Not a cartridge';
 			}
-			console.log(sn_doc)
 			if ((!customer) && sn_doc.purchase_document_type == "Delivery Note") {
 				// Typical configuration of Serial No doc for cartridges after delivery.
 				let dn_doc = await frappe.db.get_doc('Delivery Note', sn_doc.purchase_document_no);
-				console.log(dn_doc)
 				customer = dn_doc.customer;
 				customer_name = dn_doc.customer_name;
 			}
 
 			// Find serial number of valve
 			let valve_sn = null;
+			let seat_sn = null;
 			const query = await frappe.db.get_list("Stock Entry", {
 				filters: {
 					"stock_entry_type": "Manufacture",
 					"serial_no": serial_no
 				},
 				order_by: "posting_date DESC",
-				limit: 1
+				limit: 1  // first and only result should be the newest
 			});
-			console.log(query)
 			if (query.length > 0) {
-				const { name } = query[0];
-				const ste_doc = await frappe.db.get_doc("Stock Entry", name);
-				console.log(ste_doc);
-
-				// TODO: find valve SN
-				// TODO: if it exists, find suffix and increment. If no suffix, add one.
+				const ste_doc = await frappe.db.get_doc("Stock Entry", query[0].name);
+				valve_sn = ste_doc.items.find(row => bnovate.utils.is_valve(row.item_code))?.serial_no;
 			}
+			if (valve_sn) {
+				let parts = valve_sn.match(/^(.*-.*-)(\d+)$/);  // FIXME: second group would also match
+				if (parts) {
+					let [_, base, ext] = parts;
+					let inc = parseInt(ext) + 1;
+					seat_sn = `${base}${String(inc).padStart(2, '0')}`;
+				}
+			}
+
+			console.log(valve_sn, seat_sn);
 
 			return {
 				warehouse: sn_doc.warehouse,
-				customer: customer,
-				customer_name: customer_name,
 				open_sales_order: sn_doc.open_sales_order,
-				error: error,
-				valve_sn: valve_sn,
+				customer,
+				customer_name,
+				error,
+				valve_sn,
+				seat_sn,
 			}
 		} catch (err) {
 			console.log(err);
@@ -252,6 +257,11 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 				item_code: '100799', // Barrel plug for pouches
 				qty: 4,
 				s_warehouse: "Stores - bN",
+			}, {
+				item_code: '101018.02', // Cartridge seat refurbished
+				qty: 1,
+				t_warehouse: "Stores - bN", // check warehouse
+				serial_no: enc.seat_sn  // If null, will be auto-assigned.
 			}]
 
 		});
