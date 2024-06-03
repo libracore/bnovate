@@ -11,7 +11,7 @@ frappe.query_reports["Orders to Fulfill"] = {
 			"fieldname": "only_manufacturing",
 			"label": __("Only manufactured items"),
 			"fieldtype": "Check",
-			"default": 1
+			"default": 0
 		},
 		{
 			"fieldname": "include_drafts",
