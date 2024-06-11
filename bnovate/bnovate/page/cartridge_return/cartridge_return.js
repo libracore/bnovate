@@ -89,14 +89,11 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 		document.querySelectorAll(".remove-rows").forEach((el) => {
 			el.addEventListener('click', (e) => {
 				state.remove_serial_no(e.currentTarget.dataset.serialNo);
-				console.log(e)
 			})
 		})
 
 		document.querySelectorAll(".repair-needed").forEach((el) => {
 			el.addEventListener('change', (e) => {
-				console.log('Changed', e);
-				console.log(e.target.checked, e.target.dataset.serialNo);
 				state.set_repair(e.target.dataset.serialNo, e.target.checked);
 			})
 		})
