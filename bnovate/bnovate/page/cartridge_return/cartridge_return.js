@@ -63,7 +63,7 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 			</td>
 			<td>
 				{% if not enc.transferred %}
-					<input type="checkbox" class="repair-needed" id="repair-{{ enc.serial_no }}">
+					<input type="checkbox" class="repair-needed" data-serial-no="{{ enc.serial_no }}" {% if enc.needs_repair %}checked{% endif %}>
 				{% endif %}
 			</td>
 			<td>
@@ -90,6 +90,14 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 			el.addEventListener('click', (e) => {
 				state.remove_serial_no(e.currentTarget.dataset.serialNo);
 				console.log(e)
+			})
+		})
+
+		document.querySelectorAll(".repair-needed").forEach((el) => {
+			el.addEventListener('change', (e) => {
+				console.log('Changed', e);
+				console.log(e.target.checked, e.target.dataset.serialNo);
+				state.set_repair(e.target.dataset.serialNo, e.target.checked);
 			})
 		})
 	}
@@ -123,6 +131,11 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 			state.encs.splice(index, 1);
 			draw_table();
 		}
+	}
+
+	state.set_repair = function (serial_no, checked) {
+		const enc = state.encs.find(enc => enc.serial_no == serial_no);
+		enc.needs_repair = checked;
 	}
 
 
@@ -231,8 +244,7 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 	}
 
 	async function create_repack_entry(enc) {
-		const needs_repair = document.getElementById(`repair-${enc.serial_no}`).checked;
-		const warehouse = needs_repair ? "Repairs - bN" : "To Refill - bN";
+		const warehouse = enc.needs_repair ? "Repairs - bN" : "To Refill - bN";
 		doc = await frappe.db.insert({
 			doctype: "Stock Entry",
 			title: `Cartridge Return for ${enc.serial_no}`,
