@@ -2,7 +2,8 @@ import frappe
 
 from frappe import _
 
-from .helpers import auth, get_session_customers, get_addresses, build_sidebar, has_cartridge_portal, allow_unstored_cartridges, fixed_billing_address
+from .helpers import auth, get_session_customers, get_addresses, build_sidebar, has_cartridge_portal, \
+    allow_unstored_cartridges, organize_return
 
 from bnovate.bnovate.report.cartridge_status import cartridge_status
 
@@ -15,7 +16,7 @@ def get_context(context):
     data = get_cartridges()
     context.cartridges = data.cartridges
     context.allow_unstored_cartridges = data.allow_unstored_cartridges
-    context.fixed_billing_address = fixed_billing_address()
+    context.organize_return = data.organize_return
 
     build_sidebar(context)
     context.addresses = get_addresses()
@@ -35,5 +36,6 @@ def get_cartridges():
     if has_cartridge_portal() and managed_customers:
         data.cartridges = cartridge_status.get_data(frappe._dict({"customer": managed_customers}))
         data.allow_unstored_cartridges = allow_unstored_cartridges()
+        data.organize_return = organize_return()
 
     return data

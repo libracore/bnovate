@@ -57,6 +57,7 @@
         cartridges: [],    // sorted, iterable version
         cartridge_idx: {}, // quick look up
         allow_unstored_cartridges: false,
+        organize_return: false,
     }
 
     frappe.require([
@@ -70,6 +71,7 @@
         prepare_data(data);
         env.cartridges = data.cartridges;
         env.allow_unstored_cartridges = data.allow_unstored_cartridges;
+        env.organize_return = data.organize_return;
         draw_datatable(env);
     })
 
@@ -211,6 +213,7 @@
         document.getElementById('build-fill-request').show(
             get_selected(),
             await bnovate.web.get_address_data(),
+            env.organize_return,
             post_request,
         );
     });

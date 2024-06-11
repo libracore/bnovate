@@ -60,6 +60,7 @@ fixtures = [
             "Customer-enable_cartridge_portal",
             "Customer-allow_unstored_cartridges",
             "Customer-portal_billing_address",
+            "Customer-organize_return",
             "Sales Order Item-refill_request",
             "Sales Order Item-serial_nos",  # pluralized to avoid automations from selling controller
             "Sales Order-indicator_key",

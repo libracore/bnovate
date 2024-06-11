@@ -213,7 +213,7 @@ async function prompt_label_format(frm) {
             fieldname: "label_format",
             fieldtype: "Select",
             options: "8x4 inch\nA4",
-            default: "8x4 inch",
+            default: "A4",
             reqd: 1,
         }],
         "Confirm",

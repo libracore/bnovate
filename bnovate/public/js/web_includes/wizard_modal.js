@@ -134,12 +134,25 @@ const template_page4 = `
     </div>
 </div>
 
-
 <div class="row">
     <div class="col-sm">
-        <h5>{{ __("Remarks") }}</h5>
-        <label for="remarks" style="display: none">Remarks</label>
-        <textarea type="text" name="remarks"></textarea>
+        <div id="form-container">
+            <form action="">
+                {% if doc.organize_return %}
+                <h5>{{ __("Parcel Count") }}</h5>
+                <p>{{ __("How many parcels are you sending?") }}</p>
+                <p>{{ __("One parcel can contain several cartridges. We will create one return label per parcel.") }}</p>
+                <div class="form-group">
+                    <label for="parcel_count" class="control-label" style="display: none">Parcel Count</label>
+                    <input type="number" class="form-control" name="parcel_count" min="1" max="10" style="width: 30%" value="1">
+                </div>
+                {% endif %}
+
+                <h5>{{ __("Remarks") }}</h5>
+                <label for="remarks" style="display: none">Remarks</label>
+                <textarea type="text" name="remarks"></textarea>
+            </form>
+        </div>
     </div>
 </div>
 
@@ -160,6 +173,8 @@ customElements.define('wizard-modal', class extends HTMLElement {
         this.serial_nos = [];
         this.addresses = [];
         this.doc = {};
+        this.organize_return = false;
+        this.parcel_count = 0;
 
         // Initialize the wizard
         this.currentPage = 1;
@@ -223,7 +238,7 @@ customElements.define('wizard-modal', class extends HTMLElement {
         });
     }
 
-    show(serial_nos, address_data, callback) {
+    show(serial_nos, address_data, organize_return, callback) {
         if (!this.shadowRoot) {
             this.draw();
         }
@@ -231,6 +246,7 @@ customElements.define('wizard-modal', class extends HTMLElement {
         this.addresses = address_data.addresses;
         this.shipping_addresses = address_data.shipping_addresses;
         this.billing_addresses = address_data.billing_addresses;
+        this.organize_return = organize_return;
         this.callback = callback;
         $(this.modal).modal({ backdrop: 'static', keyboard: false });
     }
@@ -320,6 +336,7 @@ customElements.define('wizard-modal', class extends HTMLElement {
         }));
         const shipping_address = this.modal.querySelector("input[name='shipping_address']:checked")?.value;
         const billing_address = this.modal.querySelector("input[name='billing_address']:checked")?.value;
+        const parcel_count = this.modal.querySelector("input[name='parcel_count']")?.value;
         const remarks = this.modal.querySelector("textarea[name='remarks']")?.value;
 
         const shipping_address_display = this.addresses.find(addr => addr.name == shipping_address)?.display;
@@ -332,6 +349,8 @@ customElements.define('wizard-modal', class extends HTMLElement {
             billing_address,
             billing_address_display,
             remarks,
+            organize_return: this.organize_return,
+            parcel_count,
         };
         return doc;
     }

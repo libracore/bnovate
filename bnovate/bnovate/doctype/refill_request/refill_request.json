@@ -26,6 +26,9 @@
   "billing_address_display",
   "section_break_9",
   "items",
+  "return_section",
+  "return_label_needed",
+  "parcel_count",
   "section_break_11",
   "remarks",
   "printing_details",
@@ -202,10 +205,29 @@
    "label": "Shipment",
    "options": "Shipment",
    "read_only": 1
+  },
+  {
+   "fieldname": "return_section",
+   "fieldtype": "Section Break",
+   "label": "Return"
+  },
+  {
+   "depends_on": "return_label_needed",
+   "description": "How many return labels are needed? (One label per parcel)",
+   "fieldname": "parcel_count",
+   "fieldtype": "Int",
+   "label": "Parcel Count"
+  },
+  {
+   "default": "0",
+   "description": "If checked, the customer needs return labels.",
+   "fieldname": "return_label_needed",
+   "fieldtype": "Check",
+   "label": "Return Label Needed"
   }
  ],
  "is_submittable": 1,
- "modified": "2024-05-22 13:38:58.505993",
+ "modified": "2024-06-11 14:20:37.654104",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Refill Request",
