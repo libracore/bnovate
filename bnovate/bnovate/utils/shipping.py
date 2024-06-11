@@ -1128,7 +1128,7 @@ def fill_address_data(address_type, address_name,  company=None, customer=None, 
 
     if contact:
         contact_doc = frappe.get_value("Contact", contact, ['first_name', 'last_name', 'email_id', 'phone', 'mobile_no'], as_dict=True)
-        contact_doc.contact_display = ' '.join([contact_doc.first_name, contact_doc.last_name]).strip()
+        contact_doc.contact_display = ' '.join([n.strip() for n in [contact_doc.first_name, contact_doc.last_name] if n]).strip()
         contact_doc.email = contact_doc.email_id
     elif user:
         contact_doc = frappe.get_value("User", user, ['full_name', 'email', 'phone', 'mobile_no'], as_dict=True)
