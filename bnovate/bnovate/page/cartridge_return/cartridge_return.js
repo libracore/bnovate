@@ -8,12 +8,19 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 		title: 'Cartridge Return',
 		single_column: false
 	});
+	window.page = page;
 
 
 	let state = {
 		encs: [
 		], // will contain list of objects with attributes: serial_no [str], warehouse [str], transferred [bool]
+		print_button_shown: false,
 	};
+
+	state.get_docnames = function () {
+		return state.encs.map(enc => enc.docname).filter(docname => !!docname);
+	}
+
 	window.state = state;
 
 	let form = new frappe.ui.FieldGroup({
@@ -97,6 +104,17 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 				state.set_repair(e.target.dataset.serialNo, e.target.checked);
 			})
 		})
+
+		// Show print button if stock entries exist
+		let docnames = state.get_docnames();
+		if (docnames.length > 0) {
+			if (!state.print_button_shown) {
+				page.add_inner_button('<i class="fa fa-print"></i> ' + __('Routing Label'), () => {
+					get_label("Stock Entry", docnames, "Cartridge Routing Label", "Labels 100x30mm");
+				})
+				state.print_button_shown = true;
+			}
+		}
 	}
 	draw_table();
 
