@@ -110,7 +110,7 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 		if (docnames.length > 0) {
 			if (!state.print_button_shown) {
 				page.add_inner_button('<i class="fa fa-print"></i> ' + __('Routing Label'), () => {
-					get_label("Stock Entry", docnames, "Cartridge Routing Label", "Labels 100x30mm");
+					bnovate.utils.get_labels("Stock Entry", state.get_docnames(), "Cartridge Routing Label", "Labels 100x30mm");
 				})
 				state.print_button_shown = true;
 			}
