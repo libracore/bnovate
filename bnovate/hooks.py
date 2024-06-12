@@ -180,6 +180,7 @@ doctype_js = {
     "Sales Order": ["public/js/doctype_includes/sales_order.js"],
     "Sales Invoice": ["public/js/doctype_includes/sales_invoice.js"],
     "Serial No": ["public/js/doctype_includes/serial_no.js"],
+    "Stock Entry": ["public/js/doctype_includes/stock_entry.js"],
     "Work Order": ["public/js/doctype_includes/work_order.js"],
     "Material Request": ["public/js/doctype_includes/material_request.js"],
     "Shipment": ["public/js/doctype_includes/shipment.js"],
@@ -403,5 +404,6 @@ jenv = {
     "methods": [
         "find_serial_no:bnovate.bnovate.doctype.storage_location.storage_location.find_serial_no",
         "find_serial_nos:bnovate.bnovate.doctype.storage_location.storage_location.find_serial_nos",
+        "is_enclosure:bnovate.bnovate.utils.enclosures.is_enclosure"
     ],
 }

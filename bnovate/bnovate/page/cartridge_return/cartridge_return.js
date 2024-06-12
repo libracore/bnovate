@@ -8,12 +8,19 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 		title: 'Cartridge Return',
 		single_column: false
 	});
+	window.page = page;
 
 
 	let state = {
 		encs: [
 		], // will contain list of objects with attributes: serial_no [str], warehouse [str], transferred [bool]
+		print_button_shown: false,
 	};
+
+	state.get_docnames = function () {
+		return state.encs.map(enc => enc.docname).filter(docname => !!docname);
+	}
+
 	window.state = state;
 
 	let form = new frappe.ui.FieldGroup({
@@ -63,7 +70,7 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 			</td>
 			<td>
 				{% if not enc.transferred %}
-					<input type="checkbox" class="repair-needed" id="repair-{{ enc.serial_no }}">
+					<input type="checkbox" class="repair-needed" data-serial-no="{{ enc.serial_no }}" {% if enc.needs_repair %}checked{% endif %}>
 				{% endif %}
 			</td>
 			<td>
@@ -89,9 +96,25 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 		document.querySelectorAll(".remove-rows").forEach((el) => {
 			el.addEventListener('click', (e) => {
 				state.remove_serial_no(e.currentTarget.dataset.serialNo);
-				console.log(e)
 			})
 		})
+
+		document.querySelectorAll(".repair-needed").forEach((el) => {
+			el.addEventListener('change', (e) => {
+				state.set_repair(e.target.dataset.serialNo, e.target.checked);
+			})
+		})
+
+		// Show print button if stock entries exist
+		let docnames = state.get_docnames();
+		if (docnames.length > 0) {
+			if (!state.print_button_shown) {
+				page.add_inner_button('<i class="fa fa-print"></i> ' + __('Routing Label'), () => {
+					bnovate.utils.get_labels("Stock Entry", state.get_docnames(), "Cartridge Routing Label", "Labels 100x30mm");
+				})
+				state.print_button_shown = true;
+			}
+		}
 	}
 	draw_table();
 
@@ -125,6 +148,11 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 		}
 	}
 
+	state.set_repair = function (serial_no, checked) {
+		const enc = state.encs.find(enc => enc.serial_no == serial_no);
+		enc.needs_repair = checked;
+	}
+
 
 	// LOGIC
 	////////////////////////
@@ -154,20 +182,47 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 			if (item_code != '100146') {
 				error = 'Not a cartridge';
 			}
-			console.log(sn_doc)
 			if ((!customer) && sn_doc.purchase_document_type == "Delivery Note") {
 				// Typical configuration of Serial No doc for cartridges after delivery.
 				let dn_doc = await frappe.db.get_doc('Delivery Note', sn_doc.purchase_document_no);
-				console.log(dn_doc)
 				customer = dn_doc.customer;
 				customer_name = dn_doc.customer_name;
 			}
+
+			// Find serial number of valve
+			let valve_sn = null;
+			let seat_sn = null;
+			const query = await frappe.db.get_list("Stock Entry", {
+				filters: {
+					"stock_entry_type": "Manufacture",
+					"serial_no": serial_no
+				},
+				order_by: "posting_date DESC",
+				limit: 1  // first and only result should be the newest
+			});
+			if (query.length > 0) {
+				const ste_doc = await frappe.db.get_doc("Stock Entry", query[0].name);
+				valve_sn = ste_doc.items.find(row => bnovate.utils.is_valve(row.item_code))?.serial_no;
+			}
+			if (valve_sn) {
+				let parts = valve_sn.match(/^(.*-.*-)(\d+)$/);  // FIXME: second group would also match
+				if (parts) {
+					let [_, base, ext] = parts;
+					let inc = parseInt(ext) + 1;
+					seat_sn = `${base}${String(inc).padStart(2, '0')}`;
+				}
+			}
+
+			console.log(valve_sn, seat_sn);
+
 			return {
 				warehouse: sn_doc.warehouse,
-				customer: customer,
-				customer_name: customer_name,
 				open_sales_order: sn_doc.open_sales_order,
-				error: error,
+				customer,
+				customer_name,
+				error,
+				valve_sn,
+				seat_sn,
 			}
 		} catch (err) {
 			console.log(err);
@@ -204,8 +259,7 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 	}
 
 	async function create_repack_entry(enc) {
-		const needs_repair = document.getElementById(`repair-${enc.serial_no}`).checked;
-		const warehouse = needs_repair ? "Repairs - bN" : "To Refill - bN";
+		const warehouse = enc.needs_repair ? "Repairs - bN" : "To Refill - bN";
 		doc = await frappe.db.insert({
 			doctype: "Stock Entry",
 			title: `Cartridge Return for ${enc.serial_no}`,
@@ -230,6 +284,11 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 				item_code: '100799', // Barrel plug for pouches
 				qty: 4,
 				s_warehouse: "Stores - bN",
+			}, {
+				item_code: '101018.02', // Cartridge seat refurbished
+				qty: 1,
+				t_warehouse: "Stores - bN", // check warehouse
+				serial_no: enc.seat_sn  // If null, will be auto-assigned.
 			}]
 
 		});
