@@ -118,6 +118,18 @@ function get_label(doctype, docname, print_format, label_reference) {
 }
 bnovate.utils.get_label = get_label; // already used in many custom scripts, keep in global namespace.
 
+function get_labels(doctype, docnames, print_format, label_reference) {
+  // To print directly, we place content in an iframe and trigger print from there:
+  print_url(frappe.urllib.get_full_url(
+    "/api/method/bnovate.bnovate.utils.labels.download_label_for_docs"
+    + "?doctype=" + encodeURIComponent(doctype)
+    + "&docnames=" + encodeURIComponent(docnames)
+    + "&print_format=" + encodeURIComponent(print_format)
+    + "&label_reference=" + encodeURIComponent(label_reference)
+  ))
+}
+bnovate.utils.get_labels = get_labels; // already used in many custom scripts, keep in global namespace.
+
 bnovate.utils.get_next_item_code = async function (prefix) {
   let resp = await frappe.call({
     method: 'bnovate.bnovate.utils.items.get_next_item_code',
