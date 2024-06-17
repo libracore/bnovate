@@ -47,6 +47,10 @@ bnovate.utils.striptags = function (html) {
   return doc.body.textContent || "";
 }
 
+bnovate.utils.get_default_company = function () {
+  return frappe.defaults.get_default('Company');
+}
+
 bnovate.utils.confetti = function () {
 
   const pick_random_item = function (arr) {
