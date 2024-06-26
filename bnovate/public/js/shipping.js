@@ -50,3 +50,25 @@ bnovate.shipping.validate_sales_order = async function (name) {
     return resp.message
 }
 
+
+// Attempt to determine if we should auto-ship or not, i.e. ship through the API or manually.
+bnovate.shipping.use_auto_ship = function (frm) {
+
+    // Manual override through checkbox
+    if (frm.doc.skip_autoship)
+        return false;
+
+
+    // If incoterm is EXW or FCA, we don't organize shipping
+    if (frm.doc.incoterm == "EXW" || frm.doc.incoterm == "FCA") {
+        return false;
+    }
+
+    // Remaining incoterms are DDP and DAP.
+    // If we specify the carrier, and it's not DHL, then we definitely don't ship through API
+    // Example: we ship DAP through a freight carrier.
+    if (frm.carrier && frm.carrier !== "DHL")
+        return false;
+
+    return true;
+}

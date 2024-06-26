@@ -404,12 +404,12 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 
 				if (input.classList.contains("check-serial")) {
 					// Check that serial number exists and belongs to correct item
-					let serial = await frappe.model.with_doc("Serial No", value);
+					let serial = await frappe.model.with_doc("Serial No", value.toUpperCase());
 					if (!serial) {
 						error = "Serial No does not exist";
 					} else if (serial.item_code !== input.dataset.for_item_code) {
 						error = `Serial No is for item code ${serial.item_code}!`
-					} else if (state.work_order_doc.serial_no && state.work_order_doc.serial_no.indexOf(value) < 0) {
+					} else if (state.work_order_doc.serial_no && state.work_order_doc.serial_no.toUpperCase().indexOf(value.toUpperCase()) < 0) {
 						warning = "Does not match work order instructions";
 					}
 

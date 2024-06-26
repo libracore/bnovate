@@ -47,6 +47,10 @@ bnovate.utils.striptags = function (html) {
   return doc.body.textContent || "";
 }
 
+bnovate.utils.get_default_company = function () {
+  return frappe.defaults.get_default('Company');
+}
+
 bnovate.utils.confetti = function () {
 
   const pick_random_item = function (arr) {
@@ -117,6 +121,18 @@ function get_label(doctype, docname, print_format, label_reference) {
   ))
 }
 bnovate.utils.get_label = get_label; // already used in many custom scripts, keep in global namespace.
+
+function get_labels(doctype, docnames, print_format, label_reference) {
+  // To print directly, we place content in an iframe and trigger print from there:
+  print_url(frappe.urllib.get_full_url(
+    "/api/method/bnovate.bnovate.utils.labels.download_label_for_docs"
+    + "?doctype=" + encodeURIComponent(doctype)
+    + "&docnames=" + encodeURIComponent(docnames)
+    + "&print_format=" + encodeURIComponent(print_format)
+    + "&label_reference=" + encodeURIComponent(label_reference)
+  ))
+}
+bnovate.utils.get_labels = get_labels; // already used in many custom scripts, keep in global namespace.
 
 bnovate.utils.get_next_item_code = async function (prefix) {
   let resp = await frappe.call({
@@ -259,6 +275,10 @@ bnovate.utils.is_fill = function (item_code) {
 
 bnovate.utils.is_enclosure = function (item_code) {
   return item_code !== undefined && (item_code.startsWith("ENC") || item_code === '100146');
+}
+
+bnovate.utils.is_valve = function (item_code) {
+  return item_code !== undefined && (item_code.startsWith('101020') || item_code.startsWith('101019'));
 }
 
 

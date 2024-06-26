@@ -55,7 +55,8 @@ def get_session_customers():
             `tCus`.`enable_cartridge_portal`,
             `tCus`.`allow_unstored_cartridges`,
             `tCus`.`customer_name`,
-            `tCus`.`portal_billing_address`
+            `tCus`.`portal_billing_address`,
+            `tCus`.`organize_return`
         FROM `tabContact`
         JOIN `tabDynamic Link` AS `tC1` ON `tC1`.`parenttype` = "Contact" 
                                        AND `tC1`.`link_doctype` = "Customer" 
@@ -100,6 +101,13 @@ def allow_unstored_cartridges():
     """ True if user is allowed to use cartridge management features """
     customer = get_session_primary_customer()
     if customer is not None and customer.allow_unstored_cartridges:
+        return True
+    return False
+
+def organize_return():
+    """ True if we manage return logistics for refill requests """
+    customer = get_session_primary_customer()
+    if customer is not None and customer.organize_return:
         return True
     return False
 

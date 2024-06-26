@@ -109,7 +109,7 @@ frappe.ui.form.on("Sales Order", {
     async before_submit(frm) {
 
         // If incoterm requires that we ship, check deliverability:
-        if (frm.doc.incoterm === "DAP" || frm.doc.incoterm === "DDP") {
+        if (bnovate.shipping.use_auto_ship(frm)) {
             const err = await bnovate.shipping.validate_sales_order(frm.doc.name);
             if (err.error) {
                 frappe.msgprint(err.error + ":<br><br>" + err.message);
@@ -213,7 +213,7 @@ async function prompt_label_format(frm) {
             fieldname: "label_format",
             fieldtype: "Select",
             options: "8x4 inch\nA4",
-            default: "8x4 inch",
+            default: "A4",
             reqd: 1,
         }],
         "Confirm",

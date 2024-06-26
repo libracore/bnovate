@@ -8,10 +8,18 @@ frappe.require("/assets/bnovate/js/modals.js")  // provides bnovate.modals
 frappe.query_reports["Orders to Fulfill"] = {
 	filters: [
 		{
+			"fieldname": "company",
+			"label": __("Company"),
+			"fieldtype": "Link",
+			"options": "Company",
+			"default": frappe.defaults.get_user_default("Company"),
+			"reqd": 0
+		},
+		{
 			"fieldname": "only_manufacturing",
 			"label": __("Only manufactured items"),
 			"fieldtype": "Check",
-			"default": 1
+			"default": 0
 		},
 		{
 			"fieldname": "include_drafts",

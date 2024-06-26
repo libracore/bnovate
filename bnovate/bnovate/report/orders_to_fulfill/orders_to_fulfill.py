@@ -73,7 +73,8 @@ def get_columns(filters):
 
         {'fieldname': 'work_order', 'fieldtype': 'Link', 'label': _('Work Order'), 'options': 'Work Order', 'width': 250, 'align': 'left'},
 
-        {'fieldname': 'open_delivery_notes', 'fieldtype': 'Data', 'label': _('Delivery Notes'), 'options': 'Work Order', 'width': 250, 'align': 'left'},
+        {'fieldname': 'open_delivery_notes', 'fieldtype': 'Data', 'label': _('Delivery Notes'), 'width': 250, 'align': 'left'},
+        {'fieldname': 'company', 'fieldtype': 'Data', 'label': _('Company'),  'width': 200, 'align': 'left'},
     ]
     
 def get_data(filters):
@@ -84,7 +85,10 @@ def get_data(filters):
 
     extra_filters = ""
     if filters.only_manufacturing:
-        extra_filters += "AND it.include_item_in_manufacturing = 1"
+        extra_filters += "AND it.include_item_in_manufacturing = 1\n"
+    
+    if filters.company:
+        extra_filters += "AND so.company = '{}'\n".format(filters.company)
 
     so_filter = ""
     if filters.sales_order:
@@ -118,7 +122,8 @@ def get_data(filters):
         FALSE as is_packed_item,
         soi.idx as idx,
         0 as pidx, -- packed item index
-        so.docstatus as docstatus
+        so.docstatus as docstatus,
+        so.company as company
     FROM `tabSales Order Item` as soi
     JOIN `tabSales Order` as so ON soi.parent = so.name
     JOIN `tabItem` as it ON soi.item_code = it.name
@@ -149,7 +154,8 @@ def get_data(filters):
         TRUE as is_packed_item,
         soi.idx as idx,
         pi.idx as pidx,
-        so.docstatus as docstatus
+        so.docstatus as docstatus,
+        so.company as company
     FROM `tabSales Order Item` as soi
     JOIN `tabSales Order` as so ON soi.parent = so.name
     JOIN `tabItem` as it on soi.item_code = it.name

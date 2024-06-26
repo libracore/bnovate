@@ -60,6 +60,7 @@ fixtures = [
             "Customer-enable_cartridge_portal",
             "Customer-allow_unstored_cartridges",
             "Customer-portal_billing_address",
+            "Customer-organize_return",
             "Sales Order Item-refill_request",
             "Sales Order Item-serial_nos",  # pluralized to avoid automations from selling controller
             "Sales Order-indicator_key",
@@ -171,14 +172,21 @@ doctype_js = {
     "Company": ["public/js/doctype_includes/company.js"],
     "Contact": ["public/js/doctype_includes/contact.js"],
     "Customer": ["public/js/doctype_includes/customer.js"],
-    "Delivery Note": ["public/js/doctype_includes/delivery_note.js"],
+    "Delivery Note": [
+        "public/js/shipping.js",
+        "public/js/doctype_includes/delivery_note.js",
+    ],
     "Item": ["public/js/doctype_includes/item.js"],
     "Purchase Order": ["public/js/doctype_includes/purchase_order.js"],
     "Purchase Receipt": ["public/js/doctype_includes/purchase_receipt.js"],
     "Quotation": ["public/js/doctype_includes/quotation.js"],
-    "Sales Order": ["public/js/doctype_includes/sales_order.js"],
+    "Sales Order": [
+        "public/js/shipping.js",
+        "public/js/doctype_includes/sales_order.js",
+    ],
     "Sales Invoice": ["public/js/doctype_includes/sales_invoice.js"],
     "Serial No": ["public/js/doctype_includes/serial_no.js"],
+    "Stock Entry": ["public/js/doctype_includes/stock_entry.js"],
     "Work Order": ["public/js/doctype_includes/work_order.js"],
     "Material Request": ["public/js/doctype_includes/material_request.js"],
     "Shipment": ["public/js/doctype_includes/shipment.js"],
@@ -402,5 +410,6 @@ jenv = {
     "methods": [
         "find_serial_no:bnovate.bnovate.doctype.storage_location.storage_location.find_serial_no",
         "find_serial_nos:bnovate.bnovate.doctype.storage_location.storage_location.find_serial_nos",
+        "is_enclosure:bnovate.bnovate.utils.enclosures.is_enclosure"
     ],
 }

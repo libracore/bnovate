@@ -74,6 +74,9 @@ def make_request(doc):
     if not doc['billing_address'] in valid_names:
         frappe.throw(_("You cannot order to this billing address"), frappe.PermissionError)
 
+    return_label_needed = doc['organize_return']
+    parcel_count = int(doc['parcel_count']) if return_label_needed else 0
+
 
     new_request = frappe.get_doc({
         'doctype': 'Refill Request',
@@ -85,6 +88,8 @@ def make_request(doc):
         'shipping_address_display': doc['shipping_address_display'],
         'billing_address_display': doc['billing_address_display'],
         'items': doc['items'],  # using data.items calls the built-in dict function...
+        'return_label_needed': return_label_needed,
+        'parcel_count': parcel_count,
         'remarks': doc['remarks'],
         'language': frappe.session.data.lang,
         'docstatus': 1,

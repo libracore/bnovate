@@ -134,6 +134,8 @@ def make_sales_order(source_name, target_doc=None):
                 "total_weight": len(icp_sns) * deets.weight_per_unit,
             })
 
+        if source.return_label_needed:
+            target.order_level_requests = "Organize return from customer, {} parcels.\n".format(source.parcel_count or 1) + (source.remarks or "")
 
         # force empty some fields so they get set from customer defaults
         target.currency = None

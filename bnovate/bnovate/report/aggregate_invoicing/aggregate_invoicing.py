@@ -172,6 +172,7 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
             IFNULL(dns.shipping, 0) AS shipping,
             dn.payment_terms_template,
             dn.taxes_and_charges,
+            dn.incoterm,
 
             -- Only relevant for subscriptions:
             NULL AS sub_interval,
@@ -271,6 +272,7 @@ def get_invoiceable_entries(from_date=None, to_date=None, customer=None, doctype
             NULL AS shipping,
             ss.payment_terms_template,
             ss.taxes_and_charges,
+            NULL AS incoterm,
 
             ss.interval AS sub_interval,
             ss.start_date,
@@ -341,6 +343,18 @@ def create_invoice(from_date, to_date, customer, doctype):
         frappe.throw("Can't generate invoice for different payment terms. Please create them by hand.")
     payment_terms = payment_terms_templates.pop() if payment_terms_templates else None
 
+    # Set incoterm, only if they are identical on all DNs.
+    incoterms = set(e.incoterm for e in entries if e.incoterm)
+    incoterm = None
+    if len(incoterms) == 1:
+        incoterm = incoterms.pop()
+    if len(incoterms) > 1:
+        frappe.msgprint(
+             _("Multiple incoterms found. Please set them manually or consider invoicing separately."), 
+             _("Incoterm Conflict")
+        )
+
+
     discounts = sum(e.additional_discount for e in entries)
     if discounts:
         frappe.throw("A DN contains an additional discount. I can't handle this. Please create invoice by hand.")
@@ -379,6 +393,7 @@ def create_invoice(from_date, to_date, customer, doctype):
         'taxes_and_charges': default_taxes,
         'taxes': taxes_and_charges_template.taxes,
         'payment_terms_template': payment_terms,
+        'incoterm': incoterm,
     })
 
     shipping_total = 0
