@@ -109,7 +109,7 @@ frappe.ui.form.on("Sales Order", {
     async before_submit(frm) {
 
         // If incoterm requires that we ship, check deliverability:
-        if (!frm.doc.carrier_account_no && (frm.doc.incoterm == "DAP" || frm.doc.incoterm == "DDP")) {
+        if (bnovate.shipping.use_auto_ship(frm)) {
             const err = await bnovate.shipping.validate_sales_order(frm.doc.name);
             if (err.error) {
                 frappe.msgprint(err.error + ":<br><br>" + err.message);

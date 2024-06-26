@@ -13,8 +13,6 @@
  *      - Once shipped, stage changes to 'Shipped' and tracking info is updated.
  */
 
-frappe.require("/assets/bnovate/js/shipping.js")  // provides bnovate.shipping
-
 frappe.ui.form.on("Delivery Note", {
 
     before_load(frm) {
@@ -346,16 +344,15 @@ function override_action_buttons(frm) {
         frm.page.clear_primary_action();
         if (frm.doc.packing_stage == "Packing") {
 
-            // We organize shipping if incoterm is DAP or DDP; double check carrier preferences
-            if (!frm.doc.carrier_account_no && (frm.doc.incoterm == "DAP" || frm.doc.incoterm == "DDP")) {
-                frm.dashboard.add_comment(__("We organize shipping for this order") + ` (Incoterm ${frm.doc.incoterm})`);
+            if (bnovate.shipping.use_auto_ship(frm)) {
+                frm.dashboard.add_comment(__("This order can be shipped automatically with DHL") + ` (Incoterm ${frm.doc.incoterm})`);
 
                 frm.page.set_primary_action(__("Ship with DHL") + ' <i class="fa fa-truck"></i>', async () => {
                     return await request_pickup(frm);
                 })
 
             } else {
-                frm.dashboard.add_comment(__("The customer will organize shipping") + ` (Incoterm ${frm.doc.incoterm})`);
+                frm.dashboard.add_comment(__("Shipping is organized manually on this order") + ` (Incoterm ${frm.doc.incoterm})`);
                 frm.page.set_primary_action(__("Request Pickup") + ' <i class="fa fa-paper-plane"></i>', async () => {
                     await frm.set_value({ packing_stage: 'Ready to Ship' });
                     frm.save("Update");
