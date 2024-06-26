@@ -69,9 +69,7 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 				{% endif %}
 			</td>
 			<td>
-				{% if not enc.transferred %}
-					<input type="checkbox" class="repair-needed" data-serial-no="{{ enc.serial_no }}" {% if enc.needs_repair %}checked{% endif %}>
-				{% endif %}
+				<input type="checkbox" class="repair-needed" data-serial-no="{{ enc.serial_no }}" {% if enc.needs_repair %}checked{% endif %} {% if enc.transferred %}disabled{% endif %}>
 			</td>
 			<td>
 				{% if enc.transferred %}
@@ -284,11 +282,12 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 				item_code: '100799', // Barrel plug for pouches
 				qty: 4,
 				s_warehouse: "Stores - bN",
-			}, {
-				item_code: '101018.02', // Cartridge seat refurbished
-				qty: 1,
-				t_warehouse: "Stores - bN", // check warehouse
-				serial_no: enc.seat_sn  // If null, will be auto-assigned.
+				// VALVE RETURN DISABLED FOR NOW
+				// }, {
+				// 	item_code: '101018.02', // Cartridge seat refurbished
+				// 	qty: 1,
+				// 	t_warehouse: "Stores - bN", // check warehouse
+				// 	serial_no: enc.seat_sn  // If null, will be auto-assigned.
 			}]
 
 		});
