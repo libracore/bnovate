@@ -103,6 +103,7 @@ fixtures = [
             "Customer-default_incoterm",
             "Quotation-incoterm",
             "Sales Order-incoterm",
+            "Sales Order-skip_autoship",
             "Delivery Note-incoterm",
             "Sales Invoice-incoterm",
             "Address-contact_name",
@@ -120,6 +121,7 @@ fixtures = [
             "Delivery Note-return_shipping_label",
             "Delivery Note-pallets",
             "Delivery Note-pickup_comment",
+            "Delivery Note-skip_autoship",
             "Shipment Parcel Template-is_pallet",
             "Shipment Parcel-is_pallet",
             # Stock management

@@ -76,6 +76,8 @@ def get_columns(filters):
             # {'fieldname': 'guaranteed_qty', 'fieldtype': 'Int', 'label': 'Guar. AFTER WO', 'width': 110},
             {'fieldname': 'stock_uom', 'fieldtype': 'Data', 'label': _('Unit'), 'width': 100},
             {'fieldname': 'warehouse', 'fieldtype': 'Data', 'label': _('Warehouse'), 'width': 100},
+            {'fieldname': 'mean_time_per_unit', 'fieldtype': 'Float', 'precision': 1, 'label': _('Mean Minutes per Unit'), 'width': 100, 'align': 'right'},
+            {'fieldname': 'time_estimate_remaining', 'fieldtype': 'Data', 'label': _('Time Estimate'), 'width': 100, 'align': 'right'}, # formatted as Data for hh:mm display...
         ])
 
     return cols
@@ -93,6 +95,15 @@ def get_data(filters):
     projected_stock_query = projected_stock.build_query(so_drafts=False, wo_drafts=True, item_code=None, warehouse=None)
     sql_query = """
 -- End goal: a table where each row is either a work order production item or required item, with projected stock once WO is completed.
+WITH
+    -- Time Estimates
+    te as (SELECT
+            wo.production_item AS item_code,
+            AVG(wo.time_per_unit) AS mean_time_per_unit
+        FROM `tabWork Order` wo
+        WHERE wo.time_per_unit > 0
+        GROUP BY wo.production_item)
+
 SELECT 
 
     -- Common fields
@@ -126,6 +137,8 @@ SELECT
     wo.comment,
     wo.sales_order,
     wo.bom_description,
+    te.mean_time_per_unit,
+    te.mean_time_per_unit * (wo.qty - wo.produced_qty) AS time_estimate_remaining,
 
     -- Fields for Work Order Items (consumed items)
     woi.required_qty AS reqd_item_qty,
@@ -140,6 +153,7 @@ FROM (
 
 LEFT JOIN `tabWork Order Item` woi on woi.name = p.detail_docname
 LEFT JOIN `tabWork Order` wo on wo.name = p.detail_docname
+LEFT JOIN te on wo.production_item = te.item_code
 JOIN `tabItem` it on p.item_code = it.name
 JOIN `tabWork Order` wo2 on p.docname = wo2.name -- To filter all rows on WO properties.
 
