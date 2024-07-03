@@ -76,7 +76,7 @@ def get_columns(filters):
             # {'fieldname': 'guaranteed_qty', 'fieldtype': 'Int', 'label': 'Guar. AFTER WO', 'width': 110},
             {'fieldname': 'stock_uom', 'fieldtype': 'Data', 'label': _('Unit'), 'width': 100},
             {'fieldname': 'warehouse', 'fieldtype': 'Data', 'label': _('Warehouse'), 'width': 100},
-            {'fieldname': 'mean_time_per_unit', 'fieldtype': 'Float', 'precision': 1, 'label': _('Mean Minutes per Unit'), 'width': 100, 'align': 'right'},
+            {'fieldname': 'mean_time_per_unit', 'fieldtype': 'Data', 'precision': 1, 'label': _('Mean Minutes per Unit'), 'width': 100, 'align': 'right'}, # Also fomratted as data for hh:mm display
             {'fieldname': 'time_estimate_remaining', 'fieldtype': 'Data', 'label': _('Time Estimate'), 'width': 100, 'align': 'right'}, # formatted as Data for hh:mm display...
         ])
 
