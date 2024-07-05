@@ -106,6 +106,10 @@ frappe.query_reports["Work Order Planning"] = {
             } else if (col.fieldname === 'item_code') {
                 value = projected_stock_link(data.item_code, data.warehouse, data.item_name);
                 skip_default = true;
+            } else if ((col.fieldname === 'time_estimate_remaining' || col.fieldname === 'mean_time_per_unit') && value) {
+                // This will work as long as duration is less than 24h...
+                let format_string = col.fieldname === 'time_estimate_remaining' ? 'HH:mm' : 'HH:mm.ss';
+                value = moment.utc().startOf('day').add(value, 'minutes').format(format_string);
             }
 
             if (skip_default) {
