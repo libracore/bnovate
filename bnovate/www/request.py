@@ -17,6 +17,9 @@ def get_context(context):
     docname = frappe.form_dict.name 
     doc = get_request(docname) 
 
+    if doc is None:
+        raise DoesNotExistError
+
     context.doc = doc
     context.allow_unstored_cartridges = allow_unstored_cartridges()
 
