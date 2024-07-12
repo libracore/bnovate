@@ -20,6 +20,14 @@ class RefillRequest(Document):
     def on_cancel(self):
         self.set_status()
 
+    @property
+    def contact_display(self):
+        return self.get_contact_display()
+
+    def get_contact_display(self):
+        contact_doc = frappe.get_doc("Contact", self.contact_person)
+        return ' '.join([n.strip() for n in [contact_doc.first_name, contact_doc.last_name] if n]).strip()
+
     def set_status(self):
 
         if self.docstatus == 2:
@@ -69,7 +77,7 @@ class RefillRequest(Document):
         self.tracking_url = None
         if self.carrier == "DHL":
             self.tracking_url = "https://www.dhl.com/ch-en/home/tracking/tracking-express.html?submit=1&tracking-id={0}".format(self.tracking_no)
-
+    
 
 def get_context(context):
     context.title = "My title"
