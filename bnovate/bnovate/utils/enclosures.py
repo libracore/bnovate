@@ -10,6 +10,11 @@ from erpnext.stock.doctype.serial_no.serial_no import get_serial_nos
 def is_enclosure(item_code):
     return item_code == "100146" or item_code.startswith("ENC")
 
+def is_instrument(item_code):
+    docs = frappe.get_all("Item", filters={'item_group': 'Instruments', 'has_serial_no': 1})
+    item_codes = [d['name'] for d in docs]
+    return item_code in item_codes
+
 def check_so_serial_no(so, method=None):
     """ Check that SNs are specified for refills. Called through hooks.py """
     if method not in ('before_submit', 'on_update_after_submit'):
@@ -142,7 +147,7 @@ def set_owner_from_dn(dn, method=None):
         return
 
     for item in dn.packed_items:
-        if not is_enclosure(item.item_code):
+        if not is_enclosure(item.item_code) and not is_instrument(item.item_code):
             continue
 
         print("Enclosure found.", item.qty, item.serial_no)
@@ -153,15 +158,17 @@ def set_owner_from_dn(dn, method=None):
                 # Owned by bNovate
                 continue 
             sn_doc = frappe.get_doc("Serial No", serial)
-            if method == "on_submit":
+            if (method == "on_submit" and item.qty > 0):
                 if not sn_doc.owned_by:
                     sn_doc.db_set("owned_by", dn.customer)
                     sn_doc.db_set("owned_by_name", dn.customer_name)
                     sn_doc.db_set("owner_set_by", dn.name)
-            elif method == "on_cancel":
+
+            # In case of a return or a cancelled DN:
+            elif (method == "on_submit" and item.qty < 0) or method == "on_cancel":
                 # Cancel ownership only if this document set the ownership and it hasn't changed.
                 # If not we assume an older document set it, or that is was manually set.
-                if sn_doc.owner_set_by == dn.name and sn_doc.owned_by == dn.customer:
+                if sn_doc.owner_set_by in [dn.name, dn.return_against] and sn_doc.owned_by == dn.customer:
                     sn_doc.db_set("owned_by", None)
                     sn_doc.db_set("owned_by_name", None)
                     sn_doc.db_set("owner_set_by", None)

@@ -47,6 +47,7 @@ def get_request(name):
         return None
     doc.set_indicator()
     doc.set_tracking_url()
+
     return doc
 
 @frappe.whitelist()

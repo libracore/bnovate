@@ -105,11 +105,6 @@ ol.request-ribbon {
 	</div>
 	<div class="col-6 text-muted text-right small">
 		{{ frappe.utils.formatdate(doc.transaction_date, 'medium') }}
-		{% if doc.valid_till %}
-		<p>
-		{{ _("Valid Till") }}: {{ frappe.utils.formatdate(doc.valid_till, 'medium') }}
-		</p>
-		{% endif %}
 	</div>
 </div>
 
@@ -197,6 +192,9 @@ ol.request-ribbon {
         {% else %}
         <p>-</p>
         {% endif %}
+
+		<h5>{{ _("Requested by") }}</h5>
+        <p><a href="mailto:{{ doc.contact_email }}">{{ doc.contact_display }}</a></p>
     </div>
 </div>
 
