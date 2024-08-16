@@ -21,15 +21,11 @@ def get_columns(filters):
         {'fieldname': 'enable_cartridge_portal', 'fieldtype': 'Check', 'label': _('Has Cartridge Portal'), 'width': 100},
         {'fieldname': 'primary_customer', 'fieldtype': 'Check', 'label': _('Is Primary Customer'), 'width': 100},
 	]
-	print("==================================")
-	print(filters.connectivity_package)
-	print("==================================")
 	if filters.connectivity_package:
 		cols += [
 			{'fieldname': 'connectivity_package', 'fieldtype': 'Link', 'label': _('Connectivity Package'), 'options': 'Connectivity Package', 'width': 100},
 			{'fieldname': 'teltonika_serial', 'fieldtype': 'Link', 'label': _('Teltonika Serial'), 'options': 'Serial No', 'width': 100},
 		]
-	print(cols)
 	return cols
 
 def get_data(filters):
