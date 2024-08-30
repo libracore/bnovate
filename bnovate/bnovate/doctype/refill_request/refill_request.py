@@ -145,6 +145,8 @@ def make_sales_order(source_name, target_doc=None):
         if source.return_label_needed:
             target.order_level_requests = "Organize return from customer, {} parcels.\n".format(source.parcel_count or 1) + (source.remarks or "")
 
+        target.contact_display = source.contact_display
+
         # force empty some fields so they get set from customer defaults
         target.currency = None
         target.selling_price_list = None

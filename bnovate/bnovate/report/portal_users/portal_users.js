@@ -15,5 +15,11 @@ frappe.query_reports["Portal Users"] = {
 			"label": __("Name"),
 			"fieldtype": "Data",
 		},
+		{
+			"fieldname": "connectivity_package",
+			"label": __("Connectivity Package"),
+			"fieldtype": "Link",
+			"options": "Connectivity Package"
+		},
 	]
 };

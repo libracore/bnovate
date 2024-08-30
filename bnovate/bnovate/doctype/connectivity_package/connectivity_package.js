@@ -40,13 +40,20 @@ frappe.ui.form.on('Connectivity Package', {
 			get_connection_status(frm);
 			get_connections(frm);
 		}
-		frm.add_custom_button(__("View Data Usage"), async () => {
+		frm.add_custom_button(__("Allowed Users"), async () => {
+			frappe.route_options = {
+				"connectivity_package": frm.doc.name,
+			};
+			await frappe.set_route("query-report", "Portal Users");
+			frappe.query_report.refresh();
+		}, __("View"));
+		frm.add_custom_button(__("Data Usage"), async () => {
 			frappe.route_options = {
 				"connectivity_package": frm.doc.name,
 			};
 			await frappe.set_route("query-report", "Connectivity Data Usage");
 			frappe.query_report.refresh();
-		});
+		}, __("View"));
 	},
 
 	async refresh_connections(frm) {
