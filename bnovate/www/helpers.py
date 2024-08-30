@@ -131,6 +131,9 @@ def build_sidebar(context, show=True):
             'route': '/quotations',
             'title': 'Quotations',
         }, {
+            'route': '/invoices',
+            'title': 'Invoices',
+        }, {
             'route': '/instruments',
             'title': 'Instruments',
         }]

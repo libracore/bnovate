@@ -79,6 +79,28 @@ body {
   max-width: 400px;
 }
 
+/* Tables, list.html, i.e. basic lists of doctypes */
+.transaction-list-item {
+  margin-top: 1em;
+  padding-top: 1em;
+  border-top: 1px solid #ebecf1;
+}
+
+.order-item-table {
+  padding-bottom: 1em;
+  border-bottom: 1px solid #ebecf1;
+}
+
+.order-items {
+  margin-top: 1em;
+  padding-top: 1em;
+  border-top: 1px solid #ebecf1;
+}
+
+.order-taxes td, .order-taxes th {
+  padding: 0.5em;
+}
+
 /* Tables, bootstrap */
 
 tr:has(input[type=checkbox]:checked) {

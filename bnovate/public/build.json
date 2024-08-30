@@ -9,7 +9,7 @@
 
     "js/bnovate-web.min.js": [
         "public/js/lib/frappe-datatable/sortable.js",
-        "public/js/lib/frappe-datatable/frappe-datatable.js",
+        "public/js/lib/frappe-datatable/frappe-datatable.js"
     ],
 
     "css/bnovate.min.css": [
