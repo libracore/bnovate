@@ -1010,7 +1010,18 @@ def _update_tracking_undelivered(task_id=None):
     docs = [frappe.get_doc("Shipment", res.name) for res in results if res.awb_number]
 
     # Get tracking data
-    all_tracking_data = track_shipments([d.awb_number for d in docs])
+    tmp = ['Shipments Found for shipmentTrackingNumber 1417030860', 'No Shipments Found for shipmentTrackingNumber 5375212780', 'No Shipments Found for shipmentTrackingNumber 7426984574', 'No Shipments Found for shipmentTrackingNumber 1051155910', 'Shipments Found for shipmentTrackingNumber 2014517245', 'Shipments Found for shipmentTrackingNumber 6853669082', 'Shipments Found for shipmentTrackingNumber 6853620244',]
+    try:
+        all_tracking_data = track_shipments([d.awb_number for d in docs])
+    except DHLBadRequestError as e:
+        # If some return AWBs are between pickup request and actual pickup, we get an error "No data found"
+        # Additional details look like: ['Shipments Found for shipmentTrackingNumber 14xxxxxxxx', 'No Shipments Found for shipmentTrackingNumber 5xxxxxxxxx', ...]
+
+        if not e.message.startswith("No data found"):
+            raise e
+
+        new_awbs = [ msg[-len('5xxxxxxxxx'):] for msg in e.additional_details if msg.startswith('Shipments Found')]
+        all_tracking_data = track_shipments(new_awbs)
 
     for i, doc in enumerate(docs):
         # Some docs might be too old for tracking data
