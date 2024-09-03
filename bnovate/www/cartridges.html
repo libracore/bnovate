@@ -140,6 +140,7 @@
                 <th>{{ _("Tracking No") }}</th>
                 <th>{{ _("Pending Request") }}</th>
                 <th>{{ _("Shipped To") }}</th>
+                <th></th>
             </thead>
             <tbody>`
 
@@ -156,6 +157,14 @@
                     <td>${ row.tracking_link ? row.tracking_link : "" }</td>
                     <td>${ row.rr_link }</td>
                     <td><label for="check-${ row.serial_no }" style="margin-bottom: 0px;">${ row.address_display }</label></td>
+                    <td>
+                        <div class="dropdown">
+                            <button class="btn dropdown-toggle" data-toggle="dropdown"> <i class="fa fa-ellipsis-h"></i> </button>
+                            <div class="dropdown-menu">
+                                <a class=dropdown-item href="/cartridges/${ row.serial_no }">Cartridge History</a>
+                            </div>
+                        </div>
+                    </td>
                 </tr> 
         `)
 

@@ -30,6 +30,7 @@ def get_cartridges():
     data = frappe._dict({
         "cartridges": [],
         "allow_unstored_cartridges": False,
+        "organize_return": False,
     })
 
     managed_customers = [c.docname for c in get_session_customers()]

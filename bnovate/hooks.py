@@ -247,6 +247,9 @@ website_route_rules = [
         "from_route": "/connect/<serial_no>", 
         "to_route": "connect",
     }, {
+        "from_route": "/cartridges/<serial_no>", 
+        "to_route": "cartridge",
+    }, {
         "from_route": "/internal/storage/<key>", 
         "to_route": "internal/storage",
     }
