@@ -1010,7 +1010,6 @@ def _update_tracking_undelivered(task_id=None):
     docs = [frappe.get_doc("Shipment", res.name) for res in results if res.awb_number]
 
     # Get tracking data
-    tmp = ['Shipments Found for shipmentTrackingNumber 1417030860', 'No Shipments Found for shipmentTrackingNumber 5375212780', 'No Shipments Found for shipmentTrackingNumber 7426984574', 'No Shipments Found for shipmentTrackingNumber 1051155910', 'Shipments Found for shipmentTrackingNumber 2014517245', 'Shipments Found for shipmentTrackingNumber 6853669082', 'Shipments Found for shipmentTrackingNumber 6853620244',]
     try:
         all_tracking_data = track_shipments([d.awb_number for d in docs])
     except DHLBadRequestError as e:

@@ -32,6 +32,7 @@ fixtures = [
             "Sales Invoice Item-sc_detail",
             # Used to match invoice to SO payment terms through DN
             "Delivery Note-payment_terms_template",
+
             # Time tracking and workstation assignment on work orders
             "Work Order-time_per_unit", 
             "Work Order-total_time",
@@ -42,6 +43,7 @@ fixtures = [
             "Work Order-bom_description",
             "Stock Entry-bom_item",
             "Stock Entry Detail-delta",
+
             # Safety symbols on WOE:
             "BOM-safety_measures",
             "BOM-esd_protection",
@@ -50,11 +52,14 @@ fixtures = [
             "BOM-column_break_31",
             "BOM-eye_protection",
             "BOM-no_windsurfing",
+
             # Used to track owners of enclosures
             "Serial No-ownership_details",
             "Serial No-owned_by",
             "Serial No-owned_by_name",
             "Serial No-owner_set_by",
+            "Serial No-analysis_certificate",
+
             # Refill requests
             "Customer-portal_settings",
             "Customer-enable_cartridge_portal",
@@ -77,6 +82,7 @@ fixtures = [
             "Stock Entry-from_customer_name",
             "Blanket Order-currency",
             "Address-portal_hide",
+
             # Addresses
             "Address-company_name",
             # DN workflow
@@ -86,6 +92,7 @@ fixtures = [
             "Delivery Note-tracking_no"
             "Delivery Note-column_break_25",
             "Delivery Note-packing_stage",
+
             # Custom shipping rules
             "Sales Taxes and Charges-hide_if_zero",
             "Quotation-custom_shipping_rule",
@@ -94,6 +101,7 @@ fixtures = [
             "Sales Order-shipping_country",
             "Delivery Note-custom_shipping_rule",
             "Delivery Note-shipping_country",
+
             # Shipments (most fields are in exported customizations - shipment.json)
             "Company-eori_number",
             "Company-default_address",
@@ -124,6 +132,7 @@ fixtures = [
             "Delivery Note-skip_autoship",
             "Shipment Parcel Template-is_pallet",
             "Shipment Parcel-is_pallet",
+
             # Stock management
             "Material Request Item-default_supplier",
             "Purchase Receipt-scan",
@@ -237,6 +246,9 @@ website_route_rules = [
     }, {
         "from_route": "/connect/<serial_no>", 
         "to_route": "connect",
+    }, {
+        "from_route": "/cartridges/<serial_no>", 
+        "to_route": "cartridge",
     }, {
         "from_route": "/internal/storage/<key>", 
         "to_route": "internal/storage",
@@ -373,6 +385,7 @@ scheduler_events = {
     # 	],
     "daily": [
         "bnovate.bnovate.doctype.subscription_contract.subscription_contract.update_subscription_status",
+        "bnovate.bnovate.utils.shipping.update_tracking_undelivered",
     ],
     # 	"hourly": [
     # 		"bnovate.tasks.hourly"
