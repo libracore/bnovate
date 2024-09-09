@@ -40,3 +40,18 @@ def get_fixed_exchange_rate(from_currency, to_currency, transaction_date=None, a
         return flt(entries[0].exchange_rate)
 
     return
+
+
+@frappe.whitelist(allow_guest=True)
+def upload_file():
+    """ Uploads file to a specific field in a doc, if specified 
+
+    This is a wrapper around Frappe's built-in upload_file, that fixes file attachments.
+    
+    """ 
+
+    doc = frappe.handler.upload_file()
+    if doc.attached_to_doctype and doc.attached_to_name and doc.attached_to_field:
+        target_doc = frappe.get_doc(doc.attached_to_doctype, doc.attached_to_name)
+        setattr(target_doc, doc.attached_to_field, doc.file_url)
+        target_doc.save()
