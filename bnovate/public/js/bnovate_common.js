@@ -24,6 +24,46 @@ if (frappe.datetime.get_today && frappe.datetime.get_today().endsWith('04-01')) 
   document.querySelector("body").classList.add('party-time');
 }
 
+// Customize navbar
+
+window.onload = async function () {
+
+  const user_settings = await bnovate.utils.get_user_settings();
+  if (!user_settings)
+    return;
+
+  const search_box = document.querySelector('form.navbar-form.navbar-right[role="search"]');
+  const nav_button_span = document.querySelector('.nav-buttons');
+
+  if (search_box && !nav_button_span) {
+    var container = document.createElement('span');
+    container.className = 'nav-buttons';
+    user_settings.navbar_buttons.forEach(row => {
+
+      let button = document.createElement('button');
+      button.className = 'btn btn-primary';
+      button.innerHTML = row.label;
+
+      button.addEventListener('click', async function () {
+        if (frappe.get_route()[0] == row.type && frappe.get_route()[1] == row.destination) {
+          cur_list.filter_area.clear();
+        } else {
+          frappe.set_route(row.type, row.destination, {});
+        }
+      });
+
+      container.appendChild(button);
+    })
+    search_box.parentNode.insertBefore(container, search_box);
+  }
+
+}
+
+/*  ***********************
+ * This file contains common global functions 
+ *  *********************** */
+
+
 frappe.provide("bnovate.utils")
 
 bnovate.utils.sleep = function (ms) {
@@ -83,10 +123,6 @@ bnovate.utils.confetti = function () {
   return bnovate.utils.confettiPopper.addConfetti(pick_random_item(configs));
 }
 
-
-/*  ***********************
- * This file contains common global functions 
- *  *********************** */
 
 function print_url(url) {
   let progress = frappe.show_progress("Preparing...", 10, 100);
@@ -185,6 +221,13 @@ bnovate.utils.run_report = async function (report_name, filters) {
 // Fetch value from settings
 bnovate.utils.get_setting = async function (key) {
   return frappe.db.get_single_value("bNovate Settings", key)
+}
+
+// Fetch value from user settings
+bnovate.utils.get_user_settings = async function () {
+  const settings = await frappe.model.with_doc("User Settings", frappe.session.user);
+
+  return settings;
 }
 
 
