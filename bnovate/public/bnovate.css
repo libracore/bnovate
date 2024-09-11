@@ -48,6 +48,11 @@ body.party-time {
   border-width: 0;
 }
 
+.nav-buttons .btn {
+  margin-top: 8px;
+  margin-left: 5px;
+}
+
 /* ------------------------------------------------------------------- */
 
 
