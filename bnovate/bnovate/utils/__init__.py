@@ -42,7 +42,7 @@ def get_fixed_exchange_rate(from_currency, to_currency, transaction_date=None, a
     return
 
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist()
 def upload_file():
     """ Uploads file to a specific field in a doc, if specified 
 
