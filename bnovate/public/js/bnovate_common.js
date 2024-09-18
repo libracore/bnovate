@@ -389,4 +389,38 @@ bnovate.utils.set_cartridge_owners = async function (owners) {
   }
 }
 
+bnovate.utils.migrate_analysis_certificates = async function () {
+
+  const LIMIT = 100
+  // Identify serial numbers with attachments, where the analysis_certificate field is empty
+
+  // Get all fill / refill SNs with no analysis certificate
+  const certificate_less = await frappe.db.get_list('Serial No', {
+    fields: '*',
+    filters: {
+      item_group: ['IN', 'Cartridge Refills, New Cartridges'],
+      analysis_certificate: ['=', ''],
+    },
+    limit: LIMIT,
+  });
+
+  console.log(certificate_less.map(row => row.serial_no));
+
+  for (let [i, sn_doc] of certificate_less.entries()) {
+
+    frappe.show_progress("Working...", i, certificate_less.length, `Setting certificate for ${sn_doc.serial_no}`);
+
+    await frappe.model.with_doc("Serial No", sn_doc.serial_no);
+
+    const url = frappe.model.docinfo["Serial No"][sn_doc.serial_no]?.attachments?.[0]?.file_url;
+    if (url) {
+      await frappe.db.set_value('Serial No', sn_doc.serial_no, {
+        analysis_certificate: url,
+      });
+    }
+
+  }
+  frappe.hide_progress();
+}
+
 
