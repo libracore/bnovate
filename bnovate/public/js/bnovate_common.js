@@ -391,7 +391,7 @@ bnovate.utils.set_cartridge_owners = async function (owners) {
 
 bnovate.utils.migrate_analysis_certificates = async function () {
 
-  const LIMIT = 100
+  const LIMIT = 1000
   // Identify serial numbers with attachments, where the analysis_certificate field is empty
 
   // Get all fill / refill SNs with no analysis certificate
