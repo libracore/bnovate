@@ -28,6 +28,10 @@ if (frappe.datetime.get_today && frappe.datetime.get_today().endsWith('04-01')) 
 
 window.onload = async function () {
 
+  if (frappe.session.user === 'Guest') {
+    return;
+  }
+
   const user_settings = await bnovate.utils.get_user_settings();
   if (!user_settings)
     return;
