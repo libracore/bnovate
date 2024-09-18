@@ -1386,14 +1386,15 @@ def finalize_dn(shipment_docname):
     dn = frappe.get_doc("Delivery Note", dn_docname)
 
     if shipment.is_return:
-        dn.db_set('return_tracking_no', shipment.awb_number)
-        dn.db_set('return_shipping_label', shipment.shipping_label)
+        dn.set('return_tracking_no', shipment.awb_number)
+        dn.set('return_shipping_label', shipment.shipping_label)
     else:
-        dn.db_set('tracking_no', shipment.awb_number)
-        dn.db_set('pickup_confirmation_number', shipment.pickup_confirmation_number)
-        dn.db_set('carrier', shipment.carrier)
-        dn.db_set('shipping_label', shipment.shipping_label)
-        dn.db_set('packing_stage', 'Shipped')
+        dn.set('tracking_no', shipment.awb_number)
+        dn.set('pickup_confirmation_number', shipment.pickup_confirmation_number)
+        dn.set('carrier', shipment.carrier)
+        dn.set('shipping_label', shipment.shipping_label)
+        dn.set('packing_stage', 'Shipped')
+    dn.save()
     
 
     return dn
