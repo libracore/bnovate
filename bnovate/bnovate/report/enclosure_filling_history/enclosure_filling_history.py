@@ -59,11 +59,13 @@ def get_data(filters):
         IFNULL(it.short_name, it.item_name) AS `fill_name`,
         fsn.analysis_certificate,
         esn.owned_by,
-        esn.owned_by_name
+        esn.owned_by_name,
+        dn.shipping_address
     FROM hist
     LEFT JOIN `tabItem` it on hist.fill_item = it.item_code
     LEFT JOIN `tabSerial No` fsn on hist.fill_serial = fsn.serial_no
     LEFT JOIN `tabSerial No` esn on hist.enclosure_serial = esn.serial_no
+    LEFT JOIN `tabDelivery Note` dn on fsn.delivery_document_no = dn.name
     ORDER BY hist.posting_date DESC
     """.format(sn_filter=sn_filter)
 

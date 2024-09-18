@@ -16,6 +16,7 @@
                 <th>{{ _("Fill Serial") }}</th>
                 <th>{{ _("Fill Type") }}</th>
                 <th>{{ _("Analysis Certificate") }}</th>
+                <th>{{ _("Shipped To") }} </th>
             </thead>
             <tbody>
 
@@ -32,6 +33,11 @@
                         {% endif %}
 
                     </td>
+                    <td>
+                        <span data-html="true" data-toggle="tooltip" data-container="body" title="{{ fill.shipping_address }}">
+                        {{ fill.address_short }}
+                        </span>
+                    </td>
                 </tr>
                 {% endfor %}
 
@@ -41,5 +47,13 @@
     </div>
 </div>
 
+
+{% endblock %}
+
+{% block script %}
+
+<script>
+    $('[data-toggle="tooltip"]').tooltip()
+</script>
 
 {% endblock %}

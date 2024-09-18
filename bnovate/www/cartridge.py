@@ -2,10 +2,13 @@ import frappe
 
 from frappe import _
 from frappe.exceptions import DoesNotExistError
+from jinja2.filters import do_striptags
+
 
 from .helpers import auth, get_session_customers, get_addresses, build_sidebar, has_cartridge_portal, \
     allow_unstored_cartridges, organize_return
 
+from bnovate.bnovate.utils import truncate, trim
 from bnovate.bnovate.report.enclosure_filling_history import enclosure_filling_history
 
 no_cache = 1
@@ -42,10 +45,10 @@ def get_cartridge_data(serial_no):
         data.filling_history = enclosure_filling_history.get_data(frappe._dict({"serial_no": serial_no}))
 
     for row in data.filling_history:
-        
         # analysis_certificate file is private, write a wrapper method to check permissions before allowing download
         if row.analysis_certificate:
             row.certificate_url = "/api/method/bnovate.www.cartridge.get_certificate?serial_no={serial_no}".format(serial_no=row.fill_serial)
+        row.address_short = trim(row.shipping_address, "<br>", 20)
 
     return data
 
