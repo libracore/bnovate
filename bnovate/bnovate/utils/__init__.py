@@ -53,5 +53,7 @@ def upload_file():
     doc = frappe.handler.upload_file()
     if doc.attached_to_doctype and doc.attached_to_name and doc.attached_to_field:
         target_doc = frappe.get_doc(doc.attached_to_doctype, doc.attached_to_name)
-        setattr(target_doc, doc.attached_to_field, doc.file_url)
+        target_doc.set(doc.attached_to_field, doc.file_url)
         target_doc.save()
+
+    return doc

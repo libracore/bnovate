@@ -15,7 +15,7 @@
                 <th>{{ _("Expiry Date") }}</th>
                 <th>{{ _("Fill Serial") }}</th>
                 <th>{{ _("Fill Type") }}</th>
-                <th></th>
+                <th>{{ _("Analysis Certificate") }}</th>
             </thead>
             <tbody>
 
@@ -25,6 +25,13 @@
                     <td> {{ fill.expiry_date }} </td>
                     <td> {{ fill.fill_serial }} </td>
                     <td> {{ fill.fill_name }} </td>
+                    <td>
+                        {% if fill.certificate_url %}
+                            <a href="{{ fill.certificate_url }}" target="_blank"><i class="fa fa-file-pdf-o"></i> View</a>
+                            | <a href="{{ fill.certificate_url }}" download> <i class="fa fa-download"></i> Download</a>
+                        {% endif %}
+
+                    </td>
                 </tr>
                 {% endfor %}
 

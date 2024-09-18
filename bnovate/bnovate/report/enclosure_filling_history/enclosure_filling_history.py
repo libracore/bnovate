@@ -22,6 +22,7 @@ def get_columns():
         {'fieldname': 'enclosure_serial', 'fieldtype': 'Link', 'label': _('Enclosure Serial'), 'options': 'Serial No', 'width': 150},
         {'fieldname': 'fill_item', 'fieldtype': 'Link', 'label': _('Fill Item'), 'options': 'Item', 'width': 200},
         {'fieldname': 'fill_name', 'fieldtype': 'Data', 'label': _('Fill Name'), 'width': 200},
+        {'fieldname': 'analysis_certificate', 'fieldtype': 'Data', 'label': _('Analysis Certificate'), 'width': 200},
     ]
     
     
@@ -55,9 +56,14 @@ def get_data(filters):
 
     SELECT
         hist.*,
-        IFNULL(it.short_name, it.item_name) AS `fill_name`
+        IFNULL(it.short_name, it.item_name) AS `fill_name`,
+        fsn.analysis_certificate,
+        esn.owned_by,
+        esn.owned_by_name
     FROM hist
     LEFT JOIN `tabItem` it on hist.fill_item = it.item_code
+    LEFT JOIN `tabSerial No` fsn on hist.fill_serial = fsn.serial_no
+    LEFT JOIN `tabSerial No` esn on hist.enclosure_serial = esn.serial_no
     ORDER BY hist.posting_date DESC
     """.format(sn_filter=sn_filter)
 
