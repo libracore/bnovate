@@ -608,7 +608,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		let enc_sn = ste_doc.items.find(it => !it.s_warehouse && it.item_code == "100146")?.serial_no;
 		let fill_sn = ste_doc.items.find(it => !it.s_warehouse && it.item_code == bom_item)?.serial_no;
 
-		await bnovate.storage.remove_serial_no(enc_sn, false);
+		await bnovate.storage.remove_serial_no(enc_sn, false, null, true);
 
 		if (enc_sn && fill_sn) {
 			ste_doc.fill_associations = [{

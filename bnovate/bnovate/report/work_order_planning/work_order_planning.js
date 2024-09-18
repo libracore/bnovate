@@ -43,6 +43,7 @@ frappe.query_reports["Work Order Planning"] = {
             'Assemblage',
             'Optic',
             'Usinage',
+            'Quality Check',
         ];
         stations.forEach(station => report.page.add_inner_button(station, () => {
             this.report.set_filter_value('workstation', station);

@@ -4,6 +4,17 @@ import string
 import frappe
 from frappe.utils import get_datetime_str, nowdate, flt
 
+
+def truncate(s, n):
+    """ Return string with ellipsis in the middle if longer than n chars """
+    return s[:n-1] + '…' if len(s) > n else s
+
+def trim(s, token, n):
+    """ Return string up to token. If token is missing, return ellipsized version """
+    if token in s:
+        return s[:s.index(token)]
+    return truncate(s, n)
+
 @frappe.whitelist()
 def get_random_id():
     return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(32))
@@ -53,5 +64,7 @@ def upload_file():
     doc = frappe.handler.upload_file()
     if doc.attached_to_doctype and doc.attached_to_name and doc.attached_to_field:
         target_doc = frappe.get_doc(doc.attached_to_doctype, doc.attached_to_name)
-        setattr(target_doc, doc.attached_to_field, doc.file_url)
+        target_doc.set(doc.attached_to_field, doc.file_url)
         target_doc.save()
+
+    return doc
