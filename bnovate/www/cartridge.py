@@ -24,6 +24,11 @@ def get_context(context):
     context.serial_no = serial_no
     context.filling_history = data.filling_history
 
+    context.add_breadcrumbs = True
+    context.parents = [
+		{ "name": _("Cartridges"), "route": "/cartridges" },
+	]
+
     build_sidebar(context)
     context.title = _("Cartridge " + serial_no)
     return context
