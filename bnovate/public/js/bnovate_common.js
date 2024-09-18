@@ -389,9 +389,8 @@ bnovate.utils.set_cartridge_owners = async function (owners) {
   }
 }
 
-bnovate.utils.migrate_analysis_certificates = async function () {
+bnovate.utils.migrate_analysis_certificates = async function (limit = 100) {
 
-  const LIMIT = 1000
   // Identify serial numbers with attachments, where the analysis_certificate field is empty
 
   // Get all fill / refill SNs with no analysis certificate
@@ -401,7 +400,7 @@ bnovate.utils.migrate_analysis_certificates = async function () {
       item_group: ['IN', 'Cartridge Refills, New Cartridges'],
       analysis_certificate: ['=', ''],
     },
-    limit: LIMIT,
+    limit,
   });
 
   console.log(certificate_less.map(row => row.serial_no));
