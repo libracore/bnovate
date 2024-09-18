@@ -44,7 +44,7 @@ bnovate.storage.store_serial_no = async function store_serial_no(location_name, 
     }
 }
 
-bnovate.storage.remove_serial_no = async function remove_serial_no(serial_no, throwErr = true, key = null) {
+bnovate.storage.remove_serial_no = async function remove_serial_no(serial_no, throwErr = true, key = null, discreet = false) {
     if (!serial_no) {
         const input = await bnovate.storage.prompt_sn("Remove");
         serial_no = input?.serial_no;
@@ -64,7 +64,11 @@ bnovate.storage.remove_serial_no = async function remove_serial_no(serial_no, th
             cur_frm.reload_doc();
         }
         if (location.title) {
-            await bnovate.storage.msgprint(`<b>Location:</b> ${location.title}<br><b>Slot:</b> ${location.slot}`, `Item removed from storage`);
+            if (discreet) {
+                frappe.show_alert(`Cartridge removed from storage (${location.title} ${location.slot}).`);
+            } else {
+                await bnovate.storage.msgprint(`<b>Location:</b> ${location.title}<br><b>Slot:</b> ${location.slot}`, `Item removed from storage`);
+            }
         }
         return location;
     }
@@ -94,6 +98,7 @@ bnovate.storage.prompt_sn = function prompt_sn(primary_action_label) {
     })
 }
 
+// Simply an await-able dialog
 bnovate.storage.msgprint = function msgprint(message, title) {
     return new Promise((resolve, reject) => {
         let dialog = frappe.msgprint(message, title);
