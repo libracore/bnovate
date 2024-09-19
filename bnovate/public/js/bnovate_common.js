@@ -418,7 +418,7 @@ bnovate.utils.migrate_analysis_certificates = async function (limit = 100) {
             analysis_certificate: url,
           });
         }
-    catch {}
+    } catch {}
 
   }
   frappe.hide_progress();
