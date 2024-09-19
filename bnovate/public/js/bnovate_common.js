@@ -412,7 +412,7 @@ bnovate.utils.migrate_analysis_certificates = async function (limit = 100) {
     await frappe.model.with_doc("Serial No", sn_doc.serial_no);
 
     try {
-        const url = frappe.model.docinfo["Serial No"][sn_doc.serial_no].attachments.[0].file_url;
+        const url = frappe.model.docinfo["Serial No"][sn_doc.serial_no].attachments[0].file_url;
         if (url) {
           await frappe.db.set_value('Serial No', sn_doc.serial_no, {
             analysis_certificate: url,
