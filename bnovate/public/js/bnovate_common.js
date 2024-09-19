@@ -41,7 +41,7 @@ window.onload = async function () {
 
   if (search_box && !nav_button_span) {
     var container = document.createElement('span');
-    container.className = 'nav-buttons';
+    container.className = 'nav-buttons hidden-sm';
     user_settings.navbar_buttons.forEach(row => {
 
       let button = document.createElement('button');
@@ -422,4 +422,40 @@ bnovate.utils.migrate_analysis_certificates = async function (limit = 100) {
   frappe.hide_progress();
 }
 
+// Run this on the "Enclosure filling history" report
+bnovate.utils.migrate_certificates2 = async function () {
 
+  const data = frappe.query_report.data
+    .filter(row => row.analysis_certificate?.indexOf('BNO-TCC-00765_20230620-113201UTC_Certificate.pdf') > 0);
+
+
+  for (let [i, row] of data.entries()) {
+    frappe.show_progress("Working...", i, data.length, `Fixing certificate for ${row.fill_serial}`);
+
+    // Find '930xxx' inside SN
+    let base_sn = row.enclosure_serial.slice(4)
+
+    // Get DN
+
+    let sn_doc = await frappe.model.with_doc("Serial No", row.fill_serial);
+    let dn_doc = await frappe.model.with_doc("Delivery Note", sn_doc.delivery_document_no);
+    let dn_att = frappe.model.docinfo["Delivery Note"][sn_doc.delivery_document_no].attachments;
+
+    // Find the attachment with file named after the enclosure
+    let match_att = dn_att.find(att => att.file_name.startsWith(base_sn));
+
+    console.log(row.enclosure_serial, row.fill_serial, match_att?.file_name, match_att?.file_url);
+
+    if (!match_att) {
+      continue;
+    }
+
+    // If there is a match, update SN:
+    await frappe.db.set_value('Serial No', sn_doc.serial_no, {
+      analysis_certificate: match_att.file_url,
+    })
+  }
+
+  frappe.hide_progress();
+
+}
