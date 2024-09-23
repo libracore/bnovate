@@ -53,9 +53,9 @@ window.onload = async function () {
           cur_list.filter_area.clear();
         } else {
           if (row.type == 'Page') {
-            frappe.set_route(row.destination, {});
+            frappe.set_route(row.destination);
           } else {
-            frappe.set_route(row.type, row.destination, {});
+            frappe.set_route(row.type, ...row.destination.split('/'));
           }
         }
       });
