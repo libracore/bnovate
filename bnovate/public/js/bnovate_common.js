@@ -52,7 +52,11 @@ window.onload = async function () {
         if (frappe.get_route()[0] == row.type && frappe.get_route()[1] == row.destination) {
           cur_list.filter_area.clear();
         } else {
-          frappe.set_route(row.type, row.destination, {});
+          if (row.type == 'Page') {
+            frappe.set_route(row.destination, {});
+          } else {
+            frappe.set_route(row.type, row.destination, {});
+          }
         }
       });
 
