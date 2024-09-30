@@ -71,7 +71,7 @@ def get_data():
             soi.net_amount,
 
             -- Company currency
-			"CHF" as base_currency, -- TODO: get company currency
+			co.default_currency as base_currency,
             soi.base_price_list_rate,
 			soi.base_net_rate,
 			soi.base_net_amount,
@@ -83,15 +83,16 @@ def get_data():
 			cu.customer_group,
 			cu.territory,
 			te.parent as territory_parent,
-			-- so.project,
 			ifnull(soi.delivered_qty, 0) AS delivered_qty,
 			ifnull(soi.billed_amt, 0) AS billed_amount,
 			so.company
+
 		FROM `tabSales Order Item` soi 
         LEFT JOIN `tabSales Order` so ON so.name = soi.parent 
         LEFT JOIN `tabCustomer` cu ON cu.name = so.customer
 		LEFT JOIN `tabItem` it on it.item_code = soi.item_code
 		LEFT JOIN `tabTerritory` te on te.name = cu.territory
+		LEFT JOIN `tabCompany` co on co.name = so.company
 		WHERE
 			so.docstatus <= 1
 			AND (so._user_tags NOT LIKE "%template%" OR so._user_tags IS NULL)
