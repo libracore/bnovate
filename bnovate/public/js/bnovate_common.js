@@ -41,7 +41,7 @@ window.onload = async function () {
 
   if (search_box && !nav_button_span) {
     var container = document.createElement('span');
-    container.className = 'nav-buttons';
+    container.className = 'nav-buttons hidden-sm';
     user_settings.navbar_buttons.forEach(row => {
 
       let button = document.createElement('button');
@@ -52,7 +52,11 @@ window.onload = async function () {
         if (frappe.get_route()[0] == row.type && frappe.get_route()[1] == row.destination) {
           cur_list.filter_area.clear();
         } else {
-          frappe.set_route(row.type, row.destination, {});
+          if (row.type == 'Page') {
+            frappe.set_route(row.destination);
+          } else {
+            frappe.set_route(row.type, ...row.destination.split('/'));
+          }
         }
       });
 
@@ -388,40 +392,3 @@ bnovate.utils.set_cartridge_owners = async function (owners) {
     })
   }
 }
-
-bnovate.utils.migrate_analysis_certificates = async function (limit = 100) {
-
-  // Identify serial numbers with attachments, where the analysis_certificate field is empty
-
-  // Get all fill / refill SNs with no analysis certificate
-  const certificate_less = await frappe.db.get_list('Serial No', {
-    fields: '*',
-    filters: {
-      item_group: ['IN', 'Cartridge Refills, New Cartridges'],
-      analysis_certificate: ['=', ''],
-    },
-    limit,
-  });
-
-  console.log(certificate_less.map(row => row.serial_no));
-
-  for (let [i, sn_doc] of certificate_less.entries()) {
-
-    frappe.show_progress("Working...", i, certificate_less.length, `Setting certificate for ${sn_doc.serial_no}`);
-
-    await frappe.model.with_doc("Serial No", sn_doc.serial_no);
-
-    try {
-        const url = frappe.model.docinfo["Serial No"][sn_doc.serial_no].attachments[0].file_url;
-        if (url) {
-          await frappe.db.set_value('Serial No', sn_doc.serial_no, {
-            analysis_certificate: url,
-          });
-        }
-    } catch {}
-
-  }
-  frappe.hide_progress();
-}
-
-
