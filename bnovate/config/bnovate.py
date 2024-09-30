@@ -165,6 +165,12 @@ def get_data():
                         "is_query_report": True    
                    }, {
                         "type": "report",
+                        "name": "Item-wise Sales History (bN)",
+                        "label": _("Item-wise Sales History (bN)"),
+                        "doctype": "GL Entry",
+                        "is_query_report": True   
+                   }, {
+                        "type": "report",
                         "name": "General Ledger for Export (FRe)",
                         "label": _("General Ledger for Export (FRe)"),
                         "doctype": "GL Entry",
