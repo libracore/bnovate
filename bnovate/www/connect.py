@@ -23,8 +23,8 @@ def get_context(context):
     context.title = _("Connect BactoLink")
     context.add_breadcrumbs = True
     context.parents = [
-		{ "name": _("Instruments"), "route": "/instruments" },
-	]
+        { "name": _("Instruments"), "route": "/instruments" },
+    ]
 
     # Find gateway serial No in URL
     context.serial_no = frappe.form_dict.serial_no
