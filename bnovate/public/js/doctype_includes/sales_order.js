@@ -126,7 +126,18 @@ frappe.ui.form.on("Sales Order", {
         setTimeout(() => {
             frm.set_value('taxes_and_charges', customer_group.taxes_and_charges_template);
         }, 500)
+
+        // Default discount
+        frm.set_value("default_discount", customer_doc.default_discount || 0);
+
+        bnovate.utils.set_item_discounts(frm);
     },
+
+    apply_default_discount(frm) {
+        bnovate.utils.set_item_discounts(frm);
+    },
+
+
 
     custom_shipping_rule(frm) {
         // Call Custom Shipping Rule instead of built-in one:
@@ -158,6 +169,16 @@ frappe.ui.form.on("Sales Order", {
         // console.log('Should have triggered taxes refresh');
     },
 
+})
+
+frappe.ui.form.on('Sales Order Item', {
+    async price_list_rate(frm, cdt, cdn) {
+        if (frm.doc.ignore_default_discount) {
+            return;
+        }
+
+        await frappe.model.set_value(cdt, cdn, "discount_percentage", frm.doc.default_discount);
+    }
 })
 
 async function get_deliverability(frm) {
