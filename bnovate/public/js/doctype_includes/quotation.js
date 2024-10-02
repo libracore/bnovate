@@ -43,6 +43,25 @@ frappe.ui.form.on("Quotation", {
             };
         }, 500);
     },
+
+    async party_name(frm) {
+
+        if (frm.doc.quotation_to != "Customer") {
+            return;
+        }
+
+        // Get default discount
+        let resp = await frappe.db.get_value("Customer", { name: frm.doc.party_name }, "default_discount");
+        const default_discount = resp.message.default_discount || 0;
+        frm.set_value("default_discount", default_discount);
+
+        bnovate.utils.set_item_discounts(frm);
+    },
+
+    apply_default_discount(frm) {
+        bnovate.utils.set_item_discounts(frm);
+    },
+
     custom_shipping_rule(frm) {
         if (frm.doc.custom_shipping_rule) {
             return frappe.call({
@@ -63,5 +82,14 @@ frappe.ui.form.on("Quotation", {
         }
 
     },
+})
 
+frappe.ui.form.on('Quotation Item', {
+    async price_list_rate(frm, cdt, cdn) {
+        if (frm.doc.ignore_default_discount) {
+            return;
+        }
+
+        await frappe.model.set_value(cdt, cdn, "discount_percentage", frm.doc.default_discount);
+    }
 })

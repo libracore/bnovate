@@ -136,6 +136,15 @@ fixtures = [
             # Stock management
             "Material Request Item-default_supplier",
             "Purchase Receipt-scan",
+
+            # Distributor Discounts
+            "Customer-default_discount",
+            "Quotation-default_discount",
+            "Quotation-ignore_default_discount",
+            "Quotation-apply_default_discount",
+            "Sales Order-default_discount",
+            "Sales Order-ignore_default_discount",
+            "Sales Order-apply_default_discount",
         ]]]
     }
 ]

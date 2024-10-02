@@ -332,6 +332,25 @@ bnovate.utils.is_valve = function (item_code) {
   return item_code !== undefined && (item_code.startsWith('101020') || item_code.startsWith('101019'));
 }
 
+/********************************
+ * Sales Docs
+ *********************************/
+
+bnovate.utils.set_item_discounts = async function (frm) {
+
+  if (frm.doc.ignore_default_discount) {
+    return;
+  }
+
+  frm.doc.items.forEach(item => {
+    if (item.hide_price || item.discount_percentage == 100) {
+      return;
+    }
+    frappe.model.set_value(item.doctype, item.name, "discount_percentage", frm.doc.default_discount);
+
+  });
+}
+
 
 /*********************************
  * Code to set enclosure owners
