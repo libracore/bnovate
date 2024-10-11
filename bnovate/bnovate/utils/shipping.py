@@ -1274,7 +1274,8 @@ def make_shipment_from_dn(source_name, target_doc=None):
             "doctype": "Shipment Item",
             "field_map": {
                 "name": "dn_detail",
-            }
+            },
+            "condition": lambda item: not item.hide_price,
         }
     }, target_doc, postprocess)
 
@@ -1367,7 +1368,8 @@ def make_return_shipment_from_dn(source_name, target_doc=None):
             "doctype": "Shipment Item",
             "field_map": {
                 "name": "dn_detail",
-            }
+            },
+            "condition": lambda item: not item.hide_price,
         }
     }, target_doc, postprocess)
 
