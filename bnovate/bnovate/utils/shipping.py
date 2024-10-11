@@ -714,6 +714,10 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
         ],
     }
 
+    # Ensure signature for local deliveries:
+    if product_code == "N":
+        body['localProductCode'] = "N"
+
     # print("\n\n\n================================\n\n\n")
     # import json
     # print(json.dumps(body, indent=2))
@@ -1274,7 +1278,8 @@ def make_shipment_from_dn(source_name, target_doc=None):
             "doctype": "Shipment Item",
             "field_map": {
                 "name": "dn_detail",
-            }
+            },
+            "condition": lambda item: not item.hide_price,
         }
     }, target_doc, postprocess)
 
@@ -1367,7 +1372,8 @@ def make_return_shipment_from_dn(source_name, target_doc=None):
             "doctype": "Shipment Item",
             "field_map": {
                 "name": "dn_detail",
-            }
+            },
+            "condition": lambda item: not item.hide_price,
         }
     }, target_doc, postprocess)
 

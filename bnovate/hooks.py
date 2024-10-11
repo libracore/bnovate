@@ -145,6 +145,17 @@ fixtures = [
             "Sales Order-default_discount",
             "Sales Order-ignore_default_discount",
             "Sales Order-apply_default_discount",
+
+            # Configuration display
+            "Quotation Item-is_subitem",
+            "Quotation Item-hide_price",
+            "Sales Order Item-is_subitem",
+            "Sales Order Item-hide_price",
+            "Delivery Note Item-is_subitem",
+            "Delivery Note Item-hide_price",
+            "Sales Invoice Item-is_subitem",
+            "Sales Invoice Item-hide_price",
+
         ]]]
     }
 ]

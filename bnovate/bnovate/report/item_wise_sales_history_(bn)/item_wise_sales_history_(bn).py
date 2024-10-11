@@ -82,7 +82,7 @@ def get_data():
 			cu.customer_name,
 			cu.customer_group,
 			cu.territory,
-			te.parent as territory_parent,
+			te.parent_territory as territory_parent,
 			ifnull(soi.delivered_qty, 0) AS delivered_qty,
 			ifnull(soi.billed_amt, 0) AS billed_amount,
 			so.company
