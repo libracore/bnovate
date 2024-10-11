@@ -714,6 +714,10 @@ def _create_shipment(shipment_docname, pickup=False, task_id=None):
         ],
     }
 
+    # Ensure signature for local deliveries:
+    if product_code == "N":
+        body['localProductCode'] = "N"
+
     # print("\n\n\n================================\n\n\n")
     # import json
     # print(json.dumps(body, indent=2))
