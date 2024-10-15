@@ -8,7 +8,7 @@ from frappe.exceptions import DoesNotExistError
 from erpnext.stock.doctype.serial_no.serial_no import get_serial_nos
 
 def is_enclosure(item_code):
-    return item_code == "100146" or item_code.startswith("ENC")
+    return str(item_code) in ("100146", "101083") or str(item_code).startswith("ENC")
 
 def is_instrument(item_code):
     docs = frappe.get_all("Item", filters={'item_group': 'Instruments', 'has_serial_no': 1})

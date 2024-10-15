@@ -40,7 +40,7 @@ def get_data(filters):
         JOIN `tabSerial No` sn ON sn.serial_no = std.serial_no
         LEFT JOIN `tabSales Order` so ON so.name = sn.open_sales_order
         WHERE std.s_warehouse = "Customer Locations - bN"
-            AND std.item_code = "100146"
+            AND std.item_code IN ("100146", "101083")
             AND ste.posting_date >= '{from_date}'
         ORDER BY ste.posting_date DESC
     '''.format(from_date=from_date),

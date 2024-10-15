@@ -325,7 +325,7 @@ bnovate.utils.is_fill = function (item_code) {
 }
 
 bnovate.utils.is_enclosure = function (item_code) {
-  return item_code !== undefined && (item_code.startsWith("ENC") || item_code === '100146');
+  return item_code !== undefined && (item_code.startsWith("ENC") || item_code === '100146' || item_code === '101083');
 }
 
 bnovate.utils.is_valve = function (item_code) {

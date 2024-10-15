@@ -729,7 +729,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 	}
 
 	function is_enclosure(item_code) {
-		return item_code !== undefined && (item_code.startsWith("ENC") || item_code === '100146');
+		return bnovate.utils.is_enclosure(item_code);
 	}
 
 
