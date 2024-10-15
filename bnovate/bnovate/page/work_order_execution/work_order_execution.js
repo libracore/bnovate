@@ -236,7 +236,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 
 		// do we need an expiry date? For now only FILs need them.
 		state.needs_expiry_date = is_fill(state.work_order_doc.production_item);
-		// state.default_shelf_life = locals["Item"][state.work_order_doc.production_item].shelf_life_in_days <-- days vs months...
+		state.default_shelf_life = locals["Item"][state.work_order_doc.production_item].stability_in_months || 9;
 
 		// BOMs can't change after submit, no need to clear cache
 		state.bom_doc = await frappe.model.with_doc('BOM', state.work_order_doc.bom_no);
@@ -605,7 +605,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			return;
 		}
 
-		let enc_sn = ste_doc.items.find(it => !it.s_warehouse && it.item_code == "100146")?.serial_no;
+		let enc_sn = ste_doc.items.find(it => !it.s_warehouse && is_enclosure(it.item_code))?.serial_no;
 		let fill_sn = ste_doc.items.find(it => !it.s_warehouse && it.item_code == bom_item)?.serial_no;
 
 		await bnovate.storage.remove_serial_no(enc_sn, false, null, true);
@@ -725,11 +725,11 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 	// HELPERS
 	////////////////////////////
 	function is_fill(item_code) {
-		return item_code !== undefined && item_code.startsWith("FIL");
+		return bnovate.utils.is_fill(item_code);
 	}
 
 	function is_enclosure(item_code) {
-		return item_code !== undefined && (item_code.startsWith("ENC") || item_code === '100146');
+		return bnovate.utils.is_enclosure(item_code);
 	}
 
 

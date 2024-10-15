@@ -325,7 +325,7 @@ bnovate.utils.is_fill = function (item_code) {
 }
 
 bnovate.utils.is_enclosure = function (item_code) {
-  return item_code !== undefined && (item_code.startsWith("ENC") || item_code === '100146');
+  return item_code !== undefined && (item_code.startsWith("ENC") || item_code === '100146' || item_code === '101083');
 }
 
 bnovate.utils.is_valve = function (item_code) {
@@ -382,7 +382,7 @@ bnovate.utils.get_cartridge_owners = async function get_cartridge_owners() {
       if (known_sns.has(sn) || sn.startsWith("BNO")) {
         continue;
       }
-      if (!(row.shipped_item_code.startsWith("ENC-") || row.shipped_item_code == "100146")) {
+      if (!bnovate.utils.is_enclosure(row.shipped_item_code)) {
         continue;
       }
       known_sns.add(sn);
