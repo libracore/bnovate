@@ -177,7 +177,7 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 			let item_code = sn_doc.item_code;
 			let error = '';
 
-			if (item_code != '100146') {
+			if (!bnovate.utils.is_enclosure(item_code)) {
 				error = 'Not a cartridge';
 			}
 			if ((!customer) && sn_doc.purchase_document_type == "Delivery Note") {
@@ -221,12 +221,14 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 				error,
 				valve_sn,
 				seat_sn,
+				item_code,
 			}
 		} catch (err) {
 			console.log(err);
 			return {
 				warehouse: 'Not found',
 				error: err.statusText,
+				item_code,
 			}
 		}
 	}
@@ -257,14 +259,11 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 	}
 
 	async function create_repack_entry(enc) {
+
 		const warehouse = enc.needs_repair ? "Repairs - bN" : "To Refill - bN";
-		doc = await frappe.db.insert({
-			doctype: "Stock Entry",
-			title: `Cartridge Return for ${enc.serial_no}`,
-			stock_entry_type: "Repack",
-			docstatus: 1,
-			from_customer: enc.customer,
-			items: [{
+		let ste_items;
+		if (enc.item_code == '100146') {
+			ste_items = [{
 				item_code: '100146',
 				qty: 1,
 				s_warehouse: enc.warehouse,
@@ -288,8 +287,39 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 				// 	qty: 1,
 				// 	t_warehouse: "Stores - bN", // check warehouse
 				// 	serial_no: enc.seat_sn  // If null, will be auto-assigned.
-			}]
+			}];
+		} else if (enc.item_code == '101083') {
+			ste_items = [{
+				item_code: '101083',
+				qty: 1,
+				s_warehouse: enc.warehouse,
+				t_warehouse: warehouse,
+				serial_no: enc.serial_no,
+			}, {
+				item_code: '101011.02', // Tubing pouch 200 mm, needs cleaning
+				qty: 2,
+				t_warehouse: "Stores - bN",
+			}, {
+				item_code: '101012.02', // Tubing pouch 120 mm, needs cleaning
+				qty: 1,
+				t_warehouse: "Stores - bN",
+			}, {
+				item_code: '100799', // Barrel plug for pouches
+				qty: 5,
+				s_warehouse: "Stores - bN",
+			}];
+		} else {
+			frappe.throw("Unsupported enclosure type ${enc.item_code} for serial no ${enc.serial_no}");
+		}
 
+
+		doc = await frappe.db.insert({
+			doctype: "Stock Entry",
+			title: `Cartridge Return for ${enc.serial_no}`,
+			stock_entry_type: "Repack",
+			docstatus: 1,
+			from_customer: enc.customer,
+			items: ste_items,
 		});
 		return doc;
 	}
