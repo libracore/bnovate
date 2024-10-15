@@ -82,6 +82,8 @@ fixtures = [
             "Stock Entry-from_customer_name",
             "Blanket Order-currency",
             "Address-portal_hide",
+            "Item-compatibility",
+            "Item-stability_in_months",
 
             # Addresses
             "Address-company_name",
