@@ -18,6 +18,9 @@ def find_serial_no(serial_no, throw=True, key=None):
 	storage location.
 	"""
 
+	if throw == 'false':  # watch out for string conversions...
+		throw = False
+
 	if not key:
 		frappe.has_permission("Storage Location", "read", throw=True)
 
@@ -47,6 +50,8 @@ def find_serial_no(serial_no, throw=True, key=None):
 
 @frappe.whitelist()
 def find_serial_nos(serial_nos, throw=True, key=None):
+	if throw == 'false':  # watch out for string conversions...
+		throw = False
 	return [find_serial_no(s, throw, key) for s in get_serial_nos(serial_nos)]
 
 

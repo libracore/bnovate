@@ -234,6 +234,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		if (state.work_order_doc.sales_order) {
 			state.sales_order_doc = await frappe.model.with_doc('Sales Order', state.work_order_doc.sales_order)
 		}
+		state.work_order_doc.serial_no_locations = await bnovate.storage.find_serial_nos(state.work_order_doc.serial_no, false);
 
 		// should we switch to serialized behaviour? (produce one item at a time)
 		await fetch_item_details([state.work_order_doc.production_item]);

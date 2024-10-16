@@ -1,6 +1,6 @@
 frappe.provide("bnovate.storage");
 
-bnovate.storage.find_serial_no = async function find_serial_no(serial_no, key) {
+bnovate.storage.find_serial_no = async function (serial_no, key) {
     if (!serial_no) {
         const input = await bnovate.storage.prompt_sn("Find");
         serial_no = input?.serial_no;
@@ -20,7 +20,23 @@ bnovate.storage.find_serial_no = async function find_serial_no(serial_no, key) {
     }
 }
 
-bnovate.storage.store_serial_no = async function store_serial_no(location_name, serial_no, key) {
+bnovate.storage.find_serial_nos = async function (serial_nos, throwErr, key) {
+    if (serial_nos) {
+        const resp = await frappe.call({
+            method: "bnovate.bnovate.doctype.storage_location.storage_location.find_serial_nos",
+            args: {
+                serial_nos,
+                'throw': throwErr,
+                key,
+            }
+        })
+        const locations = resp.message;
+        // await bnovate.storage.msgprint(`<b>Location:</b> ${location.title}<br><b>Slot:</b> ${location.slot}`, `Item found`);
+        return locations
+    }
+}
+
+bnovate.storage.store_serial_no = async function (location_name, serial_no, key) {
     if (!serial_no) {
         const input = await bnovate.storage.prompt_sn("Store");
         serial_no = input?.serial_no;
@@ -44,7 +60,7 @@ bnovate.storage.store_serial_no = async function store_serial_no(location_name, 
     }
 }
 
-bnovate.storage.remove_serial_no = async function remove_serial_no(serial_no, throwErr = true, key = null, discreet = false) {
+bnovate.storage.remove_serial_no = async function (serial_no, throwErr = true, key = null, discreet = false) {
     if (!serial_no) {
         const input = await bnovate.storage.prompt_sn("Remove");
         serial_no = input?.serial_no;
@@ -76,7 +92,7 @@ bnovate.storage.remove_serial_no = async function remove_serial_no(serial_no, th
 
 // Helpers
 // Promise-ified frappe prompt:
-bnovate.storage.prompt_sn = function prompt_sn(primary_action_label) {
+bnovate.storage.prompt_sn = function (primary_action_label) {
     return new Promise((resolve, reject) => {
         const d = new frappe.ui.Dialog({
             title: "Enter Serial No",
@@ -99,7 +115,7 @@ bnovate.storage.prompt_sn = function prompt_sn(primary_action_label) {
 }
 
 // Simply an await-able dialog
-bnovate.storage.msgprint = function msgprint(message, title) {
+bnovate.storage.msgprint = function (message, title) {
     return new Promise((resolve, reject) => {
         let dialog = frappe.msgprint(message, title);
         dialog.onhide = () => { resolve() };
@@ -108,7 +124,7 @@ bnovate.storage.msgprint = function msgprint(message, title) {
 }
 
 
-bnovate.storage.decode_qr = function decode_qr(qr_string) {
+bnovate.storage.decode_qr = function (qr_string) {
     if (qr_string.trim().startsWith("{")) {
         const qrdata = JSON.parse(qr_string);
         console.log(qrdata);
