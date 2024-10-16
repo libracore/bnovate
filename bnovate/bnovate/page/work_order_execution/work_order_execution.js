@@ -118,6 +118,10 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 
 		page.clear_primary_action();
 		page.clear_secondary_action();
+
+		// Cleanup orphan popovers
+		[...document.querySelectorAll('.popover')].forEach(el => $(el).popover('hide'));
+
 		if (state.view == read) {
 			page.set_secondary_action(__('Reload'), () => state.load_work_order(state.work_order_id));
 			item_content.innerHTML = frappe.render_template('items_read', {
@@ -155,6 +159,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 				state.expiry_date_control = null;
 			}
 
+			attach_update_state();
 			attach_validator();
 			attach_enterToTab();
 			attach_additional_item_buttons();
@@ -183,7 +188,14 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		let input = expiry_date_control.input
 		input.classList.add('required');
 		input.dataset.required = true;
-		expiry_date_control.set_value(frappe.datetime.add_months(state.work_order_doc.expected_delivery_date, state.default_shelf_life));
+		expiry_date_control.set_value(
+			state.ste_doc.expiry_date ||
+			frappe.datetime.add_months(state.work_order_doc.expected_delivery_date, state.default_shelf_life)
+		);
+
+		// change detect bound with attach_update_state doesn't work - repeat here
+		// Annoyinlgy this is called twice for each change
+		expiry_date_control.$input.on('change', update_ste_doc);
 
 		return expiry_date_control;
 	}
@@ -390,6 +402,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 	}
 
 	async function validate_inputs() {
+
 		// Enable Submit button only if all required fields have values.
 		const required_inputs = [...document.querySelectorAll("[data-required]")];
 		let valid = true;
@@ -407,7 +420,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 					let serial = await frappe.model.with_doc("Serial No", value.toUpperCase());
 					if (!serial) {
 						error = "Serial No does not exist";
-					} else if (serial.item_code !== input.dataset.for_item_code) {
+					} else if (serial.item_code !== input.dataset.item) {
 						error = `Serial No is for item code ${serial.item_code}!`
 					} else if (state.work_order_doc.serial_no && state.work_order_doc.serial_no.toUpperCase().indexOf(value.toUpperCase()) < 0) {
 						warning = "Does not match work order instructions";
@@ -419,7 +432,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 					let batch = await frappe.model.with_doc("Batch", value);
 					if (!batch) {
 						error = "Batch does not exist";
-					} else if (batch.item !== input.dataset.for_item_code) {
+					} else if (batch.item !== input.dataset.item) {
 						error = `Batch is for item code ${batch.item}!`
 					}
 				}
@@ -470,33 +483,45 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		submit();
 	}
 
-	async function submit() {
-		// Submits STE with adjusted qties to db.
-		page.clear_primary_action();
+	// Copy form data into state
+	async function update_ste_doc() {
 
-		// Get adjusted quantities, apply to STE items
+		// Get adjusted quantities, keep to the side for now 
 		[...document.querySelectorAll("input.qty-delta")]
-			.map(el => [el.dataset.idx, parseFloat(el.value) || 0])
-			.map(([idx, delta]) => {
-				state.ste_doc.items.find(i => i.idx == idx).qty += delta;
-				state.ste_doc.items.find(i => i.idx == idx).delta = delta;
+			.map(el => [el.dataset.idx, el.dataset.item, parseFloat(el.value) || 0])
+			.map(([idx, item, delta]) => {
+				state.ste_doc.items.find(i => i.idx == idx && i.item_code == item).delta = delta;
 			});
 		// Same for batches, only on select items.
 		[...document.querySelectorAll("input.batch")]
-			.map(el => [el.dataset.idx, el.value || 0])
-			.map(([idx, batch_no]) => {
-				state.ste_doc.items.find(i => i.idx == idx).batch_no = batch_no.trim();
+			.map(el => [el.dataset.idx, el.dataset.item, el.value || ''])
+			.map(([idx, item, batch_no]) => {
+				state.ste_doc.items.find(i => i.idx == idx && i.item_code == item).batch_no = batch_no.toUpperCase().trim();
 			}); // BTW, this also modifies the same object pointed to from production_item_entry.
 		// And for serial no
 		[...document.querySelectorAll("input.serial")]
-			.map(el => [el.dataset.idx, el.dataset.item, el.value || 0])
+			.map(el => [el.dataset.idx, el.dataset.item, el.value || ''])
 			.map(([idx, item, serial_no]) => {
-				state.ste_doc.items.find(i => i.idx == idx && i.item_code == item).serial_no = serial_no.trim(); // scrap items can have same index as input items, need to double-check item_code.
+				state.ste_doc.items.find(i => i.idx == idx && i.item_code == item).serial_no = serial_no.toUpperCase().trim(); // scrap items can have same index as input items, need to double-check item_code.
 			});
+		// Comment
+		state.ste_doc.comment = document.querySelector("textarea#comment")?.value || null;
+
 		// Handle expiry date if relevant
 		if (state.needs_expiry_date && state.expiry_date_control) {
 			state.ste_doc.expiry_date = state.expiry_date_control.get_value();
 		}
+
+	}
+
+	async function submit() {
+		// Submits STE with adjusted qties to db.
+		page.clear_primary_action();
+
+		update_ste_doc();
+
+		// Adjust quantities
+		state.ste_doc.items.forEach(item => item.qty += item.delta || 0);
 
 		if (state.ste_doc.production_item_entry.has_batch_no) {
 			// Create target batch if it doesn't exist
@@ -857,6 +882,13 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 
 	// LISTENERS
 	////////////////////////////
+
+	function attach_update_state() {
+		[
+			...document.querySelectorAll('div[data-fieldname="items"] input'),
+			...document.querySelectorAll('div[data-fieldname="items"] textarea'),
+		].map(el => el.addEventListener("change", update_ste_doc));
+	}
 
 	function attach_validator() {
 		[...document.querySelectorAll("[data-required]")]
