@@ -13,7 +13,7 @@ import concurrent.futures
 
 from json import JSONDecodeError
 from typing import List
-from datetime import date
+from datetime import date, datetime
 from itertools import chain
 
 from frappe import _
@@ -601,25 +601,26 @@ def get_devices_and_data():
 
 def combase_get_devices():
     """ Return all SIM cards registered """
-    # TODO: check pagination when more than 50 devices
     devices = []
-    resp = {
-        'lastPage': False,
-        'pageNumber': 0,
-    }
-    while 'lastPage' in resp and not resp['lastPage']:
-        resp = combase_request(
-            "/devices", 
-            params={
-                'modifiedSince': '2023-01-01T00:00:00+00:00',
-                'pageNumber': resp['pageNumber'] + 1,
-            },
-        )
+    current_year = datetime.now().year
+    for year in range(2023, current_year + 1):
+        resp = {
+            'lastPage': False,
+            'pageNumber': 0,
+        }
+        while 'lastPage' in resp and not resp['lastPage']:
+            resp = combase_request(
+                "/devices",
+                params={
+                    'modifiedSince': '{year}-01-01T00:00:00+00:00'.format(year=year),
+                    'pageNumber': resp['pageNumber'] + 1,
+                },
+            )
 
-        if not 'devices' in resp:
-            continue
+            if not 'devices' in resp:
+                continue
 
-        devices.extend(resp['devices'])
+            devices.extend(resp['devices'])
 
     return devices
 
