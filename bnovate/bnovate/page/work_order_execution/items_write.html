@@ -13,8 +13,9 @@
             <h3>{{ __("Batch produced") }}</h3>
             <input class="batch form-control" id="batch-{{ doc.production_item_entry.idx }}"
                 name="batch-{{ doc.production_item_entry.idx }}" data-idx="{{ doc.production_item_entry.idx }}"
+                data-item="{{ doc.production_item_entry.item_code }}"
                 data-required 
-                value="{{ doc.work_order }}" tabindex="1" autofocus>
+                value="{{ doc.production_item_entry.batch_no || doc.work_order }}" tabindex="1" autofocus>
         </div>
         {% endif %}
 
@@ -50,7 +51,7 @@
                                 <td>
                                     <input class="serial form-control required" id="serial-scrap-{{ scrap_item.idx }}"
                                     name="serial-scrap-{{ scrap_item.idx }}" data-idx="{{ scrap_item.idx }}"
-                                    data-item="{{ scrap_item.item_code }}" data-required tabindex="2">
+                                    data-item="{{ scrap_item.item_code }}" data-required tabindex="2" value="{{ scrap_item.serial_no }}">
                                 </td>  
                             </tr>
                             {% endif %} 
@@ -74,7 +75,7 @@
                         <td>
                             <input class="serial form-control required" id="serial-{{ doc.production_item_entry.idx }}"
                             name="serial-{{ doc.production_item_entry.idx }}" data-idx="{{ doc.production_item_entry.idx }}"
-                            data-item="{{ doc.production_item_entry.item_code }}" data-required tabindex="1" autofocus>
+                            data-item="{{ doc.production_item_entry.item_code }}" data-required tabindex="1" autofocus value="{{ doc.production_item_entry.serial_no }}">
                         </td>
                     </tr>
 
@@ -89,7 +90,7 @@
                         <td>
                             <input class="serial form-control required" id="serial-scrap-{{ scrap_item.idx }}"
                             name="serial-scrap-{{ scrap_item.idx }}" data-idx="{{ scrap_item.idx }}"
-                            data-item="{{ scrap_item.item_code }}" data-required tabindex="2">
+                            data-item="{{ scrap_item.item_code }}" data-required tabindex="2" value="{{ scrap_item.serial_no }}">
                         </td>  
                     </tr>
                     {% endif %} 
@@ -175,7 +176,7 @@
                         <td class="text-left">
                             <div class="value">
                                 <input class="qty-delta form-control" id="delta-{{ item.idx }}"
-                                    name="delta-{{ item.idx }}" data-idx="{{ item.idx }}" tabindex="{{ item.idx + doc.items.length + 2}}">
+                                    name="delta-{{ item.idx }}" data-idx="{{ item.idx }}" data-item="{{ item.item_code }}" tabindex="{{ item.idx + doc.items.length + 2}}" value="{{ item.delta }}">
                             </div>
                         </td>
 
@@ -184,7 +185,7 @@
                             <div class="value">
                                 <input class="batch form-control required check-batch" id="batch-{{ item.idx }}"
                                     name="batch-{{ item.idx }}" data-idx="{{ item.idx }}" data-required tabindex="{{ item.idx + 2 }}"
-                                    data-for_item_code="{{ item.item_code }}">
+                                    data-item="{{ item.item_code }}" value="{{ item.batch_no }}">
                             </div>
                             {% endif %}
                         </td>
@@ -194,8 +195,8 @@
                             {% if item.has_serial_no %}
                             <div class="value">
                                 <input class="serial form-control required check-serial" id="serial-{{ item.idx }}"
-                                    name="serial-{{ item.idx }}" data-idx="{{ item.idx }}" data-item="{{ item.item_code }}" data-required tabindex="{{ item.idx + 2 }}"
-                                    data-for_item_code="{{ item.item_code }}">
+                                    name="serial-{{ item.idx }}" data-idx="{{ item.idx }}" data-required tabindex="{{ item.idx + 2 }}"
+                                    data-item="{{ item.item_code }}" value="{{ item.serial_no }}">
                             </div>
                             {% endif %}
                         </td>
@@ -242,7 +243,7 @@
     <div class="bn-row">
         <div class="bn-col comment-input">
             <h3>{{ __("Comment") }}</h3>
-            <textarea class="form-control" id="comment" name="comment" rows="5" cols="80"></textarea>
+            <textarea class="form-control" id="comment" name="comment" rows="5" cols="80">{{ doc.comment }}</textarea>
         </div>
     </div>
 
