@@ -89,6 +89,8 @@ def make_sales_order(source_name, target_doc=None):
 
     def set_missing_values(source, target):
 
+        customer = frappe.get_doc("Customer", source.customer)
+
         # Map request items to sales order items.
         tcc_sns = list(set(row.serial_no for row in source.items if row.type == "TCC"))
         icc_sns = list(set(row.serial_no for row in source.items if row.type == "ICC"))
@@ -99,6 +101,7 @@ def make_sales_order(source_name, target_doc=None):
         item_code_icp = '200141.02'
 
         target_copy = target.as_dict()
+            
         def get_item_deets(item_code):
             return get_item_details(args=target_copy.update({
                 'item_code': item_code,
@@ -107,40 +110,54 @@ def make_sales_order(source_name, target_doc=None):
 
         if tcc_sns:
             deets = get_item_deets(item_code_tcc)
-            target.append("items", {
+            fields = {
                 "item_code": item_code_tcc,
                 "serial_nos": "\n".join(tcc_sns),
                 "qty": len(tcc_sns),
                 "refill_request": source.name,
-                "blanket_order": deets.blanket_order,
                 "rate": deets.blanket_order_rate,
                 "weight_per_unit": deets.weight_per_unit,
                 "total_weight": len(tcc_sns) * deets.weight_per_unit,
-            })
+            }
+            if deets.blanket_order:
+                fields["blanket_order"] = deets.blanket_order
+            elif customer.default_discount:
+                fields["discount_percentage"] = customer.default_discount
+            target.append("items", fields)
+
         if icc_sns:
             deets = get_item_deets(item_code_icc)
-            target.append("items", {
+            fields = {
                 "item_code": item_code_icc,
                 "serial_nos": "\n".join(icc_sns),
                 "qty": len(icc_sns),
                 "refill_request": source.name,
-                "blanket_order": deets.blanket_order,
                 "rate": deets.blanket_order_rate,
                 "weight_per_unit": deets.weight_per_unit,
                 "total_weight": len(icc_sns) * deets.weight_per_unit,
-            })
+            }
+            if deets.blanket_order:
+                fields["blanket_order"] = deets.blanket_order
+            elif customer.default_discount:
+                fields["discount_percentage"] = customer.default_discount
+            target.append("items", fields)
+
         if icp_sns:
             deets = get_item_deets(item_code_icp)
-            target.append("items", {
+            fields = {
                 "item_code": item_code_icp,
                 "serial_nos": "\n".join(icp_sns),
                 "qty": len(icp_sns),
                 "refill_request": source.name,
-                "blanket_order": deets.blanket_order,
                 "rate": deets.blanket_order_rate,
                 "weight_per_unit": deets.weight_per_unit,
                 "total_weight": len(icp_sns) * deets.weight_per_unit,
-            })
+            }
+            if deets.blanket_order:
+                fields["blanket_order"] = deets.blanket_order
+            elif customer.default_discount:
+                fields["discount_percentage"] = customer.default_discount
+            target.append("items", fields)
 
         if source.return_label_needed:
             target.order_level_requests = "Organize return from customer, {} parcels.\n".format(source.parcel_count or 1) + (source.remarks or "")
@@ -151,6 +168,7 @@ def make_sales_order(source_name, target_doc=None):
         target.currency = None
         target.selling_price_list = None
         target.price_list_currency = None
+        target.default_discount = customer.default_discount
         target.total_net_weight = sum([item.total_weight for item in target.items])
         target.run_method("set_missing_values")
 
