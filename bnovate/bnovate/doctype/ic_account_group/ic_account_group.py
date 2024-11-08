@@ -3,8 +3,15 @@
 # For license information, please see license.txt
 
 from __future__ import unicode_literals
-# import frappe
+import frappe
 from frappe.model.document import Document
 
 class ICAccountGroup(Document):
-	pass
+    def before_save(self):
+        if self.parent_group:
+            parent_level = frappe.get_value("IC Account Group", self.parent_group, "level")
+            self.level = parent_level + 1
+        else:
+            self.level = 0
+            
+        return

@@ -6,6 +6,7 @@
  "field_order": [
   "company",
   "abbr",
+  "currency",
   "account"
  ],
  "fields": [
@@ -32,10 +33,19 @@
    "in_list_view": 1,
    "label": "Abbr",
    "read_only": 1
+  },
+  {
+   "fetch_from": "company.default_currency",
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Currency",
+   "options": "Currency",
+   "read_only": 1
   }
  ],
  "istable": 1,
- "modified": "2024-11-08 17:52:37.711179",
+ "modified": "2024-11-08 21:18:09.991424",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "IC Account Group Account",

@@ -8,7 +8,10 @@
  "field_order": [
   "title",
   "reporting_type",
-  "prent_group",
+  "col_main",
+  "is_group",
+  "parent_group",
+  "level",
   "sec_accounts",
   "accounts"
  ],
@@ -33,13 +36,7 @@
    "reqd": 1
   },
   {
-   "fieldname": "prent_group",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Parent Group",
-   "options": "IC Account Group"
-  },
-  {
+   "depends_on": "eval:doc.is_group==0",
    "fieldname": "sec_accounts",
    "fieldtype": "Section Break",
    "label": "Accounts"
@@ -49,9 +46,32 @@
    "fieldtype": "Table",
    "label": "Accounts",
    "options": "IC Account Group Account"
+  },
+  {
+   "fieldname": "col_main",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_group",
+   "fieldtype": "Check",
+   "label": "Is Group"
+  },
+  {
+   "fieldname": "level",
+   "fieldtype": "Int",
+   "label": "Level",
+   "read_only": 1
+  },
+  {
+   "fieldname": "parent_group",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Parent Group",
+   "options": "IC Account Group"
   }
  ],
- "modified": "2024-11-08 11:22:50.377930",
+ "modified": "2024-11-08 20:54:41.192860",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "IC Account Group",
