@@ -59,7 +59,7 @@ def get_data(filters=None):
     for d in data:
         row_total = 0
         for c in companies:
-            row_total += d['{0}'.format(c['abbr'])]
+            row_total += d.get('{0}'.format(c['abbr']))
         d['total'] = row_total
     
     return data
