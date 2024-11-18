@@ -23,7 +23,14 @@ def get_columns():
             'fieldtype': 'Currency',
             'width': 120
         })
-        
+    
+    columns.append({
+        'fieldname': 'total',
+        'label': 'Total',
+        'fieldtype': 'Currency',
+        'width': 120
+    })
+    
     return columns
     
 def get_data(filters=None):
@@ -46,7 +53,15 @@ def get_data(filters=None):
     
     # expand tree into a list
     data = expand_node(data, account_group_tree)
-        
+    
+    # add totals per row
+    companies = frappe.get_all("Company", fields=['name', 'abbr'])
+    for d in data:
+        row_total = 0
+        for c in companies:
+            row_total += d['{0}'.format(c['abbr'])]
+        d['total'] = row_total
+    
     return data
 
 def expand_node(data, children):
