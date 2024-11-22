@@ -33,6 +33,12 @@ frappe.query_reports["Aggregate Invoicing"] = {
             "fieldtype": "Check",
             "default": 0
         },
+        {
+            "fieldname": "ignore_stopped",
+            "label": __("Ignore Stopped"),
+            "fieldtype": "Check",
+            "default": 1
+        },
     ],
     initial_depth: 1,
     onload(report) {

@@ -71,6 +71,6 @@ WHERE {docstatus_filter}
     data = frappe.db.sql(sql_query, as_dict=True)
 
     if filters.reminders_only:
-        return [d for d in data if d.renewal_reminder_from and d.renewal_reminder_from <= datetime.date.today()]
+        return [d for d in data if d.renewal_reminder_from and d.renewal_reminder_from <= datetime.date.today() and d.status not in ('Stopped', 'Finished')]
 
     return data

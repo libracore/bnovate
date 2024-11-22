@@ -8,29 +8,36 @@ from frappe import _
 
 from bnovate.bnovate.doctype.refill_request.refill_request import RefillRequest
 
-from .helpers import get_session_primary_customer, auth
+from .helpers import get_session_primary_customer, auth, build_sidebar, has_cartridge_portal
 
 no_cache = 1
 
-auth()
 
 def get_context(context):
-    context.data = get_requests()
-    context.show_sidebar = True
+    auth(context)
+    build_sidebar(context)
+    
+    if has_cartridge_portal():
+        context.data = get_requests()
+    else:
+        context.data = []
     context.title = _("Refill Requests")
     return context
 
 def get_requests():
-    primary_customer = get_session_primary_customer()
 
+    primary_customer = get_session_primary_customer()
     docs = frappe.get_all("Refill Request", filters={
-            "customer": ["=", primary_customer],
+            "customer": ["=", primary_customer.docname],
         },
         fields="*"
     )
 
     for doc in docs:
         RefillRequest.set_indicator(doc)
+        RefillRequest.set_tracking_url(doc)
+        doc.contact_display = RefillRequest.get_contact_display(doc)
+
 
     return docs
 

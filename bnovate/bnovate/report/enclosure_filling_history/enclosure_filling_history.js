@@ -3,12 +3,20 @@
 /* eslint-disable */
 
 frappe.query_reports["Enclosure Filling History"] = {
-	"filters": [
+    "filters": [
         {
             "fieldname": "serial_no",
             "label": __("Serial no"),
             "fieldtype": "Link",
-            "options" : "Serial No"
+            "options": "Serial No"
         }
-	]
+    ],
+    formatter(value, row, col, data, default_formatter) {
+
+        if (col.fieldname === 'analysis_certificate' && value) {
+            return `<a href="${value}">${value}</a>`
+        }
+
+        return default_formatter(value, row, col, data);
+    }
 };

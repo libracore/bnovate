@@ -146,7 +146,14 @@
         <div class="bn-col comment">
             {% if doc.serial_no %}
             <p>
-                <b>{{ __("Serial No") }}:</b> {{ doc.serial_no }}
+                <b>{{ __("Serial No") }}:</b><br>
+                {% for loc in doc.serial_no_locations %}
+                    {{ loc.serial_no }} 
+                    {% if loc.slot %}
+                        ({{ loc.title }} {{ loc.slot }})
+                    {% endif %}
+                    <br>
+                {% endfor %}
             </p>
             {% endif %}
             {% if doc.comment %}

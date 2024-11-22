@@ -29,6 +29,10 @@
 <div class="row">
     <div class="col">
         <button id="new-address" class="btn btn-primary" style="margin-bottom: 10px">{{ _("New Address") }}</button>
+        <i id="loading" class="fa fa-cog fa-spin"></i>
+        {% if fixed_billing_address %}
+        <p><i>{{ _("You can only edit shipping addresses. To change your billing address, contact sales@bnovate.com.") }} </i></p>
+        {% endif %}
     </div>
 </div>
 
@@ -37,10 +41,15 @@
     <div class="card">
         <div class="card-body">
             <div class="btn-group float-right">
-              <!-- <button type="button" class="btn btn-sm btn-primary"><i class="fa fa-pencil"></i></button> -->
+              <button type="button" class="btn btn-sm btn-primary edit-address" data-name="{{ addr.name }}" disabled><i class="fa fa-pencil"></i></button>
               <button type="button" class="btn btn-sm btn-danger delete-address" data-name="{{ addr.name }}"><i class="fa fa-trash"></i></button>
             </div>
             {{addr.display}}
+            <p class="text-muted">
+                {% if addr.email_id %}
+                    {{ addr.email_id.split(",") | join("<br>") }}
+                {% endif %}
+            </p>
         </div>
     </div>
     {% endfor %}
@@ -61,6 +70,10 @@
                     <div id="form-container">
                         <form name="address" id="address-form" action="">
                             <div class="form-group">
+                                <label for="contact_name" class="control-label">{{ _("Contact Name") }}</label>
+                                <input type="text" class="form-control" name="contact_name" access="false" id="contact_name" required>
+                            </div>
+                            <div class="form-group">
                                 <label for="company_name" class="control-label">{{ _("Company Name") }}</label>
                                 <input type="text" class="form-control" name="company_name" access="false" id="company_name">
                             </div>
@@ -74,7 +87,7 @@
                             </div>
                             <div class="form-group">
                                 <label for="pincode" class="control-label">{{ _("Postal Code") }}</label>
-                                <input type="text" class="form-control" name="pincode" access="false" id="pincode">
+                                <input type="text" class="form-control" name="pincode" access="false" id="pincode" required>
                             </div>
                             <div class="form-group has-error">
                                 <label for="city" class="control-label">{{ _("City") }}</label>
@@ -84,9 +97,18 @@
                                 <label for="country" class="formbuilder-select-label">{{ _("Country") }}</label>
                                 <select class="form-control" name="country" id="country" required>
                                     {% for country in countries %}
-                                    <option value="{{ country }}">{{ _(country) }}</option>
+                                    <option value="{{ country }}" {{ "selected" if country == "Switzerland" }} >{{ _(country) }}</option>
                                     {% endfor %}
                                 </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="phone" class="control-label">{{ _("Phone") }}</label>
+                                <input type="text" class="form-control" name="phone" access="false" id="phone">
+                            </div>
+                            <div class="form-group">
+                                <label for="email_id" class="control-label">{{ _("Email Notifications") }}</label>
+                                <input type="text" class="form-control" name="email_id" access="false" id="email_id">
+                                <p class="help-box small text-muted">{{ _("Split addresses with comma: first@example.com, second@example.com") }}</p>
                             </div>
                         </form>
                     </div>
@@ -109,14 +131,34 @@
 
 {% block script %}
 <script>
-    frappe.require("/assets/bnovate/js/web_includes/translations.js")
-    frappe.require("/assets/bnovate/js/web_includes/helpers.js")
-    frappe.require("/assets/bnovate/js/web_includes/address_modal.js")
+    
+    const addresses = {};
+    frappe.require([
+        "/assets/bnovate/js/web_includes/translations.js",
+        "/assets/bnovate/js/web_includes/helpers.js",
+        "/assets/bnovate/js/web_includes/address_modal.js",
+    ])
+    .then( () => bnovate.translations.get_messages() )
+    .then( () => bnovate.web.get_addresses())
+    .then( remote_addresses => {
+        remote_addresses.forEach(addr => addresses[addr.name] = addr);
+        hide_spinner();
+        bind_edit_buttons();
+    });
 
+    // Create new address
     async function save() {
         const data = new FormData(document.querySelector("#address-form"));
         const doc = Object.fromEntries(data);
         await bnovate.web.create_address(doc);
+        location.reload();
+    }
+
+    // Save new address and delete old one
+    async function edit(name) {
+        const data = new FormData(document.querySelector("#address-form"));
+        const doc = Object.fromEntries(data);
+        await bnovate.web.modify_address(name, doc);
         location.reload();
     }
 
@@ -132,7 +174,44 @@
 				input.closest(".form-group").classList.remove('has-error')
 			}
 		}
+
+        // Check emails
+        const emailInput = frm.querySelector("#email_id");
+        if (!emailInput) {
+            return valid;
+        }
+
+        const re = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i; // Match email format
+        const emails = emailInput?.value;
+        let emailValid = true;
+        emails.split(',').forEach( (email) => {
+            if ( email.trim().length > 0 && !re.test(email.trim())) {
+                emailValid = false;
+                emailInput.closest(".form-group").classList.add('has-error');
+            };
+        })
+        if (emailValid) {
+            emailInput.closest(".form-group").classList.remove('has-error');
+        } else {
+            valid = false;
+        }
+
 		return valid;
+    }
+
+    function hide_spinner() {
+        document.getElementById("loading").style.display = "none";
+    }
+
+    function bind_edit_buttons() {
+        [...document.querySelectorAll(".edit-address")].map(el => {
+            el.removeAttribute("disabled");
+            el.addEventListener("click", async (e) => {
+                const contents = document.querySelector("#modal-body").content.cloneNode(true)
+                document.getElementById("edit-address-modal").show(contents, validate, () => edit(el.dataset.name), addresses[el.dataset.name] || {});
+                validate();
+            })
+        });
     }
 
     // Bind all buttons
@@ -147,5 +226,7 @@
             location.reload();
         }
     }));
+
+
 </script>
 {% endblock %}

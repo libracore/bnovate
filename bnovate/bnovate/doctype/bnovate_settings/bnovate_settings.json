@@ -4,14 +4,38 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "invoicing_section",
+  "selling_section",
+  "dummy_customer",
+  "shipping_income_account",
+  "shipping_income_item",
+  "column_break_5",
+  "so_template",
+  "dn_template",
+  "sinv_template",
+  "production_settings",
+  "qc_warehouse",
   "api_credentials_section",
   "combase_api_username",
   "combase_api_key",
   "rms_api_token",
-  "shipping_income_account",
-  "shipping_income_item",
-  "dummy_customer"
+  "rms_company_id",
+  "shipping_section",
+  "use_live_api",
+  "shipping_contact",
+  "dhl_export_account",
+  "dhl_import_account",
+  "dhl_api_key",
+  "dhl_api_secret",
+  "column_break_20",
+  "pickup_from",
+  "same_day_cutoff",
+  "pallet_same_day_cutoff",
+  "pickup_to",
+  "pallet_pickup_comment",
+  "default_customs_tariff_number",
+  "default_country_of_origin",
+  "portal_section",
+  "portal_home_page"
  ],
  "fields": [
   {
@@ -28,11 +52,6 @@
    "fieldname": "combase_api_username",
    "fieldtype": "Data",
    "label": "Combase API Username"
-  },
-  {
-   "fieldname": "invoicing_section",
-   "fieldtype": "Section Break",
-   "label": "Invoicing"
   },
   {
    "fieldname": "api_credentials_section",
@@ -59,10 +78,148 @@
    "fieldtype": "Link",
    "label": "Dummy Customer",
    "options": "Customer"
+  },
+  {
+   "fieldname": "selling_section",
+   "fieldtype": "Section Break",
+   "label": "Selling"
+  },
+  {
+   "fieldname": "column_break_5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "so_template",
+   "fieldtype": "Link",
+   "label": "SO Email Template",
+   "options": "Email Template"
+  },
+  {
+   "fieldname": "dn_template",
+   "fieldtype": "Link",
+   "label": "DN Email Template",
+   "options": "Email Template"
+  },
+  {
+   "fieldname": "sinv_template",
+   "fieldtype": "Link",
+   "label": "SINV Email Template",
+   "options": "Email Template"
+  },
+  {
+   "fieldname": "portal_section",
+   "fieldtype": "Section Break",
+   "label": "Portal"
+  },
+  {
+   "fieldname": "portal_home_page",
+   "fieldtype": "HTML Editor",
+   "label": "Portal Home Page"
+  },
+  {
+   "fieldname": "production_settings",
+   "fieldtype": "Section Break",
+   "label": "Production Settings"
+  },
+  {
+   "fieldname": "qc_warehouse",
+   "fieldtype": "Link",
+   "label": "QC Warehouse",
+   "options": "Warehouse"
+  },
+  {
+   "fieldname": "rms_company_id",
+   "fieldtype": "Data",
+   "label": "RMS Company ID"
+  },
+  {
+   "fieldname": "dhl_api_key",
+   "fieldtype": "Data",
+   "label": "DHL API Key"
+  },
+  {
+   "fieldname": "dhl_api_secret",
+   "fieldtype": "Data",
+   "label": "DHL API secret"
+  },
+  {
+   "fieldname": "dhl_export_account",
+   "fieldtype": "Data",
+   "label": "DHL Account for Exports"
+  },
+  {
+   "fieldname": "shipping_section",
+   "fieldtype": "Section Break",
+   "label": "Shipping"
+  },
+  {
+   "fieldname": "column_break_20",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "09:00:00",
+   "fieldname": "pickup_from",
+   "fieldtype": "Time",
+   "label": "Pickup From"
+  },
+  {
+   "default": "17:30:00",
+   "fieldname": "pickup_to",
+   "fieldtype": "Time",
+   "label": "Pickup To"
+  },
+  {
+   "fieldname": "default_customs_tariff_number",
+   "fieldtype": "Link",
+   "label": "Default Customs Tariff Number",
+   "options": "Customs Tariff Number"
+  },
+  {
+   "fieldname": "default_country_of_origin",
+   "fieldtype": "Link",
+   "label": "Default Country of Origin",
+   "options": "Country"
+  },
+  {
+   "description": "Person who signs commercial invoices etc.",
+   "fieldname": "shipping_contact",
+   "fieldtype": "Link",
+   "label": "Shipping Contact",
+   "options": "User"
+  },
+  {
+   "default": "0",
+   "description": "If checked, real shipping requests are made!",
+   "fieldname": "use_live_api",
+   "fieldtype": "Check",
+   "label": "Use Live DHL API?"
+  },
+  {
+   "default": "17:00:00",
+   "description": "Beyond this time, pickup is scheduled for next day.",
+   "fieldname": "same_day_cutoff",
+   "fieldtype": "Time",
+   "label": "Same Day Cutoff"
+  },
+  {
+   "fieldname": "dhl_import_account",
+   "fieldtype": "Data",
+   "label": "DHL Account for Imports"
+  },
+  {
+   "description": "Beyond this time, pickup <b>of pallets</b> is scheduled for next day.",
+   "fieldname": "pallet_same_day_cutoff",
+   "fieldtype": "Data",
+   "label": "Pallet Same Day Cutoff"
+  },
+  {
+   "fieldname": "pallet_pickup_comment",
+   "fieldtype": "Small Text",
+   "label": "Pallet Pickup Comment"
   }
  ],
  "issingle": 1,
- "modified": "2023-04-28 12:48:46.776463",
+ "modified": "2024-04-24 18:13:14.968861",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "bNovate Settings",

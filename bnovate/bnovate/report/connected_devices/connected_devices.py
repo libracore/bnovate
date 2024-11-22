@@ -22,7 +22,7 @@ def get_columns():
 		# {'fieldname': 'operator', 'fieldtype': 'Data', 'label': _('Operator'), 'width': 150}, 
 		# {'fieldname': 'connection_type', 'fieldtype': 'Data', 'label': _('Type'), 'width': 60}, 
 		# {'fieldname': 'signal', 'fieldtype': 'Int', 'label': _('Signal [dBm]'), 'width': 60}, 
-		{'fieldname': 'sim_data_usage_mb', 'fieldtype': 'Float', 'label': _('Data Usage [MB]'), 'width': 150}, 
+		{'fieldname': 'sim_data_usage_mb', 'fieldtype': 'Float', 'label': _('CTD Data Usage [MB]'), 'width': 150}, 
 		# {'fieldname': 'item_code', 'fieldtype': 'Link', 'label': _('Item'), 'options': 'Item', 'width': 100},
 		# {'fieldname': 'warehouse', 'fieldtype': 'Link', 'label': _('Warehouse'), 'options': 'Warehouse', 'width': 100},
 		# {'fieldname': 'purchase_document_no', 'fieldtype': 'Link', 'label': _('Transfer doc'), 'options': 'Stock Entry', 'width': 100}, 

@@ -2,22 +2,41 @@ import frappe
 
 from frappe import _
 
-from .helpers import auth, get_session_customers, get_addresses
+from .helpers import auth, get_session_customers, get_addresses, build_sidebar, has_cartridge_portal, \
+    allow_unstored_cartridges, organize_return
 
 from bnovate.bnovate.report.cartridge_status import cartridge_status
 
 no_cache = 1
 
-auth()
 
 def get_context(context):
+    auth(context)
     # User can see cartridges from all the customers he manages
-    managed_customers = get_session_customers()
-    if managed_customers:
-        context.data = cartridge_status.get_data(frappe._dict({"customer": managed_customers}))
-    else:
-        context.data = []
+    data = get_cartridges()
+    context.cartridges = data.cartridges
+    context.allow_unstored_cartridges = data.allow_unstored_cartridges
+    context.organize_return = data.organize_return
+
+    build_sidebar(context)
     context.addresses = get_addresses()
-    context.show_sidebar = True
     context.title = _("My Cartridges")
     return context
+
+
+@frappe.whitelist()
+def get_cartridges():
+    """ Return list of cartridges owned and portal parameters """
+    data = frappe._dict({
+        "cartridges": [],
+        "allow_unstored_cartridges": False,
+        "organize_return": False,
+    })
+
+    managed_customers = [c.docname for c in get_session_customers()]
+    if has_cartridge_portal() and managed_customers:
+        data.cartridges = cartridge_status.get_data(frappe._dict({"customer": managed_customers}))
+        data.allow_unstored_cartridges = allow_unstored_cartridges()
+        data.organize_return = organize_return()
+
+    return data

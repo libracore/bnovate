@@ -7,6 +7,10 @@ import frappe
 
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
+from frappe.utils import getdate, add_days
+
+from erpnext import get_default_company
+from erpnext.stock.get_item_details import get_item_details
 
 class RefillRequest(Document):
 
@@ -15,6 +19,14 @@ class RefillRequest(Document):
 
     def on_cancel(self):
         self.set_status()
+
+    @property
+    def contact_display(self):
+        return self.get_contact_display()
+
+    def get_contact_display(self):
+        contact_doc = frappe.get_doc("Contact", self.contact_person)
+        return ' '.join([n.strip() for n in [contact_doc.first_name, contact_doc.last_name] if n]).strip()
 
     def set_status(self):
 
@@ -61,6 +73,11 @@ class RefillRequest(Document):
         self.db_set("tracking_no", dn_doc.tracking_no)
         self.db_set("carrier", dn_doc.carrier)
 
+    def set_tracking_url(self):
+        self.tracking_url = None
+        if self.carrier == "DHL":
+            self.tracking_url = "https://www.dhl.com/ch-en/home/tracking/tracking-express.html?submit=1&tracking-id={0}".format(self.tracking_no)
+    
 
 def get_context(context):
     context.title = "My title"
@@ -71,25 +88,88 @@ def get_context(context):
 def make_sales_order(source_name, target_doc=None):
 
     def set_missing_values(source, target):
+
+        customer = frappe.get_doc("Customer", source.customer)
+
         # Map request items to sales order items.
         tcc_sns = list(set(row.serial_no for row in source.items if row.type == "TCC"))
         icc_sns = list(set(row.serial_no for row in source.items if row.type == "ICC"))
+        icp_sns = list(set(row.serial_no for row in source.items if row.type == "ICC+"))
+
+        item_code_tcc = '200019'
+        item_code_icc = '200054'
+        item_code_icp = '200141.02'
+
+        target_copy = target.as_dict()
+            
+        def get_item_deets(item_code):
+            return get_item_details(args=target_copy.update({
+                'item_code': item_code,
+                'transaction_date': getdate(),
+            }))
 
         if tcc_sns:
-            target.append("items", {
-                "item_code": '200019',
+            deets = get_item_deets(item_code_tcc)
+            fields = {
+                "item_code": item_code_tcc,
                 "serial_nos": "\n".join(tcc_sns),
                 "qty": len(tcc_sns),
                 "refill_request": source.name,
-            })
+                "rate": deets.blanket_order_rate,
+                "weight_per_unit": deets.weight_per_unit,
+                "total_weight": len(tcc_sns) * deets.weight_per_unit,
+            }
+            if deets.blanket_order:
+                fields["blanket_order"] = deets.blanket_order
+            elif customer.default_discount:
+                fields["discount_percentage"] = customer.default_discount
+            target.append("items", fields)
+
         if icc_sns:
-            target.append("items", {
-                "item_code": '200054',
+            deets = get_item_deets(item_code_icc)
+            fields = {
+                "item_code": item_code_icc,
                 "serial_nos": "\n".join(icc_sns),
                 "qty": len(icc_sns),
                 "refill_request": source.name,
-            })
+                "rate": deets.blanket_order_rate,
+                "weight_per_unit": deets.weight_per_unit,
+                "total_weight": len(icc_sns) * deets.weight_per_unit,
+            }
+            if deets.blanket_order:
+                fields["blanket_order"] = deets.blanket_order
+            elif customer.default_discount:
+                fields["discount_percentage"] = customer.default_discount
+            target.append("items", fields)
 
+        if icp_sns:
+            deets = get_item_deets(item_code_icp)
+            fields = {
+                "item_code": item_code_icp,
+                "serial_nos": "\n".join(icp_sns),
+                "qty": len(icp_sns),
+                "refill_request": source.name,
+                "rate": deets.blanket_order_rate,
+                "weight_per_unit": deets.weight_per_unit,
+                "total_weight": len(icp_sns) * deets.weight_per_unit,
+            }
+            if deets.blanket_order:
+                fields["blanket_order"] = deets.blanket_order
+            elif customer.default_discount:
+                fields["discount_percentage"] = customer.default_discount
+            target.append("items", fields)
+
+        if source.return_label_needed:
+            target.order_level_requests = "Organize return from customer, {} parcels.\n".format(source.parcel_count or 1) + (source.remarks or "")
+
+        target.contact_display = source.contact_display
+
+        # force empty some fields so they get set from customer defaults
+        target.currency = None
+        target.selling_price_list = None
+        target.price_list_currency = None
+        target.default_discount = customer.default_discount
+        target.total_net_weight = sum([item.total_weight for item in target.items])
         target.run_method("set_missing_values")
 
     doclist = get_mapped_doc("Refill Request", source_name, {
@@ -130,5 +210,6 @@ def update_status_from_delivery_note(delivery_note, method=None):
         return
 
     for so_name in list(set([it.against_sales_order for it in delivery_note.get("items")])):
-        so = frappe.get_doc("Sales Order", so_name)
-        update_status_from_sales_order(so, method='dn_update')
+        if so_name is not None:
+            so = frappe.get_doc("Sales Order", so_name)
+            update_status_from_sales_order(so, method='dn_update')

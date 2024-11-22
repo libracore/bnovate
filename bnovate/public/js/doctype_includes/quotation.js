@@ -13,6 +13,16 @@ frappe.ui.form.on("Quotation", {
             'label': 'Subscription',
         });
     },
+    onload(frm) {
+        frm.set_query("custom_shipping_rule", () => {
+            return {
+                filters: {
+                    country: frm.doc.shipping_country,
+                    company: frm.doc.company,
+                }
+            }
+        })
+    },
     setup(frm) {
         frm.custom_make_buttons['Subscription'] = 'Make Subscription';
         frm.cscript['Make Subscription'] = function () {
@@ -33,4 +43,53 @@ frappe.ui.form.on("Quotation", {
             };
         }, 500);
     },
+
+    async party_name(frm) {
+
+        if (frm.doc.quotation_to != "Customer") {
+            return;
+        }
+
+        // Get default discount
+        let resp = await frappe.db.get_value("Customer", { name: frm.doc.party_name }, "default_discount");
+        const default_discount = resp.message.default_discount || 0;
+        frm.set_value("default_discount", default_discount);
+
+        bnovate.utils.set_item_discounts(frm);
+    },
+
+    apply_default_discount(frm) {
+        bnovate.utils.set_item_discounts(frm);
+    },
+
+    custom_shipping_rule(frm) {
+        if (frm.doc.custom_shipping_rule) {
+            return frappe.call({
+                method: 'bnovate.bnovate.doctype.custom_shipping_rule.custom_shipping_rule.apply_rule',
+                args: {
+                    doc: frm.doc,
+                },
+                callback: (r) => {
+                    if (!r.exc) {
+                        frm.refresh_fields();
+                        frm.cscript.calculate_taxes_and_totals();
+                    }
+                },
+                error: () => frm.set_value('custom_shipping_rule', ''),
+            })
+        } else {
+            frm.cscript.calculate_taxes_and_totals();
+        }
+
+    },
+})
+
+frappe.ui.form.on('Quotation Item', {
+    async price_list_rate(frm, cdt, cdn) {
+        if (frm.doc.ignore_default_discount) {
+            return;
+        }
+
+        await frappe.model.set_value(cdt, cdn, "discount_percentage", frm.doc.default_discount);
+    }
 })

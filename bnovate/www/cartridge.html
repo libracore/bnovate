@@ -1,0 +1,59 @@
+{% extends "templates/web.html" %}
+
+{% block page_content %}
+
+<h1>{{ title }}</h1>
+
+<div class="row" style="margin-top: 2em">
+    <div class="col">
+        <h2>Filling History</h2>
+
+        <table class="table table-responsive table-condensed" style="margin-top: 1em">
+
+            <thead>
+                <th>{{ _("Production Date") }}</th>
+                <th>{{ _("Expiry Date") }}</th>
+                <th>{{ _("Fill Serial") }}</th>
+                <th>{{ _("Fill Type") }}</th>
+                <th>{{ _("Analysis Certificate") }}</th>
+                <th>{{ _("Shipped To") }} </th>
+            </thead>
+            <tbody>
+
+                {% for fill in filling_history %}
+                <tr>
+                    <td> {{ fill.posting_date }} </td>
+                    <td> {{ fill.expiry_date }} </td>
+                    <td> {{ fill.fill_serial }} </td>
+                    <td> {{ fill.fill_name }} </td>
+                    <td>
+                        {% if fill.certificate_url %}
+                            <a href="{{ fill.certificate_url }}" target="_blank"><i class="fa fa-file-pdf-o"></i> View</a>
+                            | <a href="{{ fill.certificate_url }}" download> <i class="fa fa-download"></i> Download</a>
+                        {% endif %}
+
+                    </td>
+                    <td>
+                        <span data-html="true" data-toggle="tooltip" data-container="body" title="{{ fill.shipping_address }}">
+                        {{ fill.address_short }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+
+            </tbody>
+        </table>
+
+    </div>
+</div>
+
+
+{% endblock %}
+
+{% block script %}
+
+<script>
+    $('[data-toggle="tooltip"]').tooltip()
+</script>
+
+{% endblock %}

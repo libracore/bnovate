@@ -177,25 +177,65 @@ def get_data():
                         "is_query_report": True    
                    }, {
                         "type": "report",
+                        "name": "Item-wise Sales History (bN)",
+                        "label": _("Item-wise Sales History (bN)"),
+                        "doctype": "GL Entry",
+                        "is_query_report": True   
+                   }, {
+                        "type": "report",
                         "name": "General Ledger for Export (FRe)",
                         "label": _("General Ledger for Export (FRe)"),
                         "doctype": "GL Entry",
                         "is_query_report": True   
-                   }  
+                   }, {
+                        "type": "report",
+                        "name": "Deferred Revenue Report",
+                        "label": _("Deferred Revenue Report"),
+                        "doctype": "GL Entry",
+                        "is_query_report": True   
+                   }, {
+                       "type": "doctype",
+                       "name": "Custom Shipping Rule",
+                       "label": _("Shipping Rule"),
+                       "description": _("Shipping Rules for bNovate")
+                   }, {
+                       "type": "doctype",
+                       "name": "Fixed Currency Exchange",
+                       "label": _("Fixed Currency Exchange"),
+                       "description": _("Long-term currency exchange rates, used for shipping rates")
+                   }
             ]
         },
-        #  {
-        #     "label": _("IoT"),
-        #     "icon": "octicon octicon-git-compare",
-        #     "items": [
-        #            {
-        #                 "type": "page",
-        #                 "name": "device-map",
-        #                 "label": _("Connected Device Map"),
-        #                 "description": _("Information about connected devices")           
-        #            }
-        #     ]
-        # },
+         {
+            "label": _("IoT"),
+            "icon": "octicon octicon-git-compare",
+            "items": [
+                   {
+                        "type": "page",
+                        "name": "device-map",
+                        "label": _("Connected Device Map"),
+                        "description": _("Information about connected devices")           
+                   },
+                   {
+                       "type": "doctype",
+                       "name": "Connectivity Package",
+                       "label": _("Connectivity Package"),
+                       "description": _("Connectivity Package")
+                   }, {
+                        "type": "report",
+                        "name": "Connectivity Data Usage",
+                        "label": _("Data Usage"),
+                        "doctype": "Connectivity Package",
+                        "is_query_report": True   
+                   }, {
+                        "type": "report",
+                        "name": "Portal Users",
+                        "label": _("Portal Users"),
+                        "doctype": "Contact",
+                        "is_query_report": True   
+                   }
+            ]
+        },
         {
             "label": _("Switzerland"),
             "icon": "fa fa-money",

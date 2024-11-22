@@ -105,11 +105,6 @@ ol.request-ribbon {
 	</div>
 	<div class="col-6 text-muted text-right small">
 		{{ frappe.utils.formatdate(doc.transaction_date, 'medium') }}
-		{% if doc.valid_till %}
-		<p>
-		{{ _("Valid Till") }}: {{ frappe.utils.formatdate(doc.valid_till, 'medium') }}
-		</p>
-		{% endif %}
 	</div>
 </div>
 
@@ -121,6 +116,25 @@ ol.request-ribbon {
 </ol>
 {% endif %}
 
+{% if doc.status == "Requested" %}
+<div class="row">
+    {% if shipping_label_url %}
+    <div class="col">
+        <p>{{ _("A return shipping label is available.")}}</p>
+        <a href="/requests/{{ name }}/pickup">
+            <button id="print-label" class="btn btn-primary" style="margin-bottom: 10px">{{ _("Organize Pickup") }}</button>
+        </a>
+    </div>
+    {% endif %}
+
+    {% if allow_unstored_cartridges %}
+    <div class="col">
+        <p><i>{{ _("The request will be confirmed once all cartridges are received at bNovate") }}</i></p>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
 <div class="row">
 {% if doc.expected_ship_date %}
     <div class="col-6">
@@ -130,8 +144,8 @@ ol.request-ribbon {
 {% if doc.tracking_no and doc.status == "Shipped" %}
     <div class="col-6">
         <b>{{ _("Tracking No") }}:</b> 
-        {% if doc.carrier and doc.carrier.strip() == "DHL" %}
-            <a href="https://www.dhl.com/ch-en/home/tracking/tracking-express.html?submit=1&tracking-id={{ doc.tracking_no }}">{{ doc.tracking_no }}</a>
+        {% if doc.tracking_url %}
+            <a target="_blank" href="{{ doc.tracking_url }}"">{{ doc.tracking_no }}</a>
         {% else %}
             {{ doc.tracking_no }} {{ doc.carrier }}
         {% endif %}
@@ -178,7 +192,15 @@ ol.request-ribbon {
         {% else %}
         <p>-</p>
         {% endif %}
+
+		<h5>{{ _("Requested by") }}</h5>
+        <p><a href="mailto:{{ doc.contact_email }}">{{ doc.contact_display }}</a></p>
     </div>
 </div>
 
+{% endblock %}
+
+{% block script %}
+<script>
+</script>
 {% endblock %}

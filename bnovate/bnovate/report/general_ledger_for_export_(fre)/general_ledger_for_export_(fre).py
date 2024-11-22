@@ -117,6 +117,13 @@ def get_columns(filters):
 			"fieldname": "remarks",
 			"width": 400
 		},
+		{
+			"label": _("Company"),
+			"fieldname": "company",
+			"fieldtype": "Link",
+			"options": "Company",
+			"width": 180
+		},
     ]
 
     # Debit (CHF)	Credit (CHF)	Balance (CHF)	Voucher Type	Voucher No	Party Type	Party	Project	Cost Center	Against Voucher Type	Against Voucher	Supplier Invoice No	Remarks
@@ -126,7 +133,10 @@ def get_data(filters):
 
     conditions = ''
     if filters.account:
-        conditions = 'AND gl.account = "{}"'.format(filters.account)
+        conditions += 'AND gl.account = "{}"'.format(filters.account)
+    if filters.company:
+        conditions += 'AND gl.company = "{}"'.format(filters.company)
+	
 
     sql = """
 SELECT
@@ -145,11 +155,11 @@ SELECT
     gl.against_voucher_type,
     gl.against_voucher,
 	pinv.bill_no,
-    gl.remarks
+    gl.remarks,
+    gl.company
 FROM `tabGL Entry` gl
 LEFT JOIN `tabPurchase Invoice` pinv ON gl.against_voucher = pinv.name
 WHERE gl.posting_date BETWEEN "{from_date}" AND "{to_date}"
-	AND pinv.docstatus = 1
     {conditions}
 ORDER BY gl.posting_date
     """.format(from_date=filters.from_date, to_date=filters.to_date, conditions=conditions)

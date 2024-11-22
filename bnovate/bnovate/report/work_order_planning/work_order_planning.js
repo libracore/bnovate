@@ -19,36 +19,56 @@ frappe.query_reports["Work Order Planning"] = {
             "label": __("Simple View"),
             "fieldtype": "Check",
         },
+        {
+            "fieldname": "show_chart",
+            "label": __("Show Chart"),
+            "fieldtype": "Check",
+        },
     ],
     onload(report) {
         this.report = report;
         this.colours = ["dark", "light"];
 
-        report.page.add_inner_button(__('Toggle Chart'), () => {
-            if (this.report.$chart.is(':visible')) {
-                this.report.$chart.hide();
-            } else {
-                this.report.$chart.show();
-            }
-        })
+        // report.page.add_inner_button(__('Toggle Chart'), () => {
+        //     if (this.report.$chart.is(':visible')) {
+        //         this.report.$chart.hide();
+        //     } else {
+        //         this.report.$chart.show();
+        //     }
+        // })
 
+        // save a click:
+        let stations = [
+            'Labo',
+            'Assemblage',
+            'Optic',
+            'Usinage',
+            'Quality Check',
+        ];
+        stations.forEach(station => report.page.add_inner_button(station, () => {
+            this.report.set_filter_value('workstation', station);
+        }));
 
         bnovate.modals.attach_report_modal("stockModal");
         bnovate.modals.attach_report_modal("cartStatusModal");
     },
     after_datatable_render(datatable) {
 
-        if (!this.report.get_filter_value('simple_view')) {
+        if (this.report.get_filter_value('show_chart')) {
             bnovate.charts.draw_timeline_chart(this.report, build_wo_dt);
+            // this.report.$chart.hide();
         }
 
         // Activate tooltips on columns
         $(function () {
             $('[data-toggle="tooltip"]').tooltip()
         })
+
     },
     formatter(value, row, col, data, default_formatter) {
-        skip_default = false;
+        let skip_default = false;
+        let simple_view = this.report.get_filter_value('simple_view');
+
         if (col.fieldname === "sufficient_stock") {
             const color = ['red', 'orange', 'green'][value];
             return `<span class="indicator ${color}"></span>`;
@@ -63,7 +83,7 @@ frappe.query_reports["Work Order Planning"] = {
             if (col.fieldname === 'comment' && value) {
                 value = `<span title="${value}">${value}</span>`
             } else if (col.fieldname === 'work_order') {
-                if (this.report.get_filter_value('simple_view')) {
+                if (simple_view) {
                     value = `<a href="/desk#work-order-execution?work_order=${value}">${value}</a>`;
                 } else {
                     value = frappe.utils.get_form_link("Work Order", value, true);
@@ -76,13 +96,22 @@ frappe.query_reports["Work Order Planning"] = {
                         <span class="indicator ${colour}">${legend}</span>
                     </span>
                     `;
-            } else if (col.fieldname === 'planned_start_date') {
-                value = value.substr(0, 10);
+            } else if (value && (col.fieldname === 'planned_start_date' || col.fieldname === 'expected_delivery_date')) {
+                let date = value.substr(0, 10);
+                if (simple_view) {
+                    value = date
+                } else {
+                    value = `<a onclick="edit_date('${data.work_order}', '${data.planned_start_date}', '${data.expected_delivery_date || ''}')">${default_formatter(date, row, col, data)}</a>`;
+                    skip_default = true;
+                }
             } else if (col.fieldname === 'item_code') {
                 value = projected_stock_link(data.item_code, data.warehouse, data.item_name);
                 skip_default = true;
+            } else if ((col.fieldname === 'time_estimate_remaining' || col.fieldname === 'mean_time_per_unit') && value) {
+                // This will work as long as duration is less than 24h...
+                let format_string = col.fieldname === 'time_estimate_remaining' ? 'HH:mm' : 'HH:mm.ss';
+                value = moment.utc().startOf('day').add(value, 'minutes').format(format_string);
             }
-
 
             if (skip_default) {
                 return `<span class="coloured ${this.colours[data.idx % this.colours.length]}">${value}</span>`;
@@ -119,6 +148,33 @@ function cartridge_status_link(serial_nos) {
         {
             serial_no: serial_nos,  // Note that this is encoded in a data- tag, so it'll be a comma-separated string
         });
+}
+
+async function edit_date(work_order, start_date, delivery_date) {
+
+    const fields = [{
+        fieldname: "new_start_date",
+        fieldtype: "Date",
+        label: __("New Start Date"),
+        default: start_date,
+    }, {
+        fieldname: "new_delivery_date",
+        fieldtype: "Date",
+        label: __("New Delivery Date"),
+        default: delivery_date,
+    }];
+
+    let values = await bnovate.utils.prompt("Edit dates", fields, "Confirm", "Cancel")
+
+    if (!values) {
+        return;
+    }
+
+    await frappe.db.set_value("Work Order", work_order, "planned_start_date", values.new_start_date);
+    if (values.new_delivery_date) {
+        await frappe.db.set_value("Work Order", work_order, "expected_delivery_date", values.new_delivery_date);
+    }
+    frappe.query_report.refresh();
 }
 
 function projected_stock_link(item_code, warehouse, item_name) {

@@ -17,7 +17,7 @@ The workflow goes:
 	- Submit -> Creates stock entry, redirects to "view" state
 
 
-The main view switches between two tables: read and write (to adjust quantities, enter S/N....)
+The main view switches between two tables: read and write (to adjust quantities, enter S/N...)
 
 For serialized items, we force entry of components for one item at a time, so the "Submit" button becomes a "Next" button.
 Also, STEs are saved in draft state, to allow scanning serial numbers before closing an enclosure, then submitting after QC.
@@ -32,6 +32,7 @@ Also, STEs are saved in draft state, to allow scanning serial numbers before clo
 // 		one with existing SNs & Batches. Would allow scanning components in several stages, and
 // 		SNs wouldn't be lost when redrawing the table after adding additional items.
 
+frappe.require("/assets/bnovate/js/storage.js")
 frappe.provide("bnovate.work_order_execution")
 
 frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
@@ -117,6 +118,10 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 
 		page.clear_primary_action();
 		page.clear_secondary_action();
+
+		// Cleanup orphan popovers
+		[...document.querySelectorAll('.popover')].forEach(el => $(el).popover('hide'));
+
 		if (state.view == read) {
 			page.set_secondary_action(__('Reload'), () => state.load_work_order(state.work_order_id));
 			item_content.innerHTML = frappe.render_template('items_read', {
@@ -125,8 +130,10 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 				produce_serial_no: state.produce_serial_no,
 				produce_batch: state.produce_batch
 			});
-			if (state.remaining_qty > 0 && state.work_order_doc.docstatus == 1 && state.work_order_doc.status != "Stopped") {
-				page.set_primary_action(state.draft_mode ? __('Start') : __('Finish'), finish);
+			if (state.work_order_doc.docstatus == 1 && state.work_order_doc.status != "Stopped") {
+				if (state.remaining_qty > 0) {
+					page.set_primary_action(state.draft_mode ? __('Start') : __('Finish'), finish);
+				}
 				time_tracking.innerHTML = frappe.render_template('time_tracking', {
 					doc: state.work_order_doc,
 					timing_started: state.timing_started,
@@ -152,6 +159,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 				state.expiry_date_control = null;
 			}
 
+			attach_update_state();
 			attach_validator();
 			attach_enterToTab();
 			attach_additional_item_buttons();
@@ -180,7 +188,14 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		let input = expiry_date_control.input
 		input.classList.add('required');
 		input.dataset.required = true;
-		expiry_date_control.set_value(frappe.datetime.add_months(state.work_order_doc.expected_delivery_date, state.default_shelf_life));
+		expiry_date_control.set_value(
+			state.ste_doc.expiry_date ||
+			frappe.datetime.add_months(state.work_order_doc.expected_delivery_date, state.default_shelf_life)
+		);
+
+		// change detect bound with attach_update_state doesn't work - repeat here
+		// Annoyinlgy this is called twice for each change
+		expiry_date_control.$input.on('change', update_ste_doc);
 
 		return expiry_date_control;
 	}
@@ -219,6 +234,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		if (state.work_order_doc.sales_order) {
 			state.sales_order_doc = await frappe.model.with_doc('Sales Order', state.work_order_doc.sales_order)
 		}
+		state.work_order_doc.serial_no_locations = await bnovate.storage.find_serial_nos(state.work_order_doc.serial_no, false);
 
 		// should we switch to serialized behaviour? (produce one item at a time)
 		await fetch_item_details([state.work_order_doc.production_item]);
@@ -233,7 +249,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 
 		// do we need an expiry date? For now only FILs need them.
 		state.needs_expiry_date = is_fill(state.work_order_doc.production_item);
-		// state.default_shelf_life = locals["Item"][state.work_order_doc.production_item].shelf_life_in_days <-- days vs months...
+		state.default_shelf_life = locals["Item"][state.work_order_doc.production_item].stability_in_months || 9;
 
 		// BOMs can't change after submit, no need to clear cache
 		state.bom_doc = await frappe.model.with_doc('BOM', state.work_order_doc.bom_no);
@@ -259,6 +275,20 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 				.filter(it => it.serial_no)
 				.map(it => it.serial_no.trim().replaceAll("\n", ", ")).
 				join(", ");
+
+
+			// Watch out, we can't attach an array to doc, or we get an error on submit.
+			let all_serial_nos = [doc.produced_serial_nos?.split(', ') || [], doc.scrap_serial_nos?.split(', ') || []].flat().filter(x => x);
+			await Promise.all(all_serial_nos.map(sn => {
+				return !!sn && frappe.model.with_doc('Serial No', sn)
+			}));
+
+			doc.extras = {}
+			doc.extras.serial_no_data = all_serial_nos.map(sn => ({
+				name: sn,
+				attachments: !!sn && state.docinfo['Serial No']?.[sn]?.attachments || [],
+				link: frappe.utils.get_form_link("Serial No", sn, true, sn),
+			}));
 		}
 
 		// Load attachments / linked docs
@@ -373,6 +403,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 	}
 
 	async function validate_inputs() {
+
 		// Enable Submit button only if all required fields have values.
 		const required_inputs = [...document.querySelectorAll("[data-required]")];
 		let valid = true;
@@ -380,33 +411,35 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			let input_valid = true;
 			let error = null;
 			let warning = null;
-			const value = input.value.trim();
+			const value = input.value.trim(); // .toUpperCase();
 			if (!value) {
 				error = 'Required Field'
 			} else {
 
 				if (input.classList.contains("check-serial")) {
 					// Check that serial number exists and belongs to correct item
-					let serial = await frappe.model.with_doc("Serial No", value);
+					let serial = await frappe.model.with_doc("Serial No", value.toUpperCase());
 					if (!serial) {
 						error = "Serial No does not exist";
-					} else if (serial.item_code !== input.dataset.for_item_code) {
+					} else if (serial.item_code !== input.dataset.item) {
 						error = `Serial No is for item code ${serial.item_code}!`
-					} else if (state.work_order_doc.serial_no && state.work_order_doc.serial_no.indexOf(value) <= 0) {
+					} else if (state.work_order_doc.serial_no && state.work_order_doc.serial_no.toUpperCase().indexOf(value.toUpperCase()) < 0) {
 						warning = "Does not match work order instructions";
 					}
+
 
 				} else if (input.classList.contains("check-batch")) {
 					// Check that batch exists and belongs to correct item
 					let batch = await frappe.model.with_doc("Batch", value);
 					if (!batch) {
 						error = "Batch does not exist";
-					} else if (batch.item !== input.dataset.for_item_code) {
+					} else if (batch.item !== input.dataset.item) {
 						error = `Batch is for item code ${batch.item}!`
 					}
 				}
 			}
 
+			$(input).popover('destroy');
 			if (error) {
 				if (value) {
 					// don't show popover for empty field to avoid visual clutter.
@@ -428,7 +461,6 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 				input.classList.remove('required');
 			} else {
 				input.classList.remove('required');
-				$(input).popover('destroy');
 			}
 		}
 
@@ -452,33 +484,45 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		submit();
 	}
 
-	async function submit() {
-		// Submits STE with adjusted qties to db.
-		page.clear_primary_action();
+	// Copy form data into state
+	async function update_ste_doc() {
 
-		// Get adjusted quantities, apply to STE items
+		// Get adjusted quantities, keep to the side for now 
 		[...document.querySelectorAll("input.qty-delta")]
-			.map(el => [el.dataset.idx, parseFloat(el.value) || 0])
-			.map(([idx, delta]) => {
-				state.ste_doc.items.find(i => i.idx == idx).qty += delta;
-				state.ste_doc.items.find(i => i.idx == idx).delta = delta;
+			.map(el => [el.dataset.idx, el.dataset.item, parseFloat(el.value) || 0])
+			.map(([idx, item, delta]) => {
+				state.ste_doc.items.find(i => i.idx == idx && i.item_code == item).delta = delta;
 			});
 		// Same for batches, only on select items.
 		[...document.querySelectorAll("input.batch")]
-			.map(el => [el.dataset.idx, el.value || 0])
-			.map(([idx, batch_no]) => {
-				state.ste_doc.items.find(i => i.idx == idx).batch_no = batch_no.trim();
+			.map(el => [el.dataset.idx, el.dataset.item, el.value || ''])
+			.map(([idx, item, batch_no]) => {
+				state.ste_doc.items.find(i => i.idx == idx && i.item_code == item).batch_no = batch_no.toUpperCase().trim();
 			}); // BTW, this also modifies the same object pointed to from production_item_entry.
 		// And for serial no
 		[...document.querySelectorAll("input.serial")]
-			.map(el => [el.dataset.idx, el.dataset.item, el.value || 0])
+			.map(el => [el.dataset.idx, el.dataset.item, el.value || ''])
 			.map(([idx, item, serial_no]) => {
-				state.ste_doc.items.find(i => i.idx == idx && i.item_code == item).serial_no = serial_no.trim(); // scrap items can have same index as input items, need to double-check item_code.
+				state.ste_doc.items.find(i => i.idx == idx && i.item_code == item).serial_no = serial_no.toUpperCase().trim(); // scrap items can have same index as input items, need to double-check item_code.
 			});
+		// Comment
+		state.ste_doc.comment = document.querySelector("textarea#comment")?.value || null;
+
 		// Handle expiry date if relevant
 		if (state.needs_expiry_date && state.expiry_date_control) {
 			state.ste_doc.expiry_date = state.expiry_date_control.get_value();
 		}
+
+	}
+
+	async function submit() {
+		// Submits STE with adjusted qties to db.
+		page.clear_primary_action();
+
+		update_ste_doc();
+
+		// Adjust quantities
+		state.ste_doc.items.forEach(item => item.qty += item.delta || 0);
 
 		if (state.ste_doc.production_item_entry.has_batch_no) {
 			// Create target batch if it doesn't exist
@@ -522,7 +566,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 
 		handle_scrap(state.ste_doc, state.work_order_doc.production_item);
 		handle_warehouses(state.ste_doc, state.work_order_doc);
-		handle_fills(state.ste_doc, state.work_order_doc.production_item);
+		await handle_fills(state.ste_doc, state.work_order_doc.production_item);
 		calculate_product_valuation(state.ste_doc, state.work_order_doc.production_item);
 
 		// Post comment (saved doc has a docname)
@@ -577,17 +621,20 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		}
 	}
 
-	function handle_fills(ste_doc, bom_item) {
+	async function handle_fills(ste_doc, bom_item) {
 		// Handles special workflows related to fills refills
 		// - builds "fill associations" table.
+		// - removes ENC from storage if applicable
 		// Assumes all serial numbers are filled in ste_doc.items.
 
 		if (!is_fill(bom_item)) {
 			return;
 		}
 
-		let enc_sn = ste_doc.items.find(it => !it.s_warehouse && it.item_code == "100146")?.serial_no;
+		let enc_sn = ste_doc.items.find(it => !it.s_warehouse && is_enclosure(it.item_code))?.serial_no;
 		let fill_sn = ste_doc.items.find(it => !it.s_warehouse && it.item_code == bom_item)?.serial_no;
+
+		await bnovate.storage.remove_serial_no(enc_sn, false, null, true);
 
 		if (enc_sn && fill_sn) {
 			ste_doc.fill_associations = [{
@@ -704,11 +751,11 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 	// HELPERS
 	////////////////////////////
 	function is_fill(item_code) {
-		return item_code !== undefined && item_code.startsWith("FIL");
+		return bnovate.utils.is_fill(item_code);
 	}
 
 	function is_enclosure(item_code) {
-		return item_code !== undefined && (item_code.startsWith("ENC") || item_code === '100146');
+		return bnovate.utils.is_enclosure(item_code);
 	}
 
 
@@ -748,6 +795,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 				doc,
 			}
 		});
+		bnovate.utils.confetti();
 		return resp.message;
 	}
 	bnovate.work_order_execution.submit_doc = submit_doc;
@@ -835,6 +883,13 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 
 	// LISTENERS
 	////////////////////////////
+
+	function attach_update_state() {
+		[
+			...document.querySelectorAll('div[data-fieldname="items"] input'),
+			...document.querySelectorAll('div[data-fieldname="items"] textarea'),
+		].map(el => el.addEventListener("change", update_ste_doc));
+	}
 
 	function attach_validator() {
 		[...document.querySelectorAll("[data-required]")]

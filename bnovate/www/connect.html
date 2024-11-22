@@ -1,0 +1,236 @@
+{% extends "templates/web.html" %}
+
+
+{% block style %}
+<style>
+    label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    /* Styling for input fields */
+    input[type="text"] {
+        width: 100%;
+        padding: 8px;
+        margin-bottom: 10px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+    }
+</style>
+{% endblock %}
+
+{% block page_content %}
+
+<h1>{{ _("Connect BactoLink") }}</h1>
+
+<div id="connect-wizard" class="container mt-5">
+    
+    <!-- Show only on computer screen, hidden on mobile -->
+    <ol class="wizard-ribbon my-3 d-none d-md-block">
+        <li class="wizard-step current" data-step="1">{{ _("Connect Hardware") }}</li>
+        <li class="wizard-step" data-step="2">{{ _("Configure BactoSense") }}</li>
+        <li class="wizard-step" data-step="3">{{ _("Configure BactoLink") }}</li>
+        <li class="wizard-step" data-step="4">{{ _("Connect") }}</li>
+    </ol>
+    
+    <div class="wizard-page" id="page1"> 
+
+        <div class="container">
+            <div class="row">
+                <div class="col-lg">
+                    <img src="/assets/bnovate/img/guide/bactolink_setup.png">
+                </div>
+                <div class="col-lg">
+                    <h3>Connect your hardware like in the picture</h2>
+                    <ol>
+                        <li>Ethernet Connection between PoE-Injector and the RS45 port of the BactoSense.</li>
+                        <li>Power Connection between PoE-Injector and power port of the BactoSense.</li>
+                        <li>Ethernet Connection between PoE-Injector and Antenna (10m cable).</li>
+                        <li>Power Supply to PoE-Injector. Note that the Power Supply is delivered with the BactoSense, not with the BactoLink.</li>
+                    </ol>
+                    <p>Once the antenna is connected, wait for two minutes before powering on the BactoSense.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="wizard-page" id="page2" style="display: none;">
+
+        <div class="container">
+            <div class="row">
+                <div class="col-lg m-2">
+                    <img src="/assets/bnovate/img/guide/service_settings.png" style="border: 0.5px solid black">
+                </div>
+                <div class="col-lg">
+                    <h3>Configure network settings of the BactoSense</h2>
+                    <ul>
+                        <li>Check whether DHCP is activated. If not, activate.
+                            (Home Menu → System Settings → Network)</li>
+                        <li>Check whether https is activated. If not, activate and reboot BactoSense.
+                            (Home Menu → System Settings → System Services)</li>
+                        <li>Optionally, enable VNC.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="wizard-page" id="page3" style="display: none;">
+        <div class="row">
+            <div class="col-sm m-2">
+                <form id="gateway-info">
+                    <label for="teltonika_serial">{{ _("Serial Number") }}:</label>
+                    <input type="text" id="teltonika_serial" name="teltonika_serial" placeholder="60001xxxxx"" value="{{ serial_no or '' }}" required>
+
+                    <label for="device_name">{{ _("Friendly Name") }}:</label>
+                    <input type="text" id="device_name" name="device_name" placeholder="Mobile Unit, Post-Filtration..." required>
+                </form>
+            </div>
+            <div class="col-sm m-2">
+                <ul>
+                    <li>Enter the Serial Number of the BactoLink</li>
+                    <li>Choose a friendly name to recognize your instrument</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="wizard-page wizard-summary" id="page4" style="display: none;">
+        <div class="row">
+            <div class="col-sm m-2">
+                <div id="results-container"><i class="fa fa-cog fa-spin"></i></div>
+            </div>
+            <div class="col-sm m-2" style="text-align:center">
+                <div id="link-status" style="text-align:left"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="modal-footer">
+        <div class="wizard-buttons">
+            <button type="button" class="btn btn-secondary" id="prev-button">{{ _("Previous") }}</button>
+            <button type="button" class="btn btn-primary" id="next-button">{{ _("Next") }}</button>
+            <button type="button" class="btn btn-primary" id="connect-button" hidden>{{ _("Connect") }}</button>
+            <a type="button" class="btn btn-primary" id="done-button" href="/instruments" hidden>{{ _("Finish") }}</a>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+
+    frappe.require("/assets/bnovate/js/realtime.js");
+
+    /********************
+    * UI logic
+    *********************/
+
+    function get_data() {
+        let frm = document.getElementById("gateway-info");
+        return Object.fromEntries(new FormData(frm));
+    }
+    function validate() {
+        let values = get_data();
+
+        if ( values.teltonika_serial.length <= 9 ) {
+            return false;
+        } else if (values.device_name <= 3) {
+            return false;
+        }
+        return true;
+    }
+
+    function draw_progress(status) {
+        console.log("Draw progress:", status);
+        const spinner = document.querySelector("#results-spinner");
+        const container = document.querySelector("#results-container");
+
+        if ( !status ) {
+            container.innerHTML = '<i class="fa fa-cog fa-spin"></i>';
+            return;
+        }
+
+        // Render-template doesn't work here, or Jinja will pre-process already on the server side.
+        function indicator(code) {
+            if ( code == null ) {
+                return "";
+            } else if ( code < 0 ) {
+                return `<i class="fa fa-cog fa-spin"></i>`
+            } else if ( code == 0 ) {
+                return `<i class="fa fa-check"></i>`
+            } else  {
+                return `<i class="fa fa-times"></i>`
+            }
+
+        }
+        const rows = status.data
+            .map(task => {
+                return `<tr>
+                    <td class="p-2">${indicator(task.code)}</td>
+                    <td class="p-2">${task.description}</td>
+                    <td class="p-2 text-danger">${task.error || "" }</td>
+                </tr>`;
+            })
+            .join("\n");
+
+        container.innerHTML = `
+        <table> 
+            ${rows}
+        </table>
+        ` 
+    }
+
+    /******************
+    * Backend Wrappers
+    *******************/
+
+    async function portal_initialize_device(teltonika_serial, device_name, task_id) {
+        const resp = await bnovate.realtime.call({
+            method: 'bnovate.www.connect.portal_initialize_device',
+            args: {
+                teltonika_serial,
+                device_name
+            },
+            callback: (data) => draw_progress(data),
+        });
+        return resp.message;
+    }
+
+    /********************
+    * Page-specific logic
+    *********************/
+
+    // Initiates auto-configuration of the Gateway. Assumes validate has been called.
+    async function connect() {
+        document.querySelector("#done-button").enabled = false;
+        let values = get_data();
+        draw_progress();
+        let device = await portal_initialize_device(values.teltonika_serial, values.device_name);
+        if ( device ) {
+            document.querySelector('#link-status').innerHTML = `
+                <span class="indicator whitespace-nowrap ${device.status ? 'green' : 'red'}">${device.status ? 'Link Online' : 'Link Offline'}</span><br>
+                ${device.operator} <img src="${bnovate.web.signal_icon(device.signal)}" style="max-height: 2em"> <br> ${device.connection_type}[${device.signal} dBm]
+            `
+        }
+        document.querySelector("#done-button").enabled = true;
+
+    }
+
+    frappe.require([
+        "/assets/bnovate/js/iot.js",
+        "/assets/bnovate/js/bnovate_common.js",
+        "/assets/bnovate/js/web_includes/wizard_page.js",
+    ]).then(() => {
+        let wizard = new WizardPage("connect-wizard", validate, connect);
+    })
+
+
+</script>
+{% endblock %}

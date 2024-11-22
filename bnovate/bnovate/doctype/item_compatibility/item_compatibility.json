@@ -1,0 +1,51 @@
+{
+ "creation": "2024-10-15 14:39:05.247661",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item",
+  "label",
+  "item_name",
+  "short_name"
+ ],
+ "fields": [
+  {
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item",
+   "options": "Item"
+  },
+  {
+   "fetch_from": "item.item_name",
+   "fieldname": "item_name",
+   "fieldtype": "Read Only",
+   "in_list_view": 1,
+   "label": "Item Name"
+  },
+  {
+   "fetch_from": "item.short_name",
+   "fieldname": "short_name",
+   "fieldtype": "Read Only",
+   "in_list_view": 1,
+   "label": "Short Name"
+  },
+  {
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Label"
+  }
+ ],
+ "istable": 1,
+ "modified": "2024-10-15 15:03:15.436168",
+ "modified_by": "Administrator",
+ "module": "bNovate",
+ "name": "Item Compatibility",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

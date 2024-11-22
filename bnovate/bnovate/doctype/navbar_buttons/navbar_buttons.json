@@ -1,0 +1,44 @@
+{
+ "creation": "2024-09-09 16:24:00.222396",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "label",
+  "type",
+  "destination"
+ ],
+ "fields": [
+  {
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Label"
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Type",
+   "options": "List\nquery-report\nPage"
+  },
+  {
+   "description": "Name of the doctype or report. For example: Sales Invoice, Stock Ledger.",
+   "fieldname": "destination",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Destination"
+  }
+ ],
+ "istable": 1,
+ "modified": "2024-09-23 13:10:25.507650",
+ "modified_by": "douglas.watson@bnovate.com",
+ "module": "bNovate",
+ "name": "Navbar Buttons",
+ "owner": "Administrator",
+ "permissions": [],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

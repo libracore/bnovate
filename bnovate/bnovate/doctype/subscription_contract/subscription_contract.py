@@ -157,7 +157,9 @@ def stop_invoices(docname):
 			sii.service_end_date,
 			sii.service_stop_date,
 			sii.idx,
+			sii.qty,
 			sii.net_amount,
+			sii.net_rate,
 			sii.sc_detail,
 			si.currency
 		FROM `tabSales Invoice Item` sii
@@ -202,7 +204,7 @@ def stop_invoices(docname):
 			remaining_days = (si.service_end_date - stop_date).days
 
 			si.refund = si.net_amount * remaining_days / period_days
-
+			si.refund_rate = si.net_rate * remaining_days / period_days
 
 	return matching_items
 
@@ -231,7 +233,7 @@ def create_credit_notes(docname, sinv_items, selected_items):
 		if it.sc_detail not in refunds:
 			refunds[it.sc_detail] = {}
 
-		refunds[it.sc_detail][getdate(it.service_start_date)] = it.refund
+		refunds[it.sc_detail][getdate(it.service_start_date)] = it.refund_rate
 
 	# Create Credit Note for each invoice
 	credit_notes = []
@@ -244,6 +246,7 @@ def create_credit_notes(docname, sinv_items, selected_items):
 
 		# Set refund amount
 		for item in sinv_ret.items:
+			item.price_list_rate = refunds[item.sc_detail][item.service_start_date]
 			item.rate = refunds[item.sc_detail][item.service_start_date]
 			item.enable_deferred_revenue = False
 

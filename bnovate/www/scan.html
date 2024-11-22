@@ -1,0 +1,112 @@
+{% extends "templates/web.html" %}
+
+{% block page_content %}
+
+<div id="status-table">
+    <i class="fa fa-cog fa-spin"></i>
+</div>
+
+{% endblock %}
+
+{% block script %}
+
+<script>
+
+function calc_fields(cp_array) {
+    for ( let cp of cp_array ) {
+        if (!cp.status) {
+            cp.status = { device_name: cp.device_name };
+            continue;
+        }
+        let status = cp.status;
+        status.device_name = cp.device_name;
+        status.cartridgePercent = Math.round(status.cartridgeLevel / (status.cartridgeCapacity || 1000) * 100);
+        status.lifetime = Math.round(100 - Math.max(status.valveMotions / (status.valveLifetime || 60000), status.plungerMotions / (status.plungerLifetime || 10000)) * 100);
+    }
+}
+
+function format_date(unix_ts) {
+    if (isNaN(parseFloat(unix_ts))) {
+        return unix_ts;
+    }
+
+    const date = moment.unix(parseFloat(unix_ts));
+    if (date.isBefore()) {
+        return `<span class="alert alert-warning" style="margin: 0px">${date.format("DD-MM-YYYY")}</span>`;
+    } else {
+        return date.format("DD-MM-YYYY");
+    }
+}
+
+function build_data(cp_array, columns) {
+    // Build data array based on column descriptions
+    const rows = []
+    for ( row of cp_array ) {
+        rows.push(columns.map( col => { return row.status[col.id] || '...' }))
+    }
+    return rows
+}
+
+function draw_datatable(cp_array) {
+    calc_fields(cp_array);
+
+    const columns = [{
+        id: 'device_name',
+        name: 'Device Name',
+    }, {
+        id: 'serialNumber',
+        name: 'Instrument Serial No'
+    }, {
+        id: 'status',
+        name: 'status'
+    }, {
+        id: 'cartridgePercent',
+        name: 'Cartridge Level',
+        format: (value) => `${value} %`,
+    }, {
+        id: 'cartridgeExpiry',
+        name: 'Cartridge Expiry',
+        format: (value) => format_date(value),
+
+    }, {
+        id: 'cartridgeSerial',
+        name: 'Cartridge Serial No'
+    }, {
+        id: 'nextServiceDue',
+        name: 'Service: Due Date',
+        format: (value) => format_date(value),
+    }, {
+        id: 'lifetime',
+        name: 'Service: Wear Parts Lifetime',
+        format: (value) => `${value} %`,
+    }];
+
+    columns.map( col => {
+        col.editable = false;
+    })
+
+    const data = build_data(cp_array, columns);
+
+    const dt = new DataTable(document.querySelector('#status-table'), {
+        columns,
+        data
+    })
+}
+
+frappe.require([
+    "/assets/bnovate/js/iot.js",
+    "/assets/bnovate/js/realtime.js",
+    "/assets/bnovate/js/bnovate_common.js",
+]).then(async () => {
+    const cp_docnames = [
+        {% for instrument in connected_instruments %}
+        "{{ instrument.cp.name }}",
+        {% endfor %}
+    ];
+    const data = await bnovate.iot.portal_sweep_instrument_status(cp_docnames, (status) => draw_datatable(status.data));
+    draw_datatable(data);
+})
+
+</script>
+
+{% endblock %}

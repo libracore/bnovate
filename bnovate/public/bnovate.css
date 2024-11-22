@@ -1,5 +1,11 @@
 @import url("https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&display=swap");
 
+:root {
+  --navbar-color: #1a3f77ff;
+  --navbar-color-transparent: #1a3f7700;
+  --flag: url("/assets/bnovate/img/flags/ch.png");
+}
+
 body {
   font-family: "Open Sans", Roboto, Oxygen, Cantarell, "Segoe UI",
     "Helvetica Neue", sans-serif;
@@ -11,14 +17,49 @@ body.party-time {
 }
 
 .party-time .navbar-default {
-  background-color: #fd85d9;
-  border-color: #fd85d9;
+  --navbar-color: #fd85d9;
 }
+
+
+/* ------------------------------------------------------------------- */
+/* Style navbar according to default company */
+
+.navbar-default {
+  background-color: var(--navbar-color);  /* default libracore colour */
+  border-color: var(--navbar-color);  /* default libracore colour */
+
+  background-image: var(--flag);
+  background-repeat: no-repeat;
+  background-size: 100px 100%;
+}
+
+.navbar-default::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50px;
+  height: 100%;
+  width: 50px;
+  background: linear-gradient(to right, var(--navbar-color-transparent), var(--navbar-color));
+  z-index: -1;
+}
+
+.navbar-fixed-top {
+  border-width: 0;
+}
+
+.nav-buttons .btn {
+  margin-top: 8px;
+  margin-left: 5px;
+}
+
+/* ------------------------------------------------------------------- */
 
 
 /* Remove border below report table headers - spans too wide when embedded in Form */
 .dt-scrollable {
   border-top: 0px;
+  min-height: 500px;
 }
 
 /* Change padding of table cells to simulate a full background fill */

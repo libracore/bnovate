@@ -1,129 +1,3 @@
-const modal_style = `
-/* Style needs to be defined outside of shadow DOM. */
-.wizard-ribbon {
-    --number-of-steps: 4;
-    --line-width: 2px;
-    --bullet-size: 2em;
-}
-
-.wizard-ribbon {
-    display: flex;
-    /* justify-content: space-between; */
-    align-items: center;
-    margin-bottom: 1rem;
-}
-
-ol.wizard-ribbon {
-    position: relative;
-    overflow: hidden;
-    counter-reset: wizard 0;
-    list-style-type: none;
-}
-
-.wizard-ribbon li {
-    position: relative;
-    float: left;
-    width: calc(100% / var(--number-of-steps));
-    text-align: center;
-    /* color: var(--active-background-color); */
-}
-
-.wizard-ribbon .current {
-    font-weight: bold;
-}
-.wizard-ribbon .current ~ li {
-    color: var(--label-color);
-}
-
-.wizard-ribbon li:before {
-    counter-increment: wizard;
-    content: ""; /* counter(wizard); */
-    display: block;
-    color: var(--line-color);
-    background-color: var(--completed-background-color);
-    border: var(--line-width) solid var(--line-color);
-    text-align: center;
-    width: var(--bullet-size);
-    height: var(--bullet-size);
-    line-height: var(--bullet-size);
-    border-radius: var(--bullet-size);
-    position: relative;
-    left: 50%;
-    margin-bottom: calc(var(--bullet-size) / 2);
-    margin-left: calc(var(--bullet-size) * -0.5);
-    z-index: 1;
-}
-
-.wizard-ribbon .current ~ li:before {
-    background-color: var(--uncompleted-background-color);
-    color: var(--line-color);
-    border-color: var(--line-color);
-}
-
-.wizard-ribbon li + li:after {
-    content: "";
-    display: block;
-    width: 100%;
-    background-color: var(--line-color);
-    height: var(--line-width);
-    position: absolute;
-    left: -50%;
-    top: calc(var(--bullet-size) / 2);
-    z-index: 0;
-}
-
-.wizard-ribbon .current ~ li:after {
-    background-color: var(--line-color);
-}
-
-.wizard-page textarea {
-    width: 100%;
-}
-
-.wizard-page label:hover,
-.wizard-page label:focus-within {
-  background-color: #e9ecef;
-}
-
-.wizard-page .card-group > .card {
-    flex: 0 0 33%;
-}
-
-.wizard-page .card-body {
-  position: relative;
-  padding: 0px;
-}
-
-.wizard-page .card-body label {
-    margin: 0;
-    padding: 10px 20px;
-    height: 100%;
-    width: 100%;
-}
-
-.wizard-page input[type="radio"] {
-  position: absolute;
-  appearance: none;
-}
-
-.wizard-page input[type="radio"]:checked ~ label {
-  background-color: var(--completed-background-color);
-}
-
-.wizard-summary .row {
-    padding: 20px;
-}
-
-.wizard-summary h5 {
-    margin-bottom: 15px;
-}
-
-.wizard-summary .card-body {
-    padding: 10px 20px;
-}
-
-</style >
-`
 
 const modal_template = `
 <div class="modal" tabindex="-1" role="dialog" id="myModal" style="display:none">
@@ -179,6 +53,7 @@ const template_page1 = `
                     <option value=""></option>
                     <option>TCC</option>
                     <option>ICC</option>
+                    <option>ICC+</option>
                 </select>
             </td>
         </tr>
@@ -186,10 +61,11 @@ const template_page1 = `
         <tr>
             <td>{{ sn.serial_no }}</td>
             <td>
-                <select class="variant-select" name="variant-{{sn.serial_no}}" data-sn="{{sn.serial_no}}">
+                <select class="variant-select" name="variant-{{sn.serial_no}}" data-sn="{{sn.serial_no}}" data-last_shipped="{{sn.address_short}}">
                     <option value=""></option>
                     <option>TCC</option>
                     <option>ICC</option>
+                    <option>ICC+</option>
                 </select>
             </td>
         </tr>
@@ -200,10 +76,10 @@ const template_page1 = `
 
 const template_page2 = `
 <div class="card-group">
-    {% for addr in addresses %}
+    {% for addr in shipping_addresses %}
     <div class="card">
         <div class="card-body">
-            <input type="radio" name="shipping_address" id="ship-{{addr.name}}" value="{{addr.name}}" {% if addresses.length == 1 %}checked{% endif %}/>
+            <input type="radio" name="shipping_address" id="ship-{{addr.name}}" value="{{addr.name}}" {% if shipping_addresses.length == 1 %}checked{% endif %}/>
             <label for="ship-{{addr.name}}">{{addr.display}}</label>
         </div>
     </div>
@@ -213,10 +89,10 @@ const template_page2 = `
 
 const template_page3 = `
 <div class="card-group">
-    {% for addr in addresses %}
+    {% for addr in billing_addresses %}
     <div class="card">
         <div class="card-body">
-            <input type="radio" name="billing_address" id="bill-{{addr.name}}" value="{{addr.name}}" {% if addresses.length == 1 %}checked{% endif %}/>
+            <input type="radio" name="billing_address" id="bill-{{addr.name}}" value="{{addr.name}}" {% if billing_addresses.length == 1 %}checked{% endif %}/>
             <label for="bill-{{addr.name}}">{{addr.display}}</label>
         </div>
     </div>
@@ -227,11 +103,11 @@ const template_page3 = `
 const template_page4 = `
 <div class="row">
     <div class="col-sm">
-        <h5>{{ __("Shipping Address") }}</h5>
+        <h5>{{ __("Shipping") }}</h5>
         {{doc.shipping_address_display}}
     </div>
     <div class="col-sm">
-        <h5>{{ __("Billing Address") }}</h5>
+        <h5>{{ __("Billing") }}</h5>
         {{doc.billing_address_display}}
     </div>
 </div>
@@ -243,12 +119,14 @@ const template_page4 = `
             <thead>
                 <th>{{ __("Serial No") }}</th>
                 <th>{{ __("Variant") }}</th>
+                <th>{{ __("Last Shipped To") }}</th>
             </thead>
             <tbody>
                 {% for it in doc.items %}
                 <tr>
                     <td>{{ it.serial_no }}</td>
                     <td>{{ it.type }}</td>
+                    <td>{{ it.last_shipped }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -256,12 +134,25 @@ const template_page4 = `
     </div>
 </div>
 
-
 <div class="row">
     <div class="col-sm">
-        <h5>{{ __("Remarks") }}</h5>
-        <label for="remarks" style="display: none">Remarks</label>
-        <textarea type="text" name="remarks"></textarea>
+        <div id="form-container">
+            <form action="">
+                {% if doc.organize_return %}
+                <h5>{{ __("Parcel Count") }}</h5>
+                <p>{{ __("How many parcels are you sending?") }}</p>
+                <p>{{ __("One parcel can contain several cartridges. We will create one return label per parcel.") }}</p>
+                <div class="form-group">
+                    <label for="parcel_count" class="control-label" style="display: none">Parcel Count</label>
+                    <input type="number" class="form-control" name="parcel_count" min="1" max="10" style="width: 30%" value="1">
+                </div>
+                {% endif %}
+
+                <h5>{{ __("Remarks") }}</h5>
+                <label for="remarks" style="display: none">Remarks</label>
+                <textarea type="text" name="remarks"></textarea>
+            </form>
+        </div>
     </div>
 </div>
 
@@ -282,6 +173,8 @@ customElements.define('wizard-modal', class extends HTMLElement {
         this.serial_nos = [];
         this.addresses = [];
         this.doc = {};
+        this.organize_return = false;
+        this.parcel_count = 0;
 
         // Initialize the wizard
         this.currentPage = 1;
@@ -293,9 +186,6 @@ customElements.define('wizard-modal', class extends HTMLElement {
         this.attachShadow({ mode: "open" });
         this.shadowRoot.innerHTML = frappe.render_template(modal_template, {});
 
-        const style = document.createElement("style");
-        style.textContent = modal_style;
-        document.head.appendChild(style);
 
         this.modal = this.shadowRoot.getElementById("myModal");
         this.next = this.shadowRoot.getElementById("next-button");
@@ -310,10 +200,10 @@ customElements.define('wizard-modal', class extends HTMLElement {
                 serial_nos: this.serial_nos,
             });
             e.target.querySelector('.modal-body #page2').innerHTML = frappe.render_template(template_page2, {
-                addresses: this.addresses,
+                shipping_addresses: this.shipping_addresses,
             });
             e.target.querySelector('.modal-body #page3').innerHTML = frappe.render_template(template_page3, {
-                addresses: this.addresses,
+                billing_addresses: this.billing_addresses,
             });
 
             this.bind_listeners(e.target);
@@ -348,12 +238,15 @@ customElements.define('wizard-modal', class extends HTMLElement {
         });
     }
 
-    show(serial_nos, addresses, callback) {
+    show(serial_nos, address_data, organize_return, callback) {
         if (!this.shadowRoot) {
             this.draw();
         }
         this.serial_nos = serial_nos;
-        this.addresses = addresses;
+        this.addresses = address_data.addresses;
+        this.shipping_addresses = address_data.shipping_addresses;
+        this.billing_addresses = address_data.billing_addresses;
+        this.organize_return = organize_return;
         this.callback = callback;
         $(this.modal).modal({ backdrop: 'static', keyboard: false });
     }
@@ -438,10 +331,12 @@ customElements.define('wizard-modal', class extends HTMLElement {
     build_doc() {
         const items = [...this.modal.querySelectorAll(".variant-select")].map(el => ({
             serial_no: el.dataset.sn,
+            last_shipped: el.dataset.last_shipped,
             type: el.value,
         }));
         const shipping_address = this.modal.querySelector("input[name='shipping_address']:checked")?.value;
         const billing_address = this.modal.querySelector("input[name='billing_address']:checked")?.value;
+        const parcel_count = this.modal.querySelector("input[name='parcel_count']")?.value;
         const remarks = this.modal.querySelector("textarea[name='remarks']")?.value;
 
         const shipping_address_display = this.addresses.find(addr => addr.name == shipping_address)?.display;
@@ -454,6 +349,8 @@ customElements.define('wizard-modal', class extends HTMLElement {
             billing_address,
             billing_address_display,
             remarks,
+            organize_return: this.organize_return,
+            parcel_count,
         };
         return doc;
     }

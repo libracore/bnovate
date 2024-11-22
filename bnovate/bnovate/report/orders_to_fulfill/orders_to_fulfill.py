@@ -7,9 +7,11 @@ import textwrap
 import itertools
 from frappe import _
 
-from bnovate.bnovate.report.projected_stock import projected_stock
+from erpnext.selling.doctype.sales_order.sales_order import make_delivery_note
 
+from bnovate.bnovate.report.projected_stock import projected_stock
 from bnovate.bnovate.utils.enclosures import is_enclosure
+from bnovate.bnovate.doctype.custom_shipping_rule import custom_shipping_rule
 
 def execute(filters=None):
     columns = get_columns(filters)
@@ -48,30 +50,31 @@ def get_columns(filters):
     return [
         {'fieldtype': 'Data', 'label': '', 'width': 20},
         {'fieldname': 'sufficient_stock', 'fieldtype': 'Data', 'label': _('Go?'), 'width': 50, 'align': 'center'},
-        {'fieldname': 'weeknum', 'fieldtype': 'Data', 'label': _('Week'), 'width': 80},
+        {'fieldname': 'weeknum', 'fieldtype': 'Data', 'label': _('WK'), 'width': 40},
         {'fieldname': 'indicator', 'fieldtype': 'Data', 'label': _('Status'), 'width': 90},
-        {'fieldname': 'sales_order', 'fieldtype': 'Link', 'label': _('Sales Order'), 'options': 'Sales Order', 'width': 90},
-        {'fieldname': 'customer', 'fieldtype': 'Link', 'label': _('Customer'), 'options': 'Customer', 'width': 80, 'align': 'left'},
+        {'fieldname': 'sales_order', 'fieldtype': 'Link', 'label': _('SO'), 'options': 'Sales Order', 'width': 70},
+        # {'fieldname': 'customer', 'fieldtype': 'Link', 'label': _('Customer'), 'options': 'Customer', 'width': 80, 'align': 'left'},
         {'fieldname': 'customer_name', 'fieldtype': 'Data', 'label': _('Customer Name'), 'width': 150, 'align': 'left'},
         {'fieldname': 'ship_date', 'fieldtype': 'Data', 'label': _('Ship date'), 'width': 80},
         # {'fieldname': 'qty', 'fieldtype': 'Int', 'label': _('Qty Ordered'), 'width': 100}, 
-        {'fieldname': 'remaining_qty', 'fieldtype': 'Int', 'label': _('Qty to Deliver'), 'width': 100}, 
-        {'fieldname': 'item_code', 'fieldtype': 'Link', 'label': _('Item code'), 'options': 'Item', 'width': 300, 'align': 'left'},
+        {'fieldname': 'remaining_qty', 'fieldtype': 'Int', 'label': _('Qty to Deliver'), 'width': 50}, 
+        {'fieldname': 'item_code', 'fieldtype': 'Link', 'label': _('Item code'), 'options': 'Item', 'width': 240, 'align': 'left'},
         {'fieldname': 'serial_nos', 'fieldtype': 'Data', 'label': _('Serial No'), 'width': 100, 'align': 'left'},
         # {'fieldname': 'item_name', 'fieldtype': 'Data', 'label': _('Item name'), 'width': 300},
-        {'fieldname': 'item_group', 'fieldtype': 'Link', 'label': _('Item group'), 'options': 'Item Group', 'width': 150, 'align': 'left'},
+        {'fieldname': 'item_group', 'fieldtype': 'Link', 'label': _('Item group'), 'options': 'Item Group', 'width': 110, 'align': 'left'},
         # {'fieldname': 'status', 'fieldtype': 'Data', 'label': _('Status'), 'width': 100}
 
         {'fieldname': 'projected_stock', 'fieldtype': 'Int', 
-            'label': '<span data-html="true" data-toggle="tooltip" data-placement="bottom" data-container="body" title="{}">Proj. Stock <i class="fa fa-info-circle"></i></span>'.format(projected_info), 
-            'width': 110},
+            'label': '<span data-html="true" data-toggle="tooltip" data-placement="bottom" data-container="body" title="{}"><i class="fa fa-info-circle"></i> Proj. Stock</span>'.format(projected_info), 
+            'width': 70},
         {'fieldname': 'guaranteed_stock', 'fieldtype': 'Int', 
-            'label': '<span data-html="true" data-toggle="tooltip" data-placement="bottom" data-container="body" title="{}">Guar. Stock <i class="fa fa-info-circle"></i></span>'.format(guaranteed_info), 
-            'width': 110},
+            'label': '<span data-html="true" data-toggle="tooltip" data-placement="bottom" data-container="body" title="{}"><i class="fa fa-info-circle"></i> Guar. Stock</span>'.format(guaranteed_info), 
+            'width': 70},
 
         {'fieldname': 'work_order', 'fieldtype': 'Link', 'label': _('Work Order'), 'options': 'Work Order', 'width': 250, 'align': 'left'},
 
-        {'fieldname': 'open_delivery_notes', 'fieldtype': 'Data', 'label': _('Delivery Notes'), 'options': 'Work Order', 'width': 250, 'align': 'left'},
+        {'fieldname': 'open_delivery_notes', 'fieldtype': 'Data', 'label': _('Delivery Notes'), 'width': 250, 'align': 'left'},
+        {'fieldname': 'company', 'fieldtype': 'Data', 'label': _('Company'),  'width': 200, 'align': 'left'},
     ]
     
 def get_data(filters):
@@ -82,7 +85,10 @@ def get_data(filters):
 
     extra_filters = ""
     if filters.only_manufacturing:
-        extra_filters += "AND it.include_item_in_manufacturing = 1"
+        extra_filters += "AND it.include_item_in_manufacturing = 1\n"
+    
+    if filters.company:
+        extra_filters += "AND so.company = '{}'\n".format(filters.company)
 
     so_filter = ""
     if filters.sales_order:
@@ -102,6 +108,7 @@ def get_data(filters):
         soi.name,
         soi.name as detail_docname,
         WEEK(soi.delivery_date) as weeknum,
+        so.shipping_address_name,
         soi.parent as sales_order,
         so.customer as customer,
         so.customer_name as customer_name,
@@ -115,7 +122,8 @@ def get_data(filters):
         FALSE as is_packed_item,
         soi.idx as idx,
         0 as pidx, -- packed item index
-        so.docstatus as docstatus
+        so.docstatus as docstatus,
+        so.company as company
     FROM `tabSales Order Item` as soi
     JOIN `tabSales Order` as so ON soi.parent = so.name
     JOIN `tabItem` as it ON soi.item_code = it.name
@@ -132,6 +140,7 @@ def get_data(filters):
         soi.name,
         pi.name as detail_docname,
         WEEK(soi.delivery_date) as weeknum,
+        so.shipping_address_name,
         soi.parent as sales_order,
         so.customer as customer,
         so.customer_name as customer_name,
@@ -145,7 +154,8 @@ def get_data(filters):
         TRUE as is_packed_item,
         soi.idx as idx,
         pi.idx as pidx,
-        so.docstatus as docstatus
+        so.docstatus as docstatus,
+        so.company as company
     FROM `tabSales Order Item` as soi
     JOIN `tabSales Order` as so ON soi.parent = so.name
     JOIN `tabItem` as it on soi.item_code = it.name
@@ -189,6 +199,7 @@ def get_data(filters):
   GROUP BY o.detail_docname  -- to avoid one line per DN item
   ORDER BY 
     delivery_date ASC,
+    shipping_address_name,
     sales_order,
     idx,
     pidx;
@@ -234,10 +245,14 @@ def get_data(filters):
     # Work out deliverability of bundles:
     bundle_name = ''
     bundle_stock = 3
+    wo_accumulator = []
     for row in data[::-1]:
         if not row.is_packed_item and row.name == bundle_name:
             # Reached the top of a bundle
             row.sufficient_stock = bundle_stock
+            row.work_order = [r['work_order'] for r in wo_accumulator] # ", ".join(wo_accumulator)
+            row.work_order_acc = wo_accumulator
+            wo_accumulator = []
             bundle_stock = 3
             continue
 
@@ -250,6 +265,14 @@ def get_data(filters):
         if row.sufficient_stock is not None:
             # If this value isn't defined, then ignore
             bundle_stock = min(row.sufficient_stock, bundle_stock)
+
+        if row.work_order:
+            wo_accumulator.append({
+                "work_order": row.work_order,
+                "wo_status": row.wo_status,
+                "wo_qty": row.wo_qty,
+                "wo_produced_qty": row.wo_produced_qty,
+            })
 
 
     # Formatting for alternating colours:
@@ -361,7 +384,34 @@ ORDER BY week ASC
         "title": "Total items per week",
     }
     return chart
-    
+
+@frappe.whitelist()
+def create_grouped_dn(source_docname):
+    """ Create a DN that consolidates several SO. """
+    # args to frappe.model.open_mapped_doc are passed to frappe.flags.args
+    so_docnames = frappe.flags.args.so_docnames
+    item_detail_docnames = frappe.flags.args.item_detail_docnames
+    ship_date = frappe.flags.args.ship_date
+    shipping_address_name = frappe.flags.args.shipping_address_name
+
+    # Create DN for main SO 
+    target_doc = make_delivery_note(source_docname)
+
+    # Create all the separate DNs
+    for next_docname in [n for n in so_docnames if n != source_docname]:
+        target_doc = make_delivery_note(next_docname, target_doc=target_doc)
+
+    # Filter out items that don't match the delivery address or shipping date
+    for item in target_doc.items:
+        if item.so_detail not in item_detail_docnames:
+            target_doc.items.remove(item)
+
+    target_doc.packed_items = []
+
+    # Recalculate shipping
+    custom_shipping_rule.apply_rule_inline(target_doc)
+
+    return target_doc
     
 ### Helpers
 

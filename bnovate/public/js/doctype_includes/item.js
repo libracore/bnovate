@@ -11,4 +11,22 @@ frappe.ui.form.on("Item", {
             'label': 'Sell',
         })
     },
+
+    refresh(frm) {
+
+        // Look for item defaults for this company
+        const default_company = bnovate.utils.get_default_company();
+        const item_defaults = frm.doc.item_defaults.find(it => it.company == default_company);
+
+        frm.add_custom_button("Projected Stock", function () {
+            // Find item default for currenct default company
+            frappe.route_options = {
+                item_code: frm.doc.name,
+                warehouse: item_defaults?.default_warehouse,
+            };
+            console.log(frappe.route_options)
+            frappe.set_route("query-report", "Projected Stock");
+        });
+
+    },
 })

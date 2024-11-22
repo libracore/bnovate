@@ -59,6 +59,7 @@ def get_columns(filters):
         {'fieldname': 'item_code', 'fieldtype': 'Data', 'label':_('Item'), 'options': 'Item', 'width': 300, 'align': 'left'},
         {'fieldname': 'sales_order', 'fieldtype': 'Link', 'label': _('Sales Order'), 'options': 'Sales Order', 'width': 100},
         {'fieldname': 'serial_no', 'fieldtype': 'Data', 'label': _('Serial No'), 'width': 200, 'align': 'left'},
+        {'fieldname': 'bom_description', 'fieldtype': 'Data', 'label': _('BOM Description'), 'width': 200, 'align': 'left'},
         {'fieldname': 'comment', 'fieldtype': 'Data', 'label': _('Comment'), 'width': 200, 'align': 'left'},
     ]
 
@@ -75,6 +76,8 @@ def get_columns(filters):
             # {'fieldname': 'guaranteed_qty', 'fieldtype': 'Int', 'label': 'Guar. AFTER WO', 'width': 110},
             {'fieldname': 'stock_uom', 'fieldtype': 'Data', 'label': _('Unit'), 'width': 100},
             {'fieldname': 'warehouse', 'fieldtype': 'Data', 'label': _('Warehouse'), 'width': 100},
+            {'fieldname': 'mean_time_per_unit', 'fieldtype': 'Data', 'precision': 1, 'label': _('Mean Minutes per Unit'), 'width': 100, 'align': 'right'}, # Also fomratted as data for hh:mm display
+            {'fieldname': 'time_estimate_remaining', 'fieldtype': 'Data', 'label': _('Time Estimate'), 'width': 100, 'align': 'right'}, # formatted as Data for hh:mm display...
         ])
 
     return cols
@@ -92,6 +95,15 @@ def get_data(filters):
     projected_stock_query = projected_stock.build_query(so_drafts=False, wo_drafts=True, item_code=None, warehouse=None)
     sql_query = """
 -- End goal: a table where each row is either a work order production item or required item, with projected stock once WO is completed.
+WITH
+    -- Time Estimates
+    te as (SELECT
+            wo.production_item AS item_code,
+            AVG(wo.time_per_unit) AS mean_time_per_unit
+        FROM `tabWork Order` wo
+        WHERE wo.time_per_unit > 0
+        GROUP BY wo.production_item)
+
 SELECT 
 
     -- Common fields
@@ -119,10 +131,14 @@ SELECT
     wo.qty as planned_qty,
     wo.produced_qty,
     (wo.qty - wo.produced_qty) AS required_qty,
+    wo.docstatus,
     wo.status,
     wo.serial_no,
     wo.comment,
     wo.sales_order,
+    wo.bom_description,
+    te.mean_time_per_unit,
+    te.mean_time_per_unit * (wo.qty - wo.produced_qty) AS time_estimate_remaining,
 
     -- Fields for Work Order Items (consumed items)
     woi.required_qty AS reqd_item_qty,
@@ -137,6 +153,7 @@ FROM (
 
 LEFT JOIN `tabWork Order Item` woi on woi.name = p.detail_docname
 LEFT JOIN `tabWork Order` wo on wo.name = p.detail_docname
+LEFT JOIN te on wo.production_item = te.item_code
 JOIN `tabItem` it on p.item_code = it.name
 JOIN `tabWork Order` wo2 on p.docname = wo2.name -- To filter all rows on WO properties.
 
@@ -169,7 +186,9 @@ ORDER BY wo2.planned_start_date, p.docname, p.detail_doctype -- Put 'Work Order 
 
     for row in data:
         row.stock_indicator = ["red", "orange", "green"][row.sufficient_stock]
-            
+
+    if filters.simple_view:
+        data = [row for row in data if  row.docstatus == 1]
 
     # import pprint
     # pp = pprint.PrettyPrinter(indent=4)

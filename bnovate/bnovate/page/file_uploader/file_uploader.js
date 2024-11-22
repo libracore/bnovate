@@ -12,6 +12,7 @@ frappe.pages['file_uploader'].on_page_load = function (wrapper) {
 	let state = {
 		files: [], // will contain a list of objects with attributes: name, fileObj, uploaded, error, message
 	};
+	window.state = state;
 
 	page.set_primary_action('Upload', upload, 'octicon octicon-plus');
 
@@ -82,13 +83,18 @@ frappe.pages['file_uploader'].on_page_load = function (wrapper) {
 
 	async function upload() {
 
-		// Get list of all available PINV
-		let pinvs = await frappe.db.get_list("Purchase Invoice", {
-			limit: 100000,
-			filters: {
-				docstatus: ["<", "2"],
-			}
-		})
+		let docs = [];
+
+		for (let doctype of ['Purchase Invoice', 'Delivery Note', 'Sales Invoice']) {
+			let subset = await frappe.db.get_list(doctype, {
+				limit: 100000,
+				filters: {
+					docstatus: ["<", "2"],
+				}
+			});
+			docs.push(...subset.map(doc => ({ doctype, ...doc })));
+		}
+
 
 		let fail = function (i, message) {
 			state.files[i].error = true;
@@ -99,23 +105,30 @@ frappe.pages['file_uploader'].on_page_load = function (wrapper) {
 		// Upload each document.
 		for (let i in state.files) {
 			let file = state.files[i];
-			let docname = file.name.replace(/\.[^/.]+$/, "");
+			let docname = file.name.match(/(DN|PINV|SINV)-\d{5}/)?.[0];
 
-			// Find closest PINV name, latest ammended version (furthest down the alphabet):
-			let closest_match = pinvs.filter(p => p.name.slice(0, "PINV-12345".length) == docname)
+			if (!docname) {
+				fail(i, `Could not find docname (PINV-xxxxx, DN-xxxxx, SINV-xxxxx) in filename.`);
+				continue;
+			}
+
+			// Find closest PINV / DN name, latest ammended version (furthest down the alphabet):
+			let closest_match = docs.filter(p => p.name.indexOf(docname) >= 0)
 				.sort()
-				.reverse()[0]?.name;
+				.reverse()[0];
+
+			console.log("upload", state.files[i], closest_match);
 
 			if (!closest_match) {
-				fail(i, `PINV does not exist: ${docname}`);
-				continue
+				fail(i, `PINV or DN does not exist: ${docname}`);
+				continue;
 			}
 
 			let formData = new FormData();
 			formData.append('is_private', 1);
 			formData.append('folder', 'Home/Attachments');
-			formData.append('doctype', 'Purchase Invoice');
-			formData.append('docname', closest_match); // strip extension
+			formData.append('doctype', closest_match.doctype);
+			formData.append('docname', closest_match.name); // strip extension
 			formData.append('file', file.fileObj, file.name);
 
 			fetch('/api/method/upload_file', {
@@ -133,7 +146,7 @@ frappe.pages['file_uploader'].on_page_load = function (wrapper) {
 					} else {
 						state.files[i].uploaded = true;
 						state.files[i].error = false;
-						state.files[i].message = `<a href="/desk#Form/Purchase Invoice/${closest_match}" target="_blank">${closest_match}</a>`;
+						state.files[i].message = `<a href="${frappe.utils.get_form_link(closest_match.doctype, closest_match.name)}" target="_blank">${closest_match.name}</a>`;
 					}
 					console.log(result);
 				})

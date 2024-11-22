@@ -1,0 +1,142 @@
+{% extends "templates/web.html" %}
+
+{% block page_content %}
+
+{% if is_desk_user %}
+<div class="alert alert-warning" role="alert">
+    This is the customer portal. You are an internal user, you probably want to see the <a href="/desk">desk</a>.<br>
+    <i>Ceci est le portail client. Vous êtes un utilisateur interne, vous cherchez probablement le <a href="/desk">bureau</a>.</i>
+</div>
+{% endif %}
+
+{% if is_guest %}
+{{ greeting }}
+{% else %}
+
+<div class="row row-cols-1 row-cols-md-2 g-4">
+    <div class="col">
+        <div class="card">
+            <div class="card-header">{{ _("Quick Connect") }}</div>
+            <div class="card-body">
+                <dl class="card-text">
+                    {% if ( connected_instruments | selectattr("cp") | list | length ) == 0  %}
+                    {{ _("You do not have any BactoLinks.") }}
+                    {% endif %}
+
+                    {% for instrument in connected_instruments if instrument.cp %}
+                    <dt>
+                        {% if customers | length > 1 %}
+                            {{ instrument.owned_by_name }} - 
+                        {% endif %}
+                        {{ instrument.cp.device_name }}
+                    </dt>
+                    <dd>
+                        {% if instrument.cp.web %}
+                        <button href="#" class="btn btn-primary get-status" data-cp-docname="{{ instrument.cp.name }}" data-cp-devicename="{{ instrument.cp.device_name }}" >
+                            {{ _("Status") }}</button>
+
+                        <button href="#" class="btn btn-primary open-remote" data-config-id="{{ instrument.cp.web.id }}"
+                            data-cp-docname="{{ instrument.cp.name}}">{{ _("Web UI") }}</button>
+                        {% endif %}
+                        {% if instrument.cp.vnc %}
+                        <button href="#" class="btn btn-primary open-remote" data-config-id="{{ instrument.cp.vnc.id }}"
+                            data-cp-docname="{{ instrument.cp.name}}">{{ _("GUI Relay") }}</button>
+                        {% endif %}
+                    </dd>
+                    {% endfor %}
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    {% if has_cartridge_portal %}
+    <div class="col">
+        <div class="card">
+            <div class="card-header">{{ _("Refill Requests") }}</div>
+            <div class="card-body">
+                <!-- <h5 class="card-title">Refill Requests</h5> -->
+                {% if ( requests | length ) == 0 %}
+                    <tr>{{ _("You have not requested any refills.") }}</tr>
+                {% else %}
+                <table class="table table-condensed" style="border-bottom: 1px solid #d1d8dd; width:100%">
+                    <thead>
+                        <th>{{ _("#") }}</th>
+                        <th>{{ _("Status") }}</th>
+                        <th>{{ _("Tracking No") }}</th>
+                    </thead>
+                    <!-- <tbody> -->
+
+                        {% for row in requests %}
+                        <tr>
+                            <td><a href="/requests/{{ row.name }}">{{ row.name }}</a></td>
+                            <td>
+                                <a href="/requests/{{ row.name }}">
+                                    <span
+                                        class="indicator {{ row.indicator_color or ('blue' if row.docstatus==1 else 'darkgrey') }}">
+                                        {{ _(row.get('indicator_title')) or _(row.status) or _("Submitted") }}
+                                    </span>
+                                </a>
+                            </td>
+                            <td>
+                                {% if row.tracking_no and row.status == "Shipped" %}
+                                    {% if row.tracking_url %} 
+                                    <a target="_blank" href="{{ row.tracking_url }}">{{ row.tracking_no | truncate(20) }}</a>
+                                    {% else %}
+                                    {{ row.tracking_no | truncate(20) }} {{ row.carrier | truncate(20) }}
+                                    {% endif %}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+
+{% endif %}
+
+{% endblock %}
+
+{% block script %}
+<script>
+
+
+    {% if is_guest %}
+        localStorage.setItem("return_to_path", location.pathname);
+    {% else %}
+        redirect_if_needed();
+    {% endif %}
+
+
+    frappe.require("/assets/js/dialog.min.js")  // Fixes progress modal layout
+    frappe.require("/assets/bnovate/js/iot.js");
+
+    let buttons = [...document.querySelectorAll("button")];
+    let remoteBtns = [...document.querySelectorAll(".open-remote")];
+    remoteBtns.map(el => el.addEventListener("click", async (e) => {
+        buttons.map(btn => btn.disabled = true)
+        try {
+            bnovate.iot.portal_start_session(el.dataset.configId, el.dataset.cpDocname);
+        } finally {
+            buttons.map(btn => btn.disabled = false)
+        }
+    }));
+
+    let statusBtns = [...document.querySelectorAll(".get-status")];
+    statusBtns.map(el => el.addEventListener("click", async (e) => {
+        buttons.map(btn => btn.disabled = true)
+        let status = null;
+        try {
+            await bnovate.web.get_instrument_status_modal(el.dataset.cpDocname, el.dataset.cpDevicename);
+        } finally {
+            buttons.map(btn => btn.disabled = false)
+        }
+    }));
+
+</script>
+{% endblock %}

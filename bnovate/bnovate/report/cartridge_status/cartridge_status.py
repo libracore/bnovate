@@ -18,22 +18,29 @@ def execute(filters=None):
 def get_columns():
     return [
         {'fieldname': 'serial_no', 'fieldtype': 'Link', 'label': _('Serial No'), 'options': 'Serial No', 'width': 100},
+        {'fieldname': 'compatibility', 'fieldtype': 'Data', 'label': _('Compatibility'), 'width': 150, 'align': 'left'}, 
         {'fieldname': 'type', 'fieldtype': 'Data', 'label': _('Type'), 'width': 150}, 
-        {'fieldname': 'order_status', 'fieldtype': 'Data', 'label': _('Order Status'), 'width': 150, 'align': 'left'}, 
         {'fieldname': 'status', 'fieldtype': 'Data', 'label': _('Status'), 'width': 150}, 
-        {'fieldname': 'location', 'fieldtype': 'Data', 'label': _('Location'), 'width': 150}, 
-        # {'fieldname': 'item_code', 'fieldtype': 'Link', 'label': _('Item'), 'options': 'Item', 'width': 100},
+        {'fieldname': 'storage_location', 'fieldtype': 'Link', 'label': _('Shelf'), 'options': 'Storage Location', 'width': 80, 'align': 'left'},
+        {'fieldname': 'storage_slot', 'fieldtype': 'Link', 'label': _('Slot'), 'options': 'Storage Slot', 'width': 70, 'align': 'left'},
+
         {'fieldname': 'warehouse', 'fieldtype': 'Link', 'label': _('Warehouse'), 'options': 'Warehouse', 'width': 100},
-        {'fieldname': 'docname', 'fieldtype': 'Dynamic Link', 'label': _('Transfer doc'), 'options': 'doctype', 'width': 100}, 
         {'fieldname': 'posting_date', 'fieldtype': 'Date', 'label': _('Since date'), 'width': 80},
         {'fieldname': 'owned_by', 'fieldtype': 'Link', 'label': _('Owned by Customer'), 'options': 'Customer', 'width': 120},
         {'fieldname': 'customer_name', 'fieldtype': 'Data', 'label': _('Customer Name'), 'width': 300, 'align': 'left'}, 
-        {'fieldname': 'shipping_address', 'fieldtype': 'Text', 'label': _('Shipping Address'), 'width': 150, 'align': 'left'}, 
-        {'fieldname': 'tracking_link', 'fieldtype': 'Data', 'label': _('Tracking No'), 'width': 100, 'align': 'left'}, 
+
         {'fieldname': 'refill_request', 'fieldtype': 'Link', 'label': _('Refill Request'), 'options': 'Refill Request', 'width': 100, 'align': 'left'}, 
         {'fieldname': 'open_sales_order', 'fieldtype': 'Link', 'label': _('Sales Order'), 'options': 'Sales Order', 'width': 220, 'align': 'left'}, 
         {'fieldname': 'work_order', 'fieldtype': 'Link', 'label': _('Work Order'), 'options': 'Work Order', 'width': 200, 'align': 'left'}, 
         {'fieldname': 'woe', 'fieldtype': 'Link', 'label': _('Manufacturing Stock Entry'), 'options': 'Work Order', 'width': 200, 'align': 'left'}, 
+
+        {'fieldname': 'shipping_address', 'fieldtype': 'Text', 'label': _('Shipping Address'), 'width': 150, 'align': 'left'}, 
+        {'fieldname': 'tracking_link', 'fieldtype': 'Data', 'label': _('Tracking No'), 'width': 100, 'align': 'left'}, 
+
+        {'fieldname': 'location', 'fieldtype': 'Data', 'label': _('Location'), 'width': 150}, 
+        # {'fieldname': 'item_code', 'fieldtype': 'Link', 'label': _('Item'), 'options': 'Item', 'width': 100},
+        {'fieldname': 'docname', 'fieldtype': 'Dynamic Link', 'label': _('Transfer doc'), 'options': 'doctype', 'width': 100}, 
+        {'fieldname': 'order_status', 'fieldtype': 'Data', 'label': _('Order Status'), 'width': 150, 'align': 'left'}, 
     ]
 
 def get_data(filters):
@@ -56,12 +63,28 @@ def get_data(filters):
         serial_nos = '("' + '", "'.join(filters.serial_no) + '")'
         extra_filters += '\nAND sn.serial_no IN {0}'.format(serial_nos)
 
+    # Like this the strings are picked up:
+    translations_hack = [_("Shipped to Customer")]
+
     sql_query = """
+        WITH items AS (
+            SELECT
+                it.name,
+                it.item_name,
+                it.short_name,
+                it.item_group,
+                GROUP_CONCAT(itc.label) as compatibility
+            FROM `tabItem` as it
+            LEFT JOIN `tabItem Compatibility` itc ON it.name = itc.parent
+            WHERE it.item_group = "Cartridge Enclosures"
+            GROUP BY it.name
+        )
         SELECT 
             sn.serial_no, 
             IF(sn.serial_no LIKE "%BNO%", "Rental", "Customer-owned") as type,
             NULL as status,
             sn.item_code, 
+            it.compatibility,
             sn.warehouse, 
             IF(sn.warehouse = "Customer Locations - bN", "Shipped to Customer", "bNovate") as location,
             sn.purchase_document_type AS doctype,
@@ -85,13 +108,17 @@ def get_data(filters):
             wo.name AS work_order,
             wo.status AS wo_status,
             woe.woe_name AS woe, -- Work Order Entry, i.e. stock entry associated with that cartridge 
-            woe.woe_docstatus AS woe_docstatus
+            woe.woe_docstatus AS woe_docstatus,
+            loc.name as storage_location_docname,
+            loc.title as storage_location,
+            sl.label as storage_slot
 
         FROM `tabSerial No` sn
         LEFT JOIN `tabStock Entry` ste ON sn.purchase_document_no = ste.name
         LEFT JOIN `tabCustomer` cr ON sn.owned_by = cr.name
         LEFT JOIN `tabDelivery Note` dn ON sn.purchase_document_no = dn.name
         LEFT JOIN `tabSales Order` so ON sn.open_sales_order = so.name
+        LEFT JOIN items it ON sn.item_code = it.name
         -- Join on a subquery that lists only packed items with matching work orders
         LEFT JOIN ( SELECT spi.name as name, spi.parent_detail_docname, spi.parent, swo.name AS wo_name
                     FROM `tabPacked Item` spi
@@ -103,8 +130,11 @@ def get_data(filters):
                     FROM `tabFill Association Item` fai
                     JOIN `tabStock Entry` ste2 on fai.parent = ste2.name) AS woe 
                     ON woe.work_order = wo.name AND woe.enclosure_serial_data = sn.serial_no
+        -- Storage Slot
+        LEFT JOIN `tabStorage Slot` sl on sl.serial_no = sn.serial_no
+        LEFT JOIN `tabStorage Location` loc on sl.parent = loc.name
 
-        WHERE sn.item_code = "100146"
+        WHERE sn.item_code IN ("100146", "101083")
             AND sn.warehouse IS NOT NULL
             {extra_filters}
         ORDER BY sn.serial_no

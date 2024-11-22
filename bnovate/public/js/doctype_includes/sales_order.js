@@ -3,10 +3,10 @@
  * Included by hooks.py to add client-side code
  * (same effect as writing a custom script)
  * 
- * - Removes legacy Create Subscription action
  */
 
 frappe.require("/assets/bnovate/js/modals.js")  // provides bnovate.modals
+frappe.require("/assets/bnovate/js/shipping.js")  // provides bnovate.shipping
 
 frappe.ui.form.on("Sales Order", {
     async before_load(frm) {
@@ -15,13 +15,49 @@ frappe.ui.form.on("Sales Order", {
             'label': 'Reference',
         });
 
+        frm.dashboard.add_transactions({
+            'items': ['Shipment'],
+            'label': 'Fulfillment',
+        });
+
         // Hijack formatter, we'll set colours according to deliverability later.
         frm.set_indicator_formatter('item_code', (doc) => "");
     },
 
+    onload(frm) {
+
+        frm.set_query("custom_shipping_rule", () => {
+            return {
+                filters: {
+                    country: frm.doc.shipping_country,
+                    company: frm.doc.company,
+                }
+            }
+        })
+
+        frm.set_query("blanket_order", "items", function () {
+            return {
+                filters: {
+                    "company": frm.doc.company,
+                    "docstatus": 1,
+                    "to_date": [">=", frm.doc.transaction_date],
+                    "from_date": ["<=", frm.doc.transaction_date],
+                    "customer": frm.doc.customer,
+                    "currency": ["IN", [frm.doc.currency, ""]]
+                }
+            }
+        });
+
+        if (frm.doc.tc_name && !frm.doc.terms) {
+            // Trigger copying of template
+            frm.trigger('tc_name');
+        }
+
+    },
+
     async refresh(frm) {
         setTimeout(() => {
-            frm.remove_custom_button("Subscription", "Create")
+            frm.remove_custom_button(__("Subscription"), __("Create"));
         }, 500);
 
         if (frm.doc.docstatus === 0) {
@@ -46,7 +82,10 @@ frappe.ui.form.on("Sales Order", {
                         }
                     })
                 }, __("Get items from"));
+
         }
+
+        frm.add_custom_button(__('Return Shipment'), () => create_return_shipment(frm), __("Create"));
 
         // Show cartridges owned by this customer in a modal
         bnovate.modals.attach_report_modal("cartStatusModal");
@@ -62,9 +101,84 @@ frappe.ui.form.on("Sales Order", {
         );
 
         bnovate.modals.attach_report_modal("projStockModal");
-        setTimeout(() => show_deliverability(frm), 500);
+        if (!frm.doc.__islocal) {
+            setTimeout(() => show_deliverability(frm), 500);
+        }
     },
 
+    async before_submit(frm) {
+
+        // If incoterm requires that we ship, check deliverability:
+        if (bnovate.shipping.use_auto_ship(frm)) {
+            const err = await bnovate.shipping.validate_sales_order(frm.doc.name);
+            if (err.error) {
+                frappe.msgprint(err.error + ":<br><br>" + err.message);
+                frappe.validated = false;
+            }
+        }
+    },
+
+    async customer(frm) {
+        // Fetch default terms from customer group
+        const customer_doc = await frappe.model.with_doc("Customer", frm.doc.customer);
+        const customer_group = await frappe.model.with_doc("Customer Group", customer_doc.customer_group);
+
+        setTimeout(() => {
+            frm.set_value('taxes_and_charges', customer_group.taxes_and_charges_template);
+        }, 500)
+
+        // Default discount
+        frm.set_value("default_discount", customer_doc.default_discount || 0);
+
+        bnovate.utils.set_item_discounts(frm);
+    },
+
+    apply_default_discount(frm) {
+        bnovate.utils.set_item_discounts(frm);
+    },
+
+
+
+    custom_shipping_rule(frm) {
+        // Call Custom Shipping Rule instead of built-in one:
+
+        if (frm.doc.custom_shipping_rule) {
+            return frappe.call({
+                method: 'bnovate.bnovate.doctype.custom_shipping_rule.custom_shipping_rule.apply_rule',
+                args: {
+                    doc: frm.doc,
+                },
+                callback: (r) => {
+                    if (!r.exc) {
+                        frm.refresh_fields();
+                        frm.cscript.calculate_taxes_and_totals();
+                    }
+                },
+                error: () => frm.set_value('custom_shipping_rule', ''),
+            })
+        }
+        else {
+            frm.cscript.calculate_taxes_and_totals();
+        }
+
+    },
+
+    taxes_and_charges(frm) {
+        // Re-calculate shipping. FIXME: race condition.
+        // frm.trigger('custom_shipping_rule');
+        // console.log('Should have triggered taxes refresh');
+    },
+
+})
+
+frappe.ui.form.on('Sales Order Item', {
+    async price_list_rate(frm, cdt, cdn) {
+        if (frm.doc.ignore_default_discount) {
+            return;
+        }
+
+        await frappe.model.set_value(cdt, cdn, "discount_percentage", frm.doc.default_discount);
+    }
 })
 
 async function get_deliverability(frm) {
@@ -78,13 +192,11 @@ async function get_deliverability(frm) {
 
 async function show_deliverability(frm) {
     const deliverability = await get_deliverability(frm);
-    console.log(deliverability);
     for (let item of cur_frm.doc.items) {
         const indicator = document.querySelector(`[data-name="${item.name}"] .indicator`)
         let colour = "darkgrey";
         let planned_stock = "";
         let status = deliverability[item.name];
-        console.log(status);
         if (item.stock_qty <= item.delivered_qty) {
             colour = "light-blue";
         } else if (typeof status !== undefined) {
@@ -111,4 +223,43 @@ async function show_deliverability(frm) {
         }
         indicator.classList.add(colour);
     }
+}
+
+
+async function prompt_label_format(frm) {
+    const data = await bnovate.utils.prompt(
+        __("Confirm Label Format"),
+        [{
+            label: __("Label Size"),
+            fieldname: "label_format",
+            fieldtype: "Select",
+            options: "8x4 inch\nA4",
+            default: "A4",
+            reqd: 1,
+        }],
+        "Confirm",
+        "Cancel",
+    )
+    return data;
+}
+
+async function create_return_shipment(frm) {
+
+    const args = await prompt_label_format(frm);
+    if (args === null) {
+        return
+    }
+
+    // Since we allow this on draft, we haven't yet validated the SO for delivery creation
+    const err = await bnovate.shipping.validate_sales_order(frm.doc.name);
+    if (err.error) {
+        frappe.msgprint(err.error + ":<br><br>" + err.message);
+        return
+    }
+
+    frappe.model.open_mapped_doc({
+        method: "bnovate.bnovate.utils.shipping.make_return_shipment_from_so",
+        frm,
+        args,
+    })
 }
