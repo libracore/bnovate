@@ -26,7 +26,7 @@
   "column_break_18",
   "subscription_contract",
   "quotation",
-  "issue_description_section",
+  "description_section",
   "work_description",
   "column_break_22",
   "validation_performed",
@@ -109,11 +109,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "issue_description_section",
-   "fieldtype": "Section Break",
-   "label": "Issue Description"
-  },
-  {
    "fieldname": "reason_for_visit",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -156,7 +151,7 @@
    "options": "Service Report Checks"
   },
   {
-   "default": "{customer_name}",
+   "default": "{customer_name} - {serial_no}",
    "fieldname": "title",
    "fieldtype": "Data",
    "hidden": 1,
@@ -235,10 +230,15 @@
   {
    "fieldname": "column_break_18",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "description_section",
+   "fieldtype": "Section Break",
+   "label": "Description"
   }
  ],
  "is_submittable": 1,
- "modified": "2023-06-19 17:50:17.472806",
+ "modified": "2024-11-27 17:32:40.248776",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Service Report",
@@ -254,6 +254,7 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
+   "submit": 1,
    "write": 1
   },
   {
@@ -266,6 +267,7 @@
    "report": 1,
    "role": "Service Manager",
    "share": 1,
+   "submit": 1,
    "write": 1
   },
   {

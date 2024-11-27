@@ -150,7 +150,7 @@
    "read_only": 1
   }
  ],
- "modified": "2023-06-19 15:26:10.094912",
+ "modified": "2024-11-27 15:43:42.469696",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Service Report Template",
@@ -183,7 +183,6 @@
   {
    "email": 1,
    "export": 1,
-   "if_owner": 1,
    "print": 1,
    "read": 1,
    "report": 1,

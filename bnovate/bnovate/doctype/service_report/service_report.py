@@ -5,11 +5,14 @@
 from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
-from frappe.model.mapper import get_mapped_doc
+from frappe.model.mapper import get_mapped_doc, map_child_doc, map_doc
 
 from erpnext.controllers.queries import get_match_cond
 
 class ServiceReport(Document):
+	# def autoname(self):
+	# 	self.title = "{0} - {1} {2}".format(self.customer_name, self.item_name, self.serial_no)
+
 	def before_submit(self):
 
 		# Check that all items are available in personal stock
@@ -26,8 +29,25 @@ def make_from_template(source_name, target_doc=None):
 	return _make_from_template(source_name, target_doc)
 
 def _make_from_template(source_name, target_doc, ignore_permissions=False):
-	def set_missing_values(source, target):
-		pass
+	def postprocess(source, target):
+
+		# Default mapping puts all child items of same doctype into the first matching table.
+		# Instead, reset and separate according to parent field:
+		target.items = []
+		target.labour_travel = []
+
+		for source_d in source.get('items', []):
+			target_d = frappe.new_doc(source_d.doctype, target, 'items')
+			map_doc(source_d, target_d, {}, source)
+			target_d.idx = None
+			target.append('items', target_d)
+
+		for source_d in source.get('labour_travel', []):
+			target_d = frappe.new_doc(source_d.doctype, target, 'labour_travel')
+			map_doc(source_d, target_d, {}, source)
+			target_d.idx = None
+			target.append('labour_travel', target_d)
+
 
 	doclist = get_mapped_doc("Service Report Template", source_name, {
 			"Service Report Template": {
@@ -35,6 +55,9 @@ def _make_from_template(source_name, target_doc, ignore_permissions=False):
 				# "validation": {
 				# 	"docstatus": ["=", 1]
 				# }
+				"field_no_map": [
+					'title', # Ignore template title
+				]
 			},
 			# "Service Report Item": {
 			# 	"doctype": "Service Report Item",
@@ -42,7 +65,7 @@ def _make_from_template(source_name, target_doc, ignore_permissions=False):
 			# 		"parentfield": "parentfield",
 			# 	},
 			# },
-		}, target_doc, set_missing_values, ignore_permissions=ignore_permissions)
+		}, target_doc, postprocess, ignore_permissions=ignore_permissions)
 
 	return doclist
 
