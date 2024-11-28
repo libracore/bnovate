@@ -23,6 +23,13 @@ frappe.ui.form.on('Service Report', {
 				}
 			}
 		});
+		frm.set_query("quotation", function () {
+			return {
+				filters: {
+					party_name: frm.doc.customer,
+				}
+			}
+		});
 		frm.set_query("serial_no", function () {
 			return {
 				filters: {

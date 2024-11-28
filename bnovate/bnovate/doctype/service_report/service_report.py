@@ -9,19 +9,30 @@ from frappe.model.mapper import get_mapped_doc, map_child_doc, map_doc
 
 from erpnext.controllers.queries import get_match_cond
 
+BILLING_QUOTATION = "According to Quotation"
+BILLING_SERVICE_AGREEMENT = "Under Service Agreement"
+
 class ServiceReport(Document):
 	# def autoname(self):
 	# 	self.title = "{0} - {1} {2}".format(self.customer_name, self.item_name, self.serial_no)
 
-	def before_submit(self):
+	def validate(self):
+		# Ensure there are no unnecessary links
+		if self.billing_basis !=  BILLING_QUOTATION:
+			self.quotation = None
+		if self.billing_basis != BILLING_SERVICE_AGREEMENT:
+			self.subscription_contract = None
 
-		# Check that all items are available in personal stock
-		levels = get_stock_levels(self.set_warehouse)
-		for row in self.items:
-			print(row.item_code, row.qty)
-			if row.item_code in levels and levels[row.item_code] >= row.qty:
-				continue
-			raise Exception("Insufficiant stock for item {item_code}.".format(item_code=row.item_code))
+	def before_submit(self):
+		pass
+
+		# # Check that all items are available in personal stock
+		# levels = get_stock_levels(self.set_warehouse)
+		# for row in self.items:
+		# 	print(row.item_code, row.qty)
+		# 	if row.item_code in levels and levels[row.item_code] >= row.qty:
+		# 		continue
+		# 	raise Exception("Insufficiant stock for item {item_code}.".format(item_code=row.item_code))
 
 
 @frappe.whitelist()
@@ -82,6 +93,13 @@ def _make_sales_order(source_name, target_doc, ignore_permissions=False):
 		target.delivery_date = source.intervention_date
 		target.ignore_pricing_rule = 1
 		# target.flags.ignore_permissions = ignore_permissions
+
+		for item in target.items:
+			item.delivery_date = source.intervention_date
+
+		if source.billing_basis == BILLING_SERVICE_AGREEMENT:
+			for item in target.items:
+				item.discount_percentage = 100
 
 	# def update_item(obj, target, source_parent):
 	# 	target.stock_qty = flt(obj.qty) * flt(obj.conversion_factor)
