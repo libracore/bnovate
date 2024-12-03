@@ -62,6 +62,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		needs_expiry_date: false,	// when produced item needs an expiry date.
 		expiry_date_control: null,	// contains expiry date control if it exists...
 		default_shelf_life: 9,		// [months] used to calculate expiry date
+		qc_required: false,			// true if item requires QC after production.
 	}
 	bnovate.work_order_execution.state = state;
 	window.state = state;
@@ -113,6 +114,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			docinfo: state.docinfo,
 			attachments: state.attachments,
 			bom: state.bom_doc,
+			qc_required: state.qc_required,
 		});
 		time_tracking.innerHTML = "";
 
@@ -250,6 +252,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		// do we need an expiry date? For now only FILs need them.
 		state.needs_expiry_date = is_fill(state.work_order_doc.production_item);
 		state.default_shelf_life = locals["Item"][state.work_order_doc.production_item].stability_in_months || 9;
+		state.qc_required = locals["Item"][state.work_order_doc.production_item].qc_required || false;
 
 		// BOMs can't change after submit, no need to clear cache
 		state.bom_doc = await frappe.model.with_doc('BOM', state.work_order_doc.bom_no);

@@ -179,6 +179,12 @@ def get_data():
                         "type": "report",
                         "name": "Item-wise Sales History (bN)",
                         "label": _("Item-wise Sales History (bN)"),
+                        "doctype": "GL Entry", # Not actually GL entry but I only want to show to accounting ppl.
+                        "is_query_report": True   
+                   }, {
+                        "type": "report",
+                        "name": "Item-wise Sales Register (bN)",
+                        "label": _("Item-wise Sales Register (bN)"),
                         "doctype": "GL Entry",
                         "is_query_report": True   
                    }, {

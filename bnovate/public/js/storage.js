@@ -118,7 +118,7 @@ bnovate.storage.prompt_sn = function (primary_action_label) {
 bnovate.storage.msgprint = function (message, title) {
     return new Promise((resolve, reject) => {
         let dialog = frappe.msgprint(message, title);
-        dialog.onhide = () => { resolve() };
+        dialog.onhide = () => { frappe.msg_dialog.msg_area.empty(); resolve() };
         return dialog;
     })
 }
