@@ -12,6 +12,11 @@ from erpnext.controllers.queries import get_match_cond
 BILLING_QUOTATION = "According to Quotation"
 BILLING_SERVICE_AGREEMENT = "Under Service Agreement"
 
+CHANNEL_DIRECT = "Direct"
+CHANNEL_PARTNER = "Service Partner"
+
+BILLING_PARTNER = "Through Service Partner"
+
 class ServiceReport(Document):
 	# def autoname(self):
 	# 	self.title = "{0} - {1} {2}".format(self.customer_name, self.item_name, self.serial_no)
@@ -22,6 +27,12 @@ class ServiceReport(Document):
 			self.quotation = None
 		if self.billing_basis != BILLING_SERVICE_AGREEMENT:
 			self.subscription_contract = None
+
+		if self.channel == CHANNEL_PARTNER:
+			self.bnovate_technician = None
+			self.bnovate_technician_name = None
+			self.billing_basis = BILLING_PARTNER
+
 
 	def before_submit(self):
 		pass

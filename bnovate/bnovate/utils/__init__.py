@@ -68,3 +68,8 @@ def upload_file():
         target_doc.save()
 
     return doc
+
+@frappe.whitelist()
+def get_contact_display(contact_docname):
+    contact_doc = frappe.get_doc("Contact", contact_docname)
+    return ' '.join([n.strip() for n in [contact_doc.first_name, contact_doc.last_name] if n]).strip()

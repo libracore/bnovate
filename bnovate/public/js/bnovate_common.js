@@ -411,3 +411,13 @@ bnovate.utils.set_cartridge_owners = async function (owners) {
     })
   }
 }
+
+bnovate.utils.get_contact_display = async function (contact_docname) {
+  const resp = await frappe.call({
+    method: "bnovate.bnovate.utils.get_contact_display",
+    args: {
+      contact_docname,
+    },
+  });
+  return resp.message;
+}

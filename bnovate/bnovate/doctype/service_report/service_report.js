@@ -1,6 +1,8 @@
 // Copyright (c) 2023, bnovate, libracore and contributors
 // For license information, please see license.txt
 
+const BILLING_PARTNER = 'Through Service Partner';
+
 frappe.ui.form.on('Service Report', {
 	onload(frm) {
 
@@ -57,16 +59,40 @@ frappe.ui.form.on('Service Report', {
 	},
 
 	refresh(frm) {
-		if (frm.doc.docstatus == 1) {
+		if (frm.doc.docstatus == 1 && frm.doc.billing_basis !== BILLING_PARTNER) {
 
 			frm.add_custom_button(__("Sales Order"), () => {
 				frappe.model.open_mapped_doc({
 					method: "bnovate.bnovate.doctype.service_report.service_report.make_sales_order",
-					frm: cur_frm
+					frm: cur_frm,
 				});
 			}, __("Create"));
 
 		}
+	},
+
+	async channel(frm) {
+		frm.toggle_reqd('bnovate_technician', frm.doc.channel === 'Direct')
+		if (frm.doc.channel == 'Service Partner') {
+			frm.set_value('billing_basis', BILLING_PARTNER);
+		} else {
+			frm.set_value('billing_basis', null);
+		}
+	},
+
+	async bnovate_technician(frm) {
+		console.log(frm.doc)
+		const resp = await frappe.db.get_value("Warehouse", { for_user: frm.doc.bnovate_technician }, 'name');
+		frm.set_value('set_warehouse', resp.message?.name);
+	},
+
+	async technician(frm) {
+		console.log("Setting technician name")
+		let technician_display = null;
+		if (frm.doc.technician) {
+			technician_display = await bnovate.utils.get_contact_display(frm.doc.technician);
+		}
+		frm.set_value('technician_name', technician_display);
 	}
 
 });

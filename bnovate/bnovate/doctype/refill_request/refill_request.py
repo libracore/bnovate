@@ -12,6 +12,8 @@ from frappe.utils import getdate, add_days
 from erpnext import get_default_company
 from erpnext.stock.get_item_details import get_item_details
 
+from bnovate.bnovate.utils import get_contact_display
+
 class RefillRequest(Document):
 
     def validate(self):
@@ -22,11 +24,7 @@ class RefillRequest(Document):
 
     @property
     def contact_display(self):
-        return self.get_contact_display()
-
-    def get_contact_display(self):
-        contact_doc = frappe.get_doc("Contact", self.contact_person)
-        return ' '.join([n.strip() for n in [contact_doc.first_name, contact_doc.last_name] if n]).strip()
+        return get_contact_display(self.contact_person)
 
     def set_status(self):
 
