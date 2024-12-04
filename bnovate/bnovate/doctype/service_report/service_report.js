@@ -59,7 +59,7 @@ frappe.ui.form.on('Service Report', {
 	},
 
 	refresh(frm) {
-		if (frm.doc.docstatus == 1 && frm.doc.billing_basis !== BILLING_PARTNER) {
+		if (frm.doc.docstatus == 1 && frm.doc.billing_basis !== BILLING_PARTNER && frm.doc.so_docstatus !== 1) {
 
 			frm.add_custom_button(__("Sales Order"), () => {
 				frappe.model.open_mapped_doc({

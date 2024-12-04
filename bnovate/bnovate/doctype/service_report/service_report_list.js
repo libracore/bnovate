@@ -1,4 +1,13 @@
 frappe.listview_settings['Service Report'] = {
+    get_indicator(doc) {
+        var status_color = {
+            "Draft": "red",
+            "To Bill": "orange",
+            "Submitted": "green",
+            "Cancelled": "darkgrey",
+        };
+        return [__(doc.status), status_color[doc.status], "status,=," + doc.status];
+    },
     onload() {
     },
     async primary_action() {

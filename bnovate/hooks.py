@@ -166,6 +166,7 @@ fixtures = [
 
             # Service report
             "Warehouse-for_user",
+            "Sales Order Item-service_report",
         ]]]
     }
 ]
@@ -372,10 +373,15 @@ doc_events = {
             "bnovate.bnovate.utils.enclosures.check_so_serial_no",
             "bnovate.bnovate.utils.controllers.check_blanket_order_currency",
         ],
-        "on_submit": "bnovate.bnovate.doctype.refill_request.refill_request.update_status_from_sales_order",
+        "on_submit": [
+            "bnovate.bnovate.doctype.refill_request.refill_request.update_status_from_sales_order",
+            "bnovate.bnovate.doctype.service_report.service_report.update_status_from_sales_order",
+        ],
         "on_update_after_submit": "bnovate.bnovate.utils.enclosures.check_so_serial_no",
-        "on_cancel": "bnovate.bnovate.doctype.refill_request.refill_request.update_status_from_sales_order",
-        "on_change": "bnovate.bnovate.utils.enclosures.associate_so_serial_no",
+        "on_cancel": [
+            "bnovate.bnovate.doctype.refill_request.refill_request.update_status_from_sales_order",
+            "bnovate.bnovate.doctype.service_report.service_report.update_status_from_sales_order",
+        ],
     },
     "Delivery Note": {
         "before_save": [

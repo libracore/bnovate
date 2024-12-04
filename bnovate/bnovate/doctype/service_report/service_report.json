@@ -7,6 +7,7 @@
  "engine": "InnoDB",
  "field_order": [
   "channel",
+  "status",
   "contact_section",
   "title",
   "amended_from",
@@ -270,10 +271,22 @@
    "fieldtype": "Link",
    "label": "Service Technician",
    "options": "Contact"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "no_copy": 1,
+   "options": "\nDraft\nTo Bill\nSubmitted\nCancelled",
+   "print_hide": 1,
+   "read_only": 1
   }
  ],
  "is_submittable": 1,
- "modified": "2024-12-03 19:29:06.101198",
+ "modified": "2024-12-04 20:15:15.657713",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Service Report",

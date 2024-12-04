@@ -26,4 +26,6 @@ def get_serial_no_dashboard_data(data):
 
 def get_sales_order_dashboard_data(data):
     data.internal_links['Refill Request'] = ['items', 'refill_request']
+    data.internal_links['Service Report'] = ['items', 'service_report']
+
     return data
