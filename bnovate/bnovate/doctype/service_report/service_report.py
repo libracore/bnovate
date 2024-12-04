@@ -22,10 +22,6 @@ class ServiceReport(Document):
     # 	self.title = "{0} - {1} {2}".format(self.customer_name, self.item_name, self.serial_no)
 
     def set_status(self):
-        print("-------------------------------")
-        print("set status called")
-        print("Docstatus", self.docstatus)
-
         self.set_so_docstatus()
 
         if self.docstatus == 2:
@@ -41,7 +37,6 @@ class ServiceReport(Document):
         else:
             self.status = "Draft"
 
-        print("-------------------------------")
         self.db_set('status', self.status)
 
     def validate(self):
@@ -242,8 +237,6 @@ def item_query(doctype, txt, searchfield, start, page_len, filters):
 
 def update_status_from_sales_order(sales_order, method=None):
     # Called by hooks.py when a SO changes
-    print("----------------------------------")
-    print("Update service report called for SO", sales_order.get('name'))
     if not method in ('before_save', 'on_submit', 'on_cancel'):
         return
 
@@ -251,4 +244,3 @@ def update_status_from_sales_order(sales_order, method=None):
         print("Updating service report", sr_name)
         doc = frappe.get_doc("Service Report", sr_name)
         doc.set_status()
-    print("----------------------------------")
