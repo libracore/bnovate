@@ -7,10 +7,14 @@ from frappe.utils import get_datetime_str, nowdate, flt
 
 def truncate(s, n):
     """ Return string with ellipsis in the middle if longer than n chars """
+    if s is None:
+        return ""
     return s[:n-1] + '…' if len(s) > n else s
 
 def trim(s, token, n):
     """ Return string up to token. If token is missing, return ellipsized version """
+    if s is None:
+        return ""
     if token in s:
         return s[:s.index(token)]
     return truncate(s, n)

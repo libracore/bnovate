@@ -9,6 +9,7 @@ def execute(filters=None):
 
 def get_columns():
     return [
+        {'fieldname': 'report', 'fieldtype': 'Link', 'label': 'Service Report', 'options': 'Service Report', 'width': 80},
         {'fieldname': 'customer', 'fieldtype': 'Link', 'label': 'Customer', 'options': 'Customer', 'width': 80},
         {'fieldname': 'customer_name', 'fieldtype': 'Data', 'label': 'Customer Name', 'width': 150},
         {'fieldname': 'intervention_date', 'fieldtype': 'Date', 'label': 'Intervention Date', 'width': 120},
@@ -36,6 +37,7 @@ def get_data(filters):
         
     sql_query = """
 SELECT
+    sr.name as report,
     sr.customer,
     cu.customer_name,
     sr.intervention_date,
