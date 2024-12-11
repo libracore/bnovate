@@ -137,6 +137,13 @@ def get_data():
                        "label": _("Service Report"),
                        "description": _("Service Report")
                    },
+                   {
+                        "type": "report",
+                        "name": "Service History",
+                        "label": _("Service History"),
+                        "doctype": "Service Report",
+                        "is_query_report": True               
+                   }         
             ]
         },
         {

@@ -19,6 +19,9 @@ def get_serial_no_dashboard_data(data):
             }, {
                 'label': _('Storage'),
                 'items': ['Storage Location'],
+            }, {
+                'label': _('Service'),
+                'items': ['Service Report'],
             }
         ],
     })
