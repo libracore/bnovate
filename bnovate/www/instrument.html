@@ -1,0 +1,49 @@
+{% extends "templates/web.html" %}
+
+{% block page_content %}
+
+<h1>{{ title }}</h1>
+
+<div class="row" style="margin-top: 2em">
+    <div class="col">
+        <h2>{{ _("Service History") }}</h2>
+
+        <table class="table table-responsive table-condensed" style="margin-top: 1em">
+
+            <thead>
+                <th>{{ _("#") }}</th>
+                <th>{{ _("Intervention Date") }}</th>
+                <th>{{ _("Reason for visit") }}</th>
+                <th>{{ _("Technician Name") }} </th>
+                <th></th>
+            </thead>
+            <tbody>
+
+                {% for sr in service_history %}
+                <tr>
+                    <td> {{ sr.report }} </td>
+                    <td> {{ sr.intervention_date }} </td>
+                    <td> {{ sr.reason_for_visit }} </td>
+                    <td> {{ sr.technician_name }} </td>
+                    <!-- <td>
+                        <a href="{{ sr.report_url }}" target="_blank"><i class="fa fa-file-pdf-o"></i> View</a>
+                    </td> -->
+                </tr>
+                {% endfor %}
+
+            </tbody>
+        </table>
+
+    </div>
+</div>
+
+
+{% endblock %}
+
+{% block script %}
+
+<script>
+    $('[data-toggle="tooltip"]').tooltip()
+</script>
+
+{% endblock %}
