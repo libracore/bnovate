@@ -514,13 +514,17 @@ def _rms_start_session(config_id, device_id, duration=30*60, settings=None, auth
     )
     channel = resp['channel']
 
+    # Re-writing the "monitor_status" code here in order to give more feedback to front-end
     def wait_for_link(attempt=0):
-        time.sleep(0.5)  # Sleep first to allow channel time to appear
 
         if attempt > 120:
             raise TimeoutError("Timeout opening remote connection session")
 
-        status = _rms_get_status(channel, settings=settings, auth=auth)
+        try:
+            status = _rms_get_status(channel, settings=settings, auth=auth)
+        except ChannelNotFound:
+            time.sleep(0.5)  # Allow channel time to appear
+            return wait_for_link(attempt+1)
 
         if device_id not in status:
             # TODO: what do we do?
