@@ -68,7 +68,7 @@
         margin: 5px;
     }
 
-    .add-items { 
+    .add-items {
         margin-top: 5px;
     }
 
@@ -142,23 +142,29 @@
             </table>
         </div>
 
-        {% if doc.comment || doc.serial_no %}
+        {% if doc.comment || doc.serial_no || qc_required %}
         <div class="bn-col comment">
             {% if doc.serial_no %}
             <p>
                 <b>{{ __("Serial No") }}:</b><br>
                 {% for loc in doc.serial_no_locations %}
-                    {{ loc.serial_no }} 
-                    {% if loc.slot %}
-                        ({{ loc.title }} {{ loc.slot }})
-                    {% endif %}
-                    <br>
+                {{ loc.serial_no }}
+                {% if loc.slot %}
+                ({{ loc.title }} {{ loc.slot }})
+                {% endif %}
+                <br>
                 {% endfor %}
             </p>
             {% endif %}
             {% if doc.comment %}
             <p>
                 <b>{{ __("Comment") }}:</b> {{ doc.comment }}
+            </p>
+            {% endif %}
+            {% if qc_required %}
+            <p>
+                <b>{{ __("Quality Control Required") }}:</b><br>
+                Please create a new Quality Control Record on the tracking sheet.
             </p>
             {% endif %}
         </div>
@@ -169,23 +175,23 @@
             <div class="warning-symbols">
 
                 {% if bom.eye_protection %}
-                    <img class="warning-symbol" src="/assets/bnovate/img/warnings/eye_protection.svg">
+                <img class="warning-symbol" src="/assets/bnovate/img/warnings/eye_protection.svg">
                 {% endif %}
 
                 {% if bom.protective_gloves %}
-                    <img class="warning-symbol" src="/assets/bnovate/img/warnings/protective_gloves.svg">
+                <img class="warning-symbol" src="/assets/bnovate/img/warnings/protective_gloves.svg">
                 {% endif %}
 
                 {% if bom.lab_coat %}
-                    <img class="warning-symbol" src="/assets/bnovate/img/warnings/lab_coat.svg">
+                <img class="warning-symbol" src="/assets/bnovate/img/warnings/lab_coat.svg">
                 {% endif %}
 
                 {% if bom.esd_protection %}
-                    <img class="warning-symbol" src="/assets/bnovate/img/warnings/esd_protection.svg">
+                <img class="warning-symbol" src="/assets/bnovate/img/warnings/esd_protection.svg">
                 {% endif %}
 
                 {% if bom.no_windsurfing %}
-                    <img class="warning-symbol" src="/assets/bnovate/img/warnings/no_windsurfing.svg">
+                <img class="warning-symbol" src="/assets/bnovate/img/warnings/no_windsurfing.svg">
                 {% endif %}
             </div>
         </div>

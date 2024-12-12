@@ -305,6 +305,7 @@ def _get_price(shipment_docname, pickup_datetime=None, auth=True):
     doc = frappe.get_doc("Shipment", shipment_docname)
 
     product_code = "P"
+    customs_declarable = True
     accounts = [{
         "typeCode": "shipper",
         "number": settings.dhl_import_account if doc.is_return else settings.dhl_export_account, 
@@ -312,6 +313,7 @@ def _get_price(shipment_docname, pickup_datetime=None, auth=True):
 
     if doc.pickup_country == "Switzerland" and doc.delivery_country == "Switzerland":
         product_code = "N"
+        customs_declarable = False
 
         # Event returns use our standard 'export' account
         accounts = [{
@@ -359,10 +361,14 @@ def _get_price(shipment_docname, pickup_datetime=None, auth=True):
             }, 
         }] * p.count for p in doc.shipment_parcel])),
         "plannedShippingDateAndTime": pickup_datetime.isoformat(),
-        "isCustomsDeclarable": True,
+        "isCustomsDeclarable": customs_declarable,
         "unitOfMeasurement": "metric",
         "nextBusinessDay": True,  # Return next available pickup
     }
+
+    # Ensure signature for local deliveries:
+    if product_code == "N":
+        body['localProductCode'] = "N"
 
     # print("\n\n\n================================\n\n\n")
     # import json
