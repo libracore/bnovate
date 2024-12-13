@@ -164,9 +164,10 @@ fixtures = [
             "Sales Invoice Item-is_subitem",
             "Sales Invoice Item-hide_price",
 
-            # Service report
+            # Service report and instrument portal
             "Warehouse-for_user",
             "Sales Order Item-service_report",
+            "Item-website_shortname",
         ]]]
     }
 ]

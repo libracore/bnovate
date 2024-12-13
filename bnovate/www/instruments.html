@@ -73,11 +73,12 @@
                     <dd>{{ instrument.serial_no }}</dd>
 
                     <dt>{{ _("Service Agreement") }}</dt>
-                    {% if instrument.sa %}
+                    {{ instrument.sa }}
+                    <!-- {% if instrument.sa %}
                     <dd>★☆☆ Essential</dd>
                     {% else %}
                     <dd>☆☆☆ None</dd>
-                    {% endif %}
+                    {% endif %} -->
 
                     {% if instrument.cp.web or instrument.cp.vnc %}
                     <dt>BactoLink</dt>

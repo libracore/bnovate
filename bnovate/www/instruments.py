@@ -23,6 +23,7 @@ def get_context(context):
     return context
 
 def get_instruments(customers):
+    # TODO: replace this by a report that includes all key data
     return {c.docname: get_instruments_one_customer(c) for c in customers}
 
 def get_instruments_one_customer(customer):
@@ -42,14 +43,24 @@ def get_instruments_one_customer(customer):
         asset.thumbnail = item.thumbnail
 
         # Find service agreements
-        sa = frappe.get_all("Subscription Contract", filters={
+        active_sa = frappe.get_all("Subscription Contract", filters={
                 "serial_no": ["=", asset.serial_no],
                 "status": ["=", "Active"]
             },
-            fields="*"
+            fields="name"
         )
-        if sa:
-            asset.sa = sa[0]
+
+        asset.sa = "☆☆☆ None"
+        for sa_name in active_sa:
+            # FIXME: replace by a SQL report
+
+            sa_doc = frappe.get_doc("Subscription Contract", sa_name) 
+            for item in sa_doc.items:
+                shortname = frappe.db.get_value("Item", item.item_code, "website_shortname")
+                if shortname:
+                    asset.sa = shortname
+                    break
+
 
         # Find connectivity packages
         cp = frappe.get_all("Connectivity Package", filters={
