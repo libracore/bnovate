@@ -50,7 +50,8 @@
                     </div>
                 </div>
 
-                <img class="card-img-top" src="/assets/bnovate/img/bactosense.jpeg" alt="BactoSense image">
+                <img class="card-img-top" src="{{ instrument.thumbnail or '/assets/bnovate/img/bactosense.jpeg'}}"
+                    alt="BactoSense image">
 
                 <h5 class="card-title">
                     {% if instrument.cp %}

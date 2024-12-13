@@ -37,6 +37,10 @@ def get_instruments_one_customer(customer):
         # Name stored in DB can be outdated:
         asset.owned_by_name = customer.customer_name
 
+        item = frappe.db.get_value("Item", asset.item_code, ["website_image", "thumbnail"], as_dict=True)
+        asset.website_image = item.website_image
+        asset.thumbnail = item.thumbnail
+
         # Find service agreements
         sa = frappe.get_all("Subscription Contract", filters={
                 "serial_no": ["=", asset.serial_no],
