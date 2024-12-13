@@ -40,7 +40,7 @@
         {% for instrument in instruments[customer.docname] %}
         <div class="card">
             <div class="card-body">
-                <div class="dropdown float-right">
+                <!-- <div class="dropdown float-right">
                     <button class="btn dropdown-toggle" data-toggle="dropdown"> <i class="fa fa-info-circle"></i>
                     </button>
                     <div class="dropdown-menu">
@@ -48,7 +48,7 @@
                             {{ _("Instrument Details") }}
                         </a>
                     </div>
-                </div>
+                </div> -->
 
                 <img class="card-img-top" src="{{ instrument.thumbnail or '/assets/bnovate/img/bactosense.jpeg'}}"
                     alt="BactoSense image">
@@ -74,11 +74,6 @@
 
                     <dt>{{ _("Service Agreement") }}</dt>
                     {{ instrument.sa }}
-                    <!-- {% if instrument.sa %}
-                    <dd>★☆☆ Essential</dd>
-                    {% else %}
-                    <dd>☆☆☆ None</dd>
-                    {% endif %} -->
 
                     {% if instrument.cp.web or instrument.cp.vnc %}
                     <dt>BactoLink</dt>
