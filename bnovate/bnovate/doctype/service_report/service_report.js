@@ -1,14 +1,48 @@
 // Copyright (c) 2023, bnovate, libracore and contributors
 // For license information, please see license.txt
 
+const CHANNEL_DIRECT = 'Direct';
+const CHANNEL_PARTNER = 'Service Partner';
 const BILLING_PARTNER = 'Through Service Partner';
 
 frappe.ui.form.on('Service Report', {
 	onload(frm) {
 
 		// Setup queries
-		frappe.dynamic_link = { doc: frm.doc, fieldname: 'customer', doctype: 'Customer' }
-		frm.set_query('contact_person', erpnext.queries.contact_query);
+
+		// contact_query from erpnext uses frappe.dynamic_link to set filters...
+		// frappe.dynamic_link = { doc: frm.doc, fieldname: 'customer', doctype: 'Customer' }
+		// frm.set_query('contact_person', erpnext.queries.contact_query);
+		frm.set_query('contact_person', function () {
+			return {
+				// contact_query from frappe package is more flexible than the one from erpnext
+				query: 'frappe.contacts.doctype.contact.contact.contact_query',
+				filters: {
+					link_doctype: 'Customer',
+					link_name: frm.doc.customer,
+				}
+			}
+		});
+
+		frm.set_query('service_partner', function() {
+			return {
+				filters: {
+					is_service_partner: 1,
+				}
+			}
+		});
+
+		frm.set_query('technician', function () {
+			return {
+				// contact_query from frappe package is more flexible than the one from erpnext
+				query: 'frappe.contacts.doctype.contact.contact.contact_query',
+				filters: {
+					link_doctype: 'Customer',
+					link_name: frm.doc.service_partner,
+				}
+			}
+		});
+		
 		frm.set_query("quotation", function () {
 			return {
 				filters: {
@@ -72,7 +106,8 @@ frappe.ui.form.on('Service Report', {
 	},
 
 	async channel(frm) {
-		frm.toggle_reqd('bnovate_technician', frm.doc.channel === 'Direct')
+		frm.toggle_reqd('bnovate_technician', frm.doc.channel === CHANNEL_DIRECT)
+		frm.toggle_reqd('service_partner', frm.doc.channel === CHANNEL_PARTNER)
 		if (frm.doc.channel == 'Service Partner') {
 			frm.set_value('billing_basis', BILLING_PARTNER);
 		} else {

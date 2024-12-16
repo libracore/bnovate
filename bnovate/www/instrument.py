@@ -5,8 +5,7 @@ from frappe.exceptions import DoesNotExistError
 from jinja2.filters import do_striptags
 
 
-from .helpers import auth, get_session_customers, get_addresses, build_sidebar, has_cartridge_portal, \
-    allow_unstored_cartridges, organize_return
+from .helpers import auth, get_session_customers, build_sidebar, is_service_partner
 
 from bnovate.bnovate.utils import truncate, trim
 from bnovate.bnovate.report.enclosure_filling_history import enclosure_filling_history

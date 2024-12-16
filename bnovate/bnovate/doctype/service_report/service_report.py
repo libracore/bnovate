@@ -50,6 +50,11 @@ class ServiceReport(Document):
             self.bnovate_technician = None
             self.bnovate_technician_name = None
             self.billing_basis = BILLING_PARTNER
+        elif self.channel == CHANNEL_DIRECT:
+            self.technician = None
+            self.technician_name = None
+            self.service_partner = None
+            self.service_partner_name = None
 
         self.set_status()
 

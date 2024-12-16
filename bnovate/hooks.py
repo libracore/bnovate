@@ -168,6 +168,8 @@ fixtures = [
             "Warehouse-for_user",
             "Sales Order Item-service_report",
             "Item-website_shortname",
+            "Customer-portal_col_2",
+            "Customer-is_service_partner",
         ]]]
     }
 ]
