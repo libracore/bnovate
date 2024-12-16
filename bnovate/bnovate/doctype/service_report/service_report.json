@@ -34,8 +34,12 @@
   "subscription_contract",
   "quotation",
   "description_section",
+  "version_before_update",
+  "description",
   "work_description",
   "column_break_22",
+  "version_after_update",
+  "resolution",
   "validation_performed",
   "section_break_23",
   "final_service_checks",
@@ -124,14 +128,16 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Reason for Visit",
-   "options": "Maintenance\nService\nOther"
+   "options": "Installation\nMaintenance\nService\nSoftware Upgrade\nOther"
   },
   {
+   "depends_on": "eval:doc.reason_for_visit != 'Software Upgrade'",
    "fieldname": "work_description",
    "fieldtype": "Text Editor",
    "label": "Work Description"
   },
   {
+   "depends_on": "eval:doc.reason_for_visit != 'Software Upgrade'",
    "fieldname": "validation_performed",
    "fieldtype": "Text Editor",
    "label": "Validation Performed"
@@ -199,7 +205,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Billing Basis",
-   "options": "Under Service Agreement\nUnder Warranty\nAccording to Quotation\nStandard Price List",
+   "options": "Under Service Agreement\nUnder Warranty\nAccording to Quotation\nStandard Price List\nThrough Service Partner",
    "reqd": 1
   },
   {
@@ -300,10 +306,36 @@
    "fieldtype": "Data",
    "label": "Service Partner Name",
    "read_only": 1
+  },
+  {
+   "depends_on": "eval:[\"Service\", \"Other\"].includes(doc.reason_for_visit)",
+   "fieldname": "description",
+   "fieldtype": "Text Editor",
+   "label": "Description"
+  },
+  {
+   "depends_on": "eval:[\"Service\", \"Other\"].includes(doc.reason_for_visit)",
+   "fieldname": "resolution",
+   "fieldtype": "Text Editor",
+   "label": "Resolution"
+  },
+  {
+   "depends_on": "eval:doc.reason_for_visit == \"Software Upgrade\"",
+   "fieldname": "version_before_update",
+   "fieldtype": "Link",
+   "label": "Version Before Update",
+   "options": "Software Version"
+  },
+  {
+   "depends_on": "eval:doc.reason_for_visit == \"Software Upgrade\"",
+   "fieldname": "version_after_update",
+   "fieldtype": "Link",
+   "label": "Version After Update",
+   "options": "Software Version"
   }
  ],
  "is_submittable": 1,
- "modified": "2024-12-16 11:53:29.492404",
+ "modified": "2024-12-16 16:26:28.678286",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Service Report",

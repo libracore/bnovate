@@ -105,9 +105,9 @@ frappe.ui.form.on('Service Report', {
 		}
 	},
 
-	async channel(frm) {
-		frm.toggle_reqd('bnovate_technician', frm.doc.channel === CHANNEL_DIRECT)
-		frm.toggle_reqd('service_partner', frm.doc.channel === CHANNEL_PARTNER)
+	channel(frm) {
+		frm.toggle_reqd('bnovate_technician', frm.doc.channel === CHANNEL_DIRECT);
+		frm.toggle_reqd('service_partner', frm.doc.channel === CHANNEL_PARTNER);
 		if (frm.doc.channel == 'Service Partner') {
 			frm.set_value('billing_basis', BILLING_PARTNER);
 		} else {
@@ -122,12 +122,16 @@ frappe.ui.form.on('Service Report', {
 	},
 
 	async technician(frm) {
-		console.log("Setting technician name")
 		let technician_display = null;
 		if (frm.doc.technician) {
 			technician_display = await bnovate.utils.get_contact_display(frm.doc.technician);
 		}
 		frm.set_value('technician_name', technician_display);
-	}
+	},
+
+	reason_for_visit(frm) {
+		frm.toggle_reqd('description', frm.doc.reason_for_visit === 'Service');
+		frm.toggle_reqd('resolution', frm.doc.reason_for_visit === 'Service');
+	},
 
 });

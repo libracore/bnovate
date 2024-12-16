@@ -4,6 +4,12 @@
 
 <h1>{{ title }}</h1>
 
+<div class="row">
+    <div class="col">
+        <button id="new-report" class="btn btn-primary" style="margin-bottom: 10px">{{ _("Report Intervention") }}</button>
+    </div>
+</div>
+
 <div class="row" style="margin-top: 2em">
     <div class="col">
         <h2>{{ _("Service History") }}</h2>
@@ -38,12 +44,125 @@
 </div>
 
 
+<!-- Easier to define contents here, for translation and list of addresses -->
+<template id="modal-body">
+    <div class="modal" tabindex="-1" role="dialog" id="myModal" style="display:none">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ _("Service Details") }}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="form-container">
+                        <form name="report" id="report-form" action="">
+                            <div class="form-group">
+                                <label for="intervention_date" class="control-label">{{ _("Intervention Date") }}</label>
+                                <input type="date" class="form-control" name="intervention_date" access="false" id="intervention_date" value="{{ frappe.utils.today() }}" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="reason_for_visit" class="formbuilder-select-label">{{ _("Reason") }}</label>
+                                <select class="form-control" name="reason_for_visit" id="reason_for_visit" required>
+                                    <option value="Installation">{{ _("Installation") }}</option>
+                                    <option value="Maintenance" selected>{{ _("Maintenance") }}</option>
+                                    <option value="Service">{{ _("Service") }}</option>
+                                    <option value="Software Upgrade">{{ _("Software Upgrade") }}</option>
+                                    <option value="Other">{{ _("Other") }}</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group software-controls" hidden>
+                                <label for="version_before_upgrade" class="formbuilder-select-label">{{ _("Version before upgrade") }}</label>
+                                <select class="form-control" name="version_before_upgrade" id="version_before_upgrade" required>
+                                    <option value="" disabled selected></option>
+                                    <option value="1.0.0">1.0.0</option>
+                                    <option value="1.0.3">1.0.3</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group software-controls" hidden>
+                                <label for="version_after_upgrade" class="formbuilder-select-label">{{ _("Version after upgrade") }}</label>
+                                <select class="form-control" name="version_after_upgrade" id="version_after_upgrade" required>
+                                    <option value="" disabled selected></option>
+                                    <option value="1.0.0">1.0.0</option>
+                                    <option value="1.0.3">1.0.3</option>
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <div class="wizard-buttons">
+                            <button type="button" class="btn btn-danger" id="cancel-button">{{ _("Cancel") }}</button>
+                            <button type="button" class="btn btn-primary" id="save-button" disabled>{{ _("Save") }}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<form-modal id="service-report-modal"></form-modal>
+
 {% endblock %}
 
 {% block script %}
 
 <script>
+    frappe.require([
+        "/assets/bnovate/js/web_includes/translations.js",
+        "/assets/bnovate/js/web_includes/helpers.js",
+        "/assets/bnovate/js/web_includes/form_modal.js",
+    ])
+
+    function validate() {
+        console.log("validate modal.");
+
+        const frm = document.querySelector("#report-form")
+        const data = new FormData(frm)
+        const doc = Object.fromEntries(data);
+        console.log(data, doc);
+
+
+        const required_inputs = [...frm.querySelectorAll("[required]")];
+		let valid = true;
+		for (let input of required_inputs) {
+			if (!input.value) {
+				input.closest(".form-group").classList.add('has-error')
+				valid = false;
+			} else {
+				input.closest(".form-group").classList.remove('has-error')
+			}
+		}
+
+
+        //------------------------------------
+        // Show or hide elements based on intervention type
+        //------------------------------------
+
+        [...frm.querySelectorAll('.software-controls')]
+            .forEach(el => el.hidden = doc.reason_for_visit !== "Software Upgrade")
+
+
+
+        return true;
+    }
+    
+    function save() {
+        console.log("save modal.");
+        location.reload();
+    }
+
     $('[data-toggle="tooltip"]').tooltip()
+
+    // Bind buttons
+    document.querySelector("#new-report").addEventListener("click", () => {
+        let contents = document.querySelector("#modal-body").content.cloneNode(true)
+        document.getElementById("service-report-modal").show(contents, validate, save);
+    });
 </script>
 
 {% endblock %}
