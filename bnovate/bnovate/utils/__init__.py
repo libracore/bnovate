@@ -1,7 +1,9 @@
 import random
 import string
+import requests
 
 import frappe
+from frappe import _
 from frappe.utils import get_datetime_str, nowdate, flt
 
 
@@ -77,3 +79,50 @@ def upload_file():
 def get_contact_display(contact_docname):
     contact_doc = frappe.get_doc("Contact", contact_docname)
     return ' '.join([n.strip() for n in [contact_doc.first_name, contact_doc.last_name] if n]).strip()
+
+@frappe.whitelist()
+def deepl_translate(texts, target_lang, source_lang="en"):
+    """
+    Return translated version of the strings, running through DeepL.
+
+    Args:
+        texts (str or list): The text or list of texts to be translated.
+        target_lang (str): The target language code (e.g., 'de' for German).
+        source_lang (str, optional): The source language code (default is 'en' for English). Set to None for auto-detect.
+
+    Returns:
+        str or list: The translated text(s).
+    """
+    api_url = "https://api-free.deepl.com/v2/translate"
+    api_key = frappe.db.get_single_value('bNovate Settings', 'deepl_api_key')
+
+    # Lists are passed as json strings through when called through FETCH...
+    try:
+        texts = frappe.parse_json(texts)
+    except ValueError:
+        pass
+
+    return_string = False
+    if not isinstance(texts, list):
+        return_string = True
+        texts = [texts]
+
+    params = {
+        "auth_key": api_key,
+        "target_lang": target_lang,
+        "text": texts,
+    }
+
+    if source_lang is not None:
+        params["source_lang"] = source_lang
+
+    response = requests.post(api_url, data=params)
+    response_data = response.json()
+
+    if response.status_code == 200 and "translations" in response_data:
+        result = [translation["text"] for translation in response_data["translations"]]
+        if return_string:
+            return result[0]
+        return result
+    else:
+        frappe.throw(_("Error in translation: {0}").format(response_data.get("message", "Unknown error")))

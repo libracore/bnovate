@@ -412,6 +412,10 @@ bnovate.utils.set_cartridge_owners = async function (owners) {
   }
 }
 
+/*********************************
+ * Mirror of utils
+ *********************************/
+
 bnovate.utils.get_contact_display = async function (contact_docname) {
   const resp = await frappe.call({
     method: "bnovate.bnovate.utils.get_contact_display",
@@ -419,5 +423,36 @@ bnovate.utils.get_contact_display = async function (contact_docname) {
       contact_docname,
     },
   });
+  return resp.message;
+}
+
+bnovate.utils.get_random_id = async function () {
+  let resp = await frappe.call({
+    method: 'bnovate.bnovate.utils.get_random_id',
+    args: {
+    }
+  })
+  return resp.message;
+}
+
+bnovate.utils.get_random_id = async function () {
+  let resp = await frappe.call({
+    method: 'bnovate.bnovate.utils.get_random_id',
+    args: {
+    }
+  })
+  return resp.message;
+}
+
+bnovate.utils.deepl_translate = async function (texts, target_lang, source_lang = "en") {
+  let resp = await frappe.call({
+    method: 'bnovate.bnovate.utils.deepl_translate',
+    args: {
+      texts,
+      target_lang,
+      source_lang
+    }
+  })
+  console.log(resp);
   return resp.message;
 }
