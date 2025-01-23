@@ -24,7 +24,7 @@ frappe.ui.form.on('Service Report', {
 			}
 		});
 
-		frm.set_query('service_partner', function() {
+		frm.set_query('service_partner', function () {
 			return {
 				filters: {
 					is_service_partner: 1,
@@ -34,7 +34,6 @@ frappe.ui.form.on('Service Report', {
 
 		frm.set_query('technician', function () {
 			return {
-				// contact_query from frappe package is more flexible than the one from erpnext
 				query: 'frappe.contacts.doctype.contact.contact.contact_query',
 				filters: {
 					link_doctype: 'Customer',
@@ -42,7 +41,7 @@ frappe.ui.form.on('Service Report', {
 				}
 			}
 		});
-		
+
 		frm.set_query("quotation", function () {
 			return {
 				filters: {
