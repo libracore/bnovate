@@ -21,7 +21,13 @@ app_logo_url = "/assets/bnovate/img/bnovate_logo.svg"
 fixtures = [
     {
         "dt": "Role",
-        "filters": [["role_name", "like", "IoT%"]],
+        "filters": [["role_name", "in", [
+            "IoT Manager",
+            "IoT User",
+            "Item User",
+            "Service Manager",
+            "Service Technician",
+            ]]],
     },
     {
         "dt": "Custom Field",
@@ -157,7 +163,14 @@ fixtures = [
             "Delivery Note Item-hide_price",
             "Sales Invoice Item-is_subitem",
             "Sales Invoice Item-hide_price",
+            "Quotation Item-translate",
 
+            # Service report and instrument portal
+            "Warehouse-for_user",
+            "Sales Order Item-service_report",
+            "Item-website_shortname",
+            "Customer-portal_col_2",
+            "Customer-is_service_partner",
         ]]]
     }
 ]
@@ -249,7 +262,7 @@ website_user_home_page = ""
 # get_website_user_home_page = "bnovate.config.homepage.get_homepage"
 
 has_website_permission = {
-    # 'Blanket Order': ['TBD']
+    "Service Report": "erpnext.controllers.website_list_for_contact.has_website_permission",
 }
 
 website_route_rules = [
@@ -271,6 +284,9 @@ website_route_rules = [
     }, {
         "from_route": "/cartridges/<serial_no>", 
         "to_route": "cartridge",
+    }, {
+        "from_route": "/instruments/<serial_no>", 
+        "to_route": "instrument",
     }, {
         "from_route": "/internal/storage/<key>", 
         "to_route": "internal/storage",
@@ -364,10 +380,15 @@ doc_events = {
             "bnovate.bnovate.utils.enclosures.check_so_serial_no",
             "bnovate.bnovate.utils.controllers.check_blanket_order_currency",
         ],
-        "on_submit": "bnovate.bnovate.doctype.refill_request.refill_request.update_status_from_sales_order",
+        "on_submit": [
+            "bnovate.bnovate.doctype.refill_request.refill_request.update_status_from_sales_order",
+            "bnovate.bnovate.doctype.service_report.service_report.update_status_from_sales_order",
+        ],
         "on_update_after_submit": "bnovate.bnovate.utils.enclosures.check_so_serial_no",
-        "on_cancel": "bnovate.bnovate.doctype.refill_request.refill_request.update_status_from_sales_order",
-        "on_change": "bnovate.bnovate.utils.enclosures.associate_so_serial_no",
+        "on_cancel": [
+            "bnovate.bnovate.doctype.refill_request.refill_request.update_status_from_sales_order",
+            "bnovate.bnovate.doctype.service_report.service_report.update_status_from_sales_order",
+        ],
     },
     "Delivery Note": {
         "before_save": [

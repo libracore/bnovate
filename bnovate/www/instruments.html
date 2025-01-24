@@ -16,7 +16,6 @@
         border-radius: 0rem;
         margin: 0.1%;
     }
-
 </style>
 {% endblock %}
 
@@ -41,7 +40,18 @@
         {% for instrument in instruments[customer.docname] %}
         <div class="card">
             <div class="card-body">
-                <img class="card-img-top" src="/assets/bnovate/img/bactosense.jpeg" alt="BactoSense image">
+                <!-- <div class="dropdown float-right">
+                    <button class="btn dropdown-toggle" data-toggle="dropdown"> <i class="fa fa-info-circle"></i>
+                    </button>
+                    <div class="dropdown-menu">
+                        <a class=dropdown-item href="/instruments/{{ instrument.serial_no }}">
+                            {{ _("Instrument Details") }}
+                        </a>
+                    </div>
+                </div> -->
+
+                <img class="card-img-top" src="{{ instrument.thumbnail or '/assets/bnovate/img/bactosense.jpeg'}}"
+                    alt="BactoSense image">
 
                 <h5 class="card-title">
                     {% if instrument.cp %}
@@ -63,25 +73,25 @@
                     <dd>{{ instrument.serial_no }}</dd>
 
                     <dt>{{ _("Service Agreement") }}</dt>
-                    {% if instrument.sa %}
-                    <dd>★☆☆ Essential</dd>
-                    {% else %}
-                    <dd>☆☆☆ None</dd>
-                    {% endif %}
+                    {{ instrument.sa }}
 
                     {% if instrument.cp.web or instrument.cp.vnc %}
                     <dt>BactoLink</dt>
                     <dd>
                         <div class="link-status" data-device-id="{{ instrument.cp.rms_id }}"></div><br>
                         {% if instrument.cp.web %}
-                        <button href="#" class="btn btn-primary get-status my-1" data-cp-docname="{{ instrument.cp.name }}" data-cp-devicename="{{ instrument.cp.device_name }}" >
+                        <button href="#" class="btn btn-primary get-status my-1"
+                            data-cp-docname="{{ instrument.cp.name }}"
+                            data-cp-devicename="{{ instrument.cp.device_name }}">
                             {{ _("Status") }}</button><br>
-                        <button href="#" class="btn btn-primary open-remote my-1" data-config-id="{{ instrument.cp.web.id }}"
-                            data-cp-docname="{{ instrument.cp.name }}" >{{ _("Web UI") }}</button>
+                        <button href="#" class="btn btn-primary open-remote my-1"
+                            data-config-id="{{ instrument.cp.web.id }}" data-cp-docname="{{ instrument.cp.name }}">{{
+                            _("Web UI") }}</button>
                         {% endif %}
                         {% if instrument.cp.vnc %}
-                        <button href="#" class="btn btn-primary open-remote my-1" data-config-id="{{ instrument.cp.vnc.id }}"
-                            data-cp-docname="{{ instrument.cp.name }}">{{ _("GUI Relay") }}</button>
+                        <button href="#" class="btn btn-primary open-remote my-1"
+                            data-config-id="{{ instrument.cp.vnc.id }}" data-cp-docname="{{ instrument.cp.name }}">{{
+                            _("GUI Relay") }}</button>
                         {% endif %}
                     </dd>
                     {% endif %}
@@ -135,17 +145,17 @@
         "/assets/bnovate/js/realtime.js",
         "/assets/bnovate/js/web_includes/translations.js"
     ])
-    .then( () => bnovate.translations.get_messages() )
-    .then(() => {
-        // Load status
-        [...document.querySelectorAll(".link-status")].map(async el => {
-            const device = await portal_get_device(el.dataset.deviceId);
-            el.innerHTML = `
+        .then(() => bnovate.translations.get_messages())
+        .then(() => {
+            // Load status
+            [...document.querySelectorAll(".link-status")].map(async el => {
+                const device = await portal_get_device(el.dataset.deviceId);
+                el.innerHTML = `
             <span class="indicator whitespace-nowrap ${device.status ? 'green' : 'red'}">${device.status ? 'Link Online' : 'Link Offline'}</span><br>
             ${device.operator} <img src="${bnovate.web.signal_icon(device.signal)}" style="max-height: 2em"> <br> ${device.connection_type}[${device.signal} dBm]
             `
+            })
         })
-    })
 
 </script>
 {% endblock %}

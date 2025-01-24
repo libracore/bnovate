@@ -56,7 +56,8 @@ def get_session_customers():
             `tCus`.`allow_unstored_cartridges`,
             `tCus`.`customer_name`,
             `tCus`.`portal_billing_address`,
-            `tCus`.`organize_return`
+            `tCus`.`organize_return`,
+            `tCus`.`is_service_partner`
         FROM `tabContact`
         JOIN `tabDynamic Link` AS `tC1` ON `tC1`.`parenttype` = "Contact" 
                                        AND `tC1`.`link_doctype` = "Customer" 
@@ -69,7 +70,7 @@ def get_session_customers():
     return customers
 
 def get_session_primary_customer():
-    """ Return ID of primary customer, i.e. first in list of linked customers """
+    """ Return details of primary customer, i.e. first in list of linked customers """
     customers = get_session_customers()
     if customers:
         return customers[0]
@@ -96,6 +97,15 @@ def has_cartridge_portal():
     if customer is not None and customer.enable_cartridge_portal:
         return True
     return False
+
+def is_service_partner():
+    """ True if user's primary Customer is a service partner """
+    primary_customer = get_session_primary_customer()
+    if primary_customer is None:
+        return False
+    else:
+        return bool(primary_customer.is_service_partner)
+
 
 def allow_unstored_cartridges():
     """ True if user is allowed to use cartridge management features """

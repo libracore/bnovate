@@ -23,6 +23,8 @@ def get_columns():
         {'fieldname': 'fill_item', 'fieldtype': 'Link', 'label': _('Fill Item'), 'options': 'Item', 'width': 200},
         {'fieldname': 'fill_name', 'fieldtype': 'Data', 'label': _('Fill Name'), 'width': 200},
         {'fieldname': 'analysis_certificate', 'fieldtype': 'Data', 'label': _('Analysis Certificate'), 'width': 200},
+        {'fieldname': 'delivery_note', 'fieldtype': 'Link', 'label': _('DN'), 'options': 'Delivery Note', 'width': 80},
+        {'fieldname': 'shipping_address', 'fieldtype': 'Text', 'label': _('Address'), 'width': 150},
     ]
     
     
@@ -60,6 +62,7 @@ def get_data(filters):
         fsn.analysis_certificate,
         esn.owned_by,
         esn.owned_by_name,
+        dn.name AS delivery_note,
         dn.shipping_address
     FROM hist
     LEFT JOIN `tabItem` it on hist.fill_item = it.item_code

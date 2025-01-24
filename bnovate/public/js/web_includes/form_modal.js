@@ -1,11 +1,8 @@
-customElements.define('address-modal', class extends HTMLElement {
+customElements.define('form-modal', class extends HTMLElement {
     constructor() {
         super();
 
         window.theModal = this;
-
-        // Data used to build the refill request doc:
-        this.address = {};
     }
 
     draw(contents) {
@@ -72,7 +69,11 @@ customElements.define('address-modal', class extends HTMLElement {
 
     // Set all blank variant selects when the first one is modified
     bind_listeners() {
-        [...document.querySelectorAll("input")].map(el => el.addEventListener("change", () => {
+        console.log("bind listeners");
+        [
+            ...document.querySelectorAll("input"),
+            ...document.querySelectorAll("select"),
+        ].map(el => el.addEventListener("change", () => {
             this.enable_buttons(this.validate());
         }))
     }

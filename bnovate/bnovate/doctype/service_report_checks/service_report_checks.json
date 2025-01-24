@@ -1,0 +1,37 @@
+{
+ "creation": "2023-06-12 18:17:04.800997",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "description",
+  "done"
+ ],
+ "fields": [
+  {
+   "default": "0",
+   "fieldname": "done",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Done"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Description",
+   "reqd": 1
+  }
+ ],
+ "istable": 1,
+ "modified": "2024-11-27 15:53:09.905812",
+ "modified_by": "Administrator",
+ "module": "bNovate",
+ "name": "Service Report Checks",
+ "owner": "Administrator",
+ "permissions": [],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

@@ -11,7 +11,7 @@ frappe.require("/assets/bnovate/js/shipping.js")  // provides bnovate.shipping
 frappe.ui.form.on("Sales Order", {
     async before_load(frm) {
         frm.dashboard.add_transactions({
-            'items': ['Refill Request'],
+            'items': ['Refill Request', 'Service Report'], // check dashboards.py and hooks to complete this!
             'label': 'Reference',
         });
 

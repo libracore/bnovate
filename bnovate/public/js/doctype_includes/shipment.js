@@ -209,6 +209,7 @@ async function copy_to_rr(frm) {
 }
 
 // Get contact details based on **contact** docname
+// This one gives contact_display but it's ugly
 async function get_contact_details(contact) {
     const resp = await frappe.call({
         method: "frappe.contacts.doctype.contact.contact.get_contact_details",

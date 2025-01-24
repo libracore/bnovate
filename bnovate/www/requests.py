@@ -7,6 +7,7 @@ import frappe
 from frappe import _
 
 from bnovate.bnovate.doctype.refill_request.refill_request import RefillRequest
+from bnovate.bnovate.utils import get_contact_display
 
 from .helpers import get_session_primary_customer, auth, build_sidebar, has_cartridge_portal
 
@@ -36,7 +37,7 @@ def get_requests():
     for doc in docs:
         RefillRequest.set_indicator(doc)
         RefillRequest.set_tracking_url(doc)
-        doc.contact_display = RefillRequest.get_contact_display(doc)
+        doc.contact_display = get_contact_display(doc.contact_person)
 
 
     return docs

@@ -125,7 +125,7 @@
     </div>
 </template>
 
-<address-modal id="edit-address-modal"></address-modal>
+<form-modal id="edit-address-modal"></form-modal>
 
 {% endblock %}
 
@@ -136,7 +136,7 @@
     frappe.require([
         "/assets/bnovate/js/web_includes/translations.js",
         "/assets/bnovate/js/web_includes/helpers.js",
-        "/assets/bnovate/js/web_includes/address_modal.js",
+        "/assets/bnovate/js/web_includes/form_modal.js",
     ])
     .then( () => bnovate.translations.get_messages() )
     .then( () => bnovate.web.get_addresses())

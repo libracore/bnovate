@@ -1,0 +1,37 @@
+{
+ "creation": "2023-06-16 17:16:33.630589",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "label",
+  "value"
+ ],
+ "fields": [
+  {
+   "fieldname": "label",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Label",
+   "options": "Temperature [\u00b0C]\nHumidity [%]\nPump Count\nValve Count\nPlunger Count\nMixer Count\nCartridge Serial\nSoftware Version"
+  },
+  {
+   "depends_on": "eval:doc.type == \"Data\"",
+   "fieldname": "value",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Value"
+  }
+ ],
+ "istable": 1,
+ "modified": "2023-06-16 17:26:08.692136",
+ "modified_by": "Administrator",
+ "module": "bNovate",
+ "name": "Service Report Data Record",
+ "owner": "Administrator",
+ "permissions": [],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
