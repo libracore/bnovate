@@ -4,11 +4,11 @@
 
 <h1>{{ title }}</h1>
 
-<div class="row">
+<!-- <div class="row">
     <div class="col">
         <button id="new-report" class="btn btn-primary" style="margin-bottom: 10px">{{ _("Report Intervention") }}</button>
     </div>
-</div>
+</div> -->
 
 <div class="row" style="margin-top: 2em">
     <div class="col">
@@ -31,9 +31,9 @@
                     <td> {{ sr.intervention_date }} </td>
                     <td> {{ sr.reason_for_visit }} </td>
                     <td> {{ sr.technician_name }} </td>
-                    <!-- <td>
+                    <td>
                         <a href="{{ sr.report_url }}" target="_blank"><i class="fa fa-file-pdf-o"></i> View</a>
-                    </td> -->
+                    </td>
                 </tr>
                 {% endfor %}
 

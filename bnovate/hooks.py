@@ -262,7 +262,7 @@ website_user_home_page = ""
 # get_website_user_home_page = "bnovate.config.homepage.get_homepage"
 
 has_website_permission = {
-    # 'Blanket Order': ['TBD']
+    "Service Report": "erpnext.controllers.website_list_for_contact.has_website_permission",
 }
 
 website_route_rules = [

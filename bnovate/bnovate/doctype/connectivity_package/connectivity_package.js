@@ -80,6 +80,13 @@ frappe.ui.form.on('Connectivity Package', {
 				message: __(`Another package already exists with this serial number: ${link}`)
 			});
 		}
+
+		// Erase lookup fields if customer is empty; assume we retrieved the device.
+		if (!frm.doc.customer) {
+			frm.doc.customer_name = null;
+			frm.doc.device_name = null;
+		}
+
 	}
 });
 

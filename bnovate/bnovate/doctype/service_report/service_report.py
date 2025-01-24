@@ -77,7 +77,6 @@ class ServiceReport(Document):
         so_docstatus = get_billing_status(self.name)
         self.db_set('so_docstatus', so_docstatus)
 
-
 def find_so(service_report_docname):
     so_match = frappe.db.sql("""
         SELECT 

@@ -2,6 +2,7 @@ import frappe
 
 from frappe import _
 from frappe.exceptions import DoesNotExistError
+from frappe.utils.pdf import get_pdf
 from jinja2.filters import do_striptags
 
 
@@ -49,12 +50,16 @@ def get_instrument_data(serial_no):
     data.service_history = service_history.get_data(frappe._dict({"serial_no": serial_no}))
 
     for sr in data.service_history:
-        sr.report_url = '/api/method/frappe.utils.print_format.download_pdf?' \
-                + 'doctype=Service%20Report' \
-                + '&name=' + sr.report \
-                + '&format=Service%20Report' \
-                + '&no_letterhead=0' \
-                + '&_lang=' + 'en' 
+        sr.report_url = '/api/method/bnovate.www.instrument.get_service_report?' \
+                + 'report_no=' + sr.report
+
+        # Permissions are granted in hooks (has_website_permission)
+        # sr.report_url = '/api/method/frappe.utils.print_format.download_pdf?' \
+        #         + 'doctype=Service%20Report' \
+        #         + '&name=' + sr.report \
+        #         + '&format=Service%20Report' \
+        #         + '&no_letterhead=0' # \
+        #         # + '&_lang=' + 'en' 
 
     return data
 
@@ -62,19 +67,12 @@ def get_instrument_data(serial_no):
 def get_service_report(report_no):
     """ Return PDF of analysis certificate for a given **fill** serial_no """
 
-    managed_customers = [c.docname for c in get_session_customers()]
+    # Permissions are granted in hooks (has_website_permission). If user is linked with customer 
+    # linked with report, permission is granted.
 
-    # This also works if we feed the fill serial_no
+    # Set response headers
+    frappe.local.response.filename = "{report_no}.pdf".format(report_no=report_no)
+    frappe.local.response.filecontent = get_pdf(frappe.get_print("Service Report", report_no, "Service Report"))
+    frappe.local.response.type = "pdf"
 
-    service_report = frappe.get_doc("Service Report", report_no)
-    
-    # If user doesn't own this instrument, he shouldn't even know if report exists. Same error either way:
-    if not service_report or service_report.customer not in managed_customers:
-        raise DoesNotExistError
-
-    # TODO: return PDF. How to allow downloading of service report under same conditions as 
-    # Return PDF
-    # file_doc = frappe.get_doc("File", {"file_url": row.analysis_certificate})
-    # frappe.local.response.filename = "analysis_certificate_{name}.pdf".format(name=serial_no)
-    # frappe.local.response.filecontent = file_doc.get_content()
-    # frappe.local.response.type = "pdf"
+    return
