@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2023, libracore and contributors
+# Copyright (c) 2023-2025, libracore and contributors
 # For license information, please see license.txt
 
 from __future__ import unicode_literals
@@ -245,6 +245,7 @@ def update_status_from_sales_order(sales_order, method=None):
         return
 
     for sr_name in list(set([it.service_report for it in sales_order.get("items")])):
-        print("Updating service report", sr_name)
-        doc = frappe.get_doc("Service Report", sr_name)
-        doc.set_status()
+        if sr_name and frappe.db.exists("Service Report", sr_name):
+            print("Updating service report", sr_name)
+            doc = frappe.get_doc("Service Report", sr_name)
+            doc.set_status()
