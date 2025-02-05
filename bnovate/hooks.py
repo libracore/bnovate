@@ -389,6 +389,7 @@ doc_events = {
             "bnovate.bnovate.doctype.refill_request.refill_request.update_status_from_sales_order",
             "bnovate.bnovate.doctype.service_report.service_report.update_status_from_sales_order",
         ],
+        "on_change": "bnovate.bnovate.utils.enclosures.associate_so_serial_no",
     },
     "Delivery Note": {
         "before_save": [
