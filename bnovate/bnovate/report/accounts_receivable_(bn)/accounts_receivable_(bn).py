@@ -54,15 +54,26 @@ def get_columns():
             "width": 100
         }, {
             "fieldname": "grand_total",
-            "label": "Total (Doc Currency)",
+            "label": "Grand Total (Doc Currency)",
             "fieldtype": "Currency",
             "options": "document_currency",
             "width": 120
         }, {
+			"fieldname": "receivables_account",
+			"label": "Receivables Account",
+			"fieldtype": "Link",
+			"options": "Account",
+			"width": 150,
+		}, {
+			"fieldname": "receivables_currency",
+			"label": "Receivables Currency",
+			"fieldtype": "Data",
+			"width": 100
+		}, {
             "fieldname": "outstanding_amount",
-            "label": "Outstanding Amount (Doc. Currency)",
+            "label": "Outstanding Amount (Receivables Currency)",
             "fieldtype": "Currency",
-            "options": "document_currency",
+            "options": "receivables_currency",
             "width": 120
         }, {
             "fieldname": "company",
@@ -75,6 +86,10 @@ def get_columns():
 
 
 def get_data(filters):
+
+	# Warnings:
+	# Pay attention to document currency, currency of the receivables account, and company currency.
+	# See notes in Accounts Payable (bN) report, the pattern is the same.
 
     additional_filters = ""
 
@@ -90,10 +105,16 @@ def get_data(filters):
             si.customer as customer,
             c.customer_name,
             si.name as voucher,
-            si.grand_total, 
-            si.base_grand_total,
-            si.outstanding_amount,
+
             si.currency as document_currency,
+            si.grand_total, 
+
+
+			si.debit_to as receivables_account,
+			si.party_account_currency as receivables_currency,
+            si.outstanding_amount,
+
+            si.base_grand_total,
             si.company
         FROM 
             `tabSales Invoice` si
@@ -103,6 +124,7 @@ def get_data(filters):
             si.docstatus = 1
             AND si.outstanding_amount > 0
             {filters}
+		ORDER BY days_till_due ASC
     """.format(status_date=filters.status_date, filters=additional_filters)
     data = frappe.db.sql(query, as_dict=True)
     return data

@@ -208,6 +208,12 @@ def get_data():
                         "is_query_report": True   
                    }, {
                         "type": "report",
+                        "name": "Accounts Payable (bN)",
+                        "label": _("Accounts Payable (bN)"),
+                        "doctype": "GL Entry", # Not actually GL entry but I only want to show to accounting ppl.
+                        "is_query_report": True   
+                   }, {
+                        "type": "report",
                         "name": "Deferred Revenue Report",
                         "label": _("Deferred Revenue Report"),
                         "doctype": "GL Entry",
