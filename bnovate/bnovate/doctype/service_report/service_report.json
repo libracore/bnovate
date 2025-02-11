@@ -49,7 +49,8 @@
   "set_warehouse",
   "items",
   "labor_section",
-  "labour_travel"
+  "labour_travel",
+  "so_docstatus"
  ],
  "fields": [
   {
@@ -332,10 +333,17 @@
    "fieldtype": "Link",
    "label": "Version After Update",
    "options": "Software Version"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "so_docstatus",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "SO Docstatus"
   }
  ],
  "is_submittable": 1,
- "modified": "2024-12-16 16:26:28.678286",
+ "modified": "2025-02-07 07:35:39.620003",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Service Report",
