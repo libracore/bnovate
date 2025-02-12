@@ -14,12 +14,14 @@ def execute(filters=None):
 
 def _execute(filters=None, additional_table_columns=None, additional_query_columns=None):
 	if not filters: filters = {}
-	filters.update({"from_date": filters.get("date_range") and filters.get("date_range")[0], "to_date": filters.get("date_range") and filters.get("date_range")[1]})
+	# filters.update({"from_date": filters.get("date_range") and filters.get("date_range")[0], "to_date": filters.get("date_range") and filters.get("date_range")[1]})
 	columns = get_columns(additional_table_columns)
 
-	company_currency = frappe.get_cached_value('Company',  filters.get("company"),  "default_currency")
 
 	item_list = get_items(filters, additional_query_columns)
+	return columns, item_list
+
+
 	if item_list:
 		itemised_tax, tax_columns = get_tax_accounts(item_list, columns, company_currency)
 	mode_of_payments = get_mode_of_payments(set([d.parent for d in item_list]))
@@ -146,19 +148,19 @@ def get_columns(additional_table_columns):
 			"width": 120,
 			"options": "Customer Group"
 		},
-		{
-			"fieldname": "receivable_account",
-			"label": _("Receivable Account"),
-			"fieldtype": "Link",
-			"width": 120,
-			"options": "Account"
-		},
-		{
-			"fieldname": "mode_of_payment",
-			"label": _("Mode of Payment"),
-			"fieldtype": "Data",
-			"width": 120
-		},
+		# {
+		# 	"fieldname": "receivable_account",
+		# 	"label": _("Receivable Account"),
+		# 	"fieldtype": "Link",
+		# 	"width": 120,
+		# 	"options": "Account"
+		# },
+		# {
+		# 	"fieldname": "mode_of_payment",
+		# 	"label": _("Mode of Payment"),
+		# 	"fieldtype": "Data",
+		# 	"width": 120
+		# },
 		{
 			"fieldname": "territory",
 			"label": _("Territory"),
@@ -228,24 +230,25 @@ def get_columns(additional_table_columns):
 			"width": 100
 		},
 		{
-			"fieldname": "base_currency",
+			"fieldname": "company_currency",
 			"label": _("Company Currency"),
-			"fieldtype": "Data",
-			"width": 80
+			"fieldtype": "Link",
+			"options": "Currency",
+			"width": 100
 		},
 		{
 			"fieldname": "base_net_rate",
 			"label": _("Net Rate"),
 			"fieldtype": "Currency",
 			"width": 120,
-			"options": "base_currency"
+			"options": "company_currency"
 		},
 		{
 			"fieldname": "base_net_amount",
 			"label": _("Net Amount"),
 			"fieldtype": "Currency",
 			"width": 120,
-			"options": "base_currency"
+			"options": "company_currency"
 		}
 	]
 
@@ -298,10 +301,12 @@ def get_items(filters, additional_query_columns):
 	if additional_query_columns:
 		additional_query_columns = ', ' + ', '.join(additional_query_columns)
 
+	company_currency = frappe.get_cached_value('Company',  filters.get("company"),  "default_currency")
+
 	return frappe.db.sql("""
 		select
 			sii.name, 
-			sii.parent,
+			sii.parent as invoice,
 			si.posting_date, 
 			si.debit_to,
 			si.project, 
@@ -322,6 +327,7 @@ def get_items(filters, additional_query_columns):
 			sii.cost_center,
 			sii.stock_qty,
 			sii.stock_uom, 
+			"{company_currency}" as company_currency,
 			sii.base_net_rate,
 			sii.base_net_amount, 
 
@@ -342,7 +348,7 @@ def get_items(filters, additional_query_columns):
 		LEFT JOIN `tabCompany` co ON co.name = si.company
 		WHERE si.docstatus = 1 %s %s
 		ORDER BY si.posting_date DESC, sii.item_code DESC
-		""".format(additional_query_columns or '') % (conditions, match_conditions), filters, as_dict=1)
+		""".format(additional_query_columns or '', company_currency=company_currency) % (conditions, match_conditions), filters, as_dict=1)
 
 def get_delivery_notes_against_sales_order(item_list):
 	so_dn_map = frappe._dict()
