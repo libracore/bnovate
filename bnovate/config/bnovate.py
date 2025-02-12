@@ -212,6 +212,12 @@ def get_data():
                         "label": _("Accounts Payable (bN)"),
                         "doctype": "GL Entry", # Not actually GL entry but I only want to show to accounting ppl.
                         "is_query_report": True   
+                    }, {
+                        "type": "report",
+                        "name": "Party Ledger per Month",
+                        "label": _("Party Ledger per Month"),
+                        "doctype": "GL Entry",
+                        "is_query_report": True
                    }, {
                         "type": "report",
                         "name": "Deferred Revenue Report",
