@@ -196,8 +196,14 @@ def get_data():
                         "is_query_report": True   
                    }, {
                         "type": "report",
-                        "name": "General Ledger for Export (FRe)",
-                        "label": _("General Ledger for Export (FRe)"),
+                        "name": "Item-wise Purchase Register (bN)",
+                        "label": _("Item-wise Purchase Register (bN)"),
+                        "doctype": "GL Entry",
+                        "is_query_report": True   
+                   }, {
+                        "type": "report",
+                        "name": "General Ledger for Export (bN)",
+                        "label": _("General Ledger for Export (bN)"),
                         "doctype": "GL Entry",
                         "is_query_report": True   
                    }, {
@@ -212,6 +218,12 @@ def get_data():
                         "label": _("Accounts Payable (bN)"),
                         "doctype": "GL Entry", # Not actually GL entry but I only want to show to accounting ppl.
                         "is_query_report": True   
+                    }, {
+                        "type": "report",
+                        "name": "Party Ledger per Month",
+                        "label": _("Party Ledger per Month"),
+                        "doctype": "GL Entry",
+                        "is_query_report": True
                    }, {
                         "type": "report",
                         "name": "Deferred Revenue Report",

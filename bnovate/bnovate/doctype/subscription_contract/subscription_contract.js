@@ -32,7 +32,16 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 	onload(doc, dt, dn) {
 		this._super();
 
-		this.frm.set_query('contact_person', erpnext.queries.contact_query);
+		this.frm.set_query('contact_person', function () {
+			return {
+				// contact_query from frappe package is more flexible than the one from erpnext
+				query: 'frappe.contacts.doctype.contact.contact.contact_query',
+				filters: {
+					link_doctype: 'Customer',
+					link_name: doc.customer,
+				}
+			}
+		});
 		// Override item filters set by SellingController
 		this.frm.set_query("item_code", "items", function () {
 			return { filters: { enable_deferred_revenue: true } }
