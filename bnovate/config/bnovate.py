@@ -196,8 +196,8 @@ def get_data():
                         "is_query_report": True   
                    }, {
                         "type": "report",
-                        "name": "General Ledger for Export (FRe)",
-                        "label": _("General Ledger for Export (FRe)"),
+                        "name": "General Ledger for Export (bN)",
+                        "label": _("General Ledger for Export (bN)"),
                         "doctype": "GL Entry",
                         "is_query_report": True   
                    }, {
