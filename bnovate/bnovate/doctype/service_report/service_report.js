@@ -92,14 +92,19 @@ frappe.ui.form.on('Service Report', {
 	},
 
 	refresh(frm) {
-		if (frm.doc.docstatus == 1 && frm.doc.billing_basis !== BILLING_PARTNER && frm.doc.so_docstatus !== 1) {
-
+		if (frm.doc.status === 'To Bill') {
 			frm.add_custom_button(__("Sales Order"), () => {
 				frappe.model.open_mapped_doc({
 					method: "bnovate.bnovate.doctype.service_report.service_report.make_sales_order",
 					frm: cur_frm,
 				});
 			}, __("Create"));
+
+			frm.add_custom_button(__("Ignore Billing"), () => {
+				frm.doc.ignore_billing = 1;
+				frm.save("Update");
+				frappe.show_alert({ message: __("Billing skipped"), indicator: 'green' });
+			}, __("Status"));
 
 		}
 	},

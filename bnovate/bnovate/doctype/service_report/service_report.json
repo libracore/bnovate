@@ -50,7 +50,9 @@
   "items",
   "labor_section",
   "labour_travel",
-  "so_docstatus"
+  "internal_information_section",
+  "so_docstatus",
+  "ignore_billing"
  ],
  "fields": [
   {
@@ -169,11 +171,14 @@
    "options": "Service Report Checks"
   },
   {
+   "allow_on_submit": 1,
    "default": "{customer_name} - {serial_no}",
    "fieldname": "title",
    "fieldtype": "Data",
    "hidden": 1,
-   "label": "Title"
+   "label": "Title",
+   "no_copy": 1,
+   "print_hide": 1
   },
   {
    "fieldname": "billing_section",
@@ -340,10 +345,27 @@
    "fieldtype": "Int",
    "hidden": 1,
    "label": "SO Docstatus"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "internal_information_section",
+   "fieldtype": "Section Break",
+   "label": "Internal Information",
+   "print_hide": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "0",
+   "description": "Check this is billing was done separately - \"To Bill\" status will be skipped.",
+   "fieldname": "ignore_billing",
+   "fieldtype": "Check",
+   "label": "Ignore Billing",
+   "no_copy": 1,
+   "print_hide": 1
   }
  ],
  "is_submittable": 1,
- "modified": "2025-02-07 07:35:39.620003",
+ "modified": "2025-02-27 11:53:25.226284",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Service Report",
