@@ -90,6 +90,7 @@ fixtures = [
             "Address-portal_hide",
             "Item-compatibility",
             "Item-stability_in_months",
+            "Item-check_serial_no_on_delivery",
 
             # Addresses
             "Address-company_name",
@@ -394,6 +395,10 @@ doc_events = {
     "Delivery Note": {
         "before_save": [
             "bnovate.bnovate.utils.shipping.set_pallets",
+            "bnovate.bnovate.utils.enclosures.check_serial_no_in_dn",  # TODO remove this is only for testing
+        ],
+        "before_submit": [
+            "bnovate.bnovate.utils.enclosures.check_serial_no_in_dn",
         ],
         "on_submit": [
             "bnovate.bnovate.utils.enclosures.set_owner_from_dn",
