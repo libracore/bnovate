@@ -1,9 +1,14 @@
 // Copyright (c) 2023, bnovate, libracore and contributors
 // For license information, please see license.txt
 
+{% include 'erpnext/selling/sales_common.js' %}
+
+frappe.provide('bnovate.service_report');
+
 const CHANNEL_DIRECT = 'Direct';
 const CHANNEL_PARTNER = 'Service Partner';
 const BILLING_PARTNER = 'Through Service Partner';
+const INTERVENTION_UPGRADE = 'Software Upgrade';
 
 frappe.ui.form.on('Service Report', {
 	onload(frm) {
@@ -81,14 +86,14 @@ frappe.ui.form.on('Service Report', {
 			}
 		});
 
-		frm.set_query("item_code", "items", function () {
-			return {
-				query: "bnovate.bnovate.doctype.service_report.service_report.item_query",
-				filters: {
-					warehouse: frm.doc.set_warehouse,
-				}
-			}
-		});
+		// frm.set_query("item_code", "items", function () {
+		// 	return {
+		// 		query: "bnovate.bnovate.doctype.service_report.service_report.item_query",
+		// 		filters: {
+		// 			warehouse: frm.doc.set_warehouse,
+		// 		}
+		// 	}
+		// });
 	},
 
 	refresh(frm) {
@@ -134,7 +139,7 @@ frappe.ui.form.on('Service Report', {
 	},
 
 	reason_for_visit(frm) {
-		frm.toggle_reqd('description', frm.doc.reason_for_visit === 'Service');
+		frm.toggle_reqd('description', frm.doc.reason_for_visit !== INTERVENTION_UPGRADE);
 		frm.toggle_reqd('resolution', frm.doc.reason_for_visit === 'Service');
 	},
 

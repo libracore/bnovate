@@ -7,6 +7,8 @@
  "engine": "InnoDB",
  "field_order": [
   "channel",
+  "column_break_2",
+  "company",
   "status",
   "contact_section",
   "title",
@@ -36,11 +38,9 @@
   "description_section",
   "version_before_update",
   "description",
-  "work_description",
   "column_break_22",
   "version_after_update",
   "resolution",
-  "validation_performed",
   "section_break_23",
   "final_service_checks",
   "column_break_15",
@@ -50,6 +50,7 @@
   "items",
   "labor_section",
   "labour_travel",
+  "labour_notes",
   "internal_information_section",
   "so_docstatus",
   "ignore_billing"
@@ -132,18 +133,6 @@
    "in_list_view": 1,
    "label": "Reason for Visit",
    "options": "Installation\nMaintenance\nService\nSoftware Upgrade\nOther"
-  },
-  {
-   "depends_on": "eval:doc.reason_for_visit != 'Software Upgrade'",
-   "fieldname": "work_description",
-   "fieldtype": "Text Editor",
-   "label": "Work Description"
-  },
-  {
-   "depends_on": "eval:doc.reason_for_visit != 'Software Upgrade'",
-   "fieldname": "validation_performed",
-   "fieldtype": "Text Editor",
-   "label": "Validation Performed"
   },
   {
    "fieldname": "column_break_7",
@@ -314,7 +303,7 @@
    "read_only": 1
   },
   {
-   "depends_on": "eval:[\"Service\", \"Other\"].includes(doc.reason_for_visit)",
+   "depends_on": "eval:doc.reason_for_visit !== \"Software Upgrade\"",
    "fieldname": "description",
    "fieldtype": "Text Editor",
    "label": "Description"
@@ -362,10 +351,28 @@
    "label": "Ignore Billing",
    "no_copy": 1,
    "print_hide": 1
+  },
+  {
+   "fieldname": "labour_notes",
+   "fieldtype": "Text Editor",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "print_hide": 1,
+   "remember_last_selected_value": 1,
+   "reqd": 1
   }
  ],
  "is_submittable": 1,
- "modified": "2025-02-27 11:53:25.226284",
+ "modified": "2025-03-07 17:09:45.864684",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Service Report",

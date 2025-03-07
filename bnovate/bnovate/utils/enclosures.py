@@ -100,7 +100,7 @@ def associate_so_serial_no(so, method=None):
     all_serials = set(d['name'] for d in docs)
     dangling = all_serials.difference(new_serials)
     for serial_no in dangling:
-        print("Removing dangling associationg from", serial_no, "to", so.name)
+        # print("Removing dangling associationg from", serial_no, "to", so.name)
         sn_doc = frappe.get_doc("Serial No", serial_no)
         sn_doc.db_set("open_sales_order", None)
         sn_doc.db_set("open_sales_order_item", None)
@@ -208,8 +208,6 @@ def check_serial_no_in_dn(dn, method=None):
 
         dn_serial_nos = get_serial_nos(pi.serial_no)
         so_serial_nos = get_serial_nos(soi.serial_nos)
-        print(dn_serial_nos)
-        print(so_serial_nos)
 
         deets = {"item_code": pi.item_code, "idx": pi.idx}
         if len(dn_serial_nos) != len(so_serial_nos):
