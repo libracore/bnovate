@@ -96,9 +96,5 @@ def get_data(filters):
             if month not in row:
                 row[month] = 0
 
-    print("-------------------------------------")
-    print(pivot_data)
-    print("-------------------------------------")
     return pivoted_data
 
-    return data

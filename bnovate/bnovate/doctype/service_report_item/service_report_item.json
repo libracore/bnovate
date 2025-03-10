@@ -7,6 +7,8 @@
   "item_code",
   "item_name",
   "qty",
+  "uom",
+  "section_header",
   "description"
  ],
  "fields": [
@@ -19,6 +21,7 @@
   },
   {
    "fetch_from": "item_code.item_name",
+   "fetch_if_empty": 1,
    "fieldname": "item_name",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -31,13 +34,28 @@
    "label": "Qty"
   },
   {
+   "fetch_from": "item_code.description",
+   "fetch_if_empty": 1,
    "fieldname": "description",
    "fieldtype": "Text Editor",
    "label": "Description"
+  },
+  {
+   "fieldname": "section_header",
+   "fieldtype": "Data",
+   "label": "Section Header"
+  },
+  {
+   "fetch_from": "item_code.stock_uom",
+   "fetch_if_empty": 1,
+   "fieldname": "uom",
+   "fieldtype": "Link",
+   "label": "UOM",
+   "options": "UOM"
   }
  ],
  "istable": 1,
- "modified": "2023-06-16 16:59:01.439914",
+ "modified": "2025-03-07 17:19:31.378760",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Service Report Item",

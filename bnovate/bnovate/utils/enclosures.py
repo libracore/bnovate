@@ -100,7 +100,7 @@ def associate_so_serial_no(so, method=None):
     all_serials = set(d['name'] for d in docs)
     dangling = all_serials.difference(new_serials)
     for serial_no in dangling:
-        print("Removing dangling associationg from", serial_no, "to", so.name)
+        # print("Removing dangling associationg from", serial_no, "to", so.name)
         sn_doc = frappe.get_doc("Serial No", serial_no)
         sn_doc.db_set("open_sales_order", None)
         sn_doc.db_set("open_sales_order_item", None)
@@ -173,3 +173,60 @@ def set_owner_from_dn(dn, method=None):
                     sn_doc.db_set("owned_by_name", None)
                     sn_doc.db_set("owner_set_by", None)
 
+
+def check_serial_no_in_dn(dn, method=None):
+    """ Check that Serial No of packed item in DN corresponds to that specified in SO. 
+    
+    Only checks if: 
+    - Packed item master is marked "Check Serial No on Delivery"
+    - There is a linked SO
+    - SO has Serial Nos specified
+
+    """
+
+    if not method in ('before_save', 'before_submit'):
+        return
+    
+    # Allow save in case of errors, but block Submit.
+    raise_exception = method == 'before_submit'
+
+    dni_lookup = {dni.name: dni for dni in dn.items}
+
+    for pi in dn.packed_items:
+        item_master = frappe.get_doc("Item", pi.item_code)
+        if not pi.serial_no or not item_master.check_serial_no_on_delivery:
+            continue
+        
+        dni = dni_lookup[pi.parent_detail_docname]
+        if not dni.so_detail:
+            continue
+
+        soi = frappe.get_doc("Sales Order Item", dni.so_detail)
+        if soi.serial_nos is None or not soi.serial_nos.strip():
+            continue
+            
+
+        dn_serial_nos = get_serial_nos(pi.serial_no)
+        so_serial_nos = get_serial_nos(soi.serial_nos)
+
+        deets = {"item_code": pi.item_code, "idx": pi.idx}
+        if len(dn_serial_nos) != len(so_serial_nos):
+            frappe.msgprint("For item {item_code}, packed items row {idx}: {count} Serial Nos entered. Please enter {qty}.".format(
+                qty=len(so_serial_nos),
+                count = len(dn_serial_nos),
+                **deets
+            ), raise_exception=raise_exception)
+            continue
+
+        if len(dn_serial_nos) != len(set(dn_serial_nos)):
+            frappe.msgprint(
+                "For item {item_code}, packed items row {idx}: duplicate serial number entered.".format(**deets), 
+                raise_exception=raise_exception)
+            continue
+
+        for serial_no in dn_serial_nos:
+            if serial_no not in so_serial_nos:
+                frappe.msgprint(
+                    "For item {item_code}, row {idx}: Serial no {serial_no} does not match Sales Order. "
+                    "Expected: <br>- {serial_nos}".format(serial_no=serial_no, serial_nos="<br>- ".join(so_serial_nos), **deets),
+                    raise_exception=raise_exception)

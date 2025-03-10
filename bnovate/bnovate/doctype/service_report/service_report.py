@@ -18,8 +18,6 @@ CHANNEL_PARTNER = "Service Partner"
 BILLING_PARTNER = "Through Service Partner"
 
 class ServiceReport(Document):
-    # def autoname(self):
-    # 	self.title = "{0} - {1} {2}".format(self.customer_name, self.item_name, self.serial_no)
 
     def set_status(self):
         self.set_so_docstatus()
@@ -30,7 +28,7 @@ class ServiceReport(Document):
             if self.channel == CHANNEL_PARTNER:
                 self.status = "Submitted"
             else:
-                if self.so_docstatus == 1:
+                if self.ignore_billing or self.so_docstatus == 1:
                     self.status = "Submitted"
                 else:
                     self.status = "To Bill"
@@ -61,6 +59,8 @@ class ServiceReport(Document):
     def on_cancel(self):
         self.set_status()
 
+    def on_update_after_submit(self):
+        self.set_status()
 
     def before_submit(self):
         pass
