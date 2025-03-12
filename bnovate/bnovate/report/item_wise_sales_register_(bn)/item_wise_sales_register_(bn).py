@@ -148,6 +148,27 @@ def get_columns():
 			"width": 100
 		},
 		{
+			"fieldname": "currency",
+			"label": _("Doc Currency"),
+			"fieldtype": "Link",
+			"options": "Currency",
+			"width": 100
+		},
+		{
+			"fieldname": "net_rate",
+			"label": _("Net Rate"),
+			"fieldtype": "Currency",
+			"width": 120,
+			"options": "currency"
+		},
+		{
+			"fieldname": "net_amount",
+			"label": _("Net Amount"),
+			"fieldtype": "Currency",
+			"width": 120,
+			"options": "currency"
+		},
+		{
 			"fieldname": "company_currency",
 			"label": _("Company Currency"),
 			"fieldtype": "Link",
@@ -156,14 +177,14 @@ def get_columns():
 		},
 		{
 			"fieldname": "base_net_rate",
-			"label": _("Net Rate"),
+			"label": _("Net Rate in Company Currency"),
 			"fieldtype": "Currency",
 			"width": 120,
 			"options": "company_currency"
 		},
 		{
 			"fieldname": "base_net_amount",
-			"label": _("Net Amount"),
+			"label": _("Net Amount in Company Currency"),
 			"fieldtype": "Currency",
 			"width": 120,
 			"options": "company_currency"
@@ -242,6 +263,10 @@ def get_items(filters):
 			sii.cost_center,
 			sii.stock_qty,
 			sii.stock_uom, 
+
+			si.currency,
+			sii.net_rate,
+			sii.net_amount,
 			"{company_currency}" as company_currency,
 			sii.base_net_rate,
 			sii.base_net_amount, 
