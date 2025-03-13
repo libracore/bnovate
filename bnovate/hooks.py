@@ -117,6 +117,7 @@ fixtures = [
             "Supplier-eori_number",
             "Delivery Note-eori_number",
             "Customer-eori_number",
+            "Customer-check_eori",
             "Customer-default_incoterm",
             "Quotation-incoterm",
             "Sales Order-incoterm",
