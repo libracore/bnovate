@@ -17,6 +17,13 @@ from frappe.utils import get_datetime
 from datetime import datetime, timedelta
 
 @frappe.whitelist()
+def assign_qc(work_order_id):
+    """ Assign work order to QC workstation """
+    wo = frappe.get_doc("Work Order", work_order_id)
+    wo.workstation = frappe.get_single("bNovate Settings").qc_workstation
+    wo.save()
+
+@frappe.whitelist()
 def start_log(work_order_id):
     """ Add a row to time tracking with current time as start time. """
     wo = frappe.get_doc("Work Order", work_order_id)
