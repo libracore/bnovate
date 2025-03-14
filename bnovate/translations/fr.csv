@@ -284,3 +284,100 @@ apps/bnovate/bnovate/www/my_addresses.html,"You can only edit shipping addresses
 apps/bnovate/bnovate/www/request.html,A return shipping label is available.,Une étiquette de retour est disponible.
 apps/bnovate/bnovate/www/request.html,Print Return Label,Imprimer l'étiquette de retour
 apps/bnovate/bnovate/www/request.html,The request will be confirmed once all cartridges are received at bNovate,La demande sera confirmée une fois que toutes les cartouches auront été reçues par bNovate.
+apps/bnovate/bnovate/bnovate/doctype/connectivity_package/connectivity_package.js,Allowed Users,Utilisateurs autorisés
+apps/bnovate/bnovate/bnovate/doctype/refill_request/refill_request.js,Unlink Shipment,Délier l'envoi
+apps/bnovate/bnovate/bnovate/doctype/service_report/service_report.js,Billing skipped,Facturation sautée
+apps/bnovate/bnovate/bnovate/doctype/service_report/service_report.js,Ignore Billing,Ignorer la facturation
+apps/bnovate/bnovate/bnovate/page/cartridge_return/cartridge_return.js,Routing Label,Étiquette de routage
+apps/bnovate/bnovate/bnovate/page/work_order_execution/time_tracking.html,Assign to Prod,Affecter à Prod
+apps/bnovate/bnovate/bnovate/page/work_order_execution/time_tracking.html,Assign to QC,Assigner au QC
+apps/bnovate/bnovate/bnovate/page/work_order_execution/work_order_execution.html,Quality Control Required,Contrôle de qualité requis
+apps/bnovate/bnovate/bnovate/report/accounts_receivable_(bn)/accounts_receivable_(bn).js,Status Date,Statut Date
+apps/bnovate/bnovate/bnovate/report/aggregate_invoicing/aggregate_invoicing.py,Incoterm Conflict,Conflit incoterm
+apps/bnovate/bnovate/bnovate/report/aggregate_invoicing/aggregate_invoicing.py,Multiple incoterms found. Please set them manually or consider invoicing separately.,Plusieurs incoterms ont été trouvés. Veuillez les définir manuellement ou envisager une facturation séparée.
+apps/bnovate/bnovate/bnovate/report/cartridge_status/cartridge_status.py,Compatibility,Compatibilité
+apps/bnovate/bnovate/bnovate/report/connectivity_data_usage/connectivity_data_usage.py,Period Start,Début de la période
+apps/bnovate/bnovate/bnovate/report/enclosure_filling_history/enclosure_filling_history.py,Analysis Certificate,Certificat d'analyse
+apps/bnovate/bnovate/bnovate/report/enclosure_filling_history/enclosure_filling_history.py,Fill Item,Remplir l'article
+apps/bnovate/bnovate/bnovate/report/enclosure_filling_history/enclosure_filling_history.py,Fill Name,Nom de remplissage
+apps/bnovate/bnovate/bnovate/report/item_wise_purchase_register_(bn)/item_wise_purchase_register_(bn).py,Amount in Company Currency,Montant en monnaie de l'entreprise
+apps/bnovate/bnovate/bnovate/report/item_wise_purchase_register_(bn)/item_wise_purchase_register_(bn).py,Subsidy,Subvention
+apps/bnovate/bnovate/bnovate/report/item_wise_sales_register_(bn)/item_wise_sales_register_(bn).py,Company Currency,Monnaie de l'entreprise
+apps/bnovate/bnovate/bnovate/report/item_wise_sales_register_(bn)/item_wise_sales_register_(bn).py,Doc Currency,Doc Monnaie
+apps/bnovate/bnovate/bnovate/report/item_wise_sales_register_(bn)/item_wise_sales_register_(bn).py,Net Amount in Company Currency,Montant net dans la devise de l'entreprise
+apps/bnovate/bnovate/bnovate/report/item_wise_sales_register_(bn)/item_wise_sales_register_(bn).py,Net Rate in Company Currency,Taux net dans la devise de l'entreprise
+apps/bnovate/bnovate/bnovate/report/item_wise_sales_register_(bn)/item_wise_sales_register_(bn).py,Territory Parent,Territoire Parent
+apps/bnovate/bnovate/bnovate/report/portal_users/portal_users.py,Teltonika Serial,Teltonika Serial
+apps/bnovate/bnovate/bnovate/report/work_order_planning/work_order_planning.py,Mean Minutes per Unit,Moyenne des minutes par unité
+apps/bnovate/bnovate/bnovate/report/work_order_planning/work_order_planning.py,Time Estimate,Estimation du temps
+apps/bnovate/bnovate/bnovate/utils/__init__.py,Error in translation: {0},Erreur de traduction : {0}
+apps/bnovate/bnovate/bnovate/utils/__init__.py,"Please check UK EORI numbers on the <a target=""_blank"" href=""https://www.tax.service.gov.uk/check-eori-number"">UK government website</a>","Veuillez vérifier les numéros EORI du Royaume-Uni sur le <a target=""_blank"" href=""https://www.tax.service.gov.uk/check-eori-number"">site web du gouvernement britannique</a>."
+apps/bnovate/bnovate/bnovate/utils/shipping.py,Cancelling pickup...,Annulation du ramassage...
+apps/bnovate/bnovate/bnovate/utils/shipping.py,Only returns to Switzerland are supported at this stage,"À ce stade, seuls les retours en Suisse sont pris en charge"
+apps/bnovate/bnovate/bnovate/utils/shipping.py,Updating...,Mise à jour...
+apps/bnovate/bnovate/config/bnovate.py,Accounts Payable (bN),Comptes fournisseurs (bN)
+apps/bnovate/bnovate/config/bnovate.py,Accounts Receivable (bN),Comptes débiteurs (bN)
+apps/bnovate/bnovate/config/bnovate.py,General Ledger for Export (bN),Grand livre pour l'exportation (bN)
+apps/bnovate/bnovate/config/bnovate.py,Item-wise Purchase Register (bN),Registre des achats par article (bN)
+apps/bnovate/bnovate/config/bnovate.py,Item-wise Sales History (bN),Historique des ventes par article (en milliards d'euros)
+apps/bnovate/bnovate/config/bnovate.py,Item-wise Sales Register (bN),Registre des ventes par article (bN)
+apps/bnovate/bnovate/config/bnovate.py,Party Ledger per Month,Grand livre des partis par mois
+apps/bnovate/bnovate/config/bnovate.py,Service & Support,Service et assistance
+apps/bnovate/bnovate/config/bnovate.py,Service Report,Rapport de service
+apps/bnovate/bnovate/config/bnovate.py,Supply Tracking,Suivi de l'approvisionnement
+apps/bnovate/bnovate/public/js/bnovate_common.js,EORI invalid,EORI non valide
+apps/bnovate/bnovate/public/js/bnovate_common.js,EORI valid,EORI valide
+apps/bnovate/bnovate/public/js/doctype_includes/contact.js,User ID is already associated with another contact:,L'ID de l'utilisateur est déjà associé à un autre contact :
+apps/bnovate/bnovate/public/js/doctype_includes/delivery_note.js,Confirm Label Format,Confirmer le format de l'étiquette
+apps/bnovate/bnovate/public/js/doctype_includes/delivery_note.js,Create return label?,Créer une étiquette de retour ?
+apps/bnovate/bnovate/public/js/doctype_includes/delivery_note.js,Label Size,Taille de l'étiquette
+apps/bnovate/bnovate/public/js/doctype_includes/delivery_note.js,Pickup From,Prise en charge à partir de
+apps/bnovate/bnovate/public/js/doctype_includes/delivery_note.js,Please enter dimensions and number of Parcels.,Veuillez indiquer les dimensions et le nombre de colis.
+apps/bnovate/bnovate/public/js/doctype_includes/delivery_note.js,Return Label,Étiquette de retour
+apps/bnovate/bnovate/public/js/doctype_includes/delivery_note.js,Return Shipment,Envoi en retour
+apps/bnovate/bnovate/public/js/doctype_includes/delivery_note.js,Shipping is organized manually on this order,L'expédition est organisée manuellement sur cette commande
+apps/bnovate/bnovate/public/js/doctype_includes/delivery_note.js,This order can be shipped automatically with DHL,Cette commande peut être expédiée automatiquement par DHL.
+apps/bnovate/bnovate/public/js/doctype_includes/quotation.js,Are these translations suitable?<br><p><b>Item Name:</b></p> <p>{0}<p> <p><b>Description:</b><p> <p>{1}</p>,Ces traductions conviennent-elles ? <br><p><b>Nom de l'article:</b></p> <p>{0}<p> <p><b>Description:</b><p> <p>{1}</p>
+apps/bnovate/bnovate/public/js/doctype_includes/shipment.js,Cancel Pickup,Annuler le ramassage
+apps/bnovate/bnovate/public/js/doctype_includes/shipment.js,Confirm Cancellation,Confirmer l'annulation
+apps/bnovate/bnovate/public/js/doctype_includes/shipment.js,Copy to RR,Copie au RR
+apps/bnovate/bnovate/public/js/doctype_includes/shipment.js,Do not cancel,Ne pas annuler
+apps/bnovate/bnovate/public/js/doctype_includes/shipment.js,Update Tracking,Mise à jour du suivi
+apps/bnovate/bnovate/public/js/web_includes/wizard_modal.js,How many parcels are you sending?,Combien de colis envoyez-vous ?
+apps/bnovate/bnovate/public/js/web_includes/wizard_modal.js,One parcel can contain several cartridges. We will create one return label per parcel.,Un colis peut contenir plusieurs cartouches. Nous créons une étiquette de retour par colis.
+apps/bnovate/bnovate/public/js/web_includes/wizard_modal.js,Parcel Count,Nombre de parcelles
+apps/bnovate/bnovate/www/cartridge.html,Production Date,Date de production
+apps/bnovate/bnovate/www/cartridge.py,Cartridge,Cartouche
+apps/bnovate/bnovate/www/instrument.html,Installation,Installation
+apps/bnovate/bnovate/www/instrument.html,Intervention Date,Date d'intervention
+apps/bnovate/bnovate/www/instrument.html,Reason for visit,Motif de la visite
+apps/bnovate/bnovate/www/instrument.html,Report Intervention,Rapport d'intervention
+apps/bnovate/bnovate/www/instrument.html,Service History,Historique de l'entretien
+apps/bnovate/bnovate/www/instrument.html,Software Upgrade,Mise à jour du logiciel
+apps/bnovate/bnovate/www/instrument.html,Version after upgrade,Version après mise à jour
+apps/bnovate/bnovate/www/instrument.html,Version before upgrade,Version avant la mise à jour
+apps/bnovate/bnovate/www/instrument.py,Instrument,Instrument
+apps/bnovate/bnovate/www/instruments.html,Instrument Details,Détails de l'instrument
+apps/bnovate/bnovate/www/pickup.html,And,Et
+apps/bnovate/bnovate/www/pickup.html,Cancel / Re-schedule Pickup,Annuler / reprogrammer l'enlèvement
+apps/bnovate/bnovate/www/pickup.html,Contact sales@bnovate.com for any changes to the above.,Contactez sales@bnovate.com pour toute modification de ce qui précède.
+apps/bnovate/bnovate/www/pickup.html,Get Availability,Obtenir la disponibilité
+apps/bnovate/bnovate/www/pickup.html,Identify parcel(s),Identifier la (les) parcelle(s)
+apps/bnovate/bnovate/www/pickup.html,No pickup availability,Pas de disponibilité d'enlèvement
+apps/bnovate/bnovate/www/pickup.html,Number of parcels,Nombre de parcelles
+apps/bnovate/bnovate/www/pickup.html,One label per parcel,Une étiquette par colis
+apps/bnovate/bnovate/www/pickup.html,Organize Return,Organiser le retour
+apps/bnovate/bnovate/www/pickup.html,Pickup Address,Adresse d'enlèvement
+apps/bnovate/bnovate/www/pickup.html,Pickup request failed.,La demande de ramassage a échoué.
+apps/bnovate/bnovate/www/pickup.html,Please allow at least a 2h window,Veuillez prévoir une fenêtre d'au moins 2 heures
+apps/bnovate/bnovate/www/pickup.html,Print Label,Imprimer l'étiquette
+apps/bnovate/bnovate/www/pickup.html,Print the label,Imprimer l'étiquette
+apps/bnovate/bnovate/www/pickup.html,Special Instructions,Instructions spéciales
+apps/bnovate/bnovate/www/pickup.html,Tape it to the parcel,Le coller sur le colis
+apps/bnovate/bnovate/www/pickup.html,Verify information,Vérifier les informations
+apps/bnovate/bnovate/www/pickup.py,No pickup date found,Aucune date d'enlèvement n'a été trouvée
+apps/bnovate/bnovate/www/pickup.py,No pickup possible,Pas d'enlèvement possible
+apps/bnovate/bnovate/www/pickup.py,Schedule Pickup,Horaire de ramassage
+apps/bnovate/bnovate/www/request.html,Organize Pickup,Organiser l'enlèvement
+apps/bnovate/bnovate/www/request.html,Requested by,Demandé par
+apps/bnovate/bnovate/www/requests.html,Requested By,Demandé par
