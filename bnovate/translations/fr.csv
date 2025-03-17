@@ -319,7 +319,7 @@ apps/bnovate/bnovate/config/bnovate.py,Accounts Payable (bN),Comptes fournisseur
 apps/bnovate/bnovate/config/bnovate.py,Accounts Receivable (bN),Comptes débiteurs (bN)
 apps/bnovate/bnovate/config/bnovate.py,General Ledger for Export (bN),Grand livre pour l'exportation (bN)
 apps/bnovate/bnovate/config/bnovate.py,Item-wise Purchase Register (bN),Registre des achats par article (bN)
-apps/bnovate/bnovate/config/bnovate.py,Item-wise Sales History (bN),Historique des ventes par article (en milliards d'euros)
+apps/bnovate/bnovate/config/bnovate.py,Item-wise Sales History (bN),Historique des ventes par article (bN)
 apps/bnovate/bnovate/config/bnovate.py,Item-wise Sales Register (bN),Registre des ventes par article (bN)
 apps/bnovate/bnovate/config/bnovate.py,Party Ledger per Month,Grand livre des partis par mois
 apps/bnovate/bnovate/config/bnovate.py,Service & Support,Service et assistance
