@@ -2,6 +2,14 @@
     {% if timing_started %}
     <button class="btn btn-block btn-danger stop-timer"><i class="fa fa-clock-o"></i> {{ __("Stop timer") }}</button>
     {% else %}
-    <button class="btn btn-block btn-success start-timer"><i class="fa fa-clock-o"></i> {{ __("Start timer") }}</button>
+    <button class="btn btn-success start-timer"><i class="fa fa-clock-o"></i> {{ __("Start timer") }}</button>
+    {% endif %}
+
+    {% if qc_required %}
+        {%if not in_qc_workstation %}
+            <button class="btn btn-primary assign-qc"><i class="fa fa-check"></i> {{ __("Assign to QC") }}</button>
+        {% else %}
+            <!-- <button class="btn btn-primary assign-prod"><i class="fa fa-cross"></i> {{ __("Assign to Prod") }}</button> -->
+        {% endif %}
     {% endif %}
 </div>

@@ -13,7 +13,7 @@
   "dn_template",
   "sinv_template",
   "production_settings",
-  "qc_warehouse",
+  "qc_workstation",
   "api_credentials_section",
   "combase_api_username",
   "combase_api_key",
@@ -124,12 +124,6 @@
    "label": "Production Settings"
   },
   {
-   "fieldname": "qc_warehouse",
-   "fieldtype": "Link",
-   "label": "QC Warehouse",
-   "options": "Warehouse"
-  },
-  {
    "fieldname": "rms_company_id",
    "fieldtype": "Data",
    "label": "RMS Company ID"
@@ -228,10 +222,16 @@
    "fieldname": "fiscal_representation_comment",
    "fieldtype": "Text",
    "label": "Fiscal Representation Comment"
+  },
+  {
+   "fieldname": "qc_workstation",
+   "fieldtype": "Link",
+   "label": "QC Workstation",
+   "options": "Workstation"
   }
  ],
  "issingle": 1,
- "modified": "2025-01-23 17:09:52.600926",
+ "modified": "2025-03-13 17:31:14.335527",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "bNovate Settings",

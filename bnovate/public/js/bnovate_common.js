@@ -453,6 +453,29 @@ bnovate.utils.deepl_translate = async function (texts, target_lang, source_lang 
       source_lang
     }
   })
-  console.log(resp);
   return resp.message;
+}
+
+bnovate.utils.check_eori = async function (eori_number) {
+  let resp = await frappe.call({
+    method: 'bnovate.bnovate.utils.check_eori',
+    args: {
+      eori_number
+    }
+  })
+  const result = resp.message;
+
+  if (result.status == 0) {
+    frappe.msgprint({
+      title: __('EORI valid'),
+      message: result.address_display,
+      indicator: 'green'
+    });
+  } else {
+    frappe.msgprint({
+      title: __('EORI invalid'),
+      message: 'EORI not valid',
+      indicator: 'red'
+    });
+  }
 }

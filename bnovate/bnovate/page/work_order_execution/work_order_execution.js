@@ -139,6 +139,8 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 				time_tracking.innerHTML = frappe.render_template('time_tracking', {
 					doc: state.work_order_doc,
 					timing_started: state.timing_started,
+					qc_required: state.qc_required,
+					in_qc_workstation: state.in_qc_workstation,
 				})
 			}
 			attach_ste_submits();
@@ -253,6 +255,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		state.needs_expiry_date = is_fill(state.work_order_doc.production_item);
 		state.default_shelf_life = locals["Item"][state.work_order_doc.production_item].stability_in_months || 9;
 		state.qc_required = locals["Item"][state.work_order_doc.production_item].qc_required || false;
+		state.in_qc_workstation = state.work_order_doc.workstation == await bnovate.utils.get_setting("qc_workstation");
 
 		// BOMs can't change after submit, no need to clear cache
 		state.bom_doc = await frappe.model.with_doc('BOM', state.work_order_doc.bom_no);
@@ -827,6 +830,16 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 	}
 	bnovate.work_order_execution.stop_time_log = stop_time_log;
 
+	async function assign_qc(work_order_id) {
+		let resp = await frappe.call({
+			method: "bnovate.bnovate.page.work_order_execution.work_order_execution.assign_qc",
+			args: {
+				work_order_id,
+			}
+		});
+		return resp.message;
+	}
+
 
 	async function fetch_item_details(item_codes) {
 		// Fetch item detail docs, store in locals["Items"].
@@ -969,6 +982,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 	}
 
 	function attach_timer_buttons() {
+		// And QC buttons since they are in the same box...
 		const start_button = document.querySelectorAll('.start-timer')[0];
 		if (start_button) {
 			start_button.addEventListener('click', async event => {
@@ -981,6 +995,14 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		if (stop_button) {
 			stop_button.addEventListener('click', async event => {
 				await stop_time_log(state.work_order_id);
+				refresh();
+			});
+		}
+
+		const qc_button = document.querySelectorAll('.assign-qc')[0];
+		if (qc_button) {
+			qc_button.addEventListener('click', async event => {
+				await assign_qc(state.work_order_id);
 				refresh();
 			});
 		}
