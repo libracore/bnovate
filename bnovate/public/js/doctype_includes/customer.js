@@ -7,7 +7,7 @@
 frappe.ui.form.on("Customer", {
     before_load(frm) {
         frm.dashboard.add_transactions({
-            'items': ['Subscription Contract', 'Connectivity Package'],
+            'items': ['Subscription Contract', 'Connectivity Package', 'Refill Request'],
             'label': 'Orders',
         })
     },
