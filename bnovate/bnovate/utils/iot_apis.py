@@ -460,8 +460,8 @@ def rms_get_access_sessions_for_config(config, settings=None, auth=True):
         auth=auth,
     )
 
-    active = [s for s in sessions if s['end_time'] > time.time()]
-    active.sort(key=lambda el: el['end_time'], reverse=True)
+    active = [s for s in sessions if int(float(s['end_time'])) > time.time()]
+    active.sort(key=lambda el: int(float(el['end_time'])), reverse=True)
     return dict(sessions=active, **config)
 
 @frappe.whitelist()
