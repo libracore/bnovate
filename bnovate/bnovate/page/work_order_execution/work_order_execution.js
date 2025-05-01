@@ -55,7 +55,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		view: read,					// state of the items display: read or write
 		ste_doc: null, 				// will contain content of stock entry before submitting.
 		ste_docs: [],				// existing stock entries related to the work order
-		draft_mode: false,			// if true, create draft STE's instead of submitted docs.
+		draft_mode: true,			// if true, create draft STE's instead of submitted docs.
 		produce_serial_no: false,	// true if produced item needs a serial number.
 		serial_no_remaining: 0,  	// when producing with S/N, loop this many more times
 		produce_batch: false,		// true if produced item needs a batch number.
@@ -243,11 +243,12 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		// should we switch to serialized behaviour? (produce one item at a time)
 		await fetch_item_details([state.work_order_doc.production_item]);
 		state.produce_serial_no = locals["Item"][state.work_order_doc.production_item].has_serial_no;
-		if (state.produce_serial_no) {
-			state.draft_mode = true;
-		} else {
-			state.draft_mode = false;
-		}
+		// if (state.produce_serial_no) {
+		// New in May 2025: always use draft mode. Simpler workflow and easier to assign to QC.
+		state.draft_mode = true;
+		// } else {
+		// state.draft_mode = false;
+		// }
 
 		state.produce_batch = locals["Item"][state.work_order_doc.production_item].has_batch_no;
 
