@@ -143,14 +143,22 @@ const template_page4 = `
                 <p>{{ __("How many parcels are you sending?") }}</p>
                 <p>{{ __("One parcel can contain several cartridges. We will create one return label per parcel.") }}</p>
                 <div class="form-group">
-                    <label for="parcel_count" class="control-label" style="display: none">Parcel Count</label>
+                    <label for="parcel_count" class="control-label" style="display: none">{{ __("Parcel Count") }}</label>
                     <input type="number" class="form-control" name="parcel_count" min="1" max="10" style="width: 30%" value="1">
                 </div>
                 {% endif %}
 
+                <h5>{{ __("Your Order Reference (PO Number)") }}</h5>
+                <div class="form-group">
+                    <label for="remarks" style="display: none">{{ __("Purchase Order No") }}</label>
+                    <input type="text" class="form-control" name="po_no">
+                </div>
+
                 <h5>{{ __("Remarks") }}</h5>
-                <label for="remarks" style="display: none">Remarks</label>
-                <textarea type="text" name="remarks"></textarea>
+                <div class="form-group">
+                    <label for="remarks" style="display: none">Remarks</label>
+                    <textarea type="text" name="remarks"></textarea>
+                </div>
             </form>
         </div>
     </div>
@@ -337,6 +345,7 @@ customElements.define('wizard-modal', class extends HTMLElement {
         const shipping_address = this.modal.querySelector("input[name='shipping_address']:checked")?.value;
         const billing_address = this.modal.querySelector("input[name='billing_address']:checked")?.value;
         const parcel_count = this.modal.querySelector("input[name='parcel_count']")?.value;
+        const po_no = this.modal.querySelector("input[name='po_no']")?.value;
         const remarks = this.modal.querySelector("textarea[name='remarks']")?.value;
 
         const shipping_address_display = this.addresses.find(addr => addr.name == shipping_address)?.display;
@@ -348,6 +357,7 @@ customElements.define('wizard-modal', class extends HTMLElement {
             shipping_address_display,
             billing_address,
             billing_address_display,
+            po_no,
             remarks,
             organize_return: this.organize_return,
             parcel_count,

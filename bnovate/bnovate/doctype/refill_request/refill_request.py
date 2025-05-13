@@ -169,6 +169,7 @@ def make_sales_order(source_name, target_doc=None):
         target.default_discount = customer.default_discount
         target.total_net_weight = sum([item.total_weight for item in target.items])
         target.run_method("set_missing_values")
+        target.po_no = ", ".join([a for a in [source.name, source.po_no] if a])
 
     doclist = get_mapped_doc("Refill Request", source_name, {
         "Refill Request": {
@@ -179,7 +180,7 @@ def make_sales_order(source_name, target_doc=None):
             "field_map": {
                 "billing_address": "customer_address",
                 "shipping_address": "shipping_address_name",
-                "name": "po_no",
+                # "name": "po_no",
                 "transaction_date": "po_date",
                 "remarks": "order_level_requests",
             },

@@ -15,6 +15,7 @@
   "transaction_date",
   "required_date",
   "expected_ship_date",
+  "po_no",
   "tracking_no",
   "carrier",
   "amended_from",
@@ -226,10 +227,17 @@
    "fieldname": "return_label_needed",
    "fieldtype": "Check",
    "label": "Return Label Needed"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "po_no",
+   "fieldtype": "Data",
+   "label": "Customer's Purchase Order",
+   "width": "100px"
   }
  ],
  "is_submittable": 1,
- "modified": "2025-05-13 14:53:21.035093",
+ "modified": "2025-05-13 16:25:17.447987",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Refill Request",
