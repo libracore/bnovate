@@ -32,6 +32,11 @@ frappe.ui.form.on("Customer", {
             frappe.set_route("query-report", "Cartridge Status");
         }, __("View"));
 
+        frm.add_custom_button(__("Owned Serial Numbers"), function () {
+            frappe.route_options = { owned_by: frm.doc.name };
+            frappe.set_route("List", "Serial No");
+        }, __("View"));
+
         frm.add_custom_button(__("Shipments"), function () {
             frappe.route_options = { customer: frm.doc.name };
             frappe.set_route("query-report", "Shipment Report");
