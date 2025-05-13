@@ -7,7 +7,7 @@
 frappe.ui.form.on("Customer", {
     before_load(frm) {
         frm.dashboard.add_transactions({
-            'items': ['Subscription Contract', 'Connectivity Package', 'Refill Request'],
+            'items': ['Subscription Contract', 'Connectivity Package', 'Refill Request', 'Blanket Order', 'Serial No', 'License Key'],
             'label': 'Orders',
         })
         frm.dashboard.add_transactions({
@@ -25,6 +25,17 @@ frappe.ui.form.on("Customer", {
                 }
             };
         })
+    },
+    refresh(frm) {
+        frm.add_custom_button(__("Stored Cartridges"), function () {
+            frappe.route_options = { customer: frm.doc.name, only_stored: true };
+            frappe.set_route("query-report", "Cartridge Status");
+        }, __("View"));
+
+        frm.add_custom_button(__("Shipments"), function () {
+            frappe.route_options = { customer: frm.doc.name };
+            frappe.set_route("query-report", "Shipment Report");
+        }, __("View"));
     },
     check_eori(frm) {
         // If API is unreliable, we could just link to the EU website:
