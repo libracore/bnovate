@@ -102,6 +102,7 @@ frappe.ui.form.on('Service Report', {
 				frappe.model.open_mapped_doc({
 					method: "bnovate.bnovate.doctype.service_report.service_report.make_sales_order",
 					frm: cur_frm,
+					run_link_triggers: true,
 				});
 			}, __("Create"));
 

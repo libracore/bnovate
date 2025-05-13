@@ -10,6 +10,10 @@ frappe.ui.form.on("Customer", {
             'items': ['Subscription Contract', 'Connectivity Package', 'Refill Request'],
             'label': 'Orders',
         })
+        frm.dashboard.add_transactions({
+            'items': ['Service Report'],
+            'label': 'Support',
+        })
     },
     setup(frm) {
         frm.set_query('portal_billing_address', function (doc) {
