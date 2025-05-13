@@ -42,7 +42,7 @@ class ServiceReport(Document):
         if self.billing_basis !=  BILLING_QUOTATION:
             self.quotation = None
         if self.billing_basis != BILLING_SERVICE_AGREEMENT:
-            self.subscription_contract = None
+            self.subscription= None
 
         if self.channel == CHANNEL_PARTNER:
             self.bnovate_technician = None

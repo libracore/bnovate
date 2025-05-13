@@ -54,7 +54,7 @@ frappe.ui.form.on('Service Report', {
 				}
 			}
 		});
-		frm.set_query("subscription_contract", function () {
+		frm.set_query("subscription", function () {
 			return {
 				filters: {
 					customer: frm.doc.customer,
