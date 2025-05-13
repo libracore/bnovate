@@ -94,6 +94,7 @@ def make_request(doc):
         'items': doc['items'],  # using data.items calls the built-in dict function...
         'return_label_needed': return_label_needed,
         'parcel_count': parcel_count,
+        'po_no': doc['po_no'],
         'remarks': doc['remarks'],
         'language': frappe.session.data.lang,
         'docstatus': 1,

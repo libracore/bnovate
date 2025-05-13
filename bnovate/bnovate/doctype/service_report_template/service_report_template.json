@@ -11,7 +11,7 @@
   "reason_for_visit",
   "billing_basis",
   "column_break_18",
-  "subscription_contract",
+  "subscription",
   "quotation",
   "issue_description_section",
   "description",
@@ -56,13 +56,6 @@
   {
    "fieldname": "column_break_18",
    "fieldtype": "Column Break"
-  },
-  {
-   "depends_on": "eval:doc.billing_basis == \"Under Service Agreement\"",
-   "fieldname": "subscription_contract",
-   "fieldtype": "Link",
-   "label": "Service Agreement",
-   "options": "Subscription Contract"
   },
   {
    "depends_on": "eval:doc.billing_basis == \"According to Quotation\"",
@@ -150,9 +143,16 @@
    "fieldname": "resolution",
    "fieldtype": "Text Editor",
    "label": "Resolution"
+  },
+  {
+   "depends_on": "eval:doc.billing_basis == \"Under Service Agreement\"",
+   "fieldname": "subscription",
+   "fieldtype": "Link",
+   "label": "Service Agreement",
+   "options": "Subscription Contract"
   }
  ],
- "modified": "2025-03-07 09:01:46.790660",
+ "modified": "2025-05-13 17:41:40.033866",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Service Report Template",

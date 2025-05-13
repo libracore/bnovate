@@ -31,7 +31,8 @@ def get_instruments_one_customer(customer):
             "owned_by": ["=", customer.docname],
             "item_group": ["=", "Instruments"],
         },
-        fields="*"
+        fields="*",
+        order_by="serial_no desc"
     )
 
     for asset in assets:

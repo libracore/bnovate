@@ -15,6 +15,7 @@
   "transaction_date",
   "required_date",
   "expected_ship_date",
+  "po_no",
   "tracking_no",
   "carrier",
   "amended_from",
@@ -41,6 +42,7 @@
   {
    "fieldname": "customer",
    "fieldtype": "Link",
+   "in_global_search": 1,
    "in_list_view": 1,
    "label": "Customer",
    "options": "Customer",
@@ -106,6 +108,7 @@
    "fetch_from": "customer.customer_name",
    "fieldname": "customer_name",
    "fieldtype": "Data",
+   "in_global_search": 1,
    "in_list_view": 1,
    "label": "Customer Name",
    "read_only": 1
@@ -224,10 +227,17 @@
    "fieldname": "return_label_needed",
    "fieldtype": "Check",
    "label": "Return Label Needed"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "po_no",
+   "fieldtype": "Data",
+   "label": "Customer's Purchase Order",
+   "width": "100px"
   }
  ],
  "is_submittable": 1,
- "modified": "2024-06-11 14:20:37.654104",
+ "modified": "2025-05-13 16:25:17.447987",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Refill Request",
@@ -261,6 +271,7 @@
    "write": 1
   }
  ],
+ "show_name_in_global_search": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "track_changes": 1

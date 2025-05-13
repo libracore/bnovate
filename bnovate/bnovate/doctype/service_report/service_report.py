@@ -42,7 +42,7 @@ class ServiceReport(Document):
         if self.billing_basis !=  BILLING_QUOTATION:
             self.quotation = None
         if self.billing_basis != BILLING_SERVICE_AGREEMENT:
-            self.subscription_contract = None
+            self.subscription= None
 
         if self.channel == CHANNEL_PARTNER:
             self.bnovate_technician = None
@@ -167,9 +167,6 @@ def make_sales_order(source_name, target_doc=None):
 def _make_sales_order(source_name, target_doc, ignore_permissions=False):
 
     def set_missing_values(source, target):
-        # if customer:
-        # 	target.customer = customer.name
-        # 	target.customer_name = customer.customer_name
         target.delivery_date = source.intervention_date
         target.ignore_pricing_rule = 1
         # target.flags.ignore_permissions = ignore_permissions

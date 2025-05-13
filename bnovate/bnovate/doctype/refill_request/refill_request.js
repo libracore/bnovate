@@ -19,7 +19,8 @@ frappe.ui.form.on('Refill Request', {
 	make_sales_order(frm) {
 		frappe.model.open_mapped_doc({
 			method: "bnovate.bnovate.doctype.refill_request.refill_request.make_sales_order",
-			frm
+			frm,
+			run_link_triggers: true,
 		});
 	},
 });

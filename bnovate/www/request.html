@@ -153,6 +153,13 @@ ol.request-ribbon {
 {% endif %}
 </div>
 
+{% if doc.po_no %}
+<div class="row">
+	<div class="col-6">
+		<b>{{ _("Your Order Reference (PO Number)") }}:</b> {{ doc.po_no }}
+	</div>
+</div>
+{% endif %}
 
 <div class="row">
 	<div class="col-6">

@@ -20,5 +20,9 @@ def get_data():
 				'label': _('Assets'),
 				'items': ['Serial No']
 			},
+			{
+				'label': _('Service'),
+				'items': ['Service Report']
+			},
 		]
 	}
