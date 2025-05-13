@@ -360,6 +360,8 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			item_name: item.item_name,
 			qty: qty,
 			s_warehouse: item_defaults.default_warehouse,
+			expense_account: item_defaults.expense_account,
+			cost_center: item_defaults.buying_cost_center,
 		});
 	}
 
@@ -563,6 +565,8 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 				item_code: item.item_code,
 				qty: item.qty,
 				s_warehouse: item.s_warehouse,
+				expense_account: item.expense_account,
+				cost_center: item.cost_center,
 			});
 		}
 
