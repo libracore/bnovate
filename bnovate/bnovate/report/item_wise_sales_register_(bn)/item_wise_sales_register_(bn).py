@@ -188,6 +188,13 @@ def get_columns():
 			"fieldtype": "Currency",
 			"width": 120,
 			"options": "company_currency"
+		},
+		{
+			"fieldname": "cogs",
+			"label": _("COGS"),
+			"fieldtype": "Currency",
+			"width": 120,
+			"options": "company_currency"
 		}
 	]
 
@@ -279,13 +286,15 @@ def get_items(filters):
 			sii.so_detail,
 			si.update_stock, 
 			sii.uom, 
-			sii.qty
+			sii.qty,
+			SUM(sle.stock_value_difference) as cogs
 		FROM `tabSales Invoice` si
 		LEFT JOIN `tabSales Invoice Item` sii ON sii.parent = si.name
 		LEFT JOIN `tabCustomer` cu ON cu.name = si.customer
 		LEFT JOIN `tabItem` it ON it.item_code = sii.item_code
 		LEFT JOIN `tabTerritory` te ON te.name = cu.territory
 		LEFT JOIN `tabCompany` co ON co.name = si.company
+		LEFT JOIN `tabStock Ledger Entry` sle ON sle.voucher_detail_no = sii.dn_detail
 		WHERE si.docstatus = 1 %s %s
 		ORDER BY si.posting_date DESC, sii.item_code DESC
 		""".format(company_currency=company_currency) % (conditions, match_conditions), filters, as_dict=1)

@@ -22,10 +22,19 @@ frappe.ui.form.on('Subscription Contract', {
 				}
 			)
 		});
-	}
+	},
+
 });
 
+frappe.ui.form.on('Subscription Contract Item', {
+	async price_list_rate(frm, cdt, cdn) {
+		if (frm.doc.ignore_default_discount) {
+			return;
+		}
 
+		await frappe.model.set_value(cdt, cdn, "discount_percentage", frm.doc.default_discount);
+	},
+});
 
 // Subclass SellingController to use their price rate mechanisms
 bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.SellingController.extend({
@@ -52,6 +61,7 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 		}
 	},
 	refresh() {
+		this.frm.doc.transaction_date = this.frm.doc.start_date; // Helps SellingController methods work for pricing for example
 		if (this.frm.doc.docstatus == 1 && (this.frm.doc.stopped || this.frm.doc.tentative_end_date)) {
 			render_checklist(this.frm);
 		}
@@ -75,6 +85,20 @@ bnovate.subscription_contract.SubscriptionContractController = erpnext.selling.S
 				this.frm.trigger('create_invoices');
 			});
 		}
+	},
+	async customer(doc, dt, dn) {
+		this._super();
+		// Get default discount
+
+		const resp = await frappe.db.get_value("Customer", { name: this.frm.doc.customer }, "default_discount")
+		const default_discount = resp.message.default_discount || 0;
+		this.frm.set_value("default_discount", default_discount);
+
+		bnovate.utils.set_item_discounts(this.frm);
+
+	},
+	apply_default_discount() {
+		bnovate.utils.set_item_discounts(this.frm);
 	},
 	start_date() {
 		this.frm.doc.transaction_date = this.frm.doc.start_date; // Helps SellingController methods work for pricing for example

@@ -37,6 +37,9 @@
   "price_list_currency",
   "plc_conversion_rate",
   "ignore_pricing_rule",
+  "default_discount",
+  "ignore_default_discount",
+  "apply_default_discount",
   "section_items",
   "items",
   "assets_section",
@@ -467,10 +470,26 @@
    "label": "Print Language",
    "options": "Language",
    "print_hide": 1
+  },
+  {
+   "fieldname": "default_discount",
+   "fieldtype": "Percent",
+   "label": "Default Discount (%)"
+  },
+  {
+   "default": "0",
+   "fieldname": "ignore_default_discount",
+   "fieldtype": "Check",
+   "label": "Ignore Default Discount"
+  },
+  {
+   "fieldname": "apply_default_discount",
+   "fieldtype": "Button",
+   "label": "Apply Default Discount"
   }
  ],
  "is_submittable": 1,
- "modified": "2024-03-22 15:10:52.906092",
+ "modified": "2025-05-16 17:01:21.939019",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Subscription Contract",
