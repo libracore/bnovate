@@ -4,6 +4,7 @@
 from __future__ import unicode_literals
 
 import frappe
+from frappe import _
 
 def execute(filters=None):
     return get_columns(), get_data(filters)
@@ -81,7 +82,25 @@ def get_columns():
             "fieldtype": "Link",
             "options": "Company",
             "width": 150
-        }
+		}, {
+			"fieldname": "company_currency",
+			"label": _("Company Currency"),
+			"fieldtype": "Link",
+			"options": "Currency",
+			"width": 100
+        }, {
+            "fieldname": "base_grand_total",
+            "label": "Grand Total (Company Currency)",
+            "fieldtype": "Currency",
+            "options": "company_currency",
+            "width": 120
+        }, {
+            "fieldname": "base_outstanding_amount",
+            "label": "Outstanding Amount (Company Currency)",
+            "fieldtype": "Currency",
+            "options": "company_currency",
+            "width": 120
+		}, 
     ]
 
 
@@ -95,6 +114,8 @@ def get_data(filters):
 
     if filters.company:
         additional_filters += " AND si.company = '{company}'".format(company=filters.company)
+
+    company_currency = frappe.get_cached_value('Company',  filters.get("company"),  "default_currency")
 
     query = """
         SELECT 
@@ -115,7 +136,9 @@ def get_data(filters):
             si.outstanding_amount,
 
             si.base_grand_total,
-            si.company
+            si.company,
+            "{company_currency}" as company_currency,
+            si.outstanding_amount * si.conversion_rate as base_outstanding_amount
         FROM 
             `tabSales Invoice` si
         JOIN 
@@ -125,6 +148,6 @@ def get_data(filters):
             AND si.outstanding_amount > 0
             {filters}
 		ORDER BY days_till_due ASC
-    """.format(status_date=filters.status_date, filters=additional_filters)
+    """.format(status_date=filters.status_date, filters=additional_filters, company_currency=company_currency)
     data = frappe.db.sql(query, as_dict=True)
     return data

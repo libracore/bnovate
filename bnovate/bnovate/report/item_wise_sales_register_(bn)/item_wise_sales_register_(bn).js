@@ -2,7 +2,7 @@
 // License: GNU General Public License v3. See license.txt
 
 frappe.query_reports["Item-wise Sales Register (bN)"] = {
-	"filters": [
+	filters: [
 		// {
 		// 	"fieldname": "date_range",
 		// 	"label": __("Date Range"),
@@ -62,5 +62,13 @@ frappe.query_reports["Item-wise Sales Register (bN)"] = {
 			"fieldtype": "Link",
 			"options": "Item Group"
 		}
-	]
+	],
+
+	after_datatable_render(datatable) {
+		// Activate tooltips on columns
+		$(function () {
+			$('[data-toggle="tooltip"]').tooltip()
+		})
+
+	},
 }
