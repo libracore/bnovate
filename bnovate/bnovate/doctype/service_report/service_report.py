@@ -242,7 +242,11 @@ def update_status_from_sales_order(sales_order, method=None):
         return
 
     for sr_name in list(set([it.service_report for it in sales_order.get("items")])):
-        if sr_name and frappe.db.exists("Service Report", sr_name):
-            print("Updating service report", sr_name)
-            doc = frappe.get_doc("Service Report", sr_name)
-            doc.set_status()
+        print("----------------------------------------")
+        print(sr_name)
+        print("----------------------------------------")
+        if not sr_name:
+            continue
+        print("Updating service report", sr_name)
+        doc = frappe.get_doc("Service Report", sr_name)
+        doc.set_status()

@@ -33,7 +33,6 @@
   "reason_for_visit",
   "billing_basis",
   "column_break_18",
-  "subscription_contract",
   "subscription",
   "quotation",
   "description_section",
@@ -188,13 +187,6 @@
    "fieldtype": "Date",
    "label": "Warranty End Date",
    "read_only": 1
-  },
-  {
-   "depends_on": "eval:doc.billing_basis == \"Under Service Agreement\"",
-   "fieldname": "subscription_contract",
-   "fieldtype": "Link",
-   "label": "Service Agreement (OLD)",
-   "options": "Subscription Contract"
   },
   {
    "fieldname": "billing_basis",
@@ -381,7 +373,7 @@
   }
  ],
  "is_submittable": 1,
- "modified": "2025-05-13 17:38:57.572046",
+ "modified": "2025-05-16 16:54:55.356214",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Service Report",
