@@ -475,6 +475,7 @@ jenv = {
     "methods": [
         "find_serial_no:bnovate.bnovate.doctype.storage_location.storage_location.find_serial_no",
         "find_serial_nos:bnovate.bnovate.doctype.storage_location.storage_location.find_serial_nos",
-        "is_enclosure:bnovate.bnovate.utils.enclosures.is_enclosure"
+        "is_enclosure:bnovate.bnovate.utils.enclosures.is_enclosure",
+        "get_print:bnovate.bnovate.utils.get_print_html",
     ],
 }

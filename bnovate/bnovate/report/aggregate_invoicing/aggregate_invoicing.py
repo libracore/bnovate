@@ -320,7 +320,7 @@ def check_invoice_status(docname, end_date):
     Empty list if invoices are up to date.
     """
     # Elementary SQL injection prevention...
-    if not re.match(r'^SC-\d{5}$', docname):
+    if not re.match(r'^SC-\d{5}(-\d+)?$', docname):
         frappe.throw("Invalid docname for Subscription Contract: {}".format(docname))
 
     return get_invoiceable_entries(to_date=end_date, subscription=docname, show_drafts=False)

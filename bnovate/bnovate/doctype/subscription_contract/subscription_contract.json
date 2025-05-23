@@ -23,6 +23,7 @@
   "end_date",
   "po_no",
   "po_date",
+  "sales_order",
   "stopped",
   "credit_confirmed",
   "contact_section",
@@ -486,10 +487,18 @@
    "fieldname": "apply_default_discount",
    "fieldtype": "Button",
    "label": "Apply Default Discount"
+  },
+  {
+   "allow_on_submit": 1,
+   "description": "Display this SC as an annex to the SO",
+   "fieldname": "sales_order",
+   "fieldtype": "Link",
+   "label": "Sales Order",
+   "options": "Sales Order"
   }
  ],
  "is_submittable": 1,
- "modified": "2025-05-16 17:01:21.939019",
+ "modified": "2025-05-23 11:50:11.281385",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Subscription Contract",
