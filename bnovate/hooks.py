@@ -308,6 +308,7 @@ website_context = {
 
 update_website_context = "bnovate.www.helpers.update_context"
 extend_website_page_controller_context  = {
+    "frappe.www.list": "bnovate.www.override_list",  # Translates titles...
 }
 
 website_redirects = [
