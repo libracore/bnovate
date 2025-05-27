@@ -93,10 +93,12 @@ def make_sales_order(source_name, target_doc=None):
         tcc_sns = list(set(row.serial_no for row in source.items if row.type == "TCC"))
         icc_sns = list(set(row.serial_no for row in source.items if row.type == "ICC"))
         icp_sns = list(set(row.serial_no for row in source.items if row.type == "ICC+"))
+        uvc_sns = list(set(row.serial_no for row in source.items if row.type == "UVC"))
 
         item_code_tcc = '200019'
         item_code_icc = '200054'
         item_code_icp = '200141.02'
+        item_code_uvc = '200161'
 
         target.transaction_date = getdate()
         target.currency = customer.default_currency
@@ -196,6 +198,29 @@ def make_sales_order(source_name, target_doc=None):
                 fields["discount_percentage"] = customer.default_discount
                 fields["rate"] = deets.price_list_rate * (1 - customer.default_discount / 100)
             target.append("items", fields)
+
+        if uvc_sns:
+            deets = get_item_deets(item_code_uvc, len(uvc_sns))
+            fields = {
+                "item_code": item_code_uvc,
+                "item_name": deets.item_name,
+                "description": deets.description,
+                "serial_nos": "\n".join(uvc_sns),
+                "qty": len(uvc_sns),
+                "uom": deets.uom,
+                "refill_request": source.name,
+                "price_list_rate": deets.price_list_rate,
+                "rate": deets.blanket_order_rate or deets.price_list_rate,
+                "weight_per_unit": deets.weight_per_unit,
+                "total_weight": len(uvc_sns) * deets.weight_per_unit,
+            }
+            if deets.blanket_order:
+                fields["blanket_order"] = deets.blanket_order
+            elif customer.default_discount:
+                fields["discount_percentage"] = customer.default_discount
+                fields["rate"] = deets.price_list_rate * (1 - customer.default_discount / 100)
+            target.append("items", fields)
+
 
         if source.return_label_needed:
             target.order_level_requests = "Organize return from customer, {} parcels.\n".format(source.parcel_count or 1) + (source.remarks or "")

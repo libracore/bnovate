@@ -22,12 +22,12 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Type",
-   "options": "\nTCC\nICC\nICC+",
+   "options": "\nTCC\nICC\nICC+\nUVC",
    "reqd": 1
   }
  ],
  "istable": 1,
- "modified": "2025-05-13 14:53:34.294051",
+ "modified": "2025-05-27 15:26:43.796353",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Refill Request Item",
