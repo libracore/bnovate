@@ -134,6 +134,18 @@ def get_columns():
             "options": "Delivery Note"
         },
         {
+            "fieldname": "so_date",
+            "label": _("SO Date"),
+            "fieldtype": "Date",
+            "width": 100
+        },
+        {
+            "fieldname": "dn_date",
+            "label": _("DN Date"),
+            "fieldtype": "Date",
+            "width": 100
+        },
+        {
             "fieldname": "income_account",
             "label": _("Income Account"),
             "fieldtype": "Link",
@@ -307,6 +319,9 @@ def get_items(filters):
             sii.sales_order,
             sii.delivery_note, 
 
+            so.transaction_date as so_date,
+            dn.posting_date as dn_date, 
+
             sii.income_account,
             sii.expense_account,
             sii.cost_center,
@@ -342,6 +357,8 @@ def get_items(filters):
         LEFT JOIN `tabTerritory` te ON te.name = cu.territory
         LEFT JOIN `tabCompany` co ON co.name = si.company
         LEFT JOIN `tabStock Ledger Entry` sle ON sle.voucher_detail_no = sii.dn_detail
+        LEFT JOIN `tabSales Order` so ON so.name = sii.sales_order
+        LEFT JOIN `tabDelivery Note` dn ON dn.name = sii.delivery_note
         WHERE si.docstatus = 1 %s %s
         GROUP BY sle.voucher_detail_no
         ORDER BY si.posting_date DESC, sii.item_code DESC
