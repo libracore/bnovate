@@ -48,14 +48,14 @@ def get_columns(filters):
             "width": 100,
             "precision": 2
         },
-        {
-            "label": "{0} ({1})".format(_("Balance"), currency),
-            "fieldname": "balance",
-            "fieldtype": "Float",
-            "width": 130,
-            "precision": 2
-        },
-        		{
+        # {
+        #     "label": "{0} ({1})".format(_("Balance"), currency),
+        #     "fieldname": "balance",
+        #     "fieldtype": "Float",
+        #     "width": 130,
+        #     "precision": 2
+        # },
+		{
 			"label": _("Voucher Type"),
 			"fieldname": "voucher_type",
 			"width": 120
