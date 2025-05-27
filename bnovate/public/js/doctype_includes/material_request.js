@@ -16,19 +16,20 @@ frappe.ui.form.on('Material Request', {
 
 
             let suppliers = await get_suppliers(frm);
+            console.log(suppliers);
             for (let item of frm.doc.items) {
                 const tooltip = frappe.render_template(`
                 <ul>
                     {% for item in supplier_items %}
-                    <li>{{ item.supplier }} - ref. {{ item.supplier_part_no }}</li>
+                    <li>{{ item.supplier_name }} - ref. {{ item.supplier_part_no }}</li>
                     {% endfor %}
                 </ul>
                 `, suppliers[item.item_code]);
 
                 let field = document.querySelector(`[data-name="${item.name}"] [data-fieldname="default_supplier"]`)
                 field.innerHTML = `
-                <span data-html="true" data-toggle="tooltip" title="${tooltip}">
-                    ${suppliers[item.item_code].default_supplier || "[Undefined]"}
+                <span data-html="true" data-toggle="tooltip" title="${tooltip}" style="max-width: 400px; white-space: normal; display: inline-block;">
+                    ${suppliers[item.item_code].default_supplier_name || "[Undefined]"}
                 <i class="fa fa-info-circle"></i></span >
             `;
             }
@@ -98,8 +99,15 @@ async function get_suppliers(frm) {
         // thanks to https://github.com/frappe/erpnext/issues/19535
         let { default_supplier } = item.item_defaults.find(({ company }) => company === frappe.defaults.get_user_default('company')) || {};
 
+        let default_supplier_name = ""
+        if (default_supplier) {
+            const supplier = await frappe.model.with_doc("Supplier", default_supplier);
+            default_supplier_name = supplier.supplier_name || default_supplier;
+        }
+
         suppliers[item_code] = {
             default_supplier,
+            default_supplier_name,
             supplier_items: item.supplier_items,
         };
     }
