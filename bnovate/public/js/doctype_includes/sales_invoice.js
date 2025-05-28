@@ -19,5 +19,11 @@ frappe.ui.form.on("Sales Invoice", {
         setTimeout(() => {
             frm.remove_custom_button("Subscription", "Create")
         }, 500);
+
+        frm.add_custom_button(__('Deferred Revenue Entries'), async function () {
+            await bnovate.utils.book_deferred_income_or_expense(frm.doc.doctype, frm.doc.name);
+        }, __('Create'))
+
+
     },
 })

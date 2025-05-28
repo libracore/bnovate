@@ -479,3 +479,37 @@ bnovate.utils.check_eori = async function (eori_number) {
     });
   }
 }
+
+bnovate.utils.convert_deferred_revenue_to_income = async function (start_date, end_date) {
+  let resp = await frappe.call({
+    method: 'bnovate.bnovate.utils.convert_deferred_revenue_to_income',
+    args: {
+      start_date,
+      end_date,
+    }
+  })
+  return resp;
+}
+
+bnovate.utils.convert_deferred_expense_to_expense = async function (start_date, end_date) {
+  let resp = await frappe.call({
+    method: 'bnovate.bnovate.utils.convert_deferred_expense_to_expense',
+    args: {
+      start_date,
+      end_date,
+    }
+  })
+  return resp;
+}
+
+bnovate.utils.book_deferred_income_or_expense = async function (doctype, docname) {
+  let resp = await frappe.call({
+    method: 'bnovate.bnovate.utils.book_deferred_income_or_expense',
+    args: {
+      doctype,
+      docname,
+    }
+  })
+  console.log(resp);
+  return resp;
+}

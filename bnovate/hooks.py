@@ -216,6 +216,7 @@ web_include_js = [
 # include js in doctype views
 doctype_js = {
     "Address": ["public/js/doctype_includes/address.js"],
+    "Accounts Settings": ["public/js/doctype_includes/accounts_settings.js"],
     "Blanket Order": ["public/js/doctype_includes/blanket_order.js"],
     "Company": ["public/js/doctype_includes/company.js"],
     "Contact": ["public/js/doctype_includes/contact.js"],
