@@ -340,9 +340,9 @@ apps/bnovate/bnovate/public/js/doctype_includes/shipment.js,Confirm Cancellation
 apps/bnovate/bnovate/public/js/doctype_includes/shipment.js,Copy to RR,Kopie an RR
 apps/bnovate/bnovate/public/js/doctype_includes/shipment.js,Do not cancel,Nicht abbrechen
 apps/bnovate/bnovate/public/js/doctype_includes/shipment.js,Update Tracking,Update-Verfolgung
-apps/bnovate/bnovate/public/js/web_includes/wizard_modal.js,How many parcels are you sending?,Wie viele Pakete werden Sie versenden?
+apps/bnovate/bnovate/public/js/web_includes/wizard_modal.js,How many parcels are you sending?,Wie viele Pakete schicken Sie?
 apps/bnovate/bnovate/public/js/web_includes/wizard_modal.js,One parcel can contain several cartridges. We will create one return label per parcel.,Ein Paket kann mehrere Kartuschen enthalten. Wir erstellen ein Rücksendeetikett pro Paket.
-apps/bnovate/bnovate/public/js/web_includes/wizard_modal.js,Parcel Count,Paketanzahl
+apps/bnovate/bnovate/public/js/web_includes/wizard_modal.js,Parcel Count,Parzellenanzahl
 apps/bnovate/bnovate/www/cartridge.html,Production Date,Produktionsdatum
 apps/bnovate/bnovate/www/cartridge.py,Cartridge,Kartusche
 apps/bnovate/bnovate/www/instrument.html,Installation,Einrichtung
@@ -378,3 +378,20 @@ apps/bnovate/bnovate/www/pickup.py,Schedule Pickup,Abholung planen
 apps/bnovate/bnovate/www/request.html,Organize Pickup,Abholung organisieren
 apps/bnovate/bnovate/www/request.html,Requested by,Angefragt von
 apps/bnovate/bnovate/www/requests.html,Requested By,Angefragt von
+apps/bnovate/bnovate/bnovate/report/cartridge_status/cartridge_status.py,Awaiting Return,Erwartete Rückkehr
+apps/bnovate/bnovate/bnovate/report/cartridge_status/cartridge_status.py,Filling,Füllen
+apps/bnovate/bnovate/bnovate/report/cartridge_status/cartridge_status.py,In Storage,Im Lager
+apps/bnovate/bnovate/bnovate/report/cartridge_status/cartridge_status.py,Ready to Ship,Bereit zum Versand
+apps/bnovate/bnovate/bnovate/report/connectivity_data_usage/connectivity_data_usage.py,Period Start,Zeitraum Beginn
+apps/bnovate/bnovate/bnovate/report/item_wise_sales_register_(bn)/item_wise_sales_register_(bn).py,COGS,COGS
+apps/bnovate/bnovate/bnovate/report/item_wise_sales_register_(bn)/item_wise_sales_register_(bn).py,DN Date,DN Datum
+apps/bnovate/bnovate/bnovate/report/item_wise_sales_register_(bn)/item_wise_sales_register_(bn).py,Price List Rate in Company Currency,Preislistenkurs in Firmenwährung
+apps/bnovate/bnovate/bnovate/report/item_wise_sales_register_(bn)/item_wise_sales_register_(bn).py,SO Date,SO Datum
+apps/bnovate/bnovate/public/js/doctype_includes/contact.js,User ID is already associated with another contact:,Die Benutzer-ID ist bereits mit einem anderen Kontakt verbunden:
+apps/bnovate/bnovate/public/js/doctype_includes/customer.js,Owned Serial Numbers,Eigene Seriennummern
+apps/bnovate/bnovate/public/js/doctype_includes/customer.js,Stored Cartridges,Gespeicherte Patronen
+apps/bnovate/bnovate/public/js/doctype_includes/stock_entry.js,No expired batches found,Keine abgelaufenen Chargen gefunden
+apps/bnovate/bnovate/public/js/web_includes/wizard_modal.js,Purchase Order No,Bestellungsnummer
+apps/bnovate/bnovate/www/cartridge.py,Cartridge,Kartusche
+apps/bnovate/bnovate/www/instrument.py,Instrument,Instrument
+apps/bnovate/bnovate/www/request.html,Your Order Reference (PO Number),Ihre Bestellnummer (PO-Nummer)
