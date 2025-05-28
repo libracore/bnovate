@@ -43,29 +43,37 @@ const template_page1 = `
 <table class="table">
     <thead>
         <th>{{ __("Serial No") }}</th>
+        <th>{{ __("Compatibility") }}</th>
         <th>{{ __("Variant") }}</th>
     </thead>
     <tbody>
         <tr>
             <td>[{{ __("All") }}]</td>
+            <td></td>
             <td>
-                <select id="variant-default">
+                <select id="variant-default" style="width: 50%">
                     <option value=""></option>
                     <option>TCC</option>
                     <option>ICC</option>
                     <option>ICC+</option>
+                    <option>UVC</option>
                 </select>
             </td>
         </tr>
         {% for sn in serial_nos %}
         <tr>
             <td>{{ sn.serial_no }}</td>
+            <td>{{ sn.compatibility }}</td>
             <td>
-                <select class="variant-select" name="variant-{{sn.serial_no}}" data-sn="{{sn.serial_no}}" data-last_shipped="{{sn.address_short}}">
+                <select class="variant-select" name="variant-{{sn.serial_no}}" data-sn="{{sn.serial_no}}" data-last_shipped="{{sn.address_short}}" style="width: 50%">
                     <option value=""></option>
-                    <option>TCC</option>
-                    <option>ICC</option>
-                    <option>ICC+</option>
+                    {% if sn.item_code == "101083" %}
+                        <option>UVC</option>
+                    {% else %}
+                        <option>TCC</option>
+                        <option>ICC</option>
+                        <option>ICC+</option>
+                    {% endif %}
                 </select>
             </td>
         </tr>
@@ -324,11 +332,15 @@ customElements.define('wizard-modal', class extends HTMLElement {
         this.enable_buttons();
     }
 
-    // Set all blank variant selects when the first one is modified
+    // Set all variant selects when the first one is modified, only if variant is compatible
     bind_listeners(el) {
         const selects = [...el.querySelectorAll(".variant-select")];
         el.querySelector("#variant-default").addEventListener("change", (e) => {
-            selects.map(s => { s.value = e.target.value });
+            selects.forEach(s => {
+                if ([...s.options].some(opt => opt.value === e.target.value)) {
+                    s.value = e.target.value;
+                }
+            });
             this.enable_buttons();
         })
 

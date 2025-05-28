@@ -312,8 +312,13 @@ ol.wizard-ribbon {
   background-color: var(--line-color);
 }
 
+.wizard-page input {
+  border: 1px solid #ced4da;
+}
+
 .wizard-page textarea {
   width: 100%;
+  border: 1px solid #ced4da;
 }
 
 .wizard-page label:hover,

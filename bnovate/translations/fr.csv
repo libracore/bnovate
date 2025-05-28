@@ -187,7 +187,7 @@ apps/bnovate/bnovate/www/instruments.html,Service Agreement,Accord de service
 apps/bnovate/bnovate/www/instruments.html,Touch UI,Touch UI
 apps/bnovate/bnovate/www/instruments.html,Warranty Until,Garantie jusqu'à
 apps/bnovate/bnovate/www/instruments.html,Web UI,Web UI
-apps/bnovate/bnovate/www/internal/storage.html,Slot,Fente
+apps/bnovate/bnovate/www/internal/storage.html,Slot,Emplacement
 apps/bnovate/bnovate/www/my_addresses.html,Address Details,Détails de l'adresse
 apps/bnovate/bnovate/www/my_addresses.html,Delete this address?,Supprimer cette adresse ?
 apps/bnovate/bnovate/www/request.py,You cannot order to this billing address,Vous ne pouvez pas commander à cette adresse de facturation
@@ -381,3 +381,20 @@ apps/bnovate/bnovate/www/pickup.py,Schedule Pickup,Horaire d'enlèvement
 apps/bnovate/bnovate/www/request.html,Organize Pickup,Organiser l'enlèvement
 apps/bnovate/bnovate/www/request.html,Requested by,Demandé par
 apps/bnovate/bnovate/www/requests.html,Requested By,Demandé par
+apps/bnovate/bnovate/bnovate/report/cartridge_status/cartridge_status.py,Awaiting Return,En attente de retour
+apps/bnovate/bnovate/bnovate/report/cartridge_status/cartridge_status.py,Filling,Remplissage
+apps/bnovate/bnovate/bnovate/report/cartridge_status/cartridge_status.py,In Storage,En stock
+apps/bnovate/bnovate/bnovate/report/cartridge_status/cartridge_status.py,Ready to Ship,Prêt à expédier
+apps/bnovate/bnovate/bnovate/report/connectivity_data_usage/connectivity_data_usage.py,Period Start,Début de la période
+apps/bnovate/bnovate/bnovate/report/item_wise_sales_register_(bn)/item_wise_sales_register_(bn).py,COGS,COGS
+apps/bnovate/bnovate/bnovate/report/item_wise_sales_register_(bn)/item_wise_sales_register_(bn).py,DN Date,DN Date
+apps/bnovate/bnovate/bnovate/report/item_wise_sales_register_(bn)/item_wise_sales_register_(bn).py,Price List Rate in Company Currency,Tarif de la liste de prix dans la devise de l'entreprise
+apps/bnovate/bnovate/bnovate/report/item_wise_sales_register_(bn)/item_wise_sales_register_(bn).py,SO Date,Date de l'OS
+apps/bnovate/bnovate/public/js/doctype_includes/contact.js,User ID is already associated with another contact:,L'ID de l'utilisateur est déjà associé à un autre contact :
+apps/bnovate/bnovate/public/js/doctype_includes/customer.js,Owned Serial Numbers,Numéros de série possédés
+apps/bnovate/bnovate/public/js/doctype_includes/customer.js,Stored Cartridges,Cartouches stockées
+apps/bnovate/bnovate/public/js/doctype_includes/stock_entry.js,No expired batches found,Aucun lot périmé n'a été trouvé
+apps/bnovate/bnovate/public/js/web_includes/wizard_modal.js,Purchase Order No,Numéro du bon de commande
+apps/bnovate/bnovate/www/cartridge.py,Cartridge,Cartouche
+apps/bnovate/bnovate/www/instrument.py,Instrument,Instrument
+apps/bnovate/bnovate/www/request.html,Your Order Reference (PO Number),Référence de votre commande (numéro de commande)

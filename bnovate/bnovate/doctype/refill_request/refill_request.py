@@ -93,27 +93,58 @@ def make_sales_order(source_name, target_doc=None):
         tcc_sns = list(set(row.serial_no for row in source.items if row.type == "TCC"))
         icc_sns = list(set(row.serial_no for row in source.items if row.type == "ICC"))
         icp_sns = list(set(row.serial_no for row in source.items if row.type == "ICC+"))
+        uvc_sns = list(set(row.serial_no for row in source.items if row.type == "UVC"))
 
         item_code_tcc = '200019'
         item_code_icc = '200054'
         item_code_icp = '200141.02'
+        item_code_uvc = '200161'
+
+        target.transaction_date = getdate()
+        target.currency = customer.default_currency
+        target.selling_price_list = customer.default_price_list
+        target.set_price_list_currency('selling') # also sets conversion rate
+
+        target.contact_display = source.contact_display
+        target.incoterm = customer.default_incoterm
 
         target_copy = target.as_dict()
             
-        def get_item_deets(item_code):
-            return get_item_details(args=target_copy.update({
-                'item_code': item_code,
-                'transaction_date': getdate(),
-            }))
+        def get_item_deets(item_code, qty):
+            return get_item_details(args={
+                "barcode": None,
+                "conversion_rate": target.conversion_rate,
+                "company": target.company,
+                "currency": target.currency,
+                "customer": target.customer,
+                "doctype": target.doctype,
+                "ignore_pricing_rule": 0,
+                "is_pos": 0,
+                "item_code": item_code,
+                "order_type": "Sales",
+                "plc_conversion_rate": target.plc_conversion_rate,
+                "pos_profile": "",
+                "price_list": target.selling_price_list,
+                "price_list_currency": target.price_list_currency,
+                "qty": qty,
+                "stock_uom": "Unit",
+                "transaction_date": target.transaction_date,
+                "transaction_type": "selling",
+                "update_stock": 0
+                }, doc=target_copy)
 
         if tcc_sns:
-            deets = get_item_deets(item_code_tcc)
+            deets = get_item_deets(item_code_tcc, len(tcc_sns))
             fields = {
                 "item_code": item_code_tcc,
+                "item_name": deets.item_name,
+                "description": deets.description,
                 "serial_nos": "\n".join(tcc_sns),
                 "qty": len(tcc_sns),
+                "uom": deets.uom,
                 "refill_request": source.name,
-                "rate": deets.blanket_order_rate,
+                "price_list_rate": deets.price_list_rate,
+                "rate": deets.blanket_order_rate or deets.price_list_rate,
                 "weight_per_unit": deets.weight_per_unit,
                 "total_weight": len(tcc_sns) * deets.weight_per_unit,
             }
@@ -121,16 +152,21 @@ def make_sales_order(source_name, target_doc=None):
                 fields["blanket_order"] = deets.blanket_order
             elif customer.default_discount:
                 fields["discount_percentage"] = customer.default_discount
+                fields["rate"] = deets.price_list_rate * (1 - customer.default_discount / 100)
             target.append("items", fields)
 
         if icc_sns:
-            deets = get_item_deets(item_code_icc)
+            deets = get_item_deets(item_code_icc, len(icc_sns))
             fields = {
                 "item_code": item_code_icc,
+                "item_name": deets.item_name,
+                "description": deets.description,
                 "serial_nos": "\n".join(icc_sns),
                 "qty": len(icc_sns),
+                "uom": deets.uom,
                 "refill_request": source.name,
-                "rate": deets.blanket_order_rate,
+                "price_list_rate": deets.price_list_rate,
+                "rate": deets.blanket_order_rate or deets.price_list_rate,
                 "weight_per_unit": deets.weight_per_unit,
                 "total_weight": len(icc_sns) * deets.weight_per_unit,
             }
@@ -138,16 +174,21 @@ def make_sales_order(source_name, target_doc=None):
                 fields["blanket_order"] = deets.blanket_order
             elif customer.default_discount:
                 fields["discount_percentage"] = customer.default_discount
+                fields["rate"] = deets.price_list_rate * (1 - customer.default_discount / 100)
             target.append("items", fields)
 
         if icp_sns:
-            deets = get_item_deets(item_code_icp)
+            deets = get_item_deets(item_code_icp, len(icp_sns))
             fields = {
                 "item_code": item_code_icp,
+                "item_name": deets.item_name,
+                "description": deets.description,
                 "serial_nos": "\n".join(icp_sns),
                 "qty": len(icp_sns),
+                "uom": deets.uom,
                 "refill_request": source.name,
-                "rate": deets.blanket_order_rate,
+                "price_list_rate": deets.price_list_rate,
+                "rate": deets.blanket_order_rate or deets.price_list_rate,
                 "weight_per_unit": deets.weight_per_unit,
                 "total_weight": len(icp_sns) * deets.weight_per_unit,
             }
@@ -155,20 +196,38 @@ def make_sales_order(source_name, target_doc=None):
                 fields["blanket_order"] = deets.blanket_order
             elif customer.default_discount:
                 fields["discount_percentage"] = customer.default_discount
+                fields["rate"] = deets.price_list_rate * (1 - customer.default_discount / 100)
             target.append("items", fields)
+
+        if uvc_sns:
+            deets = get_item_deets(item_code_uvc, len(uvc_sns))
+            fields = {
+                "item_code": item_code_uvc,
+                "item_name": deets.item_name,
+                "description": deets.description,
+                "serial_nos": "\n".join(uvc_sns),
+                "qty": len(uvc_sns),
+                "uom": deets.uom,
+                "refill_request": source.name,
+                "price_list_rate": deets.price_list_rate,
+                "rate": deets.blanket_order_rate or deets.price_list_rate,
+                "weight_per_unit": deets.weight_per_unit,
+                "total_weight": len(uvc_sns) * deets.weight_per_unit,
+            }
+            if deets.blanket_order:
+                fields["blanket_order"] = deets.blanket_order
+            elif customer.default_discount:
+                fields["discount_percentage"] = customer.default_discount
+                fields["rate"] = deets.price_list_rate * (1 - customer.default_discount / 100)
+            target.append("items", fields)
+
 
         if source.return_label_needed:
             target.order_level_requests = "Organize return from customer, {} parcels.\n".format(source.parcel_count or 1) + (source.remarks or "")
 
-        target.contact_display = source.contact_display
 
-        # force empty some fields so they get set from customer defaults
-        target.currency = None
-        target.selling_price_list = None
-        target.price_list_currency = None
         target.default_discount = customer.default_discount
         target.total_net_weight = sum([item.total_weight for item in target.items])
-        target.run_method("set_missing_values")
         target.po_no = ", ".join([a for a in [source.name, source.po_no] if a])
 
     doclist = get_mapped_doc("Refill Request", source_name, {

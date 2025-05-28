@@ -188,3 +188,16 @@ def get_data(filters):
     data.sort(key=attrgetter('sort_index'))
     
     return data
+
+
+def translations_trick():
+    [
+        _("Confirmed"),
+        _("Requested"),
+        _("Filling"),
+        _("Ready to Ship"),
+        _("Refill Pending"),
+        _("In Storage"),
+        _("Awaiting Return"),
+        _("Shipped"),
+    ]

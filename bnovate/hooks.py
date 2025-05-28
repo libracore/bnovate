@@ -216,6 +216,7 @@ web_include_js = [
 # include js in doctype views
 doctype_js = {
     "Address": ["public/js/doctype_includes/address.js"],
+    "Accounts Settings": ["public/js/doctype_includes/accounts_settings.js"],
     "Blanket Order": ["public/js/doctype_includes/blanket_order.js"],
     "Company": ["public/js/doctype_includes/company.js"],
     "Contact": ["public/js/doctype_includes/contact.js"],
@@ -308,6 +309,7 @@ website_context = {
 
 update_website_context = "bnovate.www.helpers.update_context"
 extend_website_page_controller_context  = {
+    "frappe.www.list": "bnovate.www.override_list",  # Translates titles...
 }
 
 website_redirects = [
@@ -475,6 +477,7 @@ jenv = {
     "methods": [
         "find_serial_no:bnovate.bnovate.doctype.storage_location.storage_location.find_serial_no",
         "find_serial_nos:bnovate.bnovate.doctype.storage_location.storage_location.find_serial_nos",
-        "is_enclosure:bnovate.bnovate.utils.enclosures.is_enclosure"
+        "is_enclosure:bnovate.bnovate.utils.enclosures.is_enclosure",
+        "get_print:bnovate.bnovate.utils.get_print_html",
     ],
 }

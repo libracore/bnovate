@@ -21,6 +21,7 @@ def get_columns(filters):
     columns = [
         {"label": "Expense Account", "fieldname": "expense_account", "fieldtype": "Link", "options": "Account", "width": 150},
         {"label": "Supplier", "fieldname": "supplier", "fieldtype": "Link", "options": "Supplier", "width": 150},
+        {"label": "Supplier Name", "fieldname": "supplier_name", "fieldtype": "Data", "width": 150},
     ]
 
     for month in months:
@@ -74,7 +75,7 @@ def get_data(filters):
     for row in data:
         key = (row['expense_account'], row['supplier'])
         if key not in pivot_data:
-            pivot_data[key] = {'expense_account': row['expense_account'], 'supplier': row['supplier']}
+            pivot_data[key] = {'expense_account': row['expense_account'], 'supplier': row['supplier'], 'supplier_name': row['supplier_name']}
         pivot_data[key][f"{row['year']}-{row['month']:02d}"] = row['base_net_amount']
 
     # Convert the dictionary to a list of dictionaries
