@@ -105,6 +105,11 @@ async function get_suppliers(frm) {
             default_supplier_name = supplier.supplier_name || default_supplier;
         }
 
+        item.supplier_items.forEach(async supplier_item => {
+            const supplier_doc = await frappe.model.with_doc("Supplier", supplier_item.supplier);
+            supplier_item.supplier_name = supplier_doc?.supplier_name;
+        })
+
         suppliers[item_code] = {
             default_supplier,
             default_supplier_name,
