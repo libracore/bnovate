@@ -46,14 +46,14 @@ SELECT
     dni.item_code as "item_code",
     i.item_name as "item_name",
     i.item_group as "item_group",
-    soi.delivery_date as "planned_date",
+    IFNULL(soi.benchmark_delivery_date, soi.delivery_date) as "planned_date",
     dn.posting_date as "shipped_date",
-    DATEDIFF(dn.posting_date, soi.delivery_date) as "delay",
-    DATEDIFF(dn.posting_date, soi.delivery_date) <= 0 as "0d",
-    DATEDIFF(dn.posting_date, soi.delivery_date) > 0 AND DATEDIFF(dn.posting_date, soi.delivery_date) <= 2 as "2d",
-    DATEDIFF(dn.posting_date, soi.delivery_date) > 2 AND DATEDIFF(dn.posting_date, soi.delivery_date) <= 7 as "1w",
-    DATEDIFF(dn.posting_date, soi.delivery_date) > 7 as ">1w",
-    LEFT(CONVERT(soi.delivery_date, CHAR), 7) as "month"
+    DATEDIFF(dn.posting_date, IFNULL(soi.benchmark_delivery_date, soi.delivery_date)) as "delay",
+    DATEDIFF(dn.posting_date, IFNULL(soi.benchmark_delivery_date, soi.delivery_date)) <= 0 as "0d",
+    DATEDIFF(dn.posting_date, IFNULL(soi.benchmark_delivery_date, soi.delivery_date)) > 0 AND DATEDIFF(dn.posting_date, IFNULL(soi.benchmark_delivery_date, soi.delivery_date)) <= 2 as "2d",
+    DATEDIFF(dn.posting_date, IFNULL(soi.benchmark_delivery_date, soi.delivery_date)) > 2 AND DATEDIFF(dn.posting_date, IFNULL(soi.benchmark_delivery_date, soi.delivery_date)) <= 7 as "1w",
+    DATEDIFF(dn.posting_date, IFNULL(soi.benchmark_delivery_date, soi.delivery_date)) > 7 as ">1w",
+    LEFT(CONVERT(IFNULL(soi.benchmark_delivery_date, soi.delivery_date), CHAR), 7) as "month"
 FROM `tabDelivery Note Item` AS dni
 JOIN `tabDelivery Note` AS dn ON dni.parent = dn.name
 JOIN `tabItem` AS i ON dni.item_code = i.name
@@ -94,14 +94,14 @@ FROM (
     dni.item_code as "Item Code",
     i.item_name as "Item Name",
     i.item_group as "Item Group",
-    soi.delivery_date as "Planned Date",
+    IFNULL(soi.benchmark_delivery_date, soi.delivery_date) as "Planned Date",
     dn.posting_date as "Shipped Date",
-    DATEDIFF(dn.posting_date, soi.delivery_date) as "Delay",
-    DATEDIFF(dn.posting_date, soi.delivery_date) <= 0 as "0d",
-    DATEDIFF(dn.posting_date, soi.delivery_date) > 0 AND DATEDIFF(dn.posting_date, soi.delivery_date) <= 2 as "2d",
-    DATEDIFF(dn.posting_date, soi.delivery_date) > 2 AND DATEDIFF(dn.posting_date, soi.delivery_date) <= 7 as "1w",
-    DATEDIFF(dn.posting_date, soi.delivery_date) > 7 as ">1w",
-    LEFT(CONVERT(soi.delivery_date, CHAR), 7) as "month"
+    DATEDIFF(dn.posting_date, IFNULL(soi.benchmark_delivery_date, soi.delivery_date)) as "Delay",
+    DATEDIFF(dn.posting_date, IFNULL(soi.benchmark_delivery_date, soi.delivery_date)) <= 0 as "0d",
+    DATEDIFF(dn.posting_date, IFNULL(soi.benchmark_delivery_date, soi.delivery_date)) > 0 AND DATEDIFF(dn.posting_date, IFNULL(soi.benchmark_delivery_date, soi.delivery_date)) <= 2 as "2d",
+    DATEDIFF(dn.posting_date, IFNULL(soi.benchmark_delivery_date, soi.delivery_date)) > 2 AND DATEDIFF(dn.posting_date, IFNULL(soi.benchmark_delivery_date, soi.delivery_date)) <= 7 as "1w",
+    DATEDIFF(dn.posting_date, IFNULL(soi.benchmark_delivery_date, soi.delivery_date)) > 7 as ">1w",
+    LEFT(CONVERT(IFNULL(soi.benchmark_delivery_date, soi.delivery_date), CHAR), 7) as "month"
   FROM `tabDelivery Note Item` AS dni
   JOIN `tabDelivery Note` AS dn ON dni.parent = dn.name
   JOIN `tabItem` AS i ON dni.item_code = i.name

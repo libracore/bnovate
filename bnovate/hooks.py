@@ -77,6 +77,8 @@ fixtures = [
             "Sales Order-indicator_key",
             "Sales Order Item-planned_stock",
             "Sales Order-view_stored_cartridges",
+            "Sales Order-date_change_origin",
+            "Sales Order Item-benchmark_delivery_date",
             "Work Order-serial_no",
             "Work Order-comment",
             "Serial No-open_sales_order",
@@ -388,7 +390,12 @@ doc_events = {
             "bnovate.bnovate.doctype.refill_request.refill_request.update_status_from_sales_order",
             "bnovate.bnovate.doctype.service_report.service_report.update_status_from_sales_order",
         ],
-        "on_update_after_submit": "bnovate.bnovate.utils.enclosures.check_so_serial_no",
+        "on_update_after_submit": [
+            "bnovate.bnovate.utils.enclosures.check_so_serial_no",
+        ],
+        "before_update_after_submit": [
+            "bnovate.bnovate.utils.controllers.check_delivery_date_updates",
+        ],
         "on_cancel": [
             "bnovate.bnovate.doctype.refill_request.refill_request.update_status_from_sales_order",
             "bnovate.bnovate.doctype.service_report.service_report.update_status_from_sales_order",
