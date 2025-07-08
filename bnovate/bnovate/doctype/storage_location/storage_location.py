@@ -61,7 +61,7 @@ def store_serial_no(location_name, serial_no, key=None):
 	if not key:
 		frappe.has_permission("Storage Location", "write", throw=True)
 
-	serial_no = serial_no.strip()
+	serial_no = serial_no.strip().upper()
 
 	# Check that serial_no is not currently stored:
 	location = find_serial_no(serial_no, throw=False, key=key)
