@@ -6,6 +6,7 @@
  "engine": "InnoDB",
  "field_order": [
   "title",
+  "ensure_valid_serial_no",
   "column_break_2",
   "key",
   "url",
@@ -52,9 +53,15 @@
    "fieldname": "url",
    "fieldtype": "HTML",
    "label": "URL"
+  },
+  {
+   "default": "1",
+   "fieldname": "ensure_valid_serial_no",
+   "fieldtype": "Check",
+   "label": "Ensure Serial No exist"
   }
  ],
- "modified": "2023-05-04 16:21:46.050111",
+ "modified": "2025-07-08 15:59:10.712654",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Storage Location",

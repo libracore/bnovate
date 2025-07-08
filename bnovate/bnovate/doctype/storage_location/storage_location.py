@@ -69,6 +69,10 @@ def store_serial_no(location_name, serial_no, key=None):
 		frappe.throw("Serial No {} is already stored in {}".format(serial_no, location.title))
 
 	location = frappe.get_doc("Storage Location", location_name)
+	if location.ensure_valid_serial_no:
+		if not frappe.db.exists("Serial No", serial_no):
+			frappe.throw("Serial No {} does not exist.".format(serial_no))	
+
 	if key and location.key != key:
 		frappe.throw("Key does not match.")
 
