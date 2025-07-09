@@ -16,6 +16,7 @@ def get_columns():
     return [
         {'fieldname': 'purchase_order', 'fieldtype': 'Link', 'label': _('PO'), 'options': 'Purchase Order', 'width': 80},
         {'fieldname': 'supplier', 'fieldtype': 'Link', 'label': _('Supplier'), 'options': 'Supplier', 'width': 80},
+        {'fieldname': 'supplier_name', 'fieldtype': 'Data', 'label': _('Supplier Name'), 'width': 200, 'align': 'left'},
         {'fieldname': 'expected_delivery_date', 'fieldtype': 'Date', 'label': _('Expected date'), 'width': 80},
         {'fieldname': 'item_code', 'fieldtype': 'Link', 'label': _('Sold item'), 'options': 'Item', 'width': 200, 'align': 'left'},
         {'fieldname': 'qty', 'fieldtype': 'Int', 'label': _('Qty total'), 'width': 100}, 
@@ -37,6 +38,7 @@ def get_data(filters):
 SELECT 
     po.name as purchase_order,
     po.supplier,
+    s.supplier_name as supplier_name,
     poi.item_code, 
     poi.item_name,
     poi.description,
@@ -47,6 +49,7 @@ SELECT
 FROM `tabPurchase Order` as po
     JOIN `tabPurchase Order Item` as poi ON po.name = poi.parent
     JOIN `tabItem` as it ON poi.item_code = it.name
+    JOIN `tabSupplier` as s ON po.supplier = s.name
 WHERE poi.received_qty < poi.qty
     AND IFNULL(poi.expected_delivery_date, poi.schedule_date) <= DATE_ADD(CURRENT_DATE(), INTERVAL {days_from_now} DAY)
     AND po.docstatus = 1

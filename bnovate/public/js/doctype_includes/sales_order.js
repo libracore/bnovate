@@ -118,6 +118,11 @@ frappe.ui.form.on("Sales Order", {
         }
     },
 
+    after_save(frm) {
+        frm.toggle_display('date_change_origin', false);
+        frm.set_df_property('date_change_origin', 'reqd', false);
+    },
+
     async customer(frm) {
         // Fetch default terms from customer group
         const customer_doc = await frappe.model.with_doc("Customer", frm.doc.customer);
@@ -178,6 +183,14 @@ frappe.ui.form.on('Sales Order Item', {
         }
 
         await frappe.model.set_value(cdt, cdn, "discount_percentage", frm.doc.default_discount);
+    },
+
+    delivery_date(frm, cdt, cdn) {
+        console.log('Delivery date changed', cdt, cdn);
+        if (frm.doc.docstatus === 1) {
+            frm.toggle_display('date_change_origin', true);
+            frm.set_df_property('date_change_origin', 'reqd', true);
+        }
     }
 })
 
