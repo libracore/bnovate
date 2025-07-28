@@ -312,7 +312,19 @@ def get_items(filters):
     company_currency = frappe.get_cached_value('Company',  filters.get("company"),  "default_currency")
 
     return frappe.db.sql("""
-        select
+        WITH cogs_per_sii AS (
+            -- One row SINV items = One row of DN items
+            -- One row of DN can have multiple rows in stock ledger: multiple packed items, or item leaving stock and entering customer locations
+            SELECT
+                sii.name as sii_name,
+                SUM(sle.stock_value_difference) as cogs
+                
+            FROM `tabSales Invoice Item` sii
+                JOIN `tabStock Ledger Entry` sle ON sle.voucher_detail_no = sii.dn_detail  
+            GROUP BY sle.voucher_detail_no
+        )
+
+        SELECT
             sii.name, 
             sii.parent as invoice,
             si.posting_date, 
@@ -361,7 +373,7 @@ def get_items(filters):
             si.update_stock, 
             sii.uom, 
             sii.qty,
-            SUM(sle.stock_value_difference) as cogs,
+            cogs.cogs as cogs,
 
             sr.name as service_report,
             sr.billing_basis
@@ -372,12 +384,11 @@ def get_items(filters):
         LEFT JOIN `tabItem` it ON it.item_code = sii.item_code
         LEFT JOIN `tabTerritory` te ON te.name = cu.territory
         LEFT JOIN `tabCompany` co ON co.name = si.company
-        LEFT JOIN `tabStock Ledger Entry` sle ON sle.voucher_detail_no = sii.dn_detail
+        LEFT JOIN cogs_per_sii cogs ON cogs.sii_name = sii.name
         LEFT JOIN `tabSales Order` so ON so.name = sii.sales_order
         LEFT JOIN `tabSales Order Item` soi ON soi.name = sii.so_detail
         LEFT JOIN `tabService Report` sr on sr.name = soi.service_report
         LEFT JOIN `tabDelivery Note` dn ON dn.name = sii.delivery_note
         WHERE si.docstatus = 1 %s %s
-        GROUP BY sle.voucher_detail_no
         ORDER BY si.posting_date DESC, sii.item_code DESC
         """.format(company_currency=company_currency) % (conditions, match_conditions), filters, as_dict=1)
