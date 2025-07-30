@@ -309,10 +309,9 @@ def get_items(filters):
     if match_conditions:
         match_conditions = " and {0} ".format(match_conditions)
 
-    company_currency = frappe.get_cached_value('Company',  filters.get("company"),  "default_currency")
-
     return frappe.db.sql("""
-        WITH cogs_per_sii AS (
+        WITH 
+        cogs_per_sii AS (
             -- One row SINV items = One row of DN items
             -- One row of DN can have multiple rows in stock ledger: multiple packed items, or item leaving stock and entering customer locations
             SELECT
@@ -322,19 +321,37 @@ def get_items(filters):
             FROM `tabSales Invoice Item` sii
                 JOIN `tabStock Ledger Entry` sle ON sle.voucher_detail_no = sii.dn_detail  
             GROUP BY sle.voucher_detail_no
+        ),
+        
+        sinv AS ( -- Sales invoices
+            SELECT
+                si.name,
+                si.posting_date,
+                si.project,
+                si.customer,
+                si.company,
+                si.currency,
+
+                cu.customer_name,
+                cu.customer_group, 
+                cu.territory,
+                te.parent_territory AS territory_parent,
+                co.default_currency as company_currency
+
+            FROM `tabSales Invoice` si
+            JOIN `tabCustomer` cu ON cu.name = si.customer
+            JOIN `tabTerritory` te ON te.name = cu.territory
+            JOIN `tabCompany` co ON co.name = si.company
+            WHERE si.docstatus = 1 %s %s 
         )
 
-        SELECT
+        SELECT -- Sales invoice items
             sii.name, 
             sii.parent as invoice,
-            si.posting_date, 
-            si.debit_to,
-            si.project, 
-            si.customer, 
-            si.remarks,
-            si.territory, 
-            si.company, 
-            si.base_net_total,
+            sinv.posting_date, 
+            sinv.project, 
+            sinv.customer, 
+            sinv.company, 
 
             sii.item_code, 
             it.item_name,
@@ -354,23 +371,22 @@ def get_items(filters):
             sii.stock_qty,
             sii.stock_uom, 
 
-            si.currency,
+            sinv.currency,
             sii.price_list_rate,
             sii.discount_percentage,
             sii.net_rate,
             sii.net_amount,
-            "{company_currency}" as company_currency,
+            sinv.company_currency,
             sii.base_price_list_rate,
             sii.base_net_rate,
             sii.base_net_amount, 
 
-            cu.customer_name,
-            cu.customer_group, 
-            cu.territory,
-            te.parent_territory AS territory_parent,
+            sinv.customer_name,
+            sinv.customer_group, 
+            sinv.territory,
+            sinv.territory_parent,
 
             sii.so_detail,
-            si.update_stock, 
             sii.uom, 
             sii.qty,
             cogs.cogs as cogs,
@@ -378,17 +394,68 @@ def get_items(filters):
             sr.name as service_report,
             sr.billing_basis
 
-        FROM `tabSales Invoice` si
-        LEFT JOIN `tabSales Invoice Item` sii ON sii.parent = si.name
-        LEFT JOIN `tabCustomer` cu ON cu.name = si.customer
+        FROM sinv
+        LEFT JOIN `tabSales Invoice Item` sii ON sii.parent = sinv.name
         LEFT JOIN `tabItem` it ON it.item_code = sii.item_code
-        LEFT JOIN `tabTerritory` te ON te.name = cu.territory
-        LEFT JOIN `tabCompany` co ON co.name = si.company
         LEFT JOIN cogs_per_sii cogs ON cogs.sii_name = sii.name
         LEFT JOIN `tabSales Order` so ON so.name = sii.sales_order
         LEFT JOIN `tabSales Order Item` soi ON soi.name = sii.so_detail
         LEFT JOIN `tabService Report` sr on sr.name = soi.service_report
         LEFT JOIN `tabDelivery Note` dn ON dn.name = sii.delivery_note
-        WHERE si.docstatus = 1 %s %s
-        ORDER BY si.posting_date DESC, sii.item_code DESC
-        """.format(company_currency=company_currency) % (conditions, match_conditions), filters, as_dict=1)
+
+        UNION ALL
+        
+        SELECT -- taxes and charges
+            t.name, 
+            t.parent as invoice,
+            sinv.posting_date, 
+            sinv.project, 
+            sinv.customer, 
+            sinv.company, 
+
+            NULL as item_code, 
+            NULL as item_name,
+            "Taxes and Charges" as item_group, 
+            t.description, 
+
+            NULL as sales_order,
+            NULL as delivery_note, 
+
+            NULL as so_date,
+            NULL as dn_date, 
+
+            t.account_head as income_account,
+            NULL as expense_account,
+            t.cost_center,
+
+            NULL as stock_qty,
+            NULL as stock_uom, 
+
+            sinv.currency,
+            NULL price_list_rate,
+            NULL as discount_percentage,
+            NULL as net_rate,
+            t.tax_amount as net_amount,
+            sinv.company_currency,
+            NULL as base_price_list_rate,
+            NULL as base_net_rate,
+            t.base_tax_amount as base_net_amount, 
+
+            sinv.customer_name,
+            sinv.customer_group, 
+            sinv.territory,
+            sinv.territory_parent,
+
+            NULL as so_detail,
+            NULL as uom, 
+            NULL as qty,
+            NULL as cogs,
+
+            NULL as service_report,
+            NULL as billing_basis
+        FROM sinv
+        JOIN `tabSales Taxes and Charges` t ON t.parent = sinv.name
+        
+
+        ORDER BY posting_date DESC, invoice, item_code DESC
+        """ % (conditions, match_conditions), filters, as_dict=1)
