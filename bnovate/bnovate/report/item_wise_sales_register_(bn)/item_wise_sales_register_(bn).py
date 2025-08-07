@@ -319,8 +319,8 @@ def get_items(filters):
                 SUM(sle.stock_value_difference) as cogs
                 
             FROM `tabSales Invoice Item` sii
-                JOIN `tabStock Ledger Entry` sle ON sle.voucher_detail_no = sii.dn_detail  
-            GROUP BY sle.voucher_detail_no
+            JOIN `tabStock Ledger Entry` sle ON sle.voucher_detail_no = sii.dn_detail  
+            GROUP BY sii.name
         ),
         
         sinv AS ( -- Sales invoices

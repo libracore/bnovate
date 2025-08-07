@@ -15,6 +15,12 @@ def execute(filters=None):
     return columns, data, message, chart
 
 def get_columns():
+    benchmark_date_info = """
+    <p>This date is set if the delivery date is changed.</p>
+    <p>If the customer requested the change, this date is set to the new delivery date.<br>
+    If the change was initiated by us, this date is set to the original delivery date.</p>
+    """
+
     return [
         {'fieldname': 'DN', 'fieldtype': 'Link', 'label': _('DN'), 'options': 'Delivery Note', 'width': 100},
         {'fieldname': 'SO', 'fieldtype': 'Link', 'label': _('SO'), 'options': 'Sales Order', 'width': 100},
@@ -24,6 +30,9 @@ def get_columns():
         # {'fieldname': 'item_name', 'fieldtype': 'Data', 'label': _('Item name'), 'width': 200},
         {'fieldname': 'item_group', 'fieldtype': 'Data', 'label': _('Item group'), 'width': 200},
         {'fieldname': 'planned_date', 'fieldtype': 'Date', 'label': _('Planned date'), 'width': 100},
+        {'fieldname': 'benchmark_delivery_date', 'fieldtype': 'Date', 
+            'label': '<span data-html="true" data-toggle="tooltip" data-placement="bottom" data-container="body" title="{}"><i class="fa fa-info-circle"></i> Customer-agreed date</span>'.format(benchmark_date_info), 
+            'width': 170, 'align': 'left'},
         {'fieldname': 'shipped_date', 'fieldtype': 'Date', 'label': _('Shipped date'), 'width': 100},
         {'fieldname': 'delay', 'fieldtype': 'Int', 'label': _('Delay'), 'width': 50},         
         {'fieldname': '0d', 'fieldtype': 'Int', 'label': _('On time'), 'width': 50},
@@ -46,6 +55,7 @@ SELECT
     dni.item_code as "item_code",
     i.item_name as "item_name",
     i.item_group as "item_group",
+    soi.benchmark_delivery_date as "benchmark_delivery_date",
     IFNULL(soi.benchmark_delivery_date, soi.delivery_date) as "planned_date",
     dn.posting_date as "shipped_date",
     DATEDIFF(dn.posting_date, IFNULL(soi.benchmark_delivery_date, soi.delivery_date)) as "delay",

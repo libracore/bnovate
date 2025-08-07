@@ -1,9 +1,9 @@
-// Copyright (c) 2016, libracore and contributors
+// Copyright (c) 2016-2025, bnovate, libracore and contributors
 // For license information, please see license.txt
 /* eslint-disable */
 
 frappe.query_reports["On Time Delivery KPIs"] = {
-    "filters": [
+    filters: [
         {
             "fieldname": "from_date",
             "label": __("From Date"),
@@ -24,5 +24,11 @@ frappe.query_reports["On Time Delivery KPIs"] = {
             "fieldtype": "Link",
             "options": "Item Group"
         }
-    ]
+    ],
+    after_datatable_render(datatable) {
+        // Activate tooltips on columns
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip()
+        });
+    }
 };

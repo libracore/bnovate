@@ -26,23 +26,15 @@ def check_blanket_order_currency(doc, method=None):
 def check_delivery_date_updates(doc, method=None):
     """ Check if delivery date is changed. If applicable, set benchmark delivery date to customer's request """
 
-    print("_-------------------------------------")
-    print("check_delivery_date_updates called", method)
-    print("_-------------------------------------")
-
     if method != 'before_update_after_submit':
         return
 
     old_doc = doc.get_doc_before_save()
-    print("------------------------------------------")
-    # print(json.dumps(old_doc.as_dict(), indent=2, default=str))
 
     for new_item in doc.items:
         old_item = next((i for i in old_doc.items if i.name == new_item.name), None)
         if not old_item:
             continue
-
-        print(new_item.delivery_date, type(new_item.delivery_date), old_item.delivery_date, type(old_item.delivery_date))
 
         if str(new_item.delivery_date) != str(old_item.delivery_date):
             if not doc.date_change_origin:
@@ -56,7 +48,6 @@ def check_delivery_date_updates(doc, method=None):
                 print("Set new item benchmark delivery date to old delivery date")
 
     doc.date_change_origin = None
-    print("------------------------------------------")
 
     return doc
 
