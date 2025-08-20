@@ -33,6 +33,13 @@ def get_columns():
 
     columns = [
         {
+            "fieldname": "item_group",
+            "label": _("Item Group"),
+            "fieldtype": "Link",
+            "width": 100,
+            "options": "Item Group"
+        },
+        {
             "fieldname": "item_code",
             "label": _("Item Code"),
             "fieldtype": "Link",
@@ -44,13 +51,6 @@ def get_columns():
             "label": _("Item Name"),
             "fieldtype": "Data",
             "width": 120
-        },
-        {
-            "fieldname": "item_group",
-            "label": _("Item Group"),
-            "fieldtype": "Link",
-            "width": 100,
-            "options": "Item Group"
         },
         {
             "fieldname": "description",
@@ -105,13 +105,13 @@ def get_columns():
             "width": 80,
             "options": "Territory"
         },
-        {
-            "fieldname": "project",
-            "label": _("Project"),
-            "fieldtype": "Link",
-            "width": 80,
-            "options": "Project"
-        },
+        # {
+        #     "fieldname": "project",
+        #     "label": _("Project"),
+        #     "fieldtype": "Link",
+        #     "width": 80,
+        #     "options": "Project"
+        # },
         {
             "fieldname": "company",
             "label": _("Company"),
@@ -191,6 +191,12 @@ def get_columns():
             "fieldtype": "Currency",
             "width": 120,
             "options": "currency"
+        },
+        {
+            "fieldname": "customer_default_discount",
+            "label": _("Default Discount Percentage"),
+            "fieldtype": "Percent",
+            "width": 120,
         },
         {
             "fieldname": "discount_percentage",
@@ -335,7 +341,8 @@ def get_items(filters):
                 cu.customer_name,
                 cu.customer_group, 
                 cu.territory,
-                te.parent_territory AS territory_parent,
+                cu.default_discount as customer_default_discount,
+                te.parent_territory as territory_parent,
                 co.default_currency as company_currency
 
             FROM `tabSales Invoice` si
@@ -373,6 +380,7 @@ def get_items(filters):
 
             sinv.currency,
             sii.price_list_rate,
+            sinv.customer_default_discount,
             sii.discount_percentage,
             sii.net_rate,
             sii.net_amount,
@@ -433,6 +441,7 @@ def get_items(filters):
 
             sinv.currency,
             NULL price_list_rate,
+            NULL as customer_default_discount,
             NULL as discount_percentage,
             NULL as net_rate,
             t.tax_amount as net_amount,
