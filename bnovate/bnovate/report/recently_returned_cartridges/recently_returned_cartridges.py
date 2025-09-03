@@ -16,8 +16,10 @@ def get_columns():
     return [
         {'fieldname': 'name', 'fieldtype': 'Link', 'label': _('Stock Entry'), 'options': 'Stock Entry', 'width': 100},
         {'fieldname': 'posting_date', 'fieldtype': 'Date', 'label': _('Since date'), 'width': 80},
-        {'fieldname': 'from_customer', 'fieldtype': 'Link', 'label': _('Customer'), 'options': 'Customer', 'width': 120},
-        {'fieldname': 'from_customer_name', 'fieldtype': 'Data', 'label': _('Customer Name'), 'width': 300, 'align': 'left'}, 
+        {'fieldname': 'from_customer', 'fieldtype': 'Link', 'label': _('Last DN Customer'), 'options': 'Customer', 'width': 120},
+        {'fieldname': 'from_customer_name', 'fieldtype': 'Data', 'label': _('Last DN Customer Name'), 'width': 300, 'align': 'left'}, 
+        {'fieldname': 'owned_by', 'fieldtype': 'Link', 'label': _('Owned by Customer'), 'options': 'Customer', 'width': 120},
+        {'fieldname': 'owned_by_name', 'fieldtype': 'Data', 'label': _('Owned by Name'), 'width': 300, 'align': 'left'}, 
         {'fieldname': 'serial_no', 'fieldtype': 'Link', 'label': _('Serial No'), 'options': 'Serial No', 'width': 100},
         {'fieldname': 'open_sales_order', 'fieldtype': 'Link', 'label': _('Sales Order'), 'options': 'Sales Order', 'width': 200, 'align': 'left'},
     ]
@@ -34,6 +36,8 @@ def get_data(filters):
             ste.from_customer_name,
             sn.serial_no,
             sn.open_sales_order,
+            sn.owned_by,
+            sn.owned_by_name,
             so.docstatus AS open_sales_order_docstatus
         FROM `tabStock Entry Detail` std
         JOIN `tabStock Entry` ste ON ste.name = std.parent
