@@ -68,6 +68,16 @@ def get_columns(filters):
 			"width": 180
 		},
 		{
+			"label": _("Stock Entry Type"),
+			"fieldname": "stock_entry_type",
+			"width": 100
+		},
+		{
+			"label": _("Stock Entry Reason"),
+			"fieldname": "reason",
+			"width": 100
+		},
+		{
 			"label": _("Against Account"),
 			"fieldname": "against",
 			"width": 120
@@ -154,11 +164,14 @@ SELECT
     gl.cost_center,
     gl.against_voucher_type,
     gl.against_voucher,
+	ste.stock_entry_type,
+	ste.reason,
 	pinv.bill_no,
     gl.remarks,
     gl.company
 FROM `tabGL Entry` gl
 LEFT JOIN `tabPurchase Invoice` pinv ON gl.against_voucher = pinv.name
+LEFT JOIN `tabStock Entry` ste ON gl.voucher_no = ste.name
 WHERE gl.posting_date BETWEEN "{from_date}" AND "{to_date}"
     {conditions}
 ORDER BY gl.posting_date
