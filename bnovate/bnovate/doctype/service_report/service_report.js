@@ -78,22 +78,37 @@ frappe.ui.form.on('Service Report', {
 				}
 			}
 		});
-		// frm.set_query("set_warehouse", function () {
-		// 	return {
-		// 		filters: {
-		// 			for_user: frm.doc.bnovate_technician,
-		// 		}
-		// 	}
-		// });
+		frm.set_query("set_warehouse", function () {
+			return {
+				filters: {
+					company: frm.doc.company,
+					is_group: 0,
+				}
+			}
+		});
 
-		// frm.set_query("item_code", "items", function () {
-		// 	return {
-		// 		query: "bnovate.bnovate.doctype.service_report.service_report.item_query",
-		// 		filters: {
-		// 			warehouse: frm.doc.set_warehouse,
-		// 		}
-		// 	}
-		// });
+		frm.set_query("item_code", "items", function (cdn, doc, cin) {
+			const warehouse = frm.doc.items.find(it => it.name === cin)?.warehouse || frm.doc.set_warehouse;
+
+			if (warehouse) {
+				return {
+					query: "bnovate.bnovate.doctype.service_report.service_report.item_query",
+					filters: {
+						warehouse
+					}
+				}
+			}
+
+		});
+
+		frm.set_query("warehouse", "items", function () {
+			return {
+				filters: {
+					company: frm.doc.company,
+					is_group: 0,
+				}
+			}
+		});
 	},
 
 	refresh(frm) {
@@ -143,5 +158,17 @@ frappe.ui.form.on('Service Report', {
 		frm.toggle_reqd('description', frm.doc.reason_for_visit !== INTERVENTION_UPGRADE);
 		frm.toggle_reqd('resolution', frm.doc.reason_for_visit === 'Service');
 	},
+
+	set_warehouse(frm) {
+		// Only allow individual warehouses if default warehouse is NOT set - otherwise sales order will override the changes.
+		frm.fields_dict.items.grid.toggle_enable('warehouse', !frm.doc.set_warehouse);
+		frm.fields_dict.labour_travel.grid.toggle_enable('warehouse', !frm.doc.set_warehouse);
+		if (frm.doc.set_warehouse) {
+			frm.doc.items.forEach(item => item.warehouse = frm.doc.set_warehouse);
+			frm.doc.labour_travel.forEach(item => item.warehouse = frm.doc.set_warehouse);
+		}
+		frm.fields_dict.items.grid.refresh();
+		frm.fields_dict.labour_travel.grid.refresh();
+	}
 
 });
