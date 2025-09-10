@@ -87,8 +87,8 @@ frappe.ui.form.on('Service Report', {
 			}
 		});
 
-		frm.set_query("item_code", "items", function (cdn, doc, cin) {
-			const warehouse = frm.doc.items.find(it => it.name === cin)?.warehouse || frm.doc.set_warehouse;
+		frm.set_query("item_code", "items", function (doc, cdn, cin) {
+			const warehouse = frappe.get_doc(cdn, cin).warehouse || frm.doc.set_warehouse;
 
 			if (warehouse) {
 				return {
@@ -144,6 +144,7 @@ frappe.ui.form.on('Service Report', {
 		console.log(frm.doc)
 		const resp = await frappe.db.get_value("Warehouse", { for_user: frm.doc.bnovate_technician }, 'name');
 		frm.set_value('set_warehouse', resp.message?.name);
+		frm.run_link_triggers('set_warehouse');
 	},
 
 	async technician(frm) {
@@ -161,14 +162,30 @@ frappe.ui.form.on('Service Report', {
 
 	set_warehouse(frm) {
 		// Only allow individual warehouses if default warehouse is NOT set - otherwise sales order will override the changes.
+
+		frm.fields_dict.items.grid.toggle_reqd('warehouse', !frm.doc.set_warehouse);
 		frm.fields_dict.items.grid.toggle_enable('warehouse', !frm.doc.set_warehouse);
+
+		frm.fields_dict.labour_travel.grid.toggle_reqd('warehouse', !frm.doc.set_warehouse);
 		frm.fields_dict.labour_travel.grid.toggle_enable('warehouse', !frm.doc.set_warehouse);
+
 		if (frm.doc.set_warehouse) {
-			frm.doc.items.forEach(item => item.warehouse = frm.doc.set_warehouse);
-			frm.doc.labour_travel.forEach(item => item.warehouse = frm.doc.set_warehouse);
+			frm.doc.items?.forEach(item => item.warehouse = frm.doc.set_warehouse);
+			frm.doc.labour_travel?.forEach(item => item.warehouse = frm.doc.set_warehouse);
 		}
+
 		frm.fields_dict.items.grid.refresh();
 		frm.fields_dict.labour_travel.grid.refresh();
 	}
 
+});
+
+
+frappe.ui.form.on('Service Report Item', {
+	items_add: function (frm, cdt, cdn) {
+		let row = frappe.get_doc(cdt, cdn);
+		if (!row.warehouse && frm.doc.set_warehouse) {
+			frappe.model.set_value(cdt, cdn, "warehouse", frm.doc.set_warehouse);
+		}
+	}
 });
