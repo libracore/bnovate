@@ -78,13 +78,13 @@ frappe.ui.form.on('Service Report', {
 				}
 			}
 		});
-		frm.set_query("set_warehouse", function () {
-			return {
-				filters: {
-					for_user: frm.doc.bnovate_technician,
-				}
-			}
-		});
+		// frm.set_query("set_warehouse", function () {
+		// 	return {
+		// 		filters: {
+		// 			for_user: frm.doc.bnovate_technician,
+		// 		}
+		// 	}
+		// });
 
 		// frm.set_query("item_code", "items", function () {
 		// 	return {
