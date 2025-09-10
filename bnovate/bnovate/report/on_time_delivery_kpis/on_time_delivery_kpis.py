@@ -73,6 +73,7 @@ WHERE dni.item_code NOT RLIKE '^Di-'
     AND dni.item_code NOT RLIKE '^ENC-'
     AND dn.docstatus = 1
     AND soi.delivery_date BETWEEN "{from_date}" AND "{to_date}"
+    AND soi.service_report IS NULL
     {extra_filters}
 
 ORDER BY dn.posting_date DESC
@@ -121,6 +122,7 @@ FROM (
     AND dni.item_code NOT RLIKE '^ENC-'
     AND dn.docstatus = 1
     AND soi.delivery_date BETWEEN "{from_date}" AND "{to_date}"
+    AND soi.service_report IS NULL
     {extra_filters}
 ) as sd -- shipping delays
 
