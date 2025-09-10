@@ -20,8 +20,10 @@ def get_columns(filters):
 
     columns = [
         {"label": "Expense Account", "fieldname": "expense_account", "fieldtype": "Link", "options": "Account", "width": 150},
+        {"label": "Cost Center", "fieldname": "cost_center", "fieldtype": "Link", "options": "Cost Center", "width": 150},
         {"label": "Supplier", "fieldname": "supplier", "fieldtype": "Link", "options": "Supplier", "width": 150},
         {"label": "Supplier Name", "fieldname": "supplier_name", "fieldtype": "Data", "width": 150},
+        {"label": "Company", "fieldname": "company", "fieldtype": "Link", "options": "Company", "width": 150}
     ]
 
     for month in months:
@@ -54,6 +56,7 @@ def get_data(filters):
             pi.supplier,
             s.supplier_name,
             pii.expense_account,
+            pii.cost_center,
             SUM(pii.base_net_amount) as base_net_amount,
             pi.company
         FROM `tabPurchase Invoice Item` pii
@@ -63,6 +66,7 @@ def get_data(filters):
         GROUP BY 
             YEAR(pi.posting_date),
             MONTH(pi.posting_date),
+            pii.cost_center,
             pi.supplier,
             pii.expense_account
         ORDER BY pii.expense_account, pi.supplier
@@ -73,9 +77,9 @@ def get_data(filters):
     # Create a dictionary to hold the pivoted data
     pivot_data = {}
     for row in data:
-        key = (row['expense_account'], row['supplier'])
+        key = (row['expense_account'], row['supplier'], row['cost_center'])
         if key not in pivot_data:
-            pivot_data[key] = {'expense_account': row['expense_account'], 'supplier': row['supplier'], 'supplier_name': row['supplier_name']}
+            pivot_data[key] = {'expense_account': row['expense_account'], 'cost_center': row['cost_center'], 'supplier': row['supplier'], 'supplier_name': row['supplier_name'], 'company': row['company']}
         pivot_data[key][f"{row['year']}-{row['month']:02d}"] = row['base_net_amount']
 
     # Convert the dictionary to a list of dictionaries
