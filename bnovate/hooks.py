@@ -148,6 +148,7 @@ fixtures = [
             # Stock management
             "Material Request Item-default_supplier",
             "Purchase Receipt-scan",
+            "Stock Entry-reason",
 
             # Distributor Discounts
             "Customer-default_discount",

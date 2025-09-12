@@ -9,7 +9,8 @@
   "qty",
   "uom",
   "section_header",
-  "description"
+  "description",
+  "warehouse"
  ],
  "fields": [
   {
@@ -17,7 +18,8 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Item Code",
-   "options": "Item"
+   "options": "Item",
+   "reqd": 1
   },
   {
    "fetch_from": "item_code.item_name",
@@ -31,7 +33,8 @@
    "fieldname": "qty",
    "fieldtype": "Float",
    "in_list_view": 1,
-   "label": "Qty"
+   "label": "Qty",
+   "reqd": 1
   },
   {
    "fetch_from": "item_code.description",
@@ -51,11 +54,22 @@
    "fieldname": "uom",
    "fieldtype": "Link",
    "label": "UOM",
-   "options": "UOM"
+   "options": "UOM",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "parent.set_warehouse",
+   "fetch_if_empty": 1,
+   "fieldname": "warehouse",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Warehouse",
+   "options": "Warehouse",
+   "print_hide": 1
   }
  ],
  "istable": 1,
- "modified": "2025-03-07 17:19:31.378760",
+ "modified": "2025-09-10 18:12:46.184177",
  "modified_by": "Administrator",
  "module": "bNovate",
  "name": "Service Report Item",

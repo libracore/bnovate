@@ -90,7 +90,14 @@ def get_columns(filters):
 		{
 			"label": _("Party"),
 			"fieldname": "party",
+			"fieldtype": "Dynamic Link",
+			"options": "party_type",
 			"width": 100
+		},
+		{
+			"label": _("Party Name"),
+			"fieldname": "party_name",
+			"width": 200
 		},
 		{
 			"label": _("Project"),
@@ -160,6 +167,7 @@ SELECT
     gl.against,
     gl.party_type,
     gl.party,
+	COALESCE(sup.supplier_name, cus.customer_name, emp.employee_name) as party_name,
     gl.project,
     gl.cost_center,
     gl.against_voucher_type,
@@ -172,6 +180,9 @@ SELECT
 FROM `tabGL Entry` gl
 LEFT JOIN `tabPurchase Invoice` pinv ON gl.against_voucher = pinv.name
 LEFT JOIN `tabStock Entry` ste ON gl.voucher_no = ste.name
+LEFT JOIN `tabSupplier` sup ON gl.party = sup.name
+LEFT JOIN `tabEmployee` emp ON gl.party = emp.name
+LEFT JOIN `tabCustomer` cus ON gl.party = cus.name
 WHERE gl.posting_date BETWEEN "{from_date}" AND "{to_date}"
     {conditions}
 ORDER BY gl.posting_date
