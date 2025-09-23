@@ -11,7 +11,7 @@ def execute(filters=None):
 
 def get_columns():
 	return [
-		{"label": "Shipment ID", "fieldname": "name", "fieldtype": "Data", "width": 120},
+		{"label": "Shipment ID", "fieldname": "name", "fieldtype": "Link", "options": "Shipment", "width": 120},
 		{"label": "Pickup Company", "fieldname": "pickup_company_name", "fieldtype": "Data", "width": 150},
 		{"label": "Delivery Company", "fieldname": "delivery_company_name", "fieldtype": "Data", "width": 150},
 		{"label": "Pickup Date", "fieldname": "pickup_date", "fieldtype": "Date", "width": 120},
