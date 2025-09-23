@@ -191,6 +191,24 @@ frappe.ui.form.on('Sales Order Item', {
             frm.toggle_display('date_change_origin', true);
             frm.set_df_property('date_change_origin', 'reqd', true);
         }
+    },
+
+    async translate(frm, cdt, cdn) {
+        let item = locals[cdt][cdn];
+        let texts = [item.item_name, item.description];
+
+        let translations = await bnovate.utils.deepl_translate(texts, frm.doc.language);
+
+        frappe.confirm(
+            __('Are these translations suitable?<br><p><b>Item Name:</b></p> <p>{0}<p> <p><b>Description:</b><p> <p>{1}</p>', [translations[0], translations[1]]),
+            function () {
+                frappe.model.set_value(cdt, cdn, "item_name", translations[0]);
+                frappe.model.set_value(cdt, cdn, "description", translations[1]);
+            },
+            function () {
+                // Do nothing on cancel
+            }
+        );
     }
 })
 
