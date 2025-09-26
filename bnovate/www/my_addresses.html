@@ -5,18 +5,19 @@
 {% block style %}
 <style>
     .card-group .card {
-    flex: 0 0 33%;
-    border: 1px solid rgba(0, 0, 0, 0.125);
-    border-radius: 0rem;
-    margin: 0.1%;
+        flex: 0 0 33%;
+        border: 1px solid rgba(0, 0, 0, 0.125);
+        border-radius: 0rem;
+        margin: 0.1%;
     }
 
-    .card-group .card + .card {
-    flex: 0 0 33%;
-    border: 1px solid rgba(0, 0, 0, 0.125);
-    border-radius: 0rem;
-    margin: 0.1%;
+    .card-group .card+.card {
+        flex: 0 0 33%;
+        border: 1px solid rgba(0, 0, 0, 0.125);
+        border-radius: 0rem;
+        margin: 0.1%;
     }
+
     .card-group .card:hover {
         background-color: var(--completed-background-color);
     }
@@ -41,15 +42,15 @@
     <div class="card">
         <div class="card-body">
             <div class="btn-group float-right">
-              <button type="button" class="btn btn-sm btn-primary edit-address" data-name="{{ addr.name }}" disabled><i class="fa fa-pencil"></i></button>
-              <button type="button" class="btn btn-sm btn-danger delete-address" data-name="{{ addr.name }}"><i class="fa fa-trash"></i></button>
+                <button type="button" class="btn btn-sm btn-primary edit-address" data-name="{{ addr.name }}" disabled><i class="fa fa-pencil"></i></button>
+                <button type="button" class="btn btn-sm btn-danger delete-address" data-name="{{ addr.name }}"><i class="fa fa-trash"></i></button>
             </div>
             {{addr.display}}
-            <p class="text-muted">
+            <!-- <p class="text-muted">
                 {% if addr.email_id %}
                     {{ addr.email_id.split(",") | join("<br>") }}
                 {% endif %}
-            </p>
+            </p> -->
         </div>
     </div>
     {% endfor %}
@@ -97,7 +98,7 @@
                                 <label for="country" class="formbuilder-select-label">{{ _("Country") }}</label>
                                 <select class="form-control" name="country" id="country" required>
                                     {% for country in countries %}
-                                    <option value="{{ country }}" {{ "selected" if country == "Switzerland" }} >{{ _(country) }}</option>
+                                    <option value="{{ country }}" {{ "selected" if country=="Switzerland" }}>{{ _(country) }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
@@ -112,7 +113,7 @@
                             </div>
                         </form>
                     </div>
-                    
+
                     <div class="modal-footer">
                         <div class="wizard-buttons">
                             <button type="button" class="btn btn-danger" id="cancel-button">{{ _("Cancel") }}</button>
@@ -131,20 +132,20 @@
 
 {% block script %}
 <script>
-    
+
     const addresses = {};
     frappe.require([
         "/assets/bnovate/js/web_includes/translations.js",
         "/assets/bnovate/js/web_includes/helpers.js",
         "/assets/bnovate/js/web_includes/form_modal.js",
     ])
-    .then( () => bnovate.translations.get_messages() )
-    .then( () => bnovate.web.get_addresses())
-    .then( remote_addresses => {
-        remote_addresses.forEach(addr => addresses[addr.name] = addr);
-        hide_spinner();
-        bind_edit_buttons();
-    });
+        .then(() => bnovate.translations.get_messages())
+        .then(() => bnovate.web.get_addresses())
+        .then(remote_addresses => {
+            remote_addresses.forEach(addr => addresses[addr.name] = addr);
+            hide_spinner();
+            bind_edit_buttons();
+        });
 
     // Create new address
     async function save() {
@@ -165,15 +166,15 @@
     function validate() {
         const frm = document.querySelector("#address-form")
         const required_inputs = [...frm.querySelectorAll("[required]")];
-		let valid = true;
-		for (let input of required_inputs) {
-			if (!input.value) {
-				input.closest(".form-group").classList.add('has-error')
-				valid = false;
-			} else {
-				input.closest(".form-group").classList.remove('has-error')
-			}
-		}
+        let valid = true;
+        for (let input of required_inputs) {
+            if (!input.value) {
+                input.closest(".form-group").classList.add('has-error')
+                valid = false;
+            } else {
+                input.closest(".form-group").classList.remove('has-error')
+            }
+        }
 
         // Check emails
         const emailInput = frm.querySelector("#email_id");
@@ -184,8 +185,8 @@
         const re = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i; // Match email format
         const emails = emailInput?.value;
         let emailValid = true;
-        emails.split(',').forEach( (email) => {
-            if ( email.trim().length > 0 && !re.test(email.trim())) {
+        emails.split(',').forEach((email) => {
+            if (email.trim().length > 0 && !re.test(email.trim())) {
                 emailValid = false;
                 emailInput.closest(".form-group").classList.add('has-error');
             };
@@ -196,7 +197,7 @@
             valid = false;
         }
 
-		return valid;
+        return valid;
     }
 
     function hide_spinner() {
