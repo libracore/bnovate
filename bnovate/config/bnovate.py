@@ -104,7 +104,14 @@ def get_data():
                         "name": "work-order-execution",
                         "label": _("Work Order Execution"),
                         "description": _("Execution page for work orders")            
-                   }         
+                   },
+                   {
+                        "type": "report",
+                        "name": "BOM Search (bN)",
+                        "label": _("BOM Search (bN)"),
+                        "doctype": "BOM",
+                        "is_query_report": True,            
+                   },
             ]
         },
         {
