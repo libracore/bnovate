@@ -112,6 +112,13 @@ def get_data():
                         "doctype": "BOM",
                         "is_query_report": True,            
                    },
+                   {
+                       "type": "report",
+                       "name": "Batch Report",
+                       "label": _("Batch Report"),
+                       "doctype": "Batch",
+                       "is_query_report": True,
+                   }
             ]
         },
         {
@@ -125,6 +132,13 @@ def get_data():
                         "doctype": "Item",
                         "is_query_report": True               
                    },        
+                   {
+                        "type": "report",
+                        "name": "Material Request Report",
+                        "label": _("Material Request Report"),
+                        "doctype": "Material Request",
+                        "is_query_report": True,
+                   },
                    {
                         "type": "report",
                         "name": "Late Purchases",
