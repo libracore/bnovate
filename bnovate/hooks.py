@@ -147,6 +147,7 @@ fixtures = [
 
             # Stock management
             "Material Request Item-default_supplier",
+            "Material Request Item-assigned_to",
             "Purchase Receipt-scan",
             "Stock Entry-reason",
 
