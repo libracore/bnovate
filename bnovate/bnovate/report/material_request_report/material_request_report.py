@@ -15,17 +15,19 @@ def get_columns():
         {"fieldname": "material_request", "label": "Material Request", "fieldtype": "Link", "options": "Material Request", "width": 120},
         {"fieldname": "request_type", "label": "Request Type", "fieldtype": "Data", "width": 120},
         {"fieldname": "transaction_date", "label": "Date", "fieldtype": "Date", "width": 100},
+        {"fieldname": "schedule_date", "label": "Required Date", "fieldtype": "Date", "width": 100},
         {"fieldname": "item_code", "label": "Item Code", "fieldtype": "Link", "options": "Item", "width": 220, "align": "left"},
-        {"fieldname": "qty", "label": "Qty", "fieldtype": "Float", "width": 100},
-        {"fieldname": "uom", "label": "UOM", "fieldtype": "Link", "options": "UOM", "width": 100},
-        {"fieldname": "ordered_qty", "label": "Ordered Qty", "fieldtype": "Float", "width": 100},
-        {"fieldname": "qty_to_order", "label": "Qty to Order", "fieldtype": "Float", "width": 100},
-        {"fieldname": "description", "label": "Description", "fieldtype": "Data", "width": 200},
+        # {"fieldname": "description", "label": "Description", "fieldtype": "Data", "width": 200},
         {"fieldname": "supplier", "label": "Default Supplier", "fieldtype": "Link", "options": "Supplier", "width": 140},
         {"fieldname": "supplier_name", "label": "Supplier Name", "fieldtype": "Data", "width": 180},
         {"fieldname": "item_group", "label": "Item Group", "fieldtype": "Link", "options": "Item Group", "width": 140}, 
         {"fieldname": "assigned_to", "label": "Assigned To", "fieldtype": "Link", "options": "User", "width": 140},
-        {"fieldname": "company", "label": "Company", "fieldtype": "Link", "options": "Company", "width": 140},
+        {"fieldname": "qty", "label": "Qty", "fieldtype": "Float", "width": 100},
+        {"fieldname": "uom", "label": "UOM", "fieldtype": "Link", "options": "UOM", "width": 100},
+        {"fieldname": "ordered_qty", "label": "Ordered Qty", "fieldtype": "Float", "width": 100},
+        {"fieldname": "qty_to_order", "label": "Qty to Order", "fieldtype": "Float", "width": 100},
+        {"fieldname": "purchase_order", "label": "Purchase Order", "fieldtype": "Link", "options": "Purchase Order", "width": 140, "align": "left"},
+        # {"fieldname": "company", "label": "Company", "fieldtype": "Link", "options": "Company", "width": 140},
     ]
 
 def get_data(filters):
@@ -41,11 +43,15 @@ def get_data(filters):
     if filters.request_type:
         conditions += " AND mr.material_request_type = {0} ".format(frappe.db.escape(filters.request_type))
 
+    if filters.assigned_to:
+        conditions += " AND mr_item.assigned_to = {0} ".format(frappe.db.escape(filters.assigned_to))
+
     query = """
 SELECT 
     mr.name AS material_request,
     mr.material_request_type AS request_type,
     mr.transaction_date AS transaction_date,
+    mr_item.schedule_date AS schedule_date,
     mr_item.name AS mr_item,
     mr_item.item_code AS item_code,
     SUM(IFNULL(mr_item.stock_qty, 0)) AS qty,
@@ -58,12 +64,16 @@ SELECT
     supplier.supplier_name AS supplier_name,
     mr_item.item_group AS item_group,
     mr_item.assigned_to AS assigned_to,
-    mr.company AS company
+    mr.company AS company,
+    po_item.parent AS purchase_order,
+    po.status AS po_status
 FROM
     `tabMaterial Request` mr
 JOIN `tabMaterial Request Item` mr_item ON mr_item.parent = mr.name
 JOIN `tabItem Default` item_default ON item_default.parent = mr_item.item_code AND item_default.company = mr.company
-JOIN `tabSupplier` supplier ON supplier.name = item_default.default_supplier
+LEFT JOIN `tabSupplier` supplier ON supplier.name = item_default.default_supplier
+LEFT JOIN `tabPurchase Order Item` po_item ON po_item.material_request_item = mr_item.name
+LEFT JOIN `tabPurchase Order` po ON po.name = po_item.parent
 WHERE
     mr.material_request_type = "Purchase"
     AND mr.docstatus = 1
