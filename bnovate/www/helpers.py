@@ -194,8 +194,9 @@ def get_addresses():
 
     for addr in addresses:
         short_addr = addr.copy();
-        if 'email_id' in short_addr:
-            del short_addr['email_id']
+        # if 'email_id' in short_addr:
+        #     # del short_addr['email_id']
+        #     pass
         addr.display = get_address_display(short_addr)
 
     

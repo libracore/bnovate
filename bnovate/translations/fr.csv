@@ -377,7 +377,7 @@ apps/bnovate/bnovate/www/pickup.html,Tape it to the parcel,Le coller sur le coli
 apps/bnovate/bnovate/www/pickup.html,Verify information,Vérifier les informations
 apps/bnovate/bnovate/www/pickup.py,No pickup date found,Aucune date d'enlèvement n'a été trouvée
 apps/bnovate/bnovate/www/pickup.py,No pickup possible,Pas d'enlèvement possible
-apps/bnovate/bnovate/www/pickup.py,Schedule Pickup,Horaire d'enlèvement
+apps/bnovate/bnovate/www/pickup.py,Schedule Pickup,Confirmer l'enlèvement
 apps/bnovate/bnovate/www/request.html,Organize Pickup,Organiser l'enlèvement
 apps/bnovate/bnovate/www/request.html,Requested by,Demandé par
 apps/bnovate/bnovate/www/requests.html,Requested By,Demandé par

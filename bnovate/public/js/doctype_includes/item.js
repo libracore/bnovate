@@ -28,5 +28,12 @@ frappe.ui.form.on("Item", {
             frappe.set_route("query-report", "Projected Stock");
         });
 
+        frm.add_custom_button("BOM Search", function () {
+            frappe.route_options = {
+                item1: frm.doc.name,
+            };
+            frappe.set_route("query-report", "BOM Search (bN)");
+        }, __("View"));
+
     },
 })

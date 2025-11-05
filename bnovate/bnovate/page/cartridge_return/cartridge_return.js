@@ -270,15 +270,7 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 				t_warehouse: warehouse,
 				serial_no: enc.serial_no,
 			}, {
-				item_code: '101011.02', // Tubing pouch 200 mm, needs cleaning
-				qty: 3,
-				t_warehouse: "Stores - bN",
-			}, {
-				item_code: '101012.02', // Tubing pouch 120 mm, needs cleaning
-				qty: 1,
-				t_warehouse: "Stores - bN",
-			}, {
-				item_code: '100799', // Barrel plug for pouches
+				item_code: '101372.02', // Barrel plug for pouches
 				qty: 4,
 				s_warehouse: "Stores - bN",
 				// VALVE RETURN DISABLED FOR NOW
@@ -296,15 +288,7 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 				t_warehouse: warehouse,
 				serial_no: enc.serial_no,
 			}, {
-				item_code: '101011.02', // Tubing pouch 200 mm, needs cleaning
-				qty: 2,
-				t_warehouse: "Stores - bN",
-			}, {
-				item_code: '101012.02', // Tubing pouch 120 mm, needs cleaning
-				qty: 1,
-				t_warehouse: "Stores - bN",
-			}, {
-				item_code: '100799', // Barrel plug for pouches
+				item_code: '101372.02', // Barrel plug for pouches
 				qty: 5,
 				s_warehouse: "Stores - bN",
 			}];
