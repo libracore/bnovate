@@ -54,10 +54,10 @@ SELECT
     mr_item.schedule_date AS schedule_date,
     mr_item.name AS mr_item,
     mr_item.item_code AS item_code,
-    SUM(IFNULL(mr_item.stock_qty, 0)) AS qty,
+    IFNULL(mr_item.stock_qty, 0) AS qty,
     IFNULL(mr_item.stock_uom, '') AS uom,
-    SUM(IFNULL(mr_item.ordered_qty, 0)) AS ordered_qty, 
-    (SUM(mr_item.stock_qty) - SUM(IFNULL(mr_item.ordered_qty, 0))) AS qty_to_order,
+    IFNULL(mr_item.ordered_qty, 0) AS ordered_qty,
+    mr_item.stock_qty - IFNULL(mr_item.ordered_qty, 0) AS qty_to_order,
     mr_item.item_name AS item_name,
     mr_item.description AS description,
     item_default.default_supplier AS supplier,
@@ -78,10 +78,8 @@ WHERE
     mr.material_request_type = "Purchase"
     AND mr.docstatus = 1
     AND mr.status != "Stopped"
+    AND IFNULL(mr_item.ordered_qty, 0) < IFNULL(mr_item.stock_qty, 0) 
     {conditions}
-GROUP BY mr.name, mr_item.item_code
-HAVING
-    SUM(IFNULL(mr_item.ordered_qty, 0)) < SUM(IFNULL(mr_item.stock_qty, 0))
 ORDER BY mr.transaction_date ASC
     """.format(conditions=conditions)
 
