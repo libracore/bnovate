@@ -94,6 +94,13 @@ async function create_po(supplier) {
 
     // const doc = frappe.get_doc(resp.message);
     const doc = resp.message;
+
+    // Setting price list rate from BKO works, but amount is overriden by a link trigger - just let it be calculated on save.
+    doc.items.forEach(i => {
+        if (i.blanket_order) {
+            i.price_list_rate = i.blanket_order_rate;
+        }
+    });
     frappe.model.sync(doc);
     frappe.set_route("Form", doc.doctype, doc.name);
 }
