@@ -6,7 +6,7 @@ import frappe
 
 
 def execute(filters=None):
-    columns, data = get_columns(), get_data()
+    columns, data = get_columns(), get_data(filters)
     return columns, data
 
 
@@ -29,11 +29,13 @@ def get_columns():
         {'fieldname': 'net_rate', 'label': 'Doc. Net Rate', 'fieldtype': 'Currency', 'width': 120, 'options': 'currency'},
         {'fieldname': 'net_amount', 'label': 'Doc. Net Amount', 'fieldtype': 'Currency', 'width': 120, 'options': 'currency'},
         {'fieldname': 'billed_amount', 'label': 'Billed Amount', 'fieldtype': 'Currency', 'width': 120, 'options': 'currency'},
+        {'fieldname': 'unbilled_amount', 'label': 'Unbilled Amount', 'fieldtype': 'Currency', 'width': 120, 'options': 'currency'},
 
         {'fieldname': 'base_currency', 'label': 'Company Currency', 'fieldtype': 'Data', 'width': 120},
         {'fieldname': 'base_price_list_rate', 'label': 'List Rate', 'fieldtype': 'Currency', 'width': 120, 'options': 'base_currency'},
         {'fieldname': 'base_net_rate', 'label': 'Net Rate', 'fieldtype': 'Currency', 'width': 120, 'options': 'base_currency'},
         {'fieldname': 'base_net_amount', 'label': 'Net Amount', 'fieldtype': 'Currency', 'width': 120, 'options': 'base_currency'},
+        {'fieldname': 'base_unbilled_amount', 'label': 'Unbilled Amount', 'fieldtype': 'Currency', 'width': 120, 'options': 'base_currency'},
 
         {'fieldname': 'so_name', 'label': 'Sales Order', 'fieldtype': 'Link', 'width': 120, 'options': 'Sales Order'},
         {'fieldname': 'so_date', 'label': 'SO Date', 'fieldtype': 'Date', 'width': 140},
@@ -48,7 +50,18 @@ def get_columns():
 	]
 
 
-def get_data():
+def get_data(filters):
+
+
+    conditions = ""
+    if filters.status:
+        status = frappe.parse_json(filters.status)
+        conditions += " AND so.status IN ('{0}')\n".format("', '".join(status))
+
+    if filters.from_date:
+        conditions += " AND so.{filter_on_date} >= '{from_date}'\n".format(**filters)
+    if filters.to_date:
+        conditions += " AND so.{filter_on_date} <= '{to_date}'\n".format(**filters)
 
     sql_query = """
 		SELECT
@@ -85,6 +98,8 @@ def get_data():
 			te.parent_territory as territory_parent,
 			ifnull(soi.delivered_qty, 0) AS delivered_qty,
 			ifnull(soi.billed_amt, 0) AS billed_amount,
+			soi.net_amount - ifnull(soi.billed_amt, 0) AS unbilled_amount,
+            (soi.net_amount - ifnull(soi.billed_amt, 0)) * so.conversion_rate AS base_unbilled_amount,
 			so.company
 
 		FROM `tabSales Order Item` soi 
@@ -94,9 +109,10 @@ def get_data():
 		LEFT JOIN `tabTerritory` te on te.name = cu.territory
 		LEFT JOIN `tabCompany` co on co.name = so.company
 		WHERE
-			so.docstatus <= 1
+            so.docstatus <= 1
 			AND (so._user_tags NOT LIKE "%template%" OR so._user_tags IS NULL)
-		ORDER BY so.name DESC
-	"""
+            {conditions}
+        ORDER BY so.name DESC
+	""".format(conditions=conditions)
 
     return frappe.db.sql(sql_query, as_dict=True)

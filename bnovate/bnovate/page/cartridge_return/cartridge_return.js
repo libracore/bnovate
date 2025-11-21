@@ -270,7 +270,7 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 				t_warehouse: warehouse,
 				serial_no: enc.serial_no,
 			}, {
-				item_code: '101372.02', // Barrel plug for pouches
+				item_code: '101353.02', // Barrel plug for pouches
 				qty: 4,
 				s_warehouse: "Stores - bN",
 				// VALVE RETURN DISABLED FOR NOW
@@ -288,7 +288,7 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 				t_warehouse: warehouse,
 				serial_no: enc.serial_no,
 			}, {
-				item_code: '101372.02', // Barrel plug for pouches
+				item_code: '101353.02', // Barrel plug for pouches
 				qty: 5,
 				s_warehouse: "Stores - bN",
 			}];
