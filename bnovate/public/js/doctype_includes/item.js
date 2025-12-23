@@ -35,6 +35,14 @@ frappe.ui.form.on("Item", {
             frappe.set_route("query-report", "BOM Search (bN)");
         }, __("View"));
 
+        frm.add_custom_button("BOM Stock Report (bN)", async function () {
+            frappe.route_options = {
+                bom: frm.doc.default_bom,
+                warehouse: "Available Stock - bN",
+            };
+            frappe.set_route("query-report", "BOM Stock Report (bN)");
+        }, __("View"));
+
     },
 
     onload_post_render(frm) {

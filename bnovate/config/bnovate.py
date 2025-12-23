@@ -113,6 +113,13 @@ def get_data():
                         "is_query_report": True,            
                    },
                    {
+                        "type": "report",
+                        "name": "BOM Stock Report (bN)",
+                        "label": _("BOM Stock Report (bN)"),
+                        "doctype": "BOM",
+                        "is_query_report": True,            
+                   },
+                   {
                        "type": "report",
                        "name": "Batch Report",
                        "label": _("Batch Report"),
