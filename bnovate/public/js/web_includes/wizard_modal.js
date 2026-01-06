@@ -40,6 +40,9 @@ const modal_template = `
 `;
 
 const template_page1 = `
+<div class="alert alert-info" role="alert">
+    {{ __("As of 1 Jan 2026, UVC cartridges are replaced by ACC. These offer more functionality for a lower price. Contact sales@bnovate.com for more information.") }}
+</div>
 <table class="table">
     <thead>
         <th>{{ __("Serial No") }}</th>
@@ -56,7 +59,7 @@ const template_page1 = `
                     <option>TCC</option>
                     <option>ICC</option>
                     <option>ICC+</option>
-                    <option>UVC</option>
+                    <option>ACC</option>
                 </select>
             </td>
         </tr>
@@ -68,7 +71,7 @@ const template_page1 = `
                 <select class="variant-select" name="variant-{{sn.serial_no}}" data-sn="{{sn.serial_no}}" data-last_shipped="{{sn.address_short}}" style="width: 50%">
                     <option value=""></option>
                     {% if sn.item_code == "101083" %}
-                        <option>UVC</option>
+                        <option>ACC</option>
                     {% else %}
                         <option>TCC</option>
                         <option>ICC</option>
