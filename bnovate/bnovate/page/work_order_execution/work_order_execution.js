@@ -433,7 +433,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 					} else if (serial.item_code !== input.dataset.item) {
 						error = `Serial No is for item code ${serial.item_code}!`
 					} else if (state.work_order_doc.serial_no && state.work_order_doc.serial_no.toUpperCase().indexOf(value.toUpperCase()) < 0) {
-						warning = "Does not match work order instructions";
+						error = "Does not match work order instructions";
 					}
 
 
