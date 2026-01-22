@@ -109,7 +109,7 @@ def get_data_with_snr(filters):
 			as_dict=True
 		)
 
-        if stock_level[0]['qty'] > 0 or stock_level[0]['value'] > 0:
+        if len(stock_level) > 0 and stock_level[0]['qty'] > 0 or stock_level[0]['value'] > 0:
             item = {
                 'item_code': item_warehouse['item_code'],
                 'warehouse': item_warehouse['warehouse'],
