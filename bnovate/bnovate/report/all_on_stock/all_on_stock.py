@@ -3,7 +3,7 @@
 
 import frappe
 from frappe import _
-fromf rappe.utils import flt
+from frappe.utils import flt
 
 def execute(filters=None):
     filters = frappe._dict(filters or {})
