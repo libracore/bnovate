@@ -1,9 +1,9 @@
 # Copyright (c) 2013-2026, libracore and contributors
 # For license information, please see license.txt
 
-from __future__ import unicode_literals
 import frappe
 from frappe import _
+fromf rappe.utils import flt
 
 def execute(filters=None):
     filters = frappe._dict(filters or {})
@@ -109,7 +109,7 @@ def get_data_with_snr(filters):
 			as_dict=True
 		)
 
-        if len(stock_level) > 0 and stock_level[0]['qty'] > 0 or stock_level[0]['value'] > 0:
+        if len(stock_level) > 0 and (flt(stock_level[0].get('qty')) > 0 or flt(stock_level[0].get('value')) > 0):
             item = {
                 'item_code': item_warehouse['item_code'],
                 'warehouse': item_warehouse['warehouse'],
