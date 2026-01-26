@@ -42,7 +42,15 @@ def get_columns():
         {
             "fieldname": "revenue_stream",
             "label": _("Revenue Stream"),
-            "fieldtype": "Data",
+            "fieldtype": "Link",
+            "options": "Revenue Stream",
+            "width": 100,
+        },
+        {
+            "fieldname": "revenue_stream_parent",
+            "label": _("Revenue Stream Parent"),
+            "fieldtype": "Link",
+            "options": "Revenue Stream",
             "width": 100,
         },
         {
@@ -95,6 +103,13 @@ def get_columns():
             "label": _("Customer Group"),
             "fieldtype": "Link",
             "width": 120,
+            "options": "Customer Group"
+        },
+        {
+            "fieldname": "customer_group_parent",
+            "label": _("Customer Group Parent"),
+            "fieldtype": "Link",
+            "width": 150,
             "options": "Customer Group"
         },
         {
@@ -353,6 +368,8 @@ def get_items(filters):
 
                 cu.customer_name,
                 cu.customer_group, 
+                cg.parent as customer_group_parent,
+
                 cu.territory,
                 cu.default_discount as customer_default_discount,
                 te.parent_territory as territory_parent,
@@ -360,6 +377,7 @@ def get_items(filters):
 
             FROM `tabSales Invoice` si
             JOIN `tabCustomer` cu ON cu.name = si.customer
+            LEFT JOIN `tabCustomer Group` cg on cg.name = cu.customer_group
             JOIN `tabTerritory` te ON te.name = cu.territory
             JOIN `tabCompany` co ON co.name = si.company
             WHERE si.docstatus = 1 %s %s 
@@ -377,6 +395,7 @@ def get_items(filters):
             it.item_name,
             it.item_group, 
             ig.revenue_stream,
+            rs.parent_revenue_stream as revenue_stream_parent,
             it.description, 
 
             sii.sales_order,
@@ -405,6 +424,7 @@ def get_items(filters):
 
             sinv.customer_name,
             sinv.customer_group, 
+            sinv.customer_group_parent,
             sinv.territory,
             sinv.territory_parent,
 
@@ -421,6 +441,7 @@ def get_items(filters):
         LEFT JOIN `tabSales Invoice Item` sii ON sii.parent = sinv.name
         LEFT JOIN `tabItem` it ON it.item_code = sii.item_code
         LEFT JOIN `tabItem Group` ig ON ig.name = it.item_group
+        LEFT JOIN `tabRevenue Stream` rs ON rs.name = ig.revenue_stream
         LEFT JOIN cogs_per_sii cogs ON cogs.sii_name = sii.name
         LEFT JOIN `tabSales Order` so ON so.name = sii.sales_order
         LEFT JOIN `tabSales Order Item` soi ON soi.name = sii.so_detail
@@ -441,6 +462,7 @@ def get_items(filters):
             NULL as item_name,
             "Taxes and Charges" as item_group, 
             "Taxes and Charges" as revenue_stream, 
+            "Taxes and Charges" as revenue_stream_parent, 
             t.description, 
 
             NULL as sales_order,
@@ -469,6 +491,7 @@ def get_items(filters):
 
             sinv.customer_name,
             sinv.customer_group, 
+            sinv.customer_group_parent,
             sinv.territory,
             sinv.territory_parent,
 
