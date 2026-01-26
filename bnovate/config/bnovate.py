@@ -180,8 +180,8 @@ def get_data():
             "items": [
                    {
                         "type": "report",
-                        "name": "Weekly KPI",
-                        "label": _("Weekly KPI"),
+                        "name": "Weekly Sales",
+                        "label": _("Weekly Sales"),
                         "doctype": "Sales Order",
                         "is_query_report": True               
                    },
