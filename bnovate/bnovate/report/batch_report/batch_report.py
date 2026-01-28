@@ -29,7 +29,7 @@ def get_data(filters):
     conditions = ""
 
     if not filters.status_date:
-        filters.status = frappe.utils.nowdate()
+        filters.status_date = frappe.utils.nowdate()
     
     if filters.item_code:
         conditions += " AND bs.item_code = '{0}' ".format(filters.item_code)
@@ -70,6 +70,7 @@ FROM batchwise_stock bs
 JOIN `tabItem` it on it.item_code = bs.item_code
 JOIN `tabBatch` b on b.batch_id = bs.batch_no
 WHERE TRUE {conditions}
+ORDER BY expires_in_days ASC
     """.format(conditions=conditions, status_date=filters.status_date)
 
     # run query
