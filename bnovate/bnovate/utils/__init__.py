@@ -100,7 +100,7 @@ def deepl_translate(texts, target_lang, source_lang="en"):
     api_url = "https://api-free.deepl.com/v2/translate"
     api_key = frappe.db.get_single_value('bNovate Settings', 'deepl_api_key')
 
-    # Lists are passed as json strings through when called through FETCH...
+    # Lists are passed as json strings when called through FETCH...
     try:
         texts = frappe.parse_json(texts)
     except ValueError:
@@ -112,15 +112,18 @@ def deepl_translate(texts, target_lang, source_lang="en"):
         texts = [texts]
 
     params = {
-        "auth_key": api_key,
         "target_lang": target_lang,
         "text": texts,
+    }
+
+    headers = {
+        "Authorization": f"DeepL-Auth-Key {api_key}",
     }
 
     if source_lang is not None:
         params["source_lang"] = source_lang
 
-    response = requests.post(api_url, data=params)
+    response = requests.post(api_url, data=params, headers=headers)
     response_data = response.json()
 
     if response.status_code == 200 and "translations" in response_data:

@@ -3,6 +3,7 @@
 
 from __future__ import unicode_literals
 import frappe
+from frappe import _
 
 
 def execute(filters=None):
@@ -18,6 +19,8 @@ def get_columns():
         {'fieldname': 'item_name', 'label': 'Item Name', 'fieldtype': 'Data', 'width': 120},
         {'fieldname': 'original_item_name', 'label': 'Original Item Name', 'fieldtype': 'Data', 'width': 120},
         {'fieldname': 'item_group', 'label': 'Item Group', 'fieldtype': 'Link', 'width': 120, 'options': 'Item Group'},
+        {'fieldname': 'revenue_stream', 'label': _('Revenue Stream'), 'fieldtype': 'Link', 'options': 'Revenue Stream', 'width': 100}, 
+        { 'fieldname': 'revenue_stream_parent', 'label': _('Revenue Stream Parent'), 'fieldtype': 'Link', 'options': 'Revenue Stream', 'width': 100},
         {'fieldname': 'description', 'label': 'Description', 'fieldtype': 'Data', 'width': 150},
 
         {'fieldname': 'uom', 'label': 'UOM', 'fieldtype': 'Link', 'width': 80, 'options': 'UOM'},
@@ -43,6 +46,7 @@ def get_columns():
         {'fieldname': 'customer', 'label': 'Customer', 'fieldtype': 'Link', 'width': 130, 'options': 'Customer'},
         {'fieldname': 'customer_name', 'label': 'Customer Name', 'fieldtype': 'Data', 'width': 150},
         {'fieldname': 'customer_group', 'label': 'Customer Group', 'fieldtype': 'Link', 'width': 130, 'options': 'Customer Group'},
+        {'fieldname': 'customer_group_parent', 'label': 'Customer Group Parent', 'fieldtype': 'Link', 'width': 150, 'options': 'Customer Group'},
         {'fieldname': 'territory', 'label': 'Territory', 'fieldtype': 'Link', 'width': 130, 'options': 'Territory'},
         {'fieldname': 'territory_parent', 'label': 'Territory Parent', 'fieldtype': 'Link', 'width': 130, 'options': 'Territory'},
         # {'fieldname': 'project', 'label': 'Project', 'fieldtype': 'Link', 'width': 130, 'options': 'Project'},
@@ -72,6 +76,8 @@ def get_data(filters):
 			it.item_name,
 			soi.item_name AS original_item_name,
 			it.item_group,
+            ig.revenue_stream,
+            rs.parent_revenue_stream as revenue_stream_parent,
 			it.description,
 
 			soi.qty,
@@ -94,6 +100,7 @@ def get_data(filters):
 			so.customer,
 			cu.customer_name,
 			cu.customer_group,
+            cg.parent as customer_group_parent,
 			cu.territory,
 			te.parent_territory as territory_parent,
 			ifnull(soi.delivered_qty, 0) AS delivered_qty,
@@ -105,7 +112,10 @@ def get_data(filters):
 		FROM `tabSales Order Item` soi 
         LEFT JOIN `tabSales Order` so ON so.name = soi.parent 
         LEFT JOIN `tabCustomer` cu ON cu.name = so.customer
+        LEFT JOIN `tabCustomer Group` cg on cg.name = cu.customer_group
 		LEFT JOIN `tabItem` it on it.item_code = soi.item_code
+        LEFT JOIN `tabItem Group` ig ON ig.name = it.item_group
+        LEFT JOIN `tabRevenue Stream` rs ON rs.name = ig.revenue_stream
 		LEFT JOIN `tabTerritory` te on te.name = cu.territory
 		LEFT JOIN `tabCompany` co on co.name = so.company
 		WHERE
