@@ -83,6 +83,11 @@ def get_columns(filters):
 			"width": 120
 		},
 		{
+			"label": _("Account Name"),
+			"fieldname": "account_name",
+			"width": 200
+		},
+		{
 			"label": _("Party Type"),
 			"fieldname": "party_type",
 			"width": 100
@@ -165,6 +170,7 @@ SELECT
     gl.voucher_type,
     gl.voucher_no,
     gl.against,
+	COALESCE(asup.supplier_name, acus.customer_name) as account_name,
     gl.party_type,
     gl.party,
 	COALESCE(sup.supplier_name, cus.customer_name, emp.employee_name) as party_name,
@@ -183,6 +189,8 @@ LEFT JOIN `tabStock Entry` ste ON gl.voucher_no = ste.name
 LEFT JOIN `tabSupplier` sup ON gl.party = sup.name
 LEFT JOIN `tabEmployee` emp ON gl.party = emp.name
 LEFT JOIN `tabCustomer` cus ON gl.party = cus.name
+LEFT JOIN `tabSupplier` asup ON gl.against = asup.name
+LEFT JOIN `tabCustomer` acus ON gl.against = acus.name
 WHERE gl.posting_date BETWEEN "{from_date}" AND "{to_date}"
     {conditions}
 ORDER BY gl.posting_date
