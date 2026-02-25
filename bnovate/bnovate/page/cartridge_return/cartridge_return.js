@@ -273,6 +273,10 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 				item_code: '101353.02', // Barrel plug for pouches
 				qty: 4,
 				s_warehouse: "Stores - bN",
+			}, {
+				item_code: '100113', // foam packaging
+				qty: 1,
+				t_warehouse: "Stores - bN",
 				// VALVE RETURN DISABLED FOR NOW
 				// }, {
 				// 	item_code: '101018.02', // Cartridge seat refurbished
@@ -291,6 +295,10 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 				item_code: '101353.02', // Barrel plug for pouches
 				qty: 5,
 				s_warehouse: "Stores - bN",
+			}, {
+				item_code: '100113', // foam packaging
+				qty: 1,
+				t_warehouse: "Stores - bN",
 			}];
 		} else {
 			frappe.throw("Unsupported enclosure type ${enc.item_code} for serial no ${enc.serial_no}");
