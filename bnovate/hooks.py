@@ -235,6 +235,7 @@ doctype_js = {
     "Item": ["public/js/doctype_includes/item.js"],
     "Purchase Order": ["public/js/doctype_includes/purchase_order.js"],
     "Purchase Receipt": ["public/js/doctype_includes/purchase_receipt.js"],
+    "Purchase Invoice": ["public/js/doctype_includes/purchase_invoice.js"],
     "Quotation": ["public/js/doctype_includes/quotation.js"],
     "Sales Order": [
         "public/js/shipping.js",
