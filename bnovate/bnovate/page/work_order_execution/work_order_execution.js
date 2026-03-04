@@ -525,7 +525,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 	}
 
 	async function submit() {
-		// Submits STE with adjusted qties to db.
+		// Submits STE with adjusted qties to db (or saves if draft mode is active).
 		page.clear_primary_action();
 
 		update_ste_doc();
@@ -571,6 +571,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		}
 
 
+		state.ste_doc.production_item_entry.basic_rate = 1 // Fix a bug where save_doc fails if it's the first time this item was created. The basic rate will be overwritten in calculate_product_valuation.
 		set_scrap_item_value(state.ste_doc, state.work_order_doc.production_item);
 		// Save to update costs of additional items, set docname...
 		await state.load_ste(await save_doc(state.ste_doc));
