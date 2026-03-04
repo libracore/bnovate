@@ -169,7 +169,9 @@ fixtures = [
             "Delivery Note Item-hide_price",
             "Sales Invoice Item-is_subitem",
             "Sales Invoice Item-hide_price",
+            "Quotation-translate_all",
             "Quotation Item-translate",
+            "Sales Order-translate_all",
             "Sales Order Item-translate",
 
             # Service report and instrument portal

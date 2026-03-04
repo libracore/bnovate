@@ -114,6 +114,7 @@ def deepl_translate(texts, target_lang, source_lang="en"):
     params = {
         "target_lang": target_lang,
         "text": texts,
+        "tag_handling": "html",
     }
 
     headers = {
