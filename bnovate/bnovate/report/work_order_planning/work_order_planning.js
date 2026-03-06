@@ -25,7 +25,7 @@ frappe.query_reports["Work Order Planning"] = {
             "fieldtype": "Check",
         },
     ],
-    onload(report) {
+    async onload(report) {
         this.report = report;
         this.colours = ["dark", "light"];
 
@@ -38,16 +38,12 @@ frappe.query_reports["Work Order Planning"] = {
         // })
 
         // save a click:
-        let stations = [
-            'Labo',
-            'Assemblage',
-            'Optic',
-            'Usinage',
-            'Quality Check',
-        ];
-        stations.forEach(station => report.page.add_inner_button(station, () => {
-            this.report.set_filter_value('workstation', station);
-        }));
+        let stations = await frappe.db.get_list("Workstation", { fields: ["name", "disabled"] });
+        stations
+            .filter(station => !station.disabled)
+            .forEach(station => report.page.add_inner_button(station.name, () => {
+                this.report.set_filter_value('workstation', station.name);
+            }));
 
         bnovate.modals.attach_report_modal("stockModal");
         bnovate.modals.attach_report_modal("cartStatusModal");

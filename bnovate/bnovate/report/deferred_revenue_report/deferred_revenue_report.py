@@ -100,37 +100,44 @@ ORDER BY account, doc_posting_date, doc, idx, gle_posting_date
                 'type': "Account",
             })
 
+
+        doc_deferred = row.doc_invoiced_amount - ( row.doc_recognized_revenue if row.doc_recognized_revenue else 0)
+        show_row = True
+        if doc_deferred == 0 and filters.hide_completed:
+            show_row = False
+
         if not prev_row or prev_row.doc != row.doc:
             # New invoice
-            deferred = row.doc_invoiced_amount - ( row.doc_recognized_revenue if row.doc_recognized_revenue else 0)
             total_deferred += deferred
-            out.append({
-                'indent': 1,
-                'invoice': row.doc,
-                'posting_date': row.doc_posting_date,
-                'invoiced_amount': row.doc_invoiced_amount, # row.net_amount,
-                'recognized_revenue': row.doc_recognized_revenue,
-                'deferred_revenue': deferred,
-                'type': "Invoice",
-                'customer': row.customer,
-                'customer_name': row.customer_name,
-            })
+            if show_row:
+                out.append({
+                    'indent': 1,
+                    'invoice': row.doc,
+                    'posting_date': row.doc_posting_date,
+                    'invoiced_amount': row.doc_invoiced_amount, # row.net_amount,
+                    'recognized_revenue': row.doc_recognized_revenue,
+                    'deferred_revenue': doc_deferred,
+                    'type': "Invoice",
+                    'customer': row.customer,
+                    'customer_name': row.customer_name,
+                })
 
         if not prev_row or prev_row.detail_docname != row.detail_docname:
             # New invoice item
             recognized = row.item_recognized_revenue if row.item_recognized_revenue else 0
-            out.append({
-                'indent': 2,
-                'idx': row.idx,
-                'invoiced_amount': row.base_net_amount,
-                'recognized_revenue': recognized,
-                'deferred_revenue': row.base_net_amount - recognized, #row.net_amount - row.item_recognized_revenue,
-                'item_code': row.item_code,
-                'item_name': row.item_name,
-                'service_start_date': row.service_start_date,
-                'service_end_date': row.service_end_date,
-                'type': "Invoice Item",
-            })
+            if show_row:
+                out.append({
+                    'indent': 2,
+                    'idx': row.idx,
+                    'invoiced_amount': row.base_net_amount,
+                    'recognized_revenue': recognized,
+                    'deferred_revenue': row.base_net_amount - recognized, #row.net_amount - row.item_recognized_revenue,
+                    'item_code': row.item_code,
+                    'item_name': row.item_name,
+                    'service_start_date': row.service_start_date,
+                    'service_end_date': row.service_end_date,
+                    'type': "Invoice Item",
+                })
 
         prev_row = row.copy()
 
@@ -145,29 +152,4 @@ ORDER BY account, doc_posting_date, doc, idx, gle_posting_date
         out.append(row)
 
     # Get Balance and compare
-    return out
-
-    sql_query = """
-SELECT
-  SUM(debit) - SUM(credit) as balance
-FROM `tabGL Entry`
-WHERE account LIKE "%Deferred%"
-AND posting_date <= "{to_date}"
-    """.format(to_date=filters.to_date)
-    data = frappe.db.sql(sql_query, as_dict=True)
-    balance = 0
-    if data:
-        balance = -data[0].balance
-
-    # Add totals
-    out = [{
-        'indent': 0,
-        'deferred_revenue': balance,
-        'account': prev_row.account,
-    }, {
-        'indent': 0,
-        'deferred_revenue': total_deferred,
-        'account': 'Sum of invoices'
-    }] + out
-
     return out

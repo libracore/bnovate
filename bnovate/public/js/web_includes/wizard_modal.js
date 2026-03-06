@@ -58,7 +58,6 @@ const template_page1 = `
                     <option value=""></option>
                     <option>TCC</option>
                     <option>ICC</option>
-                    <option>ICC+</option>
                     <option>ACC</option>
                 </select>
             </td>
@@ -75,7 +74,6 @@ const template_page1 = `
                     {% else %}
                         <option>TCC</option>
                         <option>ICC</option>
-                        <option>ICC+</option>
                     {% endif %}
                 </select>
             </td>

@@ -82,6 +82,16 @@ frappe.ui.form.on("Quotation", {
         }
 
     },
+
+    async translate_all(frm) {
+        let texts = await frm.doc.items.flatMap(item => [item.item_name, item.description]);
+        let translations = await bnovate.utils.deepl_translate(texts, frm.doc.language);
+
+        frm.doc.items.forEach((item, i) => {
+            frappe.model.set_value(item.doctype, item.name, "item_name", translations[2 * i]);
+            frappe.model.set_value(item.doctype, item.name, "description", translations[2 * i + 1]);
+        });
+    },
 })
 
 frappe.ui.form.on('Quotation Item', {

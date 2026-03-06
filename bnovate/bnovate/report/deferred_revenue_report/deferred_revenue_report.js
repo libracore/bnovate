@@ -16,6 +16,10 @@ frappe.query_reports["Deferred Revenue Report"] = {
             "fieldtype": "Date",
             "default": frappe.datetime.month_end(),
             "reqd": 1,
+        }, {
+            "fieldname": "hide_completed",
+            "label": __("Hide Completed"),
+            "fieldtype": "Check",
         }
     ],
     onload(report) {
