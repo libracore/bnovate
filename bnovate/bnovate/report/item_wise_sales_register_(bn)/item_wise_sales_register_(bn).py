@@ -113,6 +113,13 @@ def get_columns():
             "options": "Customer Group"
         },
         {
+            "fieldname": "industry",
+            "label": _("Industry"),
+            "fieldtype": "Link",
+            "width": 130,
+            "options": "Industry Type"
+        },
+        {
             "fieldname": "territory",
             "label": _("Territory"),
             "fieldtype": "Link",
@@ -369,6 +376,7 @@ def get_items(filters):
                 cu.customer_name,
                 cu.customer_group, 
                 cg.parent as customer_group_parent,
+                cu.industry,
 
                 cu.territory,
                 cu.default_discount as customer_default_discount,
@@ -425,6 +433,7 @@ def get_items(filters):
             sinv.customer_name,
             sinv.customer_group, 
             sinv.customer_group_parent,
+            sinv.industry,
             sinv.territory,
             sinv.territory_parent,
 
@@ -492,6 +501,7 @@ def get_items(filters):
             sinv.customer_name,
             sinv.customer_group, 
             sinv.customer_group_parent,
+            sinv.industry,
             sinv.territory,
             sinv.territory_parent,
 
