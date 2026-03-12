@@ -54,6 +54,7 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 			<th>Customer</th>
 			<th>Open Order</th>
 			<th>Repair?</th>
+			<th>Has foam?</th>
 			<th></th>
 		</tr>
 		</thead>
@@ -70,6 +71,9 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 			</td>
 			<td>
 				<input type="checkbox" class="repair-needed" data-serial-no="{{ enc.serial_no }}" {% if enc.needs_repair %}checked{% endif %} {% if enc.transferred %}disabled{% endif %}>
+			</td>
+			<td>
+				<input type="checkbox" class="has-foam" data-serial-no="{{ enc.serial_no }}" {% if enc.has_foam %}checked{% endif %} {% if enc.transferred %}disabled{% endif %}>
 			</td>
 			<td>
 				{% if enc.transferred %}
@@ -102,6 +106,11 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 				state.set_repair(e.target.dataset.serialNo, e.target.checked);
 			})
 		})
+		document.querySelectorAll(".has-foam").forEach((el) => {
+			el.addEventListener('change', (e) => {
+				state.set_foam(e.target.dataset.serialNo, e.target.checked);
+			})
+		})
 
 		// Show print button if stock entries exist
 		let docnames = state.get_docnames();
@@ -132,6 +141,7 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 			state.encs.push({
 				serial_no,
 				...location,
+				has_foam: true,
 			})
 		}
 		draw_table();
@@ -149,6 +159,11 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 	state.set_repair = function (serial_no, checked) {
 		const enc = state.encs.find(enc => enc.serial_no == serial_no);
 		enc.needs_repair = checked;
+	}
+
+	state.set_foam = function (serial_no, checked) {
+		const enc = state.encs.find(enc => enc.serial_no == serial_no);
+		enc.has_foam = checked;
 	}
 
 
@@ -273,10 +288,6 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 				item_code: '101353.02', // Barrel plug for pouches
 				qty: 4,
 				s_warehouse: "Stores - bN",
-			}, {
-				item_code: '100113', // foam packaging
-				qty: 1,
-				t_warehouse: "Stores - bN",
 				// VALVE RETURN DISABLED FOR NOW
 				// }, {
 				// 	item_code: '101018.02', // Cartridge seat refurbished
@@ -295,15 +306,18 @@ frappe.pages['cartridge-return'].on_page_load = function (wrapper) {
 				item_code: '101353.02', // Barrel plug for pouches
 				qty: 5,
 				s_warehouse: "Stores - bN",
-			}, {
-				item_code: '100113', // foam packaging
-				qty: 1,
-				t_warehouse: "Stores - bN",
 			}];
 		} else {
 			frappe.throw("Unsupported enclosure type ${enc.item_code} for serial no ${enc.serial_no}");
 		}
 
+		if (enc.has_foam) {
+			ste_items.push({
+				item_code: '100113', // foam packaging
+				qty: 1,
+				t_warehouse: "Finished Goods - bN",
+			});
+		}
 
 		doc = await frappe.db.insert({
 			doctype: "Stock Entry",
