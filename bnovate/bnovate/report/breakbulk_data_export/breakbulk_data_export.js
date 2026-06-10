@@ -9,7 +9,7 @@ frappe.query_reports["Breakbulk Data Export"] = {
 			"label": __("Date"),
 			"fieldtype": "Date",
 			"default": frappe.datetime.get_today(),
-			"reqd": 1
+			"reqd": 0
 		}
 
 	],

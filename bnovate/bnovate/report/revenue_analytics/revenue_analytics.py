@@ -112,6 +112,7 @@ def get_data(filters):
             current = add_months(current, 1)
 
         row["total"] = total
+        row["currency"] = get_company_currency(filters.company)
         data.append(row)
         rows_by_name[rs.name] = row
 
