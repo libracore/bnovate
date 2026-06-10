@@ -59,10 +59,12 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		produce_serial_no: false,	// true if produced item needs a serial number.
 		serial_no_remaining: 0,  	// when producing with S/N, loop this many more times
 		produce_batch: false,		// true if produced item needs a batch number.
+		is_fill: false,				// used to display quick "add item" buttons	
 		needs_expiry_date: false,	// when produced item needs an expiry date.
 		expiry_date_control: null,	// contains expiry date control if it exists...
 		default_shelf_life: 9,		// [months] used to calculate expiry date
 		qc_required: false,			// true if item requires QC after production.
+		quick_add_items: [],		// these items can be added with one click (for common broken parts during refills for example)
 	}
 	bnovate.work_order_execution.state = state;
 	window.state = state;
@@ -149,6 +151,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		} else if (state.view == write) {
 			item_content.innerHTML = frappe.render_template('items_write', {
 				doc: state.ste_doc,
+				quick_add_items: state.quick_add_items,
 			});
 			if (state.serial_no_remaining > 0) {
 				page.set_primary_action(`Next (${state.serial_no_remaining})`, validate);
@@ -253,6 +256,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		state.produce_batch = locals["Item"][state.work_order_doc.production_item].has_batch_no;
 
 		// do we need an expiry date? For now only FILs need them.
+		state.is_fill = is_fill(state.work_order_doc.production_item);
 		state.needs_expiry_date = is_fill(state.work_order_doc.production_item);
 		state.default_shelf_life = locals["Item"][state.work_order_doc.production_item].stability_in_months || 9;
 		state.qc_required = locals["Item"][state.work_order_doc.production_item].qc_required || false;
@@ -309,6 +313,29 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 
 		// Check time tracking status. If a row with no end_time exists, then timing has started.
 		state.timing_started = state.work_order_doc.time_log.map(row => row.end_time).indexOf(undefined) >= 0;
+
+		if (state.is_fill) {
+			// Populate quick-add-item buttons
+			const item_codes = [
+				100028,
+				100029,
+				100068,
+				100069,
+				100076,
+				100063,
+				100084,
+				100055,
+				100050,
+				100051,
+				100054,
+			]
+			const item_docs = await Promise.all(item_codes.map(code => frappe.model.with_doc("Item", code)));
+
+			state.quick_add_items = item_docs.map(item => ({
+				item_code: item.item_code,
+				item_name: item.short_name || item.item_name,
+			}));
+		}
 
 		draw();
 	}
@@ -979,6 +1006,15 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 				draw();
 			});
 		}
+
+		[...document.querySelectorAll('.quick-add-item')]
+			.map(el => el.addEventListener('click', async event => {
+				let item_code = el.dataset.item;
+				console.log("Add", item_code)
+				await state.add_additional_item(item_code, 1);
+				draw();
+			}));
+
 		[...document.querySelectorAll('.remove-additional-item')]
 			.map(el => el.addEventListener('click', async event => {
 				await state.remove_additional_item(el.dataset.row);
