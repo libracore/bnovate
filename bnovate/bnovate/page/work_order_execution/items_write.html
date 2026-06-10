@@ -216,12 +216,18 @@
 
                         <td class="text-right">
                         </td>
+
+                        <td class="text-right">
+                        </td>
                     </tr>
                     {% endfor %}
 
                 </tbody>
             </table>
             <button class="btn btn-small btn-primary add-items"><i class="fa fa-plus"></i> {{ __("Add") }}</button>
+            {% for mini_bom in quick_add_bulk %}
+            <button class="btn btn-small btn-info quick-add-bulk" data-items="{{ mini_bom.item_codes }}"><i class="fa fa-plus"></i> {{ mini_bom.name }}</button>
+            {% endfor %}
             {% for item in quick_add_items %}
             <br>
             <button class="btn btn-small btn-secondary quick-add-item" data-item="{{ item.item_code }}"><i class="fa fa-plus"></i> {{ item.item_code}}: {{ item.item_name }}</button>

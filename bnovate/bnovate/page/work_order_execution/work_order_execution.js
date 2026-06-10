@@ -65,6 +65,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		default_shelf_life: 9,		// [months] used to calculate expiry date
 		qc_required: false,			// true if item requires QC after production.
 		quick_add_items: [],		// these items can be added with one click (for common broken parts during refills for example)
+		quick_add_bulk: [],			// one click adds several items defined here (like a mini-BOM)
 	}
 	bnovate.work_order_execution.state = state;
 	window.state = state;
@@ -152,6 +153,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			item_content.innerHTML = frappe.render_template('items_write', {
 				doc: state.ste_doc,
 				quick_add_items: state.quick_add_items,
+				quick_add_bulk: state.quick_add_bulk,
 			});
 			if (state.serial_no_remaining > 0) {
 				page.set_primary_action(`Next (${state.serial_no_remaining})`, validate);
@@ -227,6 +229,8 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		state.produce_serial_no = false;
 		state.produce_batch = false;
 		state.serial_no_remaining = 0;
+		state.quick_add_items = [];
+		state.quick_add_bulk = [];
 
 		// with_doctype loads default for the doctype, populates listview_settings,
 		// giving us status indicators
@@ -335,6 +339,14 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 				item_code: item.item_code,
 				item_name: item.short_name || item.item_name,
 			}));
+
+			state.quick_add_bulk = [{
+				name: __("4-port valve"),
+				item_codes: ['100011', '100012', '100052', '100053'],
+			}, {
+				name: __("5-port valve"),
+				item_codes: ['101049.02', '101050.02', '100052', '100053'],
+			}];
 		}
 
 		draw();
@@ -1012,6 +1024,15 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 				let item_code = el.dataset.item;
 				console.log("Add", item_code)
 				await state.add_additional_item(item_code, 1);
+				draw();
+			}));
+
+		[...document.querySelectorAll('.quick-add-bulk')]
+			.map(el => el.addEventListener('click', async event => {
+				let item_codes = el.dataset.items.split(',');
+				for (let item_code of item_codes) {
+					await state.add_additional_item(item_code, 1);
+				}
 				draw();
 			}));
 
