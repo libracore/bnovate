@@ -10,8 +10,14 @@ frappe.query_reports["Breakbulk Data Export"] = {
 			"fieldtype": "Date",
 			"default": frappe.datetime.get_today(),
 			"reqd": 0
+		}, {
+			"fieldname": "company",
+			"label": __("Company"),
+			"fieldtype": "Link",
+			"options": "Company",
+			"default": frappe.defaults.get_user_default("Company"),
+			"reqd": 1
 		}
-
 	],
 	onload(report) {
 		this.report = report;
