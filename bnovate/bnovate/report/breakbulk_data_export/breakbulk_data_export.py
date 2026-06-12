@@ -57,12 +57,12 @@ def get_columns():
             "fieldtype": "Float",
             "width": 120
         },
-        {
-            "label": "EORI",
-            "fieldname": "eori_number",
-            "fieldtype": "Data",
-            "width": 150
-        },
+        # {
+        #     "label": "EORI",
+        #     "fieldname": "eori_number",
+        #     "fieldtype": "Data",
+        #     "width": 150
+        # },
         {
             "label": "Recipient's VAT Number",
             "fieldname": "tax_id",
