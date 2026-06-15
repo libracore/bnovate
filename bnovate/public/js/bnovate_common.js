@@ -480,6 +480,40 @@ bnovate.utils.check_eori = async function (eori_number) {
   }
 }
 
+bnovate.utils.check_vat_number = async function (vat_number) {
+  let resp = await frappe.call({
+    method: 'bnovate.bnovate.utils.check_vat_number',
+    args: {
+      vat_number
+    }
+  })
+
+  const result = resp.message;
+
+  if (result.error) {
+    frappe.msgprint({
+      title: __('Error looking up VAT number'),
+      message: result.error,
+      indicator: 'red'
+    });
+    return;
+  }
+
+  if (result.valid) {
+    frappe.msgprint({
+      title: __('VAT number valid'),
+      message: result.address_display,
+      indicator: 'green'
+    });
+  } else {
+    frappe.msgprint({
+      title: __('VAT number invalid'),
+      message: 'VAT number not valid',
+      indicator: 'red'
+    });
+  }
+}
+
 bnovate.utils.convert_deferred_revenue_to_income = async function (start_date, end_date) {
   let resp = await frappe.call({
     method: 'bnovate.bnovate.utils.convert_deferred_revenue_to_income',

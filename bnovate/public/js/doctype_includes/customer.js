@@ -42,10 +42,10 @@ frappe.ui.form.on("Customer", {
             frappe.set_route("query-report", "Shipment Report");
         }, __("View"));
     },
+    check_vat(frm) {
+        bnovate.utils.check_vat_number(frm.doc.tax_id);
+    },
     check_eori(frm) {
-        // If API is unreliable, we could just link to the EU website:
-        // window.open('https://ec.europa.eu/taxation_customs/dds2/eos/eori_validation.jsp?Lang=en&EoriNumb=' + frm.doc.eori_number, '_blank');
-
         bnovate.utils.check_eori(frm.doc.eori_number);
     }
 })
