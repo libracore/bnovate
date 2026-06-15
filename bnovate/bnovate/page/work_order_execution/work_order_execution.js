@@ -319,33 +319,46 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		state.timing_started = state.work_order_doc.time_log.map(row => row.end_time).indexOf(undefined) >= 0;
 
 		if (state.is_fill) {
-			// Populate quick-add-item buttons
+			// Populate quick-add-item buttons. Qties adds additional buttons to quick add the specified number of units.
 			const item_codes = [
-				100028,
-				100029,
-				100068,
-				100069,
-				100076,
-				100063,
-				100084,
-				100055,
-				100050,
-				100051,
-				100054,
+				{ item_code: "100028", qties: [2, 3, 4] },
+				{ item_code: "100029", qties: [] },
+				{ item_code: "100068", qties: [2, 3, 4] },
+				{ item_code: "100069", qties: [] },
+				{ item_code: "100076", qties: [2, 3, 4, 5] },
+				{ item_code: "100063", qties: [2, 3, 4, 5] },
+				{ item_code: "100084", qties: [2, 3] },
+				{ item_code: "100055", qties: [2, 3, 4] },
+				{ item_code: "100050", qties: [2, 3, 4] },
+				{ item_code: "100051", qties: [] },
+				{ item_code: "100054", qties: [] },
 			]
-			const item_docs = await Promise.all(item_codes.map(code => frappe.model.with_doc("Item", code)));
+			const item_docs = await Promise.all(item_codes.map(item => frappe.model.with_doc("Item", item.item_code)));
 
 			state.quick_add_items = item_docs.map(item => ({
 				item_code: item.item_code,
 				item_name: item.short_name || item.item_name,
+				qties: item_codes.find(ic => ic.item_code == item.item_code)?.qties || [],
 			}));
 
 			state.quick_add_bulk = [{
-				name: __("4-port valve"),
-				item_codes: ['100011', '100012', '100052', '100053'],
+				label: __("4-port valve"),
+				minibom_name: '4-port valve',
+				items: [
+					{ item_code: '100011', qty: 1 },
+					{ item_code: '100012', qty: 1 },
+					{ item_code: '100052', qty: 4 },
+					{ item_code: '100053', qty: 2 }
+				],
 			}, {
-				name: __("5-port valve"),
-				item_codes: ['101049.02', '101050.02', '100052', '100053'],
+				label: __("5-port valve"),
+				minibom_name: '5-port valve',
+				items: [
+					{ item_code: '101049.02', qty: 1 },
+					{ item_code: '101050.02', qty: 1 },
+					{ item_code: '100052', qty: 4 },
+					{ item_code: '100053', qty: 2 }
+				],
 			}];
 		}
 
@@ -1022,16 +1035,18 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		[...document.querySelectorAll('.quick-add-item')]
 			.map(el => el.addEventListener('click', async event => {
 				let item_code = el.dataset.item;
-				console.log("Add", item_code)
-				await state.add_additional_item(item_code, 1);
+				let qty = el.dataset.qty ? parseFloat(el.dataset.qty) : 1;
+				await state.add_additional_item(item_code, qty);
 				draw();
 			}));
 
 		[...document.querySelectorAll('.quick-add-bulk')]
 			.map(el => el.addEventListener('click', async event => {
-				let item_codes = el.dataset.items.split(',');
-				for (let item_code of item_codes) {
-					await state.add_additional_item(item_code, 1);
+				let minibom_name = el.dataset.minibom;
+				let minibom = state.quick_add_bulk.find(item => item.minibom_name == minibom_name);
+
+				for (let item of minibom.items) {
+					await state.add_additional_item(item.item_code, item.qty);
 				}
 				draw();
 			}));

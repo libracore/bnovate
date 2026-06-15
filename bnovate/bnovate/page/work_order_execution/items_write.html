@@ -225,12 +225,18 @@
                 </tbody>
             </table>
             <button class="btn btn-small btn-primary add-items"><i class="fa fa-plus"></i> {{ __("Add") }}</button>
-            {% for mini_bom in quick_add_bulk %}
-            <button class="btn btn-small btn-info quick-add-bulk" data-items="{{ mini_bom.item_codes }}"><i class="fa fa-plus"></i> {{ mini_bom.name }}</button>
+            {% for minibom in quick_add_bulk %}
+            <button class="btn btn-small btn-info quick-add-bulk" data-minibom="{{ minibom.minibom_name }}"><i class="fa fa-plus"></i> {{ minibom.label }}</button>
             {% endfor %}
+
             {% for item in quick_add_items %}
             <br>
             <button class="btn btn-small btn-secondary quick-add-item" data-item="{{ item.item_code }}"><i class="fa fa-plus"></i> {{ item.item_code}}: {{ item.item_name }}</button>
+
+            {% for qty in item.qties %}
+            <button class="btn btn-small btn-outline-secondary quick-add-item" data-item="{{ item.item_code }}" data-qty="{{ qty }}">x {{ qty }}</button>
+            {% endfor %}
+
             {% endfor %}
         </div>
     </div>
