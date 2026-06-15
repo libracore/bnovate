@@ -68,6 +68,9 @@ def get_data(filters):
     if filters.to_date:
         conditions += " AND so.{filter_on_date} <= '{to_date}'\n".format(**filters)
 
+    if filters.customer:
+        conditions += " AND so.customer = '{customer}'\n".format(**filters)
+
     sql_query = """
 		SELECT
 			so.docstatus,
