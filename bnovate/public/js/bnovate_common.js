@@ -178,6 +178,36 @@ function get_labels(doctype, docnames, print_format, label_reference) {
 }
 bnovate.utils.get_labels = get_labels; // already used in many custom scripts, keep in global namespace.
 
+function get_pdf_url(doctype, docname, print_format, lang) {
+  return frappe.urllib.get_full_url('/api/method/frappe.utils.print_format.download_pdf?'
+    + 'doctype=' + encodeURIComponent(doctype)
+    + '&name=' + encodeURIComponent(docname)
+    + '&format=' + encodeURIComponent(print_format)
+    + '&no_letterhead=0'
+    + '&_lang=' + encodeURIComponent(lang)
+  )
+}
+bnovate.utils.get_pdf_url = get_pdf_url;
+
+function get_pdf_urls(doctype, docnames, print_format, letterhead = 1) {
+  const docnames_json = JSON.stringify(docnames);
+  return '/api/method/frappe.utils.print_format.download_multi_pdf?' +
+    'doctype=' + encodeURIComponent(doctype) +
+    '&name=' + encodeURIComponent(docnames_json) +
+    '&format=' + encodeURIComponent(print_format) +
+    '&no_letterhead=' + (letterhead ? '0' : '1')
+}
+
+
+function open_pdf_urls(doctype, docnames, print_format, letterhead = 1) {
+  const w = window.open(get_pdf_urls(doctype, docnames, print_format, letterhead));
+  if (!w) {
+    frappe.msgprint(__('Please enable pop-ups'));
+    return;
+  }
+}
+bnovate.utils.open_pdf_urls = open_pdf_urls;
+
 bnovate.utils.get_next_item_code = async function (prefix) {
   let resp = await frappe.call({
     method: 'bnovate.bnovate.utils.items.get_next_item_code',

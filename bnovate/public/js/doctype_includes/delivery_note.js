@@ -47,6 +47,12 @@ frappe.ui.form.on("Delivery Note", {
 
     refresh(frm) {
 
+        // const pdf_url = bnovate.utils.get_pdf_url(frm.doc.doctype, frm.doc.name, "Commercial Invoice CHF", frm.doc.language);
+        // frm.add_custom_button(`<a href="${pdf_url}" download="${frm.doc.name}_invoice_CHF.pdf"><i class="fa fa-download"></i> Details</a> `, () => {
+        //     frappe.show_progress("Preparing...", 50, 100);
+        //     setTimeout(() => frappe.hide_progress(), 1000);
+        // });
+
         if (frm.doc.shipping_label) {
             frm.add_custom_button('<i class="fa fa-print"></i> ' + __('Shipping Label'), () => {
                 print_shipping_label(frm);
