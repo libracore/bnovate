@@ -118,6 +118,7 @@ fixtures = [
             # "Company-default_address",
             "Supplier-eori_number",
             "Delivery Note-eori_number",
+            "Customer-check_vat",
             "Customer-eori_number",
             "Customer-check_eori",
             "Customer-default_incoterm",

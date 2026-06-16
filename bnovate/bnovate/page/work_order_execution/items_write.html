@@ -8,58 +8,52 @@
     </div> -->
 
     <div class="bn-row">
-        {% if doc.production_item_entry.needs_batch_input  %}
+        {% if doc.production_item_entry.needs_batch_input %}
         <div class="bn-col">
             <h3>{{ __("Batch produced") }}</h3>
-            <input class="batch form-control" id="batch-{{ doc.production_item_entry.idx }}"
-                name="batch-{{ doc.production_item_entry.idx }}" data-idx="{{ doc.production_item_entry.idx }}"
-                data-item="{{ doc.production_item_entry.item_code }}"
-                data-required 
-                value="{{ doc.production_item_entry.batch_no || doc.work_order }}" tabindex="1" autofocus>
+            <input class="batch form-control" id="batch-{{ doc.production_item_entry.idx }}" name="batch-{{ doc.production_item_entry.idx }}" data-idx="{{ doc.production_item_entry.idx }}" data-item="{{ doc.production_item_entry.item_code }}" data-required value="{{ doc.production_item_entry.batch_no || doc.work_order }}" tabindex="1" autofocus>
         </div>
         {% endif %}
 
         {% if doc.production_item_entry.has_batch_no %}
-            {% if not doc.production_item_entry.needs_batch_input %}
-                <div class="bn-col info">
-                    <i class="fa fa-info-circle"></i> {{ __("Batch no is automatically generated.") }}
-                </div>
-            {% endif %}
+        {% if not doc.production_item_entry.needs_batch_input %}
+        <div class="bn-col info">
+            <i class="fa fa-info-circle"></i> {{ __("Batch no is automatically generated.") }}
+        </div>
+        {% endif %}
         {% endif %}
 
         {% if doc.production_item_entry.has_serial_no %}
-            {% if not doc.production_item_entry.needs_serial_input %}
-                <div class="bn-col">
-                    <h3>{{ __("Serial No produced") }}</h3>
-                    <table class="table table-condensed no-margin" style="border-bottom: 1px solid #d1d8dd">
-                        <tbody>
-                            <tr>
-                                <td>
-                                    {{ doc.production_item_entry.item_code }}
-                                </td>
-                                <td class="info">
-                                    <i class="fa fa-info-circle"></i> {{ __("Serial no is automatically generated") }}.
-                                </td>
-                            </tr>
-                            <!-- Special case for new cartridges -->
-                            {% for scrap_item in doc.exclusively_scrap_items %} 
-                            {% if scrap_item.needs_serial_input %}
-                            <tr>
-                                <td>
-                                    {{ scrap_item.item_code }}
-                                </td>
-                                <td>
-                                    <input class="serial form-control required" id="serial-scrap-{{ scrap_item.idx }}"
-                                    name="serial-scrap-{{ scrap_item.idx }}" data-idx="{{ scrap_item.idx }}"
-                                    data-item="{{ scrap_item.item_code }}" data-required tabindex="2" value="{{ scrap_item.serial_no }}">
-                                </td>  
-                            </tr>
-                            {% endif %} 
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% endif %}
+        {% if not doc.production_item_entry.needs_serial_input %}
+        <div class="bn-col">
+            <h3>{{ __("Serial No produced") }}</h3>
+            <table class="table table-condensed no-margin" style="border-bottom: 1px solid #d1d8dd">
+                <tbody>
+                    <tr>
+                        <td>
+                            {{ doc.production_item_entry.item_code }}
+                        </td>
+                        <td class="info">
+                            <i class="fa fa-info-circle"></i> {{ __("Serial no is automatically generated") }}.
+                        </td>
+                    </tr>
+                    <!-- Special case for new cartridges -->
+                    {% for scrap_item in doc.exclusively_scrap_items %}
+                    {% if scrap_item.needs_serial_input %}
+                    <tr>
+                        <td>
+                            {{ scrap_item.item_code }}
+                        </td>
+                        <td>
+                            <input class="serial form-control required" id="serial-scrap-{{ scrap_item.idx }}" name="serial-scrap-{{ scrap_item.idx }}" data-idx="{{ scrap_item.idx }}" data-item="{{ scrap_item.item_code }}" data-required tabindex="2" value="{{ scrap_item.serial_no }}">
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
         {% endif %}
 
         {% if doc.production_item_entry.needs_serial_input %}
@@ -73,27 +67,23 @@
                             {{ doc.production_item_entry.item_code }}
                         </td>
                         <td>
-                            <input class="serial form-control required" id="serial-{{ doc.production_item_entry.idx }}"
-                            name="serial-{{ doc.production_item_entry.idx }}" data-idx="{{ doc.production_item_entry.idx }}"
-                            data-item="{{ doc.production_item_entry.item_code }}" data-required tabindex="1" autofocus value="{{ doc.production_item_entry.serial_no }}">
+                            <input class="serial form-control required" id="serial-{{ doc.production_item_entry.idx }}" name="serial-{{ doc.production_item_entry.idx }}" data-idx="{{ doc.production_item_entry.idx }}" data-item="{{ doc.production_item_entry.item_code }}" data-required tabindex="1" autofocus value="{{ doc.production_item_entry.serial_no }}">
                         </td>
                     </tr>
 
 
                     <!-- Special case for new cartridges -->
-                    {% for scrap_item in doc.exclusively_scrap_items %} 
+                    {% for scrap_item in doc.exclusively_scrap_items %}
                     {% if scrap_item.has_serial_no %}
                     <tr>
                         <td>
                             {{ scrap_item.item_code }}
                         </td>
                         <td>
-                            <input class="serial form-control required" id="serial-scrap-{{ scrap_item.idx }}"
-                            name="serial-scrap-{{ scrap_item.idx }}" data-idx="{{ scrap_item.idx }}"
-                            data-item="{{ scrap_item.item_code }}" data-required tabindex="2" value="{{ scrap_item.serial_no }}">
-                        </td>  
+                            <input class="serial form-control required" id="serial-scrap-{{ scrap_item.idx }}" name="serial-scrap-{{ scrap_item.idx }}" data-idx="{{ scrap_item.idx }}" data-item="{{ scrap_item.item_code }}" data-required tabindex="2" value="{{ scrap_item.serial_no }}">
+                        </td>
                     </tr>
-                    {% endif %} 
+                    {% endif %}
                     {% endfor %}
                 </tbody>
             </table>
@@ -103,7 +93,7 @@
         <div class="bn-row">
             <div class="bn-col" id="expiry-div" hidden>
                 <h3>{{ __("Expiry Date") }}</h3>
-            <!-- This is filled in from JS, a date input is added -->
+                <!-- This is filled in from JS, a date input is added -->
             </div>
         </div>
 
@@ -152,12 +142,12 @@
                     {% for item in doc.required_items %}
                     <tr>
                         <td class="table-sr">{{ item.idx }}</td>
-                        <td class="" >
+                        <td class="">
                             <div class="value">
                                 {{ item.item_code }}
                             </div>
                         </td>
-                        <td class="" >
+                        <td class="">
                             <div class="value">
                                 <strong>{{ item.item_name }}</strong>
                             </div>
@@ -170,22 +160,19 @@
                         <td class="text-left">
                             <div class="value">
                                 {{ item.uom }}
-                            </div> 
+                            </div>
                         </td>
 
                         <td class="text-left">
                             <div class="value">
-                                <input class="qty-delta form-control" id="delta-{{ item.idx }}"
-                                    name="delta-{{ item.idx }}" data-idx="{{ item.idx }}" data-item="{{ item.item_code }}" tabindex="{{ item.idx + doc.items.length + 2}}" value="{{ item.delta }}">
+                                <input class="qty-delta form-control" id="delta-{{ item.idx }}" name="delta-{{ item.idx }}" data-idx="{{ item.idx }}" data-item="{{ item.item_code }}" tabindex="{{ item.idx + doc.items.length + 2}}" value="{{ item.delta }}">
                             </div>
                         </td>
 
                         <td class="text-right">
                             {% if item.has_batch_no %}
                             <div class="value">
-                                <input class="batch form-control required check-batch" id="batch-{{ item.idx }}"
-                                    name="batch-{{ item.idx }}" data-idx="{{ item.idx }}" data-required tabindex="{{ item.idx + 2 }}"
-                                    data-item="{{ item.item_code }}" value="{{ item.batch_no }}">
+                                <input class="batch form-control required check-batch" id="batch-{{ item.idx }}" name="batch-{{ item.idx }}" data-idx="{{ item.idx }}" data-required tabindex="{{ item.idx + 2 }}" data-item="{{ item.item_code }}" value="{{ item.batch_no }}">
                             </div>
                             {% endif %}
                         </td>
@@ -194,9 +181,7 @@
                         <td class="text-right">
                             {% if item.has_serial_no %}
                             <div class="value">
-                                <input class="serial form-control required check-serial" id="serial-{{ item.idx }}"
-                                    name="serial-{{ item.idx }}" data-idx="{{ item.idx }}" data-required tabindex="{{ item.idx + 2 }}"
-                                    data-item="{{ item.item_code }}" value="{{ item.serial_no }}">
+                                <input class="serial form-control required check-serial" id="serial-{{ item.idx }}" name="serial-{{ item.idx }}" data-idx="{{ item.idx }}" data-required tabindex="{{ item.idx + 2 }}" data-item="{{ item.item_code }}" value="{{ item.serial_no }}">
                             </div>
                             {% endif %}
                         </td>
@@ -207,12 +192,12 @@
                         <td class="table-sr">
                             <button class="btn btn-xs btn-danger remove-additional-item" data-row="{{ item._row }}"><i class="octicon octicon-x"></i></button>
                         </td>
-                        <td class="" >
+                        <td class="">
                             <div class="value">
                                 {{ item.item_code }}
                             </div>
                         </td>
-                        <td class="" >
+                        <td class="">
                             <div class="value">
                                 <strong>{{ item.item_name }}</strong>
                             </div>
@@ -224,6 +209,9 @@
                         </td>
 
                         <td class="text-left">
+                        </td>
+
+                        <td class="text-right">
                         </td>
 
                         <td class="text-right">
@@ -237,6 +225,19 @@
                 </tbody>
             </table>
             <button class="btn btn-small btn-primary add-items"><i class="fa fa-plus"></i> {{ __("Add") }}</button>
+            {% for minibom in quick_add_bulk %}
+            <button class="btn btn-small btn-info quick-add-bulk" data-minibom="{{ minibom.minibom_name }}"><i class="fa fa-plus"></i> {{ minibom.label }}</button>
+            {% endfor %}
+
+            {% for item in quick_add_items %}
+            <br>
+            <button class="btn btn-small btn-secondary quick-add-item" data-item="{{ item.item_code }}"><i class="fa fa-plus"></i> {{ item.item_code}}: {{ item.item_name }}</button>
+
+            {% for qty in item.qties %}
+            <button class="btn btn-small btn-outline-secondary quick-add-item" data-item="{{ item.item_code }}" data-qty="{{ qty }}">x {{ qty }}</button>
+            {% endfor %}
+
+            {% endfor %}
         </div>
     </div>
 

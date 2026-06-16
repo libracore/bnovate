@@ -60,8 +60,6 @@ def get_columns(filters):
     return columns
 
 def get_data(filters):
-
-
     # Get all revenue streams in tree order
     revenue_streams = frappe.db.sql("""
         SELECT 
@@ -114,6 +112,7 @@ def get_data(filters):
             current = add_months(current, 1)
 
         row["total"] = total
+        row["currency"] = get_company_currency(filters.company)
         data.append(row)
         rows_by_name[rs.name] = row
 

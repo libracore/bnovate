@@ -59,10 +59,13 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		produce_serial_no: false,	// true if produced item needs a serial number.
 		serial_no_remaining: 0,  	// when producing with S/N, loop this many more times
 		produce_batch: false,		// true if produced item needs a batch number.
+		is_fill: false,				// used to display quick "add item" buttons	
 		needs_expiry_date: false,	// when produced item needs an expiry date.
 		expiry_date_control: null,	// contains expiry date control if it exists...
 		default_shelf_life: 9,		// [months] used to calculate expiry date
 		qc_required: false,			// true if item requires QC after production.
+		quick_add_items: [],		// these items can be added with one click (for common broken parts during refills for example)
+		quick_add_bulk: [],			// one click adds several items defined here (like a mini-BOM)
 	}
 	bnovate.work_order_execution.state = state;
 	window.state = state;
@@ -149,6 +152,8 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		} else if (state.view == write) {
 			item_content.innerHTML = frappe.render_template('items_write', {
 				doc: state.ste_doc,
+				quick_add_items: state.quick_add_items,
+				quick_add_bulk: state.quick_add_bulk,
 			});
 			if (state.serial_no_remaining > 0) {
 				page.set_primary_action(`Next (${state.serial_no_remaining})`, validate);
@@ -224,6 +229,8 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		state.produce_serial_no = false;
 		state.produce_batch = false;
 		state.serial_no_remaining = 0;
+		state.quick_add_items = [];
+		state.quick_add_bulk = [];
 
 		// with_doctype loads default for the doctype, populates listview_settings,
 		// giving us status indicators
@@ -253,6 +260,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		state.produce_batch = locals["Item"][state.work_order_doc.production_item].has_batch_no;
 
 		// do we need an expiry date? For now only FILs need them.
+		state.is_fill = is_fill(state.work_order_doc.production_item);
 		state.needs_expiry_date = is_fill(state.work_order_doc.production_item);
 		state.default_shelf_life = locals["Item"][state.work_order_doc.production_item].stability_in_months || 9;
 		state.qc_required = locals["Item"][state.work_order_doc.production_item].qc_required || false;
@@ -309,6 +317,50 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 
 		// Check time tracking status. If a row with no end_time exists, then timing has started.
 		state.timing_started = state.work_order_doc.time_log.map(row => row.end_time).indexOf(undefined) >= 0;
+
+		if (state.is_fill) {
+			// Populate quick-add-item buttons. Qties adds additional buttons to quick add the specified number of units.
+			const item_codes = [
+				{ item_code: "100028", qties: [2, 3, 4] },
+				{ item_code: "100029", qties: [] },
+				{ item_code: "100068", qties: [2, 3, 4] },
+				{ item_code: "100069", qties: [] },
+				{ item_code: "100076", qties: [2, 3, 4, 5] },
+				{ item_code: "100063", qties: [2, 3, 4, 5] },
+				{ item_code: "100084", qties: [2, 3] },
+				{ item_code: "100055", qties: [2, 3, 4] },
+				{ item_code: "100050", qties: [2, 3, 4] },
+				{ item_code: "100051", qties: [] },
+				{ item_code: "100054", qties: [] },
+			]
+			const item_docs = await Promise.all(item_codes.map(item => frappe.model.with_doc("Item", item.item_code)));
+
+			state.quick_add_items = item_docs.map(item => ({
+				item_code: item.item_code,
+				item_name: item.short_name || item.item_name,
+				qties: item_codes.find(ic => ic.item_code == item.item_code)?.qties || [],
+			}));
+
+			state.quick_add_bulk = [{
+				label: __("4-port valve"),
+				minibom_name: '4-port valve',
+				items: [
+					{ item_code: '100011', qty: 1 },
+					{ item_code: '100012', qty: 1 },
+					{ item_code: '100052', qty: 4 },
+					{ item_code: '100053', qty: 2 }
+				],
+			}, {
+				label: __("5-port valve"),
+				minibom_name: '5-port valve',
+				items: [
+					{ item_code: '101049.02', qty: 1 },
+					{ item_code: '101050.02', qty: 1 },
+					{ item_code: '100052', qty: 4 },
+					{ item_code: '100053', qty: 2 }
+				],
+			}];
+		}
 
 		draw();
 	}
@@ -979,6 +1031,26 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 				draw();
 			});
 		}
+
+		[...document.querySelectorAll('.quick-add-item')]
+			.map(el => el.addEventListener('click', async event => {
+				let item_code = el.dataset.item;
+				let qty = el.dataset.qty ? parseFloat(el.dataset.qty) : 1;
+				await state.add_additional_item(item_code, qty);
+				draw();
+			}));
+
+		[...document.querySelectorAll('.quick-add-bulk')]
+			.map(el => el.addEventListener('click', async event => {
+				let minibom_name = el.dataset.minibom;
+				let minibom = state.quick_add_bulk.find(item => item.minibom_name == minibom_name);
+
+				for (let item of minibom.items) {
+					await state.add_additional_item(item.item_code, item.qty);
+				}
+				draw();
+			}));
+
 		[...document.querySelectorAll('.remove-additional-item')]
 			.map(el => el.addEventListener('click', async event => {
 				await state.remove_additional_item(el.dataset.row);

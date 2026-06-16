@@ -222,7 +222,92 @@ def check_eori(eori_number):
 
     return validate_eu_eori(eori_number)
 
+
     
+def _parse_vat_number(vat_number):
+    """Normalize EU VAT number into country code and number."""
+    if not vat_number:
+        frappe.throw(_("VAT number must not be empty"))
+
+    if not vat_number.isalnum(): 
+        frappe.throw(_("VAT number must contain only letters and numbers. No spaces or special characters."))
+
+    country_code, vat_no = vat_number[:2], vat_number[2:]
+
+    if not country_code.isalpha() or not vat_no.isalnum():
+        frappe.throw(_("Invalid VAT number format. Must start with a two letter country code followed by numbers and letters."))
+
+    return country_code, vat_no
+
+
+def _validate_eu_vat(vat_number):
+    """Returns VAT details from the EU VIES VAT validation service."""
+    country_code, vat_no = _parse_vat_number(vat_number)
+
+    url = "https://ec.europa.eu/taxation_customs/vies/services/checkVatService"
+    headers = {
+        "Content-Type": "text/xml",
+        "User-Agent": "ERPNext",
+    }
+
+    soap_request = """<?xml version="1.0" encoding="UTF-8"?>
+    <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tns="urn:ec.europa.eu:taxud:vies:services:checkVat:types">
+        <soapenv:Header/>
+        <soapenv:Body>
+            <tns:checkVat>
+                <tns:countryCode>{country_code}</tns:countryCode>
+                <tns:vatNumber>{vat_no}</tns:vatNumber>
+            </tns:checkVat>
+        </soapenv:Body>
+    </soapenv:Envelope>""".format(country_code=country_code, vat_no=vat_no)
+
+    response = requests.post(url, data=soap_request, headers=headers)
+    if response.status_code != 200:
+        return {"error": f"HTTP Error {response.status_code}", "details": response.text}
+
+    soup = BeautifulSoup(response.text, "xml")
+    fault = soup.find("faultstring")
+    if fault:
+        return {"error": fault.text.strip()}
+
+    result = {
+        "countryCode": country_code,
+        "vatNumber": vat_no,
+        "valid": False,
+        "name": None,
+        "address": None,
+        "requestDate": None,
+        "address_display": None,
+    }
+
+    valid_node = soup.find("valid")
+    if valid_node:
+        result["valid"] = valid_node.text.strip().lower() in ("true", "1")
+
+    name_node = soup.find("name")
+    address_node = soup.find("address")
+    request_date_node = soup.find("requestDate")
+
+    result["name"] = name_node.text.strip() if name_node and name_node.text else None
+    result["address"] = address_node.text.strip() if address_node and address_node.text else None
+    result["requestDate"] = request_date_node.text.strip() if request_date_node and request_date_node.text else None
+    result["address_display"] = "<br>\n".join([s for s in [result["name"], result["address"].replace('\n', '<br>\n')] if s])
+
+    return result
+
+
+@frappe.whitelist()
+def check_vat_number(vat_number):
+    """Check VAT on public register. Raise frappe exception if invalid.
+
+    Only checks EU register, not UK.
+    """
+
+    if vat_number and vat_number.strip().upper().startswith("GB"):
+        frappe.throw(_('Please check UK VAT numbers on the <a target="_blank" href="https://www.gov.uk/check-uk-vat-number">UK government website</a>'))
+
+    return _validate_eu_vat(vat_number)
+
 def get_print_html(doctype, docname, print_format, no_letterhead=True, lang=None):
     """ Return HTML for a print format. """
 

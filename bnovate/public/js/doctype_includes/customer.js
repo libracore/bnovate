@@ -41,11 +41,22 @@ frappe.ui.form.on("Customer", {
             frappe.route_options = { customer: frm.doc.name };
             frappe.set_route("query-report", "Shipment Report");
         }, __("View"));
+
+        frm.add_custom_button(__("Orders Awaiting Call-Off"), function () {
+            frappe.route_options = {
+                customer: frm.doc.name,
+                status: ["Draft", "To Deliver", "To Deliver and Bill"],
+                from_date: frappe.datetime.year_end(),
+                to_date: frappe.datetime.year_end(),
+                filter_on_date: "delivery_date"
+            };
+            frappe.set_route("query-report", "Item-wise Sales History (bN)");
+        }, __("View"));
+    },
+    check_vat(frm) {
+        bnovate.utils.check_vat_number(frm.doc.tax_id);
     },
     check_eori(frm) {
-        // If API is unreliable, we could just link to the EU website:
-        // window.open('https://ec.europa.eu/taxation_customs/dds2/eos/eori_validation.jsp?Lang=en&EoriNumb=' + frm.doc.eori_number, '_blank');
-
         bnovate.utils.check_eori(frm.doc.eori_number);
     }
 })

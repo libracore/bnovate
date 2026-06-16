@@ -82,6 +82,7 @@ def get_columns(filters):
         "fieldname": "amount",
         "label": _("Amount"),
         "fieldtype": "Currency",
+        "options": "currency",
         "width": 150
     },
     {
@@ -97,6 +98,18 @@ def get_columns(filters):
         "fieldtype": "Link",
         "options": "Sales Invoice",
         "width": 200
+    },
+    {
+        "fieldname": "customer",
+        "label": _("Customer"),
+        "fieldtype": "Link",
+        "options": "Customer",
+        "width": 100
+    }, {
+        "fieldname": "customer_name",
+        "label": _("Customer Name"),
+        "fieldtype": "Data",
+        "width": 200
     }]
 
 def get_data(filters):
@@ -104,12 +117,16 @@ def get_data(filters):
     filters.include_so = filters.get("include") in ("All", "Unbilled")
 
     filters.where_conditions = "WHERE true"    
-    if filters.revenue_stream:
-        filters.where_conditions += " AND IFNULL(rs.name, 'Other') = '{revenue_stream}' ".format(**filters)
+
+    if filters.revenue_streams:
+        if isinstance(filters.revenue_streams, str):
+            filters.revenue_streams = [filters.revenue_streams]
+        filters.where_conditions += " AND IFNULL(rs.name, 'Other') IN ({0}) ".format(", ".join("'{0}'".format(f) for f in filters.revenue_streams))
 
 
     filters.shipping_default_account = frappe.get_value("Company", filters.company, "default_freight_sales_account")
     filters.shipping_item_group = "Shipping"
+    filters.currency = get_company_currency(filters.company)
 
     data_query = """
         WITH orders AS (
@@ -120,7 +137,8 @@ def get_data(filters):
                 sii.base_net_amount as amount,
                 sii.sales_order as so_name,
                 si.name as sinv_name,
-                "Billed" as stage
+                "Billed" as stage,
+                si.customer as customer
             FROM `tabSales Invoice` si
             JOIN `tabSales Invoice Item` sii ON sii.parent = si.name 
             JOIN `tabItem` i on i.item_code = sii.item_code
@@ -139,7 +157,8 @@ def get_data(filters):
                 t.base_tax_amount as amount,
                 NULL as so_name,
                 si.name as sinv_name,
-                "Billed" as stage
+                "Billed" as stage,
+                si.customer as customer
             FROM `tabSales Invoice` si
             JOIN `tabSales Taxes and Charges` t ON t.parent = si.name
             WHERE si.docstatus = 1
@@ -156,7 +175,8 @@ def get_data(filters):
                 (soi.net_amount - ifnull(soi.billed_amt, 0)) * so.conversion_rate AS amount,  -- Unbilled amount in company currency
                 so.name as so_name,
                 NULL as sinv_name,
-                "Unbilled" as stage
+                "Unbilled" as stage,
+                so.customer as customer
             FROM `tabSales Order` so
             JOIN `tabSales Order Item` soi ON soi.parent = so.name 
             JOIN `tabItem` i on i.item_code = soi.item_code
@@ -180,11 +200,15 @@ def get_data(filters):
             DATE_FORMAT(o.posting_date, '%Y-%m') as month,
             o.amount,
             o.so_name,
-            o.sinv_name
+            o.sinv_name,
+            o.customer,
+            c.customer_name,
+            "{currency}" as currency
         FROM orders o
         LEFT JOIN `tabItem` i on i.item_code = o.item_code
         LEFT JOIN `tabItem Group` ig ON ig.name = o.item_group
         LEFT JOIN `tabRevenue Stream` rs ON rs.name = ig.revenue_stream
+        JOIN `tabCustomer` c ON c.name = o.customer
         {where_conditions}
     """.format(**filters)
     

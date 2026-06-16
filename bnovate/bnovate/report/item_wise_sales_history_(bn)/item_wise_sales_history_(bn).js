@@ -45,6 +45,12 @@ frappe.query_reports["Item-wise Sales History (bN)"] = {
 			default: "transaction_date",
 		},
 		{
+			fieldname: "customer",
+			label: __("Customer"),
+			fieldtype: "Link",
+			options: "Customer",
+		},
+		{
 			fieldname: "company",
 			label: __("Company"),
 			fieldtype: "Link",
