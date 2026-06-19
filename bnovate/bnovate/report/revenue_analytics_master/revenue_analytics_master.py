@@ -183,7 +183,7 @@ def get_data(filters):
             WHERE so.docstatus = 1
                 AND so.status != 'Closed'
                 AND so.company = '{company}'
-                AND so.delivery_date BETWEEN '{from_date}' AND '{to_date}'
+                AND soi.delivery_date BETWEEN '{from_date}' AND '{to_date}'
                 AND(soi.net_amount - ifnull(soi.billed_amt, 0)) > 0
                 AND {include_so}
         )
