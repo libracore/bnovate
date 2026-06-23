@@ -410,6 +410,8 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			_row: state.ste_doc.additional_items.length,
 			item_code: item_code,
 			item_name: item.item_name,
+			has_batch_no: item.has_batch_no,
+			has_serial_no: item.has_serial_no,
 			qty: qty,
 			s_warehouse: item_defaults.default_warehouse,
 			expense_account: item_defaults.expense_account,
