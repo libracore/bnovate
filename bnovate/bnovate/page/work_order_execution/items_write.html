@@ -225,7 +225,7 @@
                         <td class="text-right">
                             {% if item.has_serial_no %}
                             <div class="value">
-                                <input class="serial form-control required check-serial" id="serial-{{ item._row }}" name="serial-{{ item._row }}" data-idx="{{ item._row }}" data-required tabindex="{{ item._row + doc.items.length + 2 }}" data-item="{{ item.item_code }}" value="{{ item.serial_no }}">
+                                <input class="serial form-control required check-serial" id="serial-add-{{ item._row }}" name="serial-add-{{ item._row }}" data-row="{{ item._row }}" data-required tabindex="{{ item._row + doc.items.length + 2 }}" data-item="{{ item.item_code }}" value="{{ item.serial_no }}">
                             </div>
                             {% endif %}
                         </td>

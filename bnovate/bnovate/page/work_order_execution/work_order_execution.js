@@ -573,10 +573,19 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 		// And for serial no
 		[...document.querySelectorAll("input.serial")]
 			// TODO adapt for serial no on additional items.
-			.map(el => [el.dataset.idx, el.dataset.item, el.value || ''])
-			.map(([idx, item, serial_no]) => {
-				state.ste_doc.items.find(i => i.idx == idx && i.item_code == item).serial_no = serial_no.toUpperCase().trim(); // scrap items can have same index as input items, need to double-check item_code.
-			});
+			.map(el => {
+				let { idx, row, item } = el.dataset;
+				let serial_no = el.value || '';
+
+				if (idx) {  // main items
+					// scrap items can have the same index as input items, need to double-check item_code.
+					state.ste_doc.items.find(i => i.idx == idx && i.item_code == item).serial_no = serial_no.toUpperCase().trim();
+				}
+
+				if (row) { // additional item
+					state.ste_doc.additional_items.find(i => i._row == row && i.item_code == item).serial_no = serial_no.toUpperCase().trim();
+				}
+			})
 		// Comment
 		state.ste_doc.comment = document.querySelector("textarea#comment")?.value || null;
 
