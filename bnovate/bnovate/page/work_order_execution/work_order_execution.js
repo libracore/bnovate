@@ -410,6 +410,8 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			_row: state.ste_doc.additional_items.length,
 			item_code: item_code,
 			item_name: item.item_name,
+			has_batch_no: item.has_batch_no,
+			has_serial_no: item.has_serial_no,
 			qty: qty,
 			s_warehouse: item_defaults.default_warehouse,
 			expense_account: item_defaults.expense_account,
@@ -556,16 +558,34 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			});
 		// Same for batches, only on select items.
 		[...document.querySelectorAll("input.batch")]
-			.map(el => [el.dataset.idx, el.dataset.item, el.value || ''])
-			.map(([idx, item, batch_no]) => {
-				state.ste_doc.items.find(i => i.idx == idx && i.item_code == item).batch_no = batch_no.toUpperCase().trim();
+			.map(el => {
+				let { idx, row, item } = el.dataset;
+				let batch_no = el.value || '';
+
+				if (idx) {  // main items
+					state.ste_doc.items.find(i => i.idx == idx && i.item_code == item).batch_no = batch_no.toUpperCase().trim();
+				}
+
+				if (row) { // additional item
+					state.ste_doc.additional_items.find(i => i._row == row && i.item_code == item).batch_no = batch_no.toUpperCase().trim();
+				}
 			}); // BTW, this also modifies the same object pointed to from production_item_entry.
 		// And for serial no
 		[...document.querySelectorAll("input.serial")]
-			.map(el => [el.dataset.idx, el.dataset.item, el.value || ''])
-			.map(([idx, item, serial_no]) => {
-				state.ste_doc.items.find(i => i.idx == idx && i.item_code == item).serial_no = serial_no.toUpperCase().trim(); // scrap items can have same index as input items, need to double-check item_code.
-			});
+			// TODO adapt for serial no on additional items.
+			.map(el => {
+				let { idx, row, item } = el.dataset;
+				let serial_no = el.value || '';
+
+				if (idx) {  // main items
+					// scrap items can have the same index as input items, need to double-check item_code.
+					state.ste_doc.items.find(i => i.idx == idx && i.item_code == item).serial_no = serial_no.toUpperCase().trim();
+				}
+
+				if (row) { // additional item
+					state.ste_doc.additional_items.find(i => i._row == row && i.item_code == item).serial_no = serial_no.toUpperCase().trim();
+				}
+			})
 		// Comment
 		state.ste_doc.comment = document.querySelector("textarea#comment")?.value || null;
 
@@ -615,6 +635,9 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			let item = state.ste_doc.additional_items.pop();
 			state.ste_doc.items.push({
 				item_code: item.item_code,
+				batch_no: item.batch_no,
+				serial_no: item.serial_no,
+				// idx: item.idx, // don't copy over idx, it will be recalculated on save.
 				qty: item.qty,
 				s_warehouse: item.s_warehouse,
 				expense_account: item.expense_account,
