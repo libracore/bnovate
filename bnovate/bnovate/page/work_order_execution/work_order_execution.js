@@ -572,6 +572,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			}); // BTW, this also modifies the same object pointed to from production_item_entry.
 		// And for serial no
 		[...document.querySelectorAll("input.serial")]
+			// TODO adapt for serial no on additional items.
 			.map(el => [el.dataset.idx, el.dataset.item, el.value || ''])
 			.map(([idx, item, serial_no]) => {
 				state.ste_doc.items.find(i => i.idx == idx && i.item_code == item).serial_no = serial_no.toUpperCase().trim(); // scrap items can have same index as input items, need to double-check item_code.

@@ -29,11 +29,12 @@ frappe.query_reports["BOM Stock Report (bN)"] = {
 	],
 	"formatter": function (value, row, column, data, default_formatter) {
 		value = default_formatter(value, row, column, data);
-		if (column.id == "Item") {
-			if (data["Enough Parts to Build"] > 0) {
-				value = `<a style='color:green' href="#Form/Item/${data['Item']}" data-doctype="Item">${data['Item']}</a>`
+		console.log(column);
+		if (column.id == "item_code") {
+			if (data["required_qty"] < data["stock_qty"]) {
+				value = `<a style='color:green' href="#Form/Item/${data['item_code']}" data-doctype="Item">${data['item_code']}</a>`
 			} else {
-				value = `<a style='color:red' href="#Form/Item/${data['Item']}" data-doctype="Item">${data['Item']}</a>`
+				value = `<a style='color:red' href="#Form/Item/${data['item_code']}" data-doctype="Item">${data['item_code']}</a>`
 			}
 		}
 		return value

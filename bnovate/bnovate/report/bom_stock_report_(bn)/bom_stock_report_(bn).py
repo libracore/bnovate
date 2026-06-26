@@ -8,21 +8,53 @@ from frappe import _
 def execute(filters=None):
 	if not filters: filters = {}
 
-	columns = get_columns()
+	columns = get_columns(filters)
 
 	data = get_bom_stock(filters)
 
 	return columns, data
 
-def get_columns():
+def get_columns(filters):
 	"""return columns"""
+
 	columns = [
-		_("Item") + ":Link/Item:150",
-		_("Item Name") + "::300",
-		_("Qty per BOM Line") + ":Float:100",
-		_("Required Qty") + ":Float:100",
-		_("In Stock Qty") + ":Float:100",
-		_("Enough Parts to Build") + ":Float:200",
+		{
+			"label": _("Item"),
+			"fieldname": "item_code",
+			"fieldtype": "Link",
+			"options": "Item",
+			"width": 150
+		},
+		{
+			"label": _("Item Name"),
+			"fieldname": "item_name",
+			"fieldtype": "Data",
+			"width": 300
+		},
+		{
+			"label": _("Qty per BOM Line"),
+			"fieldname": "bom_qty",
+			"fieldtype": "Float",
+			"width": 100
+		},
+		{
+			"label": _("Required Qty"),
+			"fieldname": "required_qty",
+			"fieldtype": "Float",
+			"width": 100
+		},
+		{
+			"label": _("In Stock Qty"),
+			"fieldname": "stock_qty",
+			"fieldtype": "Float",
+			"width": 100
+		},
+		{
+			"label": _("Enough to build"),
+			"fieldname": "enough_parts_to_build",
+			"fieldtype": "Float",
+			"width": 200
+		},
 	]
 
 	return columns
@@ -59,10 +91,10 @@ def get_bom_stock(filters):
 				bom_item.item_code,
 				item.item_name,
 				bom_item.description,
-				bom_item.{qty_field},
-				bom_item.{qty_field} * {qty_to_produce},
-				sum(ledger.actual_qty) as actual_qty,
-				sum(FLOOR(ledger.actual_qty / (bom_item.{qty_field} * {qty_to_produce})))
+				bom_item.{qty_field} as bom_qty,
+				bom_item.{qty_field} * {qty_to_produce} as required_qty,
+				sum(ledger.actual_qty) as stock_qty,
+				sum(FLOOR(ledger.actual_qty / bom_item.{qty_field})) as enough_parts_to_build
 			FROM
 				{table} AS bom_item
 				LEFT JOIN `tabItem` AS item ON bom_item.item_code = item.item_code
@@ -78,4 +110,4 @@ def get_bom_stock(filters):
 				conditions=conditions,
 				bom=bom,
 				qty_to_produce=qty_to_produce or 1)
-			)
+			, as_dict=True)
