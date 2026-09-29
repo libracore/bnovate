@@ -129,7 +129,7 @@ def get_data(filters, include_parcels=True, include_shipping=False):
 
             SELECT
                 0 as dni_idx,
-                tc.description as item_name,
+                "Shipping" as item_name,
                 tc.base_tax_amount as base_declared_rate,
                 tc.base_tax_amount as base_amount,
                 1 as qty,
