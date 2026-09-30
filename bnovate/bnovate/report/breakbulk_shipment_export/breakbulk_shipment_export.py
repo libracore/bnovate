@@ -68,15 +68,15 @@ def get_data(filters, include_parcels=True, include_shipping=False):
 
       # Shipping
       COALESCE(a.company_name, dn.customer_name, '') AS delivery_company_name,
-      COALESCE(a.contact_name, dn.contact_display) AS delivery_contact_name,
+      COALESCE(a.contact_name, dn.contact_display, '') AS delivery_contact_name,
       a.address_line1 AS delivery_address_line1,
       a.address_line2 AS delivery_address_line2,
-      "" AS delivery_address_line3,
+      '' AS delivery_address_line3,
       a.pincode AS delivery_postal_code,
       a.city AS delivery_city,
       UPPER(country.code) AS delivery_country_code,
-      a.email_id AS delivery_email,
-      a.phone AS delivery_phone,
+      COALESCE(a.email_id, dn.contact_email, '') AS delivery_email,
+      COALESCE(a.phone, dn.contact_phone, '') AS delivery_phone,
 
       # Billing
       dn.eori_number,
@@ -129,7 +129,7 @@ def get_data(filters, include_parcels=True, include_shipping=False):
 
             SELECT
                 0 as dni_idx,
-                tc.description as item_name,
+                "Shipping" as item_name,
                 tc.base_tax_amount as base_declared_rate,
                 tc.base_tax_amount as base_amount,
                 1 as qty,

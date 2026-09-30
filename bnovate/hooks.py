@@ -225,6 +225,7 @@ doctype_js = {
     "Address": ["public/js/doctype_includes/address.js"],
     "Accounts Settings": ["public/js/doctype_includes/accounts_settings.js"],
     "Blanket Order": ["public/js/doctype_includes/blanket_order.js"],
+    "BOM": ["public/js/doctype_includes/bom.js"],
     "Company": ["public/js/doctype_includes/company.js"],
     "Contact": ["public/js/doctype_includes/contact.js"],
     "Customer": ["public/js/doctype_includes/customer.js"],
@@ -254,7 +255,9 @@ doctype_list_js = {
     "Shipment": ["public/js/doctype_includes/shipment_list.js"],
 }
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
-# doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
+doctype_calendar_js = {
+    "Work Order": "public/js/doctype_includes/work_order_calendar.js",
+}
 
 # Home Pages
 # ----------
@@ -368,12 +371,20 @@ doc_events = {
     # }
     "Work Order": {
         "before_save": [
+            "bnovate.bnovate.utils.work_order.stash_previous_dates",
+            "bnovate.bnovate.utils.work_order.default_start_time",
             "bnovate.bnovate.page.work_order_execution.work_order_execution.calculate_total_time",
             "bnovate.bnovate.utils.enclosures.set_wo_serial_no",
+            "bnovate.bnovate.utils.work_order.set_planned_end_date",
+        ],
+        "before_update_after_submit": [
+            "bnovate.bnovate.utils.work_order.stash_previous_dates",
         ],
         "on_update_after_submit": [
+            "bnovate.bnovate.utils.work_order.default_start_time",
             "bnovate.bnovate.page.work_order_execution.work_order_execution.calculate_total_time",
             "bnovate.bnovate.utils.enclosures.set_wo_serial_no",
+            "bnovate.bnovate.utils.work_order.set_planned_end_date",
         ]
     },
     "Stock Entry": {
