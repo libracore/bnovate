@@ -532,3 +532,26 @@ apps/bnovate/bnovate/public/js/doctype_includes/sales_order.js,Please save the d
 apps/bnovate/bnovate/public/js/doctype_includes/sales_order.js,Select Quotation,Sélectionner le devis
 apps/bnovate/bnovate/public/js/doctype_includes/sales_order.js,Compare,Comparer
 apps/bnovate/bnovate/public/js/doctype_includes/sales_order.js,Quotation {0} and Sales Order {1},Devis {0} et commande client {1}
+apps/bnovate/bnovate/public/js/doctype_includes/item.js,STEP files,Fichiers STEP
+apps/bnovate/bnovate/public/js/doctype_includes/item.js,This item has no STEP files attached.,Aucun fichier STEP n'est joint à cet article.
+apps/bnovate/bnovate/public/js/step_viewer.js,Reset view,Réinitialiser la vue
+apps/bnovate/bnovate/public/js/step_viewer.js,Edges,Arêtes
+apps/bnovate/bnovate/public/js/step_viewer.js,"Drag to rotate, scroll to zoom, right-drag to move.","Faites glisser pour pivoter, défilez pour zoomer, glissez avec le bouton droit pour déplacer."
+apps/bnovate/bnovate/public/js/step_viewer.js,Loading...,Chargement...
+apps/bnovate/bnovate/public/js/step_viewer.js,The 3D viewer could not be loaded. It needs internet access.,Le visualiseur 3D n'a pas pu être chargé. Il nécessite un accès à Internet.
+apps/bnovate/bnovate/public/js/step_viewer.js,Could not show this file.,Impossible d'afficher ce fichier.
+apps/bnovate/bnovate/public/js/step_viewer.js,"This STEP file could not be read, or contains no solids.",Ce fichier STEP n'a pas pu être lu ou ne contient aucun solide.
+apps/bnovate/bnovate/public/js/step_viewer.js,(units of the file),(unités du fichier)
+apps/bnovate/bnovate/public/js/step_viewer.js,Colour by subassembly,Colorer par sous-ensemble
+apps/bnovate/bnovate/public/js/step_viewer.js,Opacity,Opacité
+apps/bnovate/bnovate/public/js/step_viewer.js,Subassemblies,Sous-ensembles
+apps/bnovate/bnovate/public/js/step_viewer.js,Subassembly,Sous-ensemble
+apps/bnovate/bnovate/public/js/step_viewer.js,Other parts,Autres pièces
+apps/bnovate/bnovate/public/js/step_viewer.js,Show all,Tout afficher
+apps/bnovate/bnovate/public/js/step_viewer.js,{0} parts,{0} pièces
+apps/bnovate/bnovate/public/js/step_viewer.js,{0} triangles,{0} triangles
+apps/bnovate/bnovate/public/js/step_viewer.js,{0} instances,{0} instances
+apps/bnovate/bnovate/public/js/step_viewer.js,Looking up items...,Recherche des articles...
+apps/bnovate/bnovate/public/js/step_viewer.js,No item found for {0},Aucun article trouvé pour {0}
+apps/bnovate/bnovate/public/js/step_viewer.js,disabled,désactivé
+apps/bnovate/bnovate/public/js/step_viewer.js,Show all versions in the item list,Afficher toutes les versions dans la liste des articles

@@ -2772,6 +2772,29 @@
    "property": "depends_on",
    "property_type": "Data",
    "value": "eval:doc.bn_requires_deferral || doc.enable_deferred_revenue"
+  },
+  {
+   "_assign": null,
+   "_comments": null,
+   "_liked_by": null,
+   "_user_tags": null,
+   "creation": "2026-10-12 17:30:13.135437",
+   "default_value": null,
+   "doc_type": "Item",
+   "docstatus": 0,
+   "doctype_or_field": "DocType",
+   "field_name": null,
+   "idx": 0,
+   "modified": "2026-10-12 17:30:13.135437",
+   "modified_by": "Administrator",
+   "name": "Item-main-max_attachments",
+   "owner": "Administrator",
+   "parent": null,
+   "parentfield": null,
+   "parenttype": null,
+   "property": "max_attachments",
+   "property_type": "Int",
+   "value": "0"
   }
  ],
  "sync_on_migrate": 1
