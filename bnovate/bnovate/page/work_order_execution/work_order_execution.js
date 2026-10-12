@@ -334,6 +334,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 				{ item_code: "100050", qties: [2, 3, 4] },
 				{ item_code: "100051", qties: [] },
 				{ item_code: "100054", qties: [] },
+				{ item_code: "101089.02", qties: [5] },
 			]
 			const item_docs = await Promise.all(item_codes.map(item => frappe.model.with_doc("Item", item.item_code)));
 

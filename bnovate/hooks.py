@@ -378,10 +378,12 @@ doc_events = {
             "bnovate.bnovate.utils.work_order.default_start_time",
             "bnovate.bnovate.page.work_order_execution.work_order_execution.calculate_total_time",
             "bnovate.bnovate.utils.enclosures.set_wo_serial_no",
+            "bnovate.bnovate.utils.enclosures.warn_previous_fill_type",
             "bnovate.bnovate.utils.work_order.set_planned_end_date",
         ],
         "before_update_after_submit": [
             "bnovate.bnovate.utils.work_order.stash_previous_dates",
+            "bnovate.bnovate.utils.enclosures.warn_previous_fill_type",
         ],
         "on_update_after_submit": [
             "bnovate.bnovate.utils.work_order.default_start_time",
