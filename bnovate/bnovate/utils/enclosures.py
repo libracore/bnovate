@@ -174,7 +174,7 @@ def get_last_fill_types(serial_nos, exclude_work_order=None):
 
 
 def warn_previous_fill_type(wo, method=None):
-    """ Add a warning to the comment of a refill Work Order if an enclosure was last filled with another fill type.
+    """ Add a warning to the comment of an ID refill Work Order if enclosure was last filled with ACC or equivalent.
 
     Called from hooks.py. The comment is shown to the operators on the Work Order Execution page.
     The warning is only added once, if it is not already in the comment.
@@ -185,14 +185,14 @@ def warn_previous_fill_type(wo, method=None):
 
     serial_nos = get_serial_nos(wo.serial_no or "")
     last_fill_types = get_last_fill_types(serial_nos, wo.name)
-    different = [(sn, last_fill_types[sn]) for sn in serial_nos if last_fill_types.get(sn, fill_type) != fill_type]
-    if not different:
+    warnings = [(sn, last_fill_types[sn]) for sn in serial_nos if last_fill_types.get(sn, fill_type) in ['ACC', 'UVC']]
+    if not warnings:
         return
 
     if len(serial_nos) == 1:
-        message = "Warning: previously filled with {0}".format(different[0][1])
+        message = "Warning: previously filled with {0}".format(warnings[0][1])
     else:
-        message = "Warning: " + "; ".join("{0} previously filled with {1}".format(sn, ft) for sn, ft in different)
+        message = "Warning: " + "; ".join("{0} previously filled with {1}".format(sn, ft) for sn, ft in warnings)
 
     if message in (wo.comment or ""):
         return
