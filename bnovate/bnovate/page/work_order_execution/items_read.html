@@ -6,22 +6,22 @@
         <table class="table table-condensed no-margin" style="border-bottom: 1px solid #d1d8dd">
             <thead>
                 <tr>
-                    <th style="width: 15%;" class="" >
+                    <th style="width: 15%;" class="">
                         {{ __("Status") }}
                     </th>
-                    <th style="width: 20%;" class="" >
+                    <th style="width: 20%;" class="">
                         {{ __("Stock Entry") }}
                     </th>
-                    <th style="width: 10%;" class="text-right" >
+                    <th style="width: 10%;" class="text-right">
                         {{ __("Qty") }}
                     </th>
                     {% if produce_serial_no %}
-                    <th style="width: 30%;" class="" >
+                    <th style="width: 30%;" class="">
                         {{ __("Serial No") }}
                     </th>
                     {% endif %}
                     {% if produce_batch %}
-                    <th style="width: 30%;" class="" >
+                    <th style="width: 30%;" class="">
                         Batch
                     </th>
                     {% endif %}
@@ -46,30 +46,29 @@
                     <td>
                         |
                         {% for serial_no in ste.extras.serial_no_data %}
-                            {{ serial_no.link }}
-                            {% for attachment in serial_no.attachments %}
-                                <a href="{{ attachment.file_url }}" target="_blank"><i class="fa fa-file"></i></a>
-                            {% endfor  %}
-                            |
+                        {{ serial_no.link }}
+                        {% for attachment in serial_no.attachments %}
+                        <a href="{{ attachment.file_url }}" target="_blank"><i class="fa fa-file"></i></a>
+                        {% endfor %}
+                        |
                         {% endfor %}
                     </td>
                     {% endif %}
                     {% if produce_batch %}
                     <td>
-                        {{ ste.produced_batch }}
+                        {{ ste.produced_batch_link }}
                     </td>
                     {% endif %}
                     <td>
                         {% if ste.docstatus == 0 %}
-                        <button class="btn btn-xs btn-danger submit-ste" data-docname="{{ ste.name }}">{{ __("Submit") }}</button> 
+                        <button class="btn btn-xs btn-danger submit-ste" data-docname="{{ ste.name }}">{{ __("Submit") }}</button>
                         {% endif %}
 
                         <!-- Else if seems not to be supported by frappe microtemplating -->
-                        {% if ste.docstatus <= 1 %}
-                        <button class="btn btn-xs btn-primary print-wo-label" data-docname="{{ ste.name }}"><i class="fa fa-print"></i> {{ __("Big Label") }}</button>
-                        <button class="btn btn-xs btn-primary print-pouch-label" data-docname="{{ ste.name }}"><i class="fa fa-print"></i> {{ __("Small Label") }}</button>
-                        <button class="btn btn-xs btn-primary print-rating-plate" data-docname="{{ ste.name }}"><i class="fa fa-print"></i> {{ __("Rating Plate") }}</button>
-                        {% endif %}
+                        {% if ste.docstatus <= 1 %} <button class="btn btn-xs btn-primary print-wo-label" data-docname="{{ ste.name }}"><i class="fa fa-print"></i> {{ __("Big Label") }}</button>
+                            <button class="btn btn-xs btn-primary print-pouch-label" data-docname="{{ ste.name }}"><i class="fa fa-print"></i> {{ __("Small Label") }}</button>
+                            <button class="btn btn-xs btn-primary print-rating-plate" data-docname="{{ ste.name }}"><i class="fa fa-print"></i> {{ __("Rating Plate") }}</button>
+                            {% endif %}
                     </td>
                 </tr>
                 {% endfor %}
@@ -85,13 +84,13 @@
                 <tr>
                     <th style="width: 5%" class="table-sr">{{ __("Sr") }}</th>
 
-                    <th style="width: 20%;" class="" >
+                    <th style="width: 20%;" class="">
                         {{ __("Item Code") }}
                     </th>
-                    <th style="width: 35%;" class="" >
+                    <th style="width: 35%;" class="">
                         {{ __("Item Name") }}
                     </th>
-                    <th style="width: 20%;" class="text-right" >
+                    <th style="width: 20%;" class="text-right">
                         {{ __("Required Qty") }}
                     </th>
                 </tr>
@@ -101,19 +100,19 @@
                 {% for item in doc.required_items %}
                 <tr>
                     <td class="table-sr">{{ item.idx }}</td>
-                    <td class="" >
+                    <td class="">
                         <div class="value">
                             {{ item.item_code }}
                         </div>
                     </td>
-                    <td class="" >
+                    <td class="">
                         <div class="value">
                             <strong>{{ item.item_name }}</strong>
                         </div>
                     </td>
-                    <td class="text-right" >
+                    <td class="text-right">
                         <div class="value">
-                            {{ item.uom }} 
+                            {{ item.uom }}
                             {{ item.required_qty }}
                         </div>
                     </td>
@@ -123,5 +122,5 @@
             </tbody>
         </table>
     </div>
-    
+
 </div>

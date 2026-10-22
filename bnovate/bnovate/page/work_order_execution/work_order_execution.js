@@ -287,6 +287,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			doc.link = frappe.utils.get_form_link('Stock Entry', doc.name);
 			doc.produced_serial_nos = doc.items.find(it => it.item_code == state.work_order_doc.production_item)?.serial_no?.trim().replaceAll("\n", ", ");
 			doc.produced_batch = doc.items.find(it => it.item_code == state.work_order_doc.production_item)?.batch_no?.trim().replaceAll("\n", ", ");
+			doc.produced_batch_link = doc.produced_batch ? frappe.utils.get_form_link('Batch', doc.produced_batch, true, doc.produced_batch) : null;  // Will break if multiple batches are present, fix later if needed.
 			doc.scrap_items = doc.items.filter(it => !it.s_warehouse && it.item_code !== doc.bom_item);
 			doc.scrap_serial_nos = doc.items.filter(it => !it.s_warehouse && it.item_code !== doc.bom_item)
 				.filter(it => it.serial_no)
