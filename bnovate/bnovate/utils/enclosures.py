@@ -2,6 +2,8 @@
 #
 # General utility functions for enclosures
 
+import re
+
 import frappe
 from frappe.utils import getdate, get_link_to_form
 from frappe.exceptions import DoesNotExistError
@@ -133,6 +135,68 @@ def set_wo_serial_no(wo, method=None):
     
     serial_nos = get_serial_nos(soi.serial_nos) # cleanup
     wo.db_set("serial_no", "\n".join(serial_nos))
+
+
+def get_fill_type(item_code):
+    """ Fill type of a fill item: "CBC" for FIL-CBC-xxxxxx. None if it does not match the pattern. """
+    match = re.match(r"^FIL-([A-Z0-9]+)-", item_code or "")
+    return match.group(1) if match else None
+
+
+def get_last_fill_types(serial_nos, exclude_work_order=None):
+    """ Fill type that each enclosure was last filled with: { serial_no: "ACC" }. Enclosures never filled are not returned.
+
+    Same source as the Enclosure Filling History report: Fill Association Items of submitted Manufacture Stock Entries.
+    Fills made by exclude_work_order are ignored.
+    """
+    if not serial_nos:
+        return {}
+
+    data = frappe.db.sql("""
+        SELECT
+            UPPER(IFNULL(fa.enclosure_serial_data, fa.enclosure_serial)) AS serial_no,
+            IFNULL(ste.bom_item, fa.fill_type) AS fill_item
+        FROM `tabStock Entry` AS ste
+        JOIN `tabFill Association Item` AS fa ON fa.parent = ste.name
+        WHERE ste.purpose = "Manufacture"
+            AND ste.docstatus = 1
+            AND IFNULL(fa.enclosure_serial_data, fa.enclosure_serial) IN %(serial_nos)s
+            AND IFNULL(ste.work_order, '') != %(work_order)s
+        ORDER BY ste.posting_date, ste.creation
+    """, {"serial_nos": tuple(serial_nos), "work_order": exclude_work_order or ""}, as_dict=True)
+
+    last_fill_types = {}
+    for row in data:
+        fill_type = get_fill_type(row.fill_item)
+        if fill_type:
+            last_fill_types[row.serial_no] = fill_type  # Later fills overwrite earlier ones
+    return last_fill_types
+
+
+def warn_previous_fill_type(wo, method=None):
+    """ Add a warning to the comment of an ID refill Work Order if enclosure was last filled with ACC or equivalent.
+
+    Called from hooks.py. The comment is shown to the operators on the Work Order Execution page.
+    The warning is only added once, if it is not already in the comment.
+    """
+    fill_type = get_fill_type(wo.production_item)
+    if fill_type not in ("CBC", "NBC", "ECC"):
+        return
+
+    serial_nos = get_serial_nos(wo.serial_no or "")
+    last_fill_types = get_last_fill_types(serial_nos, wo.name)
+    warnings = [(sn, last_fill_types[sn]) for sn in serial_nos if last_fill_types.get(sn, fill_type) in ['ACC', 'UVC']]
+    if not warnings:
+        return
+
+    if len(serial_nos) == 1:
+        message = "Warning: previously filled with {0}".format(warnings[0][1])
+    else:
+        message = "Warning: " + "; ".join("{0} previously filled with {1}".format(sn, ft) for sn, ft in warnings)
+
+    if message in (wo.comment or ""):
+        return
+    wo.comment = (wo.comment + "\n\n" if wo.comment else "") + message
 
 
 def set_owner_from_dn(dn, method=None):

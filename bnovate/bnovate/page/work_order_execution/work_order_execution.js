@@ -287,6 +287,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 			doc.link = frappe.utils.get_form_link('Stock Entry', doc.name);
 			doc.produced_serial_nos = doc.items.find(it => it.item_code == state.work_order_doc.production_item)?.serial_no?.trim().replaceAll("\n", ", ");
 			doc.produced_batch = doc.items.find(it => it.item_code == state.work_order_doc.production_item)?.batch_no?.trim().replaceAll("\n", ", ");
+			doc.produced_batch_link = doc.produced_batch ? frappe.utils.get_form_link('Batch', doc.produced_batch, true, doc.produced_batch) : null;  // Will break if multiple batches are present, fix later if needed.
 			doc.scrap_items = doc.items.filter(it => !it.s_warehouse && it.item_code !== doc.bom_item);
 			doc.scrap_serial_nos = doc.items.filter(it => !it.s_warehouse && it.item_code !== doc.bom_item)
 				.filter(it => it.serial_no)
@@ -334,6 +335,7 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 				{ item_code: "100050", qties: [2, 3, 4] },
 				{ item_code: "100051", qties: [] },
 				{ item_code: "100054", qties: [] },
+				{ item_code: "101089.02", qties: [5] },
 			]
 			const item_docs = await Promise.all(item_codes.map(item => frappe.model.with_doc("Item", item.item_code)));
 
@@ -435,6 +437,13 @@ frappe.pages['work-order-execution'].on_page_load = function (wrapper) {
 	async function finish() {
 		// Prompts user for finished qty.
 		page.clear_primary_action();
+
+		// Easter egg: pressing Start (not Finish) on a FIL* item has a 1-in-20
+		// chance of sending the operator to Warehouse Wars instead.
+		if (state.draft_mode && is_fill(state.work_order_doc.production_item) && Math.random() < 1 / 20) {
+			frappe.set_route('warehouse-wars');
+			return;
+		}
 
 		let qty = await prompt_qty(state.remaining_qty);
 

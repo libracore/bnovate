@@ -235,6 +235,7 @@ doctype_js = {
     ],
     "Item": ["public/js/doctype_includes/item.js"],
     "Supplier": ["public/js/doctype_includes/supplier.js"],
+    "Payment Reminder": ["public/js/doctype_includes/payment_reminder.js"],
     "Purchase Order": ["public/js/doctype_includes/purchase_order.js"],
     "Purchase Receipt": ["public/js/doctype_includes/purchase_receipt.js"],
     "Purchase Invoice": ["public/js/doctype_includes/purchase_invoice.js"],
@@ -315,7 +316,9 @@ standard_portal_menu_items = [
 ]
 
 website_context = {
-    "favicon": "/assets/bnovate/favicon.ico",
+    "favicon": "/assets/bnovate/img/favicon.png",
+    # Overrides the brand_html of Website Settings, which points at a file uploaded to the site
+    "brand_html": '<img src="/assets/bnovate/img/bnovate_logo_main.svg" alt="bNovate Technologies" title="bNovate Technologies">',
     # “splash_image”: “/assets/your_app/images/your_splash.png”
 }
 
@@ -375,10 +378,12 @@ doc_events = {
             "bnovate.bnovate.utils.work_order.default_start_time",
             "bnovate.bnovate.page.work_order_execution.work_order_execution.calculate_total_time",
             "bnovate.bnovate.utils.enclosures.set_wo_serial_no",
+            "bnovate.bnovate.utils.enclosures.warn_previous_fill_type",
             "bnovate.bnovate.utils.work_order.set_planned_end_date",
         ],
         "before_update_after_submit": [
             "bnovate.bnovate.utils.work_order.stash_previous_dates",
+            "bnovate.bnovate.utils.enclosures.warn_previous_fill_type",
         ],
         "on_update_after_submit": [
             "bnovate.bnovate.utils.work_order.default_start_time",
@@ -399,7 +404,13 @@ doc_events = {
     "Purchase Order": {
         "before_submit": "bnovate.bnovate.utils.controllers.check_blanket_order_currency",
     },
+    "Sales Invoice": {
+        "before_validate": "bnovate.bnovate.utils.deferral.set_deferral_flags",
+    },
     "Sales Order": {
+        "after_insert": [
+            "bnovate.bnovate.doctype.refill_request.refill_request.copy_po_attachment_to_sales_order",
+        ],
         "before_submit": [
             "bnovate.bnovate.utils.enclosures.check_so_serial_no",
             "bnovate.bnovate.utils.controllers.check_blanket_order_currency",
@@ -480,11 +491,26 @@ scheduler_events = {
 
 # before_tests = "bnovate.install.before_tests"
 
+# Translations
+# ------------------------------
+#
+# Also deliver the strings of on-demand portal scripts (see the function's docstring)
+get_translated_dict = {
+    ("boot", None): "bnovate.bnovate.utils.web_translations.get_portal_translated_dict",
+}
+
+# Searchable in global search, in addition to ERPNext's doctypes. These are only used when resetting the Global Search Settings;
+# see also patches.
+global_search_doctypes = [
+    {"doctype": "Service Report"},
+]
+
 # Overriding Methods
 # ------------------------------
 #
 override_whitelisted_methods = {
 	# "erpnext.stock.get_item_details.get_item_details": "bnovate.bnovate.utils.overrides.get_item_details",
+	"frappe.utils.global_search.search": "bnovate.bnovate.utils.search.search",
 }
 #
 # each overriding function accepts a `data` argument;

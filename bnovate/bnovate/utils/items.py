@@ -288,3 +288,32 @@ def duplicate_item(item_code, new_item_code):
     new_item.insert()
 
     return new_item.name
+
+
+@frappe.whitelist()
+def get_item_versions(codes):
+    """ Return the versions of items, for a list of item codes without revision (e.g. "100655").
+
+    Versions are the item with that code, and its revisions: 100655, 100655.01, 100655.02...
+    Return { code: [{ name, item_name, disabled }, ...] }, in order of name. Only returns items the user can read.
+    """
+    import json
+    if isinstance(codes, str):
+        codes = json.loads(codes)
+    codes = [str(code) for code in codes if code]
+    versions = {code: [] for code in codes}
+    if not codes:
+        return versions
+
+    items = frappe.get_list(
+        "Item",
+        or_filters=[["name", "like", code + "%"] for code in codes],
+        fields=["name", "item_name", "disabled"],
+        order_by="name asc",
+        limit_page_length=5000,
+    )
+    for item in items:
+        for code in codes:
+            if item.name == code or item.name.startswith(code + "."):
+                versions[code].append(item)
+    return versions
